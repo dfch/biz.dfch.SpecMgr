@@ -9,7 +9,7 @@ version: 1.0.0
 
 # Level 1 Heading is the Title of the Risk
 
-<!-- Optional HTML comment giving context for this risk. -->
+<!-- Optional HTML comment giving context for this risk. Closed sets: `## Strategy` is one of the four TARA words (transfer, accept, reduce, avoid -- see the specmgr://rsk/tara resource); the `### Probability {1..5}` and `### Impact {1..5}` headings carry 5x5 risk-matrix coordinates 1-5 (see the specmgr://rsk/risk-matrix resource). -->
 
 ## Cause
 

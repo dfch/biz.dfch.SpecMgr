@@ -44,7 +44,7 @@ from .body import (
 )
 from .document import PrbDocument
 from .frontmatter import PrbFrontmatter
-from .parser import parse_prb
+from .parser import parse_prb, parse_prb_body
 from .summary import PrbSummary
 
 __all__ = [
@@ -68,4 +68,5 @@ __all__ = [
     "References",
     "Summary",
     "parse_prb",
+    "parse_prb_body",
 ]

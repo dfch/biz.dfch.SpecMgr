@@ -23,8 +23,8 @@ path -> parse via free-function returning typed document model. A
 content-validation failure of an existing file (the parser's
 ``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``) is
 caught and returned as the non-raising ``ValidateResult``
-(feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case
-5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+(feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case
+5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
 structured-result workaround chain); only the file-access errors raised
 by ``Path.read_text()`` for a truly-absent or unreadable path still
 surface as MCP tool errors to the caller.
@@ -33,6 +33,20 @@ Inserted late in the Phase 3 task list (Task 3.2, renumbering every
 subsequent task by one) after REQ-004 was found to list ``parse_tsk`` among
 the nine required MCP tools while Phase 2 only ever built the model-layer
 free function of the same name -- see the feature README's Decisions Made.
+
+**Path-derived language (feat-197-i18n Phase 125, DEC 38efdb66 item 5).**
+A 1:1 port of ``parse_dec``'s handling. This tool takes no ``language``
+parameter: it derives the effective language from the file's own position
+relative to the task list base directory
+(``general.tools._doc_paths.language_for_doc_path``) -- a file directly in
+the flat ``docs/tsk/`` directory parses canonical (no heading-mapping
+table), a file directly in a shape-validated ``docs/tsk/{language}/``
+subdirectory parses with that language's table, and any other location
+(outside the base, a non-shape-validated subdirectory, a deeper nesting)
+parses canonical. A derived language without a table file therefore fails
+with the table loader's actionable ``ValueError`` (propagated, like every
+other caller-usage error -- the non-raising ``ValidateResult`` channel
+covers content-validation failures only).
 """
 
 from __future__ import annotations
@@ -40,11 +54,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...general.models import ValidateResult, ValidationErrorEntry
+from ...general.tools._doc_paths import language_for_doc_path
 from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md._errors import wrap_tool_errors
 from ...models.md._markdown import snippet
 from ...server import mcp
 from ..models.v1 import TskDocument, parse_tsk as _parse_tsk
+from ._paths import tsk_base_dir
 
 
 @mcp.tool(
@@ -55,11 +71,16 @@ from ..models.v1 import TskDocument, parse_tsk as _parse_tsk
         "into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. An existing file "
         "that fails to parse returns a non-raising `ValidateResult` (`valid=False`, a single "
         "`errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) "
-        "instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (ADR "
-        "f14f125e-eaad-4f4f-a6fd-3c931bed726e, GitHub issue #204 -- case 5 of the ADR 519d1206 "
+        "instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (DEC "
+        "f14f125e-eaad-4f4f-a6fd-3c931bed726e, GitHub issue #204 -- case 5 of the DEC 519d1206 "
         "non-raising-structured-result workaround chain); a truly-absent or unreadable path still "
         "raises the `OSError`-family file-access error (`FileNotFoundError`/`PermissionError`/`OSError`) "
         "from `Path.read_text()`."
+        " The file's language is derived from its path position relative to the task list base "
+        "directory: a file in the flat docs/tsk/ directory parses canonical (no heading-mapping table); "
+        "a file in a direct two-letter docs/tsk/{language}/ subdirectory parses through that language's "
+        "table (an actionable ValueError when no table exists for the language); any other location "
+        "parses canonical."
     ),
 )
 def parse_tsk(path: str) -> TskDocument | ValidateResult:
@@ -75,8 +96,8 @@ def parse_tsk(path: str) -> TskDocument | ValidateResult:
     field/cross-field validation failure raises
     ``AssertionError``/``pydantic.ValidationError`` (a malformed frontmatter
     block raises ``yaml.YAMLError``) internally, but this tool catches all
-    three (feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
-    case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+    three (feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+    case 5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
     structured-result workaround chain) and returns the enriched message
     (domain/tool context prepended by the shared tool-boundary wrapper,
     :func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`, on top of
@@ -94,6 +115,12 @@ def parse_tsk(path: str) -> TskDocument | ValidateResult:
         The filesystem path to the ``.md`` file to parse (absolute or
         relative to the current working directory).
 
+        The file's language is derived from this path's position relative to the
+        task list base directory (feat-197-i18n Phase 125, DEC 38efdb66 item 5):
+        flat ``docs/tsk/`` = canonical (no table), a direct shape-validated
+        ``docs/tsk/{language}/`` subdirectory = that language's table, any
+        other location = canonical.
+
     Returns
     -------
     TskDocument | ValidateResult
@@ -105,8 +132,8 @@ def parse_tsk(path: str) -> TskDocument | ValidateResult:
         exactly as the generic ``validate`` tool caps it (feat-110, via
         :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
         ``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``
-        (feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
-        case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+        (feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+        case 5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
         structured-result workaround chain).
 
     Raises
@@ -117,11 +144,17 @@ def parse_tsk(path: str) -> TskDocument | ValidateResult:
         so a truly-absent or unreadable path still surfaces the ``OSError``-
         family error to the caller unchanged (the documented file-access
         contract, feat-204-create-error REQ-002).
+    ValueError
+        The path sits in a direct ``{language}`` subdirectory whose language
+        has no packaged heading-mapping table (the table loader's actionable
+        error, feat-197-i18n Phase 125).
     """
-    text = Path(path).read_text(encoding="utf-8")
+    doc_path = Path(path)
+    text = doc_path.read_text(encoding="utf-8")
+    language = language_for_doc_path(tsk_base_dir(), doc_path)
     try:
         with wrap_tool_errors(domain="tsk", tool="parse_tsk"):
-            return _parse_tsk(text)
+            return _parse_tsk(text, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])

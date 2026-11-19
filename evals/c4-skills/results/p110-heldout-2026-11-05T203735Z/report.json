@@ -1,0 +1,95 @@
+{
+  "cases": [
+    "heldout-validate"
+  ],
+  "comparison": "none",
+  "conditions": [
+    "none",
+    "skill"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 1.6,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 64.8,
+    "mean_wall_time_s": 57.5,
+    "measured_trials": 5,
+    "median_wall_time_s": 62.8,
+    "within_budget_at_median": true
+  },
+  "k": 5,
+  "label": "p110-heldout",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 5,
+        "contended": 0,
+        "timeout": 0
+      },
+      "gate_failures": {
+        "inspect_called": 5,
+        "parse_called": 5,
+        "triage_complete": 5,
+        "validated_before_return": 5
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "heldout-validate": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 5,
+      "wilson": [
+        2.7755575615628914e-17,
+        0.4344824686593928
+      ]
+    },
+    "skill": {
+      "flags": {
+        "cached": 0,
+        "contended": 0,
+        "timeout": 0
+      },
+      "gate_failures": {
+        "triage_complete": 1
+      },
+      "pass_power_k": 0.3276800000000001,
+      "pass_rate": 0.8,
+      "passes": 4,
+      "per_case": {
+        "heldout-validate": {
+          "passes": 4,
+          "trials": 5
+        }
+      },
+      "trials": 5,
+      "wilson": [
+        0.375534627029995,
+        0.9637758917743693
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p110-heldout-2026-11-05T203735Z",
+  "seed": 743505,
+  "skill_margins": {
+    "margin": {
+      "better_than_none": true,
+      "clearly_worse_cases": [],
+      "none_rate": 0.0,
+      "ok": true,
+      "rate_margin_pp": -80.0,
+      "within_rate_margin": true
+    },
+    "wilson": [
+      0.375534627029995,
+      0.9637758917743693
+    ]
+  },
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

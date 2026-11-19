@@ -112,7 +112,7 @@ class TestFormatMarkdownDocument(unittest.TestCase):
             """\
             ---
             id: test
-            type: adr
+            type: req
             ---
 
             # Title
@@ -165,7 +165,7 @@ class TestFormatMarkdownDocument(unittest.TestCase):
             """\
             ---
             id: test
-            type: adr
+            type: req
             ---
 
             # Title

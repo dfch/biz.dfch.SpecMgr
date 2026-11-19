@@ -2,7 +2,7 @@
 
 Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
 
-Backs ADR 750842b2-aca4-4649-ba0c-855ec8e1f505's **cache** sub-decision:
+Backs DEC 750842b2-aca4-4649-ba0c-855ec8e1f505's **cache** sub-decision:
 computed embeddings are cached in-memory, per process, content-hash
 validated -- no on-disk persistence. A document's vector is only ever
 recomputed when its on-disk content actually changed.
@@ -29,8 +29,8 @@ last read, the stored vector **and** the stored row metadata (the
 candidate's ``SimilarityText`` -- see below) are returned without
 re-embedding or re-parsing. A stale entry is structurally impossible --
 it can only ever cost one extra embed, never an incorrect result. This
-refines, rather than violates, ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
-"the filesystem is the sole source of truth" invariant, exactly as ADR
+refines, rather than violates, DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
+"the filesystem is the sole source of truth" invariant, exactly as DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d did for parsing.
 
 **Row metadata is cached with the vector (feat-134, Phase 6).** An entry
@@ -55,7 +55,7 @@ therefore returns the *same array object* the cache stores: callers must
 treat vectors as read-only (the Phase 2/3 ranking logic only performs dot
 products over them).
 
-**Lock-ordering rule (mirrors DocCache, ADR bfd76370).** This cache's own
+**Lock-ordering rule (mirrors DocCache, DEC bfd76370).** This cache's own
 internal ``threading.Lock`` guards *only* its dict get/set/pop/clear
 bookkeeping -- never the file read, never the caller-supplied ``embed_fn``
 call itself (the expensive embedding computation), and never held across
@@ -86,9 +86,10 @@ for the entry's row-metadata type, itself stdlib + the base
 simply return the structured unavailable result (REQ-003) without ever
 touching this cache.
 
-**Explicitly out of scope** (mirroring both ADRs): no TTL/size-based
-eviction, no on-disk persistence, and no ``stat()``-based (mtime/size)
-pre-check fast path -- content-hash-only for v1.
+**Explicitly out of scope** (mirroring both DECs, 750842b2 and
+bfd76370): no TTL/size-based eviction, no on-disk persistence, and no
+``stat()``-based (mtime/size) pre-check fast path -- content-hash-only
+for v1.
 
 ## Classes
 
@@ -97,7 +98,7 @@ pre-check fast path -- content-hash-only for v1.
 A process-local, content-hash-validated in-memory embedding cache.
 
 Shaped as ``dict[tuple[domain, resolved_path], tuple[content_hash,
-vector, similarity_text]]`` (ADR 750842b2, as revised in Phase 6),
+vector, similarity_text]]`` (DEC 750842b2, as revised in Phase 6),
 where ``content_hash`` is the ``hashlib.blake2b`` digest of
 ``path``'s full on-disk text at the last :meth:`read`, ``vector`` is
 the :data:`Vector` that read produced (stored in the provider's
@@ -202,7 +203,7 @@ result); this class does not attempt to de-duplicate in-flight embeds.
   instance's lock; the file read and the ``embed_fn`` call itself
   happen outside the lock, so a slow embed of one document never
   blocks a concurrent read of a different one (lock-ordering rule,
-  ADR bfd76370).
+  DEC bfd76370).
 
   Args:
       domain:
@@ -291,7 +292,7 @@ Read and, if needed, compute the cached vector plus row metadata for ``(domain, 
 The public read entry point over the module-level :data:`_cache`
 singleton (Phase 3's similarity tools are the first callers): a file is
 only ever re-embedded when its on-disk content hash no longer matches
-the hash recorded at the last read of ``(domain, path)`` (ADR
+the hash recorded at the last read of ``(domain, path)`` (DEC
 750842b2/REQ-004) -- see :meth:`EmbeddingCache.read` for the full
 contract, including the Phase 6 row-metadata serving (a warm read is
 one file read and no parse; a cold one, one of each).

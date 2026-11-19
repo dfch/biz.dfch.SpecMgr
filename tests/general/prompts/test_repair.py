@@ -145,18 +145,6 @@ class TestRepairPrompt(unittest.TestCase):
         self.assertIn("Diagnose-only degradation", result)
         self.assertIn("do not touch the file", result)
 
-    def test_adr_exclusion_stated(self):
-        """The ADR exclusion must be stated in the instructions."""
-        result = repair_fn("req", _ID)
-        self.assertIn("ADR is explicitly out", result)
-        self.assertIn("scope", result)
-
-    def test_raises_value_error_for_adr(self):
-        """repair('adr') must fail fast (ADR exclusion)."""
-        with self.assertRaises(ValueError) as ctx:
-            repair_fn("adr", _ID)
-        self.assertIn("adr", str(ctx.exception))
-
     def test_raises_value_error_for_unknown_type(self):
         """An unknown type must fail fast with the allowed domains named."""
         with self.assertRaises(ValueError) as ctx:

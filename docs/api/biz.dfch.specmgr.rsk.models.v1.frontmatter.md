@@ -17,6 +17,11 @@ inherited ``_default_blank_status_to_draft`` (Pydantic applies child-class
 ``mode="before"`` validators first), so by the time the base's validator sees
 the value it is already ``"open"`` and passes it through unchanged.
 
+This module also owns the risk status state machine (feat-108-fsm, GitHub
+issue #108): the ``_STATUS_TRANSITIONS`` table, next to
+``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
+
 ## Classes
 
 ### `RskFrontmatter`

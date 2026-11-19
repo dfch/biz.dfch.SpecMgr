@@ -47,7 +47,7 @@ from .body import (
 )
 from .document import DecDocument
 from .frontmatter import DecFrontmatter
-from .parser import parse_dec
+from .parser import parse_dec, parse_dec_body
 from .summary import DecSummary
 
 __all__ = [
@@ -73,4 +73,5 @@ __all__ = [
     "UpdateEntry",
     "Updates",
     "parse_dec",
+    "parse_dec_body",
 ]

@@ -30,10 +30,10 @@ printing each line's 1-based body-line number, ready to feed into
 ``req.prompts.update_req``, with the instructional content rewritten to
 describe QA's own schema and lifecycle instead of REQ's. Like ``get_req``,
 step 1 points at the ``get_qa`` tool, not a ``specmgr://qa/{id}`` resource
--- there is no such resource; see ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614.
+-- there is no such resource; see DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614.
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: QA's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: QA's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="qa"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="qa"``) -- so the tool-mapping section below
@@ -62,7 +62,9 @@ from ...server import mcp
     title="Update a QA document",
     description=(
         "Guides the LLM through revising an existing QA document by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_qa_schema` tool (the generated JSON Schema); the "
+        "`get_qa_template`/`get_qa_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_qa(id: str, instructions: str | None = None) -> str:

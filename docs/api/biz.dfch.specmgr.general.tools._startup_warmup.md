@@ -8,7 +8,7 @@ startup. ``server.py``'s lifespan hook was never actually a no-op -- it
 already started feat-134's similarity warmup -- and this module's own
 addition (the ``feat`` two-stage cache warmup, GitHub issue #187) would
 otherwise be a *second*, independently-scheduled background thread
-competing for the GIL with the first one. ADR
+competing for the GIL with the first one. DEC
 3982712a-a46b-4b2b-809f-9c6925a49b44 instead unifies both into a single
 daemon thread (``specmgr-startup-warmup``) running three phases, strictly
 in order:

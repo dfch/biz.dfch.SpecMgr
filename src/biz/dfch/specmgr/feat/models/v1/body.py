@@ -279,7 +279,7 @@ class DesignNotes(MarkdownSection3):
 
 
 class RelatedDecisions(MarkdownSection3):
-    """`### Related Decisions` -- free-form cross-reference list; entries may reference either an ADR id or a
+    """`### Related Decisions` -- free-form cross-reference list; entries may reference a dec id or a
     `dec` id (or any other decision record). Optional."""
 
 
@@ -496,7 +496,7 @@ _ENTRY_HEADING_PATTERN = re.compile(
 #: The `@alias` REGEX value shared verbatim by `UpdateEntry` and
 #: `DecisionEntry` -- full ISO 8601 date+time (date + `T` or space + time +
 #: milliseconds + explicit UTC offset (`+02:00`, `-05:00`) or `Z` for UTC;
-#: date-only is rejected, per ADR
+#: date-only is rejected, per DEC
 #: 8c889262-152b-4b8e-ae2c-75371f7a9edf), joined to the title by either
 #: `" - "` or `" : "` (the em-dash separator is rejected).
 _ENTRY_HEADING_ALIAS = r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$"
@@ -539,7 +539,7 @@ class UpdateEntry(MarkdownSection4):
     or space) + `HH:mm:ss.SSS` + explicit UTC offset (`+02:00`, `-05:00`)
     or `Z` for UTC -- the same format as frontmatter `created`/`updated`
     (both separators accepted, the `T`-separated form the machine-written
-    canonical variant, date-only rejected; ADR
+    canonical variant, date-only rejected; DEC
     8c889262-152b-4b8e-ae2c-75371f7a9edf). E.g. `2026-08-30 14:23:01.123Z`.
 
     Parameters

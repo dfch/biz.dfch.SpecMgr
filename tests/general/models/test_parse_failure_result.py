@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Tests for `general.models.parse_failure_result.ParseFailureResult` (feat-150-mcp-lifecycle-commands Phase 1a,
-REQ-013, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)."""
+REQ-013, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c)."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ import unittest
 
 from biz.dfch.specmgr.general.models import ParseFailureResult
 
-#: The exact field names `ParseFailureResult` declares (the ADR 9080b37c's fixed shape).
+#: The exact field names `ParseFailureResult` declares (the DEC 9080b37c's fixed shape).
 _EXPECTED_FIELD_NAMES = ["error", "path", "id"]
 
 

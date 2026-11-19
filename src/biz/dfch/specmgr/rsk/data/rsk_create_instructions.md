@@ -52,15 +52,16 @@ residual 5x5 coordinates, and the chosen TARA strategy with its
 mitigation measures, and the source (the origin/authority of the
 risk), and optionally owner, tags, and more information.
 
-## 3. Use the template/example/schema and the domain knowledge as references
-Fetch `specmgr://rsk/template` or `specmgr://rsk/example` as a
-starting point/style reference, then check `specmgr://rsk/schema`
-(the generated JSON Schema) to confirm field names and constraints
-before drafting the body. Do not invent field names or section
-headings that are not present there. For what TARA means and when to
-pick each of the four strategies, read `specmgr://rsk/tara`; for what
-'high risk' and 'low risk' mean (the 5x5 zone table and the product
-thresholds), read `specmgr://rsk/risk-matrix`.
+## 3. Use the template/example tools and the domain knowledge as references
+Call the `get_rsk_template` and `get_rsk_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_rsk_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error. For what
+TARA means and when to pick each of the four strategies, read
+`specmgr://rsk/tara`; for what 'high risk' and 'low risk' mean (the
+5x5 zone table and the product thresholds), read
+`specmgr://rsk/risk-matrix`.
 
 ## 4. Tool call sequence
 1. Draft the body-only markdown per the structure above.

@@ -22,14 +22,18 @@ structured document model. ``get_rsk_example`` returns a complete, valid
 sample risk document as raw markdown; ``get_rsk_template`` returns a
 document with every field present but populated with short placeholder
 ("blind text") content instead -- both read a packaged, build-guaranteed
-data file rather than anything on the caller's filesystem. ``get_rsk``
+data file rather than anything on the caller's filesystem.
+``get_rsk_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://rsk/schema`` resource). ``get_rsk``
 reads, parses, and returns a full risk document by id -- the sole id-based
 read path for RSK (there never was a ``specmgr://rsk/{id}`` resource to
 begin with). ``list_rsk`` (Task 3.14) returns one page of
 id/title/status/ref summaries of every risk, plus the initial/residual 5x5
 zone levels, the TARA strategy word, the first ``## Scope`` entry, and the
 residual-risk coordinates (``RskSummary``), so that ``max_results``/
-``offset`` paging parameters can be accepted (feat-13-list-paging, ADR
+``offset`` paging parameters can be accepted (feat-13-list-paging, DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_rsk`` assigns a fresh id,
 builds the frontmatter itself, and writes a new document (body markdown
 only, no frontmatter) under the risk base directory (``rsk.tools._paths``/
@@ -51,6 +55,7 @@ package to register all risk tools at once::
 from .create_rsk import create_rsk
 from .get_rsk import get_rsk
 from .get_rsk_example import get_rsk_example
+from .get_rsk_schema import get_rsk_schema
 from .get_rsk_template import get_rsk_template
 from .list_rsk import list_rsk
 from .parse_rsk import parse_rsk
@@ -59,6 +64,7 @@ __all__ = [
     "create_rsk",
     "get_rsk",
     "get_rsk_example",
+    "get_rsk_schema",
     "get_rsk_template",
     "list_rsk",
     "parse_rsk",

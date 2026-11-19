@@ -165,6 +165,12 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
         # 5. set_status (type="dec"): only status/updated may change.
+        #    feat-108-fsm Phase 120: the domain's own state machine is enforced, so the
+        #    transition walks the legal path draft -> proposed -> accepted (draft -> accepted
+        #    is rejected pre-write with InvalidStatusTransitionResult).
+        proposed = set_status(dec_id, "dec", "proposed")
+        self.assertEqual(proposed.status, "proposed")
+        self.assertEqual(proposed.id, updated.frontmatter.id)
         accepted = set_status(dec_id, "dec", "accepted")
         self.assertEqual(accepted.status, "accepted")
         self.assertEqual(accepted.id, updated.frontmatter.id)
@@ -208,7 +214,7 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
 
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
         """ACC-003: set_status (type="dec") must reject `implemented` (GOL's seventh value, outside
-        DEC's closed six-set), returning a non-raising ``InvalidStatusResult`` (ADR
+        DEC's closed six-set), returning a non-raising ``InvalidStatusResult`` (DEC
         b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_dec(_INITIAL_BODY)
         expected_path = dec_base_dir() / f"dec-{created.id}-choose-a-document-store.md"

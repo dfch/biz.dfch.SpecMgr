@@ -18,7 +18,7 @@ should be able to use a `TaskList` document instead of a full `feat-N-slug`
 feature file — keeping the list out of the main feature file's context and
 providing a lightweight vehicle for small procedures where a complete feature
 is too much. `tsk` follows the domain-first hierarchy and MCP surface already
-established by `req` (ADR ece4554b-725c-4f76-bc04-5d2b760363d2), reusing its
+established by `req` (DEC ece4554b-725c-4f76-bc04-5d2b760363d2), reusing its
 tools/resources shape almost exactly (per GitHub issue #10).
 
 > **Superseded timestamp-format decisions (feat-146-date-time, 2026-09-24):** ADR `8c889262-152b-4b8e-ae2c-75371f7a9edf` supersedes this feature's free-form `## Recent Updates` entry-heading
@@ -77,8 +77,8 @@ in this feature:
 
 #### Depends On
 
-- ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
-  hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
+- DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+  hierarchy), DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
   `MarkdownFrontmatter` base), `general/tools/_doc_paths.py` and
   `_packaged_data.py` (generalized past REQ specifically for this kind of
   reuse, `feat-6-requirement-artifact` Tasks 3.10/5.2/5.3), the existing

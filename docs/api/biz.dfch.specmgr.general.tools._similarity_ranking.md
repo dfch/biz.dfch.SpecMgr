@@ -2,7 +2,7 @@
 
 Pure-Python cosine (dot-on-normalized) ranking (feat-134, Phase 2, Task 2.4).
 
-Backs ADR 750842b2-aca4-4649-ba0c-855ec8e1f505's **ranking** sub-decision
+Backs DEC 750842b2-aca4-4649-ba0c-855ec8e1f505's **ranking** sub-decision
 (REQ-009): the similarity score is the dot product on L2-normalized
 vectors (== cosine), the candidates are sorted by score descending,
 ``top_k`` is validated to 1..100 (the same cap the ``list_*`` tools apply

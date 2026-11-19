@@ -28,10 +28,10 @@ parameter serves the line-range flow's line numbers, with ``numbered=True``
 additionally printing each line's 1-based body-line number, ready to feed
 into ``update``'s ``offset``). There is no
 ``specmgr://vcr/{id}`` resource to point at -- id-based reads always go
-through the ``get_vcr`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+through the ``get_vcr`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: VCR's lifecycle surface is deliberately
+There are no fine-grained frontmatter/section mutation tools for
+this domain: VCR's lifecycle surface is deliberately
 small -- a whole-body or line-range replace (the generic ``update`` tool
 with ``type="vcr"``) plus a single, dedicated status-change path (the
 generic ``set_status`` tool with ``type="vcr"``) -- mirroring
@@ -74,7 +74,10 @@ from ...server import mcp
     title="Update a verification case record",
     description=(
         "Guides the LLM through revising an existing verification case record by id: reading "
-        "current state, applying the requested change with the right tool, and validating."
+        "current state, applying the requested change with the right tool, and validating. The "
+        "structure reference is the `get_vcr_schema` tool (the generated JSON Schema); the "
+        "`get_vcr_template`/`get_vcr_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def update_vcr(id: str, instructions: str | None = None) -> str:

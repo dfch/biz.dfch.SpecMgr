@@ -30,12 +30,14 @@ import unittest
 from pathlib import Path
 
 #: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008):
-#: ``UUID_DOMAINS`` -- every domain other than ``feat``, plus ``adr``
-#: (feat-38-39-41-43-44 Phase 4) -- and ``FEAT``.
+#: ``UUID_DOMAINS`` -- every domain other than ``feat`` -- and ``FEAT``.
 from biz.dfch.specmgr.general.tools._domains import FEAT, UUID_DOMAINS
 
 from biz.dfch.specmgr.general.tools._path_safety import (
+    DEFAULT_LANGUAGE,
+    LANGUAGE_PATTERN,
     assert_feat_id,
+    assert_language,
     assert_no_traversal,
     assert_uuid,
     assert_within,
@@ -141,6 +143,49 @@ class TestAssertFeatId(unittest.TestCase):
         self.assertIn(repr(value), str(ctx.exception))
 
 
+class TestAssertLanguage(unittest.TestCase):
+    """Tests for assert_language (the ISO 639-1-shaped language guard, feat-197-i18n REQ-008/ACC-013)."""
+
+    def test_accepts_shape_valid_two_letter_codes(self):
+        """Any lowercase two-letter code passes -- the guard is shape-only (an open set)."""
+        for value in ("de", "en", "fr", "zh", "aa", "zz"):
+            with self.subTest(value=value):
+                assert_language(value)
+
+    def test_rejects_the_pinned_invalid_shapes(self):
+        """Each pinned invalid shape must raise a ValueError naming the offending value.
+
+        The guard performs no filesystem access of its own -- it is pure shape
+        validation, so a malicious payload (``"../../etc"``, ``"de/x"``,
+        ``"/abs"``) is rejected on shape alone, before it can become part of a
+        resolved path (ACC-013).
+        """
+        for value in ("", "d", "de3", "DE", "De", "de x", "de-x", "../../etc", "de/x", "/abs", "de\\x", "..", "de\n"):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError) as ctx:
+                    assert_language(value)
+                self.assertIn(repr(value), str(ctx.exception))
+
+    def test_rejected_message_names_the_expected_shape(self):
+        """The rejection message must state the expected two-letter shape (actionable)."""
+        with self.assertRaises(ValueError) as ctx:
+            assert_language("../../etc")
+        message = str(ctx.exception)
+        self.assertIn("two-letter", message)
+        self.assertIn("'de'", message)
+
+    def test_pattern_is_fullmatch_not_match(self):
+        """LANGUAGE_PATTERN must anchor both ends: a two-letter prefix of a longer value fails."""
+        self.assertIsNotNone(LANGUAGE_PATTERN.fullmatch("de"))
+        self.assertIsNone(LANGUAGE_PATTERN.fullmatch("de3"))
+        self.assertIsNone(LANGUAGE_PATTERN.fullmatch("xde"))
+
+    def test_default_language_is_shape_valid(self):
+        """DEFAULT_LANGUAGE ('en') must itself pass the guard."""
+        self.assertEqual(DEFAULT_LANGUAGE, "en")
+        assert_language(DEFAULT_LANGUAGE)
+
+
 class TestValidateId(unittest.TestCase):
     """Tests for validate_id."""
 
@@ -179,15 +224,6 @@ class TestValidateId(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             validate_id(value, _VALID_UUID)
         self.assertIn(repr(value), str(ctx.exception))
-
-    def test_accepts_a_uuid_for_adr(self):
-        """For the adr domain (feat-38-39-41-43-44 Phase 4), a canonical UUID must pass."""
-        validate_id("adr", _VALID_UUID)
-
-    def test_rejects_a_feat_id_for_adr(self):
-        """For the adr domain, a feat-NNN-slug id must raise a ValueError."""
-        with self.assertRaises(ValueError):
-            validate_id("adr", _VALID_FEAT_ID)
 
 
 class TestAssertWithin(unittest.TestCase):

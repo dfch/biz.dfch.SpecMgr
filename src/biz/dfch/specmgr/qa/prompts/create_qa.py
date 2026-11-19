@@ -20,12 +20,12 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Question and Answer (QA) document using the
 existing ``qa/tools/``/``qa/resources/`` surface (``list_qa``,
-``specmgr://qa/template``/``specmgr://qa/example``, ``specmgr://qa/schema``,
+``specmgr://qa/template``/``specmgr://qa/example``, ``get_qa_schema``,
 ``create_qa``, generic ``validate`` tool). Structural shape ported 1:1 from
 ``req.prompts.create_req``, with the instructional content rewritten to
 describe QA's own schema instead of REQ's.
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_qa`` builds the entire QA frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown.
@@ -60,7 +60,9 @@ from ...server import mcp
     description=(
         "Guides the LLM through checking for an existing similar QA document, gathering answers "
         "to ISO/IEC 25010:2023 characteristic-relevant questions, and driving "
-        "create_qa/validate to author a new QA document."
+        "create_qa/validate to author a new QA document. The structure reference is the "
+        "`get_qa_schema` tool (the generated JSON Schema); the `get_qa_template`/`get_qa_example` "
+        "tools return the authoring template and a complete sample."
     ),
 )
 def create_qa(topic: str) -> str:

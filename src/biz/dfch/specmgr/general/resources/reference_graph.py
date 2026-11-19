@@ -57,7 +57,7 @@ from ..tools._packaged_data import read_packaged_text
     title="Reference Graph Diagram Rulebook",
     description=(
         "The frozen reference-graph rulebook: the deterministic PlantUML component-diagram "
-        "emission layout (the 14-entry palette, the bracketed alias/label/truncation rules, "
+        "emission layout (the 15-entry palette, the bracketed alias/label/truncation rules, "
         "the title override + defaults, the FEAT-exclusion rule, the bare-`feat-NNN` "
         "source-id rejection with the `list_feat` discovery pointer, the SCC cycle rule + "
         "red-arrow syntax, the construction semantics, the CLI file layout) plus the pointer "

@@ -643,6 +643,13 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "accepted",
+            "deprecated",
+            "draft",
+            "proposed",
+            "superseded"
+          ],
           "title": "Status",
           "type": "string"
         },

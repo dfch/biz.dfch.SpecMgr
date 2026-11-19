@@ -95,7 +95,7 @@ class TestCreateDecPrompt(unittest.TestCase):
         self.assertIn("skip", result)
 
     def test_does_not_narrate_the_old_adr_options_heading(self):
-        """The prompt must not narrate the ADR heading `## Pros and Cons of the Options` as a
+        """The prompt must not narrate the old decision-record heading `## Pros and Cons of the Options` as a
         DEC heading line -- that heading is rejected by the DEC schema (the prompt may mention
         it in prose only to forbid it, which it does as a code span, never as its own heading)."""
         result = create_dec("Some topic")
@@ -104,22 +104,23 @@ class TestCreateDecPrompt(unittest.TestCase):
         normalized = " ".join(result.split())
         self.assertIn("is not part of this schema and must not be used", normalized)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_dec_template/get_dec_example
+        tools and name the conditional get_dec_schema fetch."""
         result = create_dec("Some topic")
-        self.assertIn("specmgr://dec/template", result)
-        self.assertIn("specmgr://dec/example", result)
-        self.assertIn("specmgr://dec/schema", result)
+        self.assertIn("get_dec_template", result)
+        self.assertIn("get_dec_example", result)
+        self.assertIn("get_dec_schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_dec tool, the template/example
-        resources, specmgr://dec/schema, and create_dec, in that order,
+        tools, get_dec_schema, and create_dec, in that order,
         matching the intended sequence."""
         result = create_dec("Some topic")
         markers = [
             "list_dec",
-            "specmgr://dec/template",
-            "specmgr://dec/schema",
+            "get_dec_template",
+            "get_dec_schema",
             "create_dec(content)",
         ]
         positions = [result.index(marker) for marker in markers]

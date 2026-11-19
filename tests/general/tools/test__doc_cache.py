@@ -160,7 +160,7 @@ _VALID_REQ_FRONTMATTER = (
     "\n"
 )
 
-#: A well-formed, minimal `req` body -- valid `## Level` value ("MUST"), mirroring
+#: A well-formed, minimal `req` body -- valid `## Level` value ("SRS"), mirroring
 #: `tests/req/tools/test_doc_cache_wiring.py`'s own `_MINIMAL_BODY` fixture.
 _VALID_REQ_BODY = textwrap.dedent(
     """\
@@ -179,7 +179,7 @@ _VALID_REQ_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -201,7 +201,7 @@ _REQ_DOC_WITH_BAD_FRONTMATTER_STATUS = (
 #: recognized, builtin `"value_error"` kind) -- `str()`-ing it appends the trailing "For
 #: further information visit https://errors.pydantic.dev/<ver>/v/value_error" footer line.
 _REQ_DOC_WITH_BAD_BODY_LEVEL = _VALID_REQ_FRONTMATTER + _VALID_REQ_BODY.replace(
-    "## Level\n\nMUST\n", "## Level\n\nNOTVALID\n"
+    "## Level\n\nSRS\n", "## Level\n\nNOTVALID\n"
 )
 
 #: Both a bad frontmatter `status` AND a bad body `## Level` value in one document -- used only
@@ -210,7 +210,7 @@ _REQ_DOC_WITH_BAD_BODY_LEVEL = _VALID_REQ_FRONTMATTER + _VALID_REQ_BODY.replace(
 #: `parse_req` call path in this codebase.
 _REQ_DOC_WITH_BOTH_BAD_FRONTMATTER_AND_BODY = _VALID_REQ_FRONTMATTER.replace(
     "status: draft", "status: not-a-valid-status"
-) + _VALID_REQ_BODY.replace("## Level\n\nMUST\n", "## Level\n\nNOTVALID\n")
+) + _VALID_REQ_BODY.replace("## Level\n\nSRS\n", "## Level\n\nNOTVALID\n")
 
 
 class TestFreshExceptionValidationErrorReconstruction(unittest.TestCase):

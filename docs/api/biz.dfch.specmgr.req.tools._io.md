@@ -2,7 +2,7 @@
 
 Thin file read helpers over ``parse_req`` (Task 3.11).
 
-Read-only, unlike ``adr.tools._io``'s ``read_adr``/``write_adr`` pair: there
+Read-only: there
 is no ``write_req``/``render_req`` counterpart here, since Task 3.9's design
 settled on ``create_req`` and the generic ``update`` tool in ``general.tools``
 persisting the caller's already-validated body markdown byte-for-byte rather
@@ -28,7 +28,7 @@ calls ``read_req(path)`` again immediately after ``find_req_path`` already
 resolved and read the same ``path`` once during its own scan. The generic
 ``delete`` tool in ``general.tools`` only holds the *target* document's own
 per-id lock, never a whole-domain lock, while ``get_req``/``list_req``
-intentionally take no lock at all (ADR
+intentionally take no lock at all (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of this
 same document can remove ``path`` in the narrow window between
 ``find_req_path``'s own read and this one, raising ``FileNotFoundError``.

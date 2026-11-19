@@ -19,7 +19,7 @@
 
 ``find_references`` is pure string extraction (no fixture required);
 ``resolve_reference`` resolves against real, referenced artifacts created
-in a temp ``SPECMGR_DOCS_DIR``/``SPECMGR_ADR_DIR``/``SPECMGR_FEAT_DIR``
+in a temp ``SPECMGR_DOCS_DIR``/``SPECMGR_FEAT_DIR``
 (fixture convention mirrors ``tests/general/tools/test_delete.py``'s
 ``TempDeleteDirTestCase``: the env vars are read per call, so patching is
 clean and isolated).
@@ -35,8 +35,6 @@ from unittest import mock
 
 from typing import Any, Callable
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
-from biz.dfch.specmgr.adr.tools.create_adr import create_adr
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
@@ -44,12 +42,12 @@ from biz.dfch.specmgr.general.models.reference import ReferenceRow
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._references import REFERENCE_TYPES, find_references, resolve_reference
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
-from biz.dfch.specmgr.models.adr import AdrBody, AdrFrontmatter
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
@@ -85,7 +83,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -338,7 +336,21 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
-_ADR_TITLE = "Use the dispatch convention"
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Sample Free-Form Text
+
+    Some free-form prose about the sample.
+
+    ## Updates
+
+    ### 2026-08-30 16:47:59.981Z - Initial entry
+
+    Content.
+    """
+)
+
+_TXT_TITLE = "Sample Free-Form Text"
 
 
 def _feat_body(title: str) -> str:
@@ -406,6 +418,7 @@ _TARGET_SEEDS: tuple[tuple[str, Callable[[str], Any], str, str], ...] = (
     ("dec", create_dec, _DEC_MINIMAL_BODY, "Title of the Decision"),
     ("vcr", create_vcr, _VCR_MINIMAL_BODY, "Sample Verification Case"),
     ("sysrs", create_sysrs, _SYSRS_MINIMAL_BODY, "System Requirements Specification: Sample Document"),
+    ("txt", create_txt, _TXT_MINIMAL_BODY, _TXT_TITLE),
 )
 
 
@@ -426,6 +439,21 @@ class TestFindReferences(unittest.TestCase):
                 result = find_references(text)
 
                 self.assertEqual(result, [(tag, _UUID)])
+
+    def test_txt_tag_extraction_variants(self):
+        """The TXT tag (feat-229-txt REQ-009): lowercase, CamelCase, and UPPERCASE spellings, and
+        the single-space, dash, double-space, and tab separators, must all extract as
+        ("txt", <uuid>) -- the free-floating reference shape a txt body carries."""
+        for text in (
+            f"txt {_UUID}: A free-form text document",
+            f"Txt {_UUID}: A free-form text document",
+            f"TXT {_UUID}: A free-form text document",
+            f"TXT-{_UUID}: A free-form text document",
+            f"TXT  {_UUID}: A free-form text document",
+            f"TXT\t{_UUID}: A free-form text document",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(find_references(text), [("txt", _UUID)])
 
     def test_tag_is_case_insensitive(self):
         """lowercase, CamelCase, and UPPERCASE tag spellings must all match."""
@@ -634,20 +662,18 @@ class TestFindReferences(unittest.TestCase):
 
 
 class TempRefDirTestCase(unittest.TestCase):
-    """Common fixture: temp dirs set as the docs root via SPECMGR_DOCS_DIR, the ADR base dir via
-    SPECMGR_ADR_DIR, and the feat base dir via SPECMGR_FEAT_DIR (the lifecycle is managed by
-    ``enterContext``, per the sibling ``test_delete.py``/``test_set_status.py`` fixture convention)."""
+    """Common fixture: temp dirs set as the docs root via SPECMGR_DOCS_DIR and the feat base dir via
+    SPECMGR_FEAT_DIR (the lifecycle is managed by ``enterContext``, per the sibling
+    ``test_delete.py``/``test_set_status.py`` fixture convention)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        self.adr_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.feat_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(
             mock.patch.dict(
                 "os.environ",
                 {
                     DOCS_DIR_ENV_VAR: str(self.docs_root),
-                    ADR_DIR_ENV_VAR: str(self.adr_dir),
                     FEAT_DIR_ENV_VAR: str(self.feat_dir),
                 },
             )
@@ -682,33 +708,14 @@ class TestResolveReference(TempRefDirTestCase):
                 self.assertTrue(path.is_absolute())
                 self.assertTrue(path.exists())
 
-    def test_adr_target_row_uses_the_adr_h1(self):
-        """The adr special case: the row's title is the referenced ADR's own H1 (doc.body.title)."""
-        created_adr = create_adr(
-            AdrFrontmatter(),
-            AdrBody(
-                title=_ADR_TITLE,
-                context_and_problem_statement="Context.",
-                considered_options="Options.",
-                decision_outcome="Outcome.",
-            ),
-        )
-
-        row = resolve_reference("adr", created_adr.frontmatter.id)
-
-        self.assertEqual((row.type, row.id), ("adr", created_adr.frontmatter.id))
-        self.assertEqual(row.title, _ADR_TITLE)
-        expected_path = self.adr_dir / f"{created_adr.frontmatter.id}-use-the-dispatch-convention.md"
-        self.assertEqual(row.path, str(expected_path.resolve()))
-        self.assertIsNone(row.error)
-
     def test_not_found_rows_never_raise(self):
         """A target absent on disk must yield a row with null title/path and the domain's own
-        not-found message in error -- for the flat, the adr, and a second flat domain."""
+        not-found message in error -- for the flat, a second flat domain, and the txt
+        target domain (feat-229-txt REQ-009)."""
         for ref_type, error_fragment in (
             ("req", "no requirement found with id"),
             ("gol", "no goal found with id"),
-            ("adr", "no ADR found with id"),
+            ("txt", "no free-form text document found with id"),
         ):
             with self.subTest(ref_type=ref_type):
                 row = resolve_reference(ref_type, _MISSING_UUID)

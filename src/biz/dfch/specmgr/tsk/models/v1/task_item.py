@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import computed_field
+from pydantic import ConfigDict, computed_field
 
 from ....models.md import MarkdownListItem, MarkdownParagraph
 
@@ -40,6 +40,15 @@ from ....models.md import MarkdownListItem, MarkdownParagraph
 #: for the "checked" state (`[x]`/`[X]` both count), matching common GFM
 #: task-list authoring conventions.
 _MARKER_PATTERN = re.compile(r"^\[( |x|X)\]\s*(?P<description>.*)$")
+
+#: JSON Schema (ECMAScript) form of `_MARKER_PATTERN` for `TaskItem`'s own
+#: `model_config` `json_schema_extra` metadata (feat-189 Phase 120, C13):
+#: the same start-anchored `[ ]`/`[x]`/`[X]` checkbox-marker shape, with the
+#: Python-only `(?P<description>...)` named group as an unnamed `(...)`
+#: (ECMAScript has no `(?P<name>...)` syntax). Metadata only -- the
+#: enforcement is `_MARKER_PATTERN` itself, matched by `checked`/
+#: `description` below; this constant is never matched in Python.
+_MARKER_SCHEMA_PATTERN = r"^\[( |x|X)\]\s*(.*)$"
 
 
 class TaskItem(MarkdownListItem):
@@ -65,6 +74,15 @@ class TaskItem(MarkdownListItem):
     content:
         An optional list of paragraphs with details content of the task item.
     """
+
+    # feat-189 Phase 120 (C13): the checkbox-marker constraint as a `pattern`
+    # key on this class's own generated JSON Schema entry -- metadata only
+    # (the item text itself is private `_value` state, invisible to the
+    # validation-mode schema, and `checked`/`description` are computed
+    # fields, which the generator's `model_json_schema()` default mode
+    # omits): `_MARKER_PATTERN` matched in those computed properties below
+    # remains the sole enforcement point.
+    model_config = ConfigDict(json_schema_extra={"pattern": _MARKER_SCHEMA_PATTERN})
 
     @computed_field  # type: ignore
     @property

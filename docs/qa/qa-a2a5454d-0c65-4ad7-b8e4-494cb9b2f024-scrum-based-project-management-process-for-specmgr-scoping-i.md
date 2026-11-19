@@ -157,7 +157,7 @@ TODO: answer pending
 > its own execution-level role, distinct from a generic developer —
 > responsible for technical/solution design and consistency, not
 > day-to-day implementation, which lines up well with specmgr's existing
-> `adr` (Architecture Decision Record) tooling. Concretely:
+> decision-record tooling. Concretely:
 >
 > - Is Architect a distinct accountability with its own agent (like
 >   Quality/Testing was added via 0.0020 Option D), or a specialization
@@ -748,7 +748,7 @@ TODO: answer pending
 > practice and the HERMES research (4.0027):
 >
 > - **Architect** (new this round, see 0.0029) — technical/design
->   authority; a natural fit given specmgr's existing `adr` tooling.
+>   authority; a natural fit given specmgr's existing decision-record tooling.
 > - **Sponsor/Executive** (HERMES's "Project Sponsor" — a steering-level
 >   role sitting *above* the Scrum Team, distinct from Product Owner):
 >   owns budget/strategic objectives and the "why does this exist" case,
@@ -819,7 +819,7 @@ TODO: answer pending
 >   session, a separate "human sign-off" tool that must succeed before the
 >   status-changing tool will, or something else?
 > - Since this touches shared generic tools used by every domain, not just
->   Scrum artifacts, do you want this designed/reviewed as its own ADR
+>   Scrum artifacts, do you want this designed/reviewed as its own decision record
 >   before implementation, consistent with how other cross-cutting
 >   mechanism changes in this codebase are usually decided?
 

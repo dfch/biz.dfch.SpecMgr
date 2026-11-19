@@ -1,0 +1,215 @@
+# Architecture Decision Records
+
+Index of all ADRs in this repository.
+
+## All ADRs
+
+- [Replace domain-specific validate tools with a generic type-dispatched validate tool](078bf395-0a5f-4afd-84f6-b7a2191a00e6-replace-domain-specific-validate-tools-with-a-generic-type-d.md)
+  - Id: 078bf395-0a5f-4afd-84f6-b7a2191a00e6
+  - Status: accepted
+  - Date: 2026-09-04
+  - Decision-makers: OpenCode agent + user decision
+- [Convert the 12 per-domain schema resources to get_<d>_schema tools](112b6498-078b-4a59-88b8-8ffb7a5041b3-convert-the-12-per-domain-schema-resources-to-get-d-schema-t.md)
+  - Id: 112b6498-078b-4a59-88b8-8ffb7a5041b3
+  - Status: accepted
+  - Date: 2026-10-17
+  - Decision-makers: dfch
+- [Revise the generic update tool's success return to frontmatter plus an optional before/after snippet](19ff316b-cd11-41a7-a616-ffd84917da51-revise-the-generic-update-tool-s-success-return-to-frontmatt.md)
+  - Id: 19ff316b-cd11-41a7-a616-ffd84917da51
+  - Status: accepted
+  - Date: 2026-09-28
+  - Decision-makers: OpenCode agent + user decision
+- [Replace domain-specific delete tools with a generic type-dispatched delete tool](1af6787b-eaab-4e8f-888f-531c1e76c19d-replace-domain-specific-delete-tools-with-a-generic-type-dis.md)
+  - Id: 1af6787b-eaab-4e8f-888f-531c1e76c19d
+  - Status: accepted
+  - Date: 2026-09-01
+- [Use ISO 8601 for all dates and times](23a14195-339c-48af-99d2-97c9964041ae-use-iso-8601-for-all-dates-and-times.md)
+  - Id: 23a14195-339c-48af-99d2-97c9964041ae
+  - Status: accepted
+  - Date: 2026-08-05
+- [Adopt icontract as the Design by Contract library for SpecMgr](3159caf2-4beb-43f2-9f5d-8f46be0211af-adopt-icontract-as-the-design-by-contract-library-for-specmg.md)
+  - Id: 3159caf2-4beb-43f2-9f5d-8f46be0211af
+  - Status: accepted
+  - Date: 2026-08-12
+  - Decision-makers: OpenCode agent + user decision
+- [Filesystem is the sole source of truth: no in-memory id-to-document cache](33c5ab08-ff58-4c73-8c32-23abaf3838e3-filesystem-is-the-sole-source-of-truth-no-in-memory-id-to-do.md)
+  - Id: 33c5ab08-ff58-4c73-8c32-23abaf3838e3
+  - Status: accepted
+  - Decision-makers: dfch
+- [Expose cross-cutting reference resources as raw markdown with model-backed drift-guard tests, not structured JSON](356d8781-e446-4c26-917a-eda85648ce9d-expose-cross-cutting-reference-resources-as-raw-markdown-wit.md)
+  - Id: 356d8781-e446-4c26-917a-eda85648ce9d
+  - Status: accepted
+  - Decision-makers: dfch
+- [Consolidate whole-body update and status-change tools into generic type-dispatched tools](36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md)
+  - Id: 36905d5b-8057-4294-8665-c7eed5534db0
+  - Status: accepted
+  - Date: 2026-08-27
+  - Decision-makers: OpenCode agent + user decision
+- [Multi-language artifact variants: directory layout, heading-mapping table, and language vocabulary](38efdb66-8025-45c5-bbe8-45b25fc7a772-multi-language-artifact-variants-directory-layout-heading-ma.md)
+  - Id: 38efdb66-8025-45c5-bbe8-45b25fc7a772
+  - Status: accepted
+  - Date: 2026-10-29
+  - Decision-makers: OpenCode agent + user decision
+- [Two-Stage Dirty/Clean DocCache Staging and a Unified Startup Warmup Thread to Fix list_feat's Cold-Scan Timeout (#187)](3982712a-a46b-4b2b-809f-9c6925a49b44-two-stage-dirty-clean-doccache-staging-and-a-unified-startup.md)
+  - Id: 3982712a-a46b-4b2b-809f-9c6925a49b44
+  - Status: accepted
+  - Decision-makers: dfch
+- [Extract MCP Singleton into Its Own Module to Break Domain/Server Cyclic Imports](3bf0326f-065a-424c-a2b9-87e5d5bcfa99-extract-mcp-singleton-into-its-own-module-to-break-domain-se.md)
+  - Id: 3bf0326f-065a-424c-a2b9-87e5d5bcfa99
+  - Status: accepted
+- [Parse-validate-render pipeline: library choices, no AST-preserving round-trip](4c6119c9-532f-4629-8977-108e78304f48-parse-validate-render-pipeline-library-choices-no-ast-preser.md)
+  - Id: 4c6119c9-532f-4629-8977-108e78304f48
+  - Status: accepted
+  - Decision-makers: dfch
+- [offset/limit coordinates for the generic update tool and get_<d> windowed reads](4ec08dcb-fcb7-4961-abaf-ff7803e2f21d-offset-limit-coordinates-for-the-generic-update-tool-and-get.md)
+  - Id: 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d
+  - Status: accepted
+  - Date: 2026-09-01
+  - Decision-makers: OpenCode agent + user decision
+- [Design validate as a non-raising, structured-result tool to work around client-side MCP error-content truncation](519d1206-4d2a-4500-9046-6db635209996-design-validate-as-a-non-raising-structured-result-tool-to-w.md)
+  - Id: 519d1206-4d2a-4500-9046-6db635209996
+  - Status: accepted
+  - Date: 2026-09-03
+  - Decision-makers: OpenCode agent + user decision
+- [Generic update_section(key, value) with deletion sentinel and mandatory-section rejection](71fd95d7-07f2-466f-81aa-d29b7e3ef34c-generic-update-section-key-value-with-deletion-sentinel-and.md)
+  - Id: 71fd95d7-07f2-466f-81aa-d29b7e3ef34c
+  - Status: accepted
+  - Decision-makers: dfch
+- [Use pre-commit hooks for local quality gates](737858a9-7796-4f01-ae35-5afc1c707818-use-pre-commit-hooks-for-local-quality-gates.md)
+  - Id: 737858a9-7796-4f01-ae35-5afc1c707818
+  - Status: accepted
+  - Date: 2026-08-05
+- [Add an embedding-based, cross-domain semantic similarity engine (find_related / find_similar_text) with a pluggable CPU-only provider](750842b2-aca4-4649-ba0c-855ec8e1f505-add-an-embedding-based-cross-domain-semantic-similarity-engi.md)
+  - Id: 750842b2-aca4-4649-ba0c-855ec8e1f505
+  - Status: accepted
+  - Decision-makers: dfch
+- [Expose listing and by-id reads as MCP resources in addition to tools](7531106b-074b-4bd8-a83a-e433d01676e2-expose-listing-and-by-id-reads-as-mcp-resources-in-addition.md)
+  - Id: 7531106b-074b-4bd8-a83a-e433d01676e2
+  - Status: accepted
+  - Decision-makers: dfch
+- [Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain](7a626b12-b189-4561-a51d-ffb2e9e193b4-add-an-in-package-import-free-plantuml-package-with-a-strict.md)
+  - Id: 7a626b12-b189-4561-a51d-ffb2e9e193b4
+  - Status: accepted
+  - Date: 2026-10-03
+  - Decision-makers: dfch
+- [Preserve caller-visible tool error text across mcp >= 2.1.0 via a call_tool seam](80305c52-102e-4833-a233-3468bef29e11-preserve-caller-visible-tool-error-text-across-mcp-2-1-0-via.md)
+  - Id: 80305c52-102e-4833-a233-3468bef29e11
+  - Status: accepted
+  - Date: 2026-10-19
+  - Decision-makers: OpenCode agent + user decision
+- [Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints](832cd6c1-ef8a-4bfc-990e-a610823f61ae-generic-heading-mapped-markdown-to-pydantic-parsing-with-dec.md)
+  - Id: 832cd6c1-ef8a-4bfc-990e-a610823f61ae
+  - Status: accepted
+  - Decision-makers: dfch
+- [Author and edit ADRs only through MCP structured tools, never raw markdown](898bfcd0-85f9-462f-93a8-747bda4166c8-author-and-edit-adrs-only-through-mcp-structured-tools-never.md)
+  - Id: 898bfcd0-85f9-462f-93a8-747bda4166c8
+  - Status: accepted
+  - Decision-makers: dfch
+- [Use full ISO 8601 date+time timestamps in all entry headings and frontmatter (accept T or space, write T)](8c889262-152b-4b8e-ae2c-75371f7a9edf-use-full-iso-8601-date-time-timestamps-in-all-entry-headings.md)
+  - Id: 8c889262-152b-4b8e-ae2c-75371f7a9edf
+  - Status: accepted
+  - Date: 2026-09-23
+  - Decision-makers: dfch
+- [id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution](8cf940c5-3100-485c-a12d-14b59b631712-id-filename-addressing-scheme-server-generated-uuid-id-slug.md)
+  - Id: 8cf940c5-3100-485c-a12d-14b59b631712
+  - Status: accepted
+  - Decision-makers: dfch
+- [Extend the non-raising structured-result workaround to get_<d>'s parse-failure case](9080b37c-82b3-4f63-81f1-79641d0bf14c-extend-the-non-raising-structured-result-workaround-to-get-d.md)
+  - Id: 9080b37c-82b3-4f63-81f1-79641d0bf14c
+  - Status: accepted
+  - Date: 2026-09-25
+  - Decision-makers: OpenCode agent + user decision
+- [Remove the Confluence tools (`confluence_fetch`, `confluence_update`) from the MCP server](92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c-remove-the-confluence-tools-confluence-fetch-confluence-upda.md)
+  - Id: 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c
+  - Status: accepted
+  - Date: 2026-09-10
+  - Decision-makers: dfch
+- [Enforce doc generation, lint, and tests locally via pre-commit hook, not just CI](9c687bb1-8ee7-41c8-84ec-07606356bc73-enforce-doc-generation-lint-and-tests-locally-via-pre-commit.md)
+  - Id: 9c687bb1-8ee7-41c8-84ec-07606356bc73
+  - Status: accepted
+  - Decision-makers: dfch
+- [Detect unreferenced Python Code](9d3800cf-b3b4-4d46-8b68-3573d932b1c8-detect-unreferenced-code-with-vulture-not-snakefood-enforced.md)
+  - Id: 9d3800cf-b3b4-4d46-8b68-3573d932b1c8
+  - Status: accepted
+  - Decision-makers: dfch
+- [Rename `webfetch` to `confluence_fetch`, add `confluence_update`, and self-construct Confluence REST API URLs instead of relying on a non-existent "confluence skill"](a156fdf9-052c-4f43-93a2-eeec04a91eac-rename-webfetch-to-confluence-fetch-add-confluence-update-an.md)
+  - Id: a156fdf9-052c-4f43-93a2-eeec04a91eac
+  - Status: superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c
+  - Date: 2026-09-01
+  - Decision-makers: dfch
+- [Per-domain status state machines for set_status: domain-owned tables, central aggregation, and the non-raising, current-state-relative transition result](a79608e4-88cd-498f-8ca1-445df4d04f92-per-domain-status-state-machines-for-set-status-domain-owned.md)
+  - Id: a79608e4-88cd-498f-8ca1-445df4d04f92
+  - Status: accepted
+  - Date: 2026-11-05
+  - Decision-makers: OpenCode agent + user decision (plan locked during feat-108-fsm planning)
+- [Extend the non-raising structured-result workaround to set_status's invalid-status case](b399f1ce-ed42-4929-b01c-7a57d18e8014-extend-the-non-raising-structured-result-workaround-to-set-s.md)
+  - Id: b399f1ce-ed42-4929-b01c-7a57d18e8014
+  - Status: accepted
+  - Date: 2026-09-07
+  - Decision-makers: OpenCode agent + user decision
+- [Extend the non-raising structured-result workaround to the generic mutation tools' failure cases](b8c9bfea-6dcf-4158-bfc5-4ec17abb842f-extend-the-non-raising-structured-result-workaround-to-the-g.md)
+  - Id: b8c9bfea-6dcf-4158-bfc5-4ec17abb842f
+  - Status: accepted
+  - Date: 2026-09-30
+  - Decision-makers: OpenCode agent + user decision
+- [Frontmatter extension fields (id, version) with whole-object full-replace update contract](bbf412a7-965e-4435-8669-c338407d73b7-frontmatter-extension-fields-id-version-with-whole-object-fu.md)
+  - Id: bbf412a7-965e-4435-8669-c338407d73b7
+  - Status: accepted
+  - Decision-makers: dfch
+- [Generic base frontmatter model for markdown document types (models/md/frontmatter.py)](bc5e18ad-6bbf-4265-bae4-3e34984a2d29-generic-base-frontmatter-model-for-markdown-document-types-m.md)
+  - Id: bc5e18ad-6bbf-4265-bae4-3e34984a2d29
+  - Status: accepted
+  - Decision-makers: dfch
+- [Add a content-hash-validated, per-domain in-memory read cache for the 12 generic whole-body domains](bfd76370-b59b-4d65-b550-a969f6c93c9d-add-a-content-hash-validated-per-domain-in-memory-read-cache.md)
+  - Id: bfd76370-b59b-4d65-b550-a969f6c93c9d
+  - Status: accepted
+  - Decision-makers: dfch
+- [Single source of truth for the document-type domain-name set](c4efbde6-fd19-4aa8-8668-95316ed62dcc-single-source-of-truth-for-the-document-type-domain-name-set.md)
+  - Id: c4efbde6-fd19-4aa8-8668-95316ed62dcc
+  - Status: accepted
+  - Date: 2026-09-22
+  - Decision-makers: OpenCode agent + user decision
+- [Base the ADR template on MADR 4.0.0](c73e4f9d-81f3-495d-bd3a-f660ab992ed3-base-the-adr-template-on-madr-4-0-0.md)
+  - Id: c73e4f9d-81f3-495d-bd3a-f660ab992ed3
+  - Status: accepted
+  - Decision-makers: dfch
+- [Use Conventional Commits for commit messages](cb5a2d5f-7020-4c6e-b28d-a38d17b23243-use-conventional-commits-for-commit-messages.md)
+  - Id: cb5a2d5f-7020-4c6e-b28d-a38d17b23243
+  - Status: accepted
+  - Date: 2026-08-05
+- ["Pros and Cons of the Options" as a derived container with a dedicated Option sub-API](d54abe50-a2c5-44f8-8bfe-11ea634b6f87-pros-and-cons-of-the-options-as-a-derived-container-with-a-d.md)
+  - Id: d54abe50-a2c5-44f8-8bfe-11ea634b6f87
+  - Status: accepted
+  - Decision-makers: dfch
+- [Prompt surface: narrated guidance plus step-gated test variants](ddd038f0-ae16-4f4b-beef-df06f7ed226f-prompt-surface-narrated-guidance-plus-step-gated-test-varian.md)
+  - Id: ddd038f0-ae16-4f4b-beef-df06f7ed226f
+  - Status: accepted
+  - Decision-makers: dfch
+- [Expose id-based REQ document reads as a tool (get_req), not a resource](ddfb1109-422d-4507-8dbc-dc5e4bec9614-expose-id-based-req-document-reads-as-a-tool-get-req-not-a-r.md)
+  - Id: ddfb1109-422d-4507-8dbc-dc5e4bec9614
+  - Status: accepted
+  - Date: 2026-08-15
+  - Decision-makers: OpenCode agent + user decision
+- [Use Architecture Decision Records (ADRs) to document design decisions](e11421d3-cc1d-487b-af32-ee4093422712-use-architecture-decision-records-adrs-to-document-design-de.md)
+  - Id: e11421d3-cc1d-487b-af32-ee4093422712
+  - Status: accepted
+  - Decision-makers: dfch
+- [Organize development artifacts in `.specmgr` with feature-driven work units](e369ee2e-3353-4f92-991c-6367d76d832e-organize-development-artifacts-in-specmgr-with-feature.md)
+  - Id: e369ee2e-3353-4f92-991c-6367d76d832e
+  - Status: accepted
+  - Date: 2026-08-05
+  - Decision-makers: dfch
+- [Expose <domain>_list as paged MCP tools (list_<domain>), not resources](ec9f5262-9912-49d0-903f-fcfb54f28c13-expose-domain-list-as-paged-mcp-tools-list-domain-not-resour.md)
+  - Id: ec9f5262-9912-49d0-903f-fcfb54f28c13
+  - Status: accepted
+  - Date: 2026-08-19
+  - Decision-makers: OpenCode agent + user decision
+- [Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models](ece4554b-725c-4f76-bc04-5d2b760363d2-organize-the-codebase-by-document-type-domain-domain-first-h.md)
+  - Id: ece4554b-725c-4f76-bc04-5d2b760363d2
+  - Status: accepted
+  - Decision-makers: dfch
+- [Extend the non-raising structured-result workaround to the create_<d>/parse_<d> content-validation cases](f14f125e-eaad-4f4f-a6fd-3c931bed726e-extend-the-non-raising-structured-result-workaround-to-the-c.md)
+  - Id: f14f125e-eaad-4f4f-a6fd-3c931bed726e
+  - Status: accepted
+  - Date: 2026-10-08
+  - Decision-makers: OpenCode agent + user decision

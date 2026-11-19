@@ -62,7 +62,6 @@ import biz.dfch.specmgr.general.tools._embedding  # noqa: F401 (side-effects onl
 import biz.dfch.specmgr.general.tools._startup_warmup  # noqa: F401 (side-effects only: SPECMGR_FEAT_WARMUP_DISABLED registration)
 import biz.dfch.specmgr.uc.tools.validate_plantuml  # noqa: F401 (side-effects only: the plantuml trio's registration)
 
-from biz.dfch.specmgr.adr.tools._paths import DEFAULT_ADR_DIR
 from biz.dfch.specmgr.feat.tools._paths import DEFAULT_FEAT_DIR
 from biz.dfch.specmgr.general.tools._doc_paths import DEFAULT_DOCS_ROOT
 from biz.dfch.specmgr._envregistry import all_vars
@@ -75,7 +74,6 @@ from biz.dfch.specmgr._envregistry import all_vars
 #: ``TMPDIR``/``tempfile.tempdir``; the registration read the same way at
 #: import time).
 _EXPECTED_METADATA: dict[str, tuple[str | None, str | None, tuple[str, ...], bool, str]] = {
-    "SPECMGR_ADR_DIR": ("docs/adr", "filepath", (), True, "adr"),
     "SPECMGR_DIAGRAM_MAX_TITLE": ("40", "number", (), False, "general"),
     "SPECMGR_DOCS_DIR": ("docs", "filepath", (), True, "general"),
     "SPECMGR_FEAT_DIR": (".specmgr/feat", "filepath", (), True, "feat"),
@@ -134,7 +132,6 @@ class TestPhase110Registrations(unittest.TestCase):
         # from the registry records (feat-208 Phase 110, the user-approved
         # Option A decision) -- the values must stay byte-identical to the
         # pre-Phase-110 literals (REQ-005: no default change).
-        self.assertEqual(DEFAULT_ADR_DIR, Path("docs/adr"))
         self.assertEqual(DEFAULT_DOCS_ROOT, Path("docs"))
         self.assertEqual(DEFAULT_FEAT_DIR, Path(".specmgr/feat"))
 

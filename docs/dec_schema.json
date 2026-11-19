@@ -104,6 +104,14 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "accepted",
+            "deprecated",
+            "draft",
+            "proposed",
+            "rejected",
+            "superseded"
+          ],
           "title": "Status",
           "type": "string"
         },
@@ -136,7 +144,7 @@
       "type": "object"
     },
     "Decision": {
-      "description": "The `dec` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. Keeps the ADR's general structure\n(MADR headings + an options collection) on the generic `models.md`\nengine -- see the module docstring.\n\nParameters\n----------\ncontext:\n    `## Context and Problem Statement`. Mandatory.\ndrivers:\n    `## Decision Drivers`. Optional.\nconsidered:\n    `## Considered Options`. Optional.\noutcome:\n    `## Decision Outcome` (mandatory lead paragraph + optional\n    `### Consequences`/`### Confirmation`). Mandatory.\nroles_and_responsibilities:\n    `## Roles and Responsibilities` (RASCI composite). Mandatory (unlike\n    `sop`'s own optional equivalent) -- a decision must always have a\n    named accountable owner.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nrelated_artifacts:\n    `## Related Artifacts` (four all-optional H3 bullet lists). Optional.\npros_and_cons:\n    `## Pros and Cons` (`### Option {N}: {name}` entries, >=1 if\n    present). Optional.\nmore_information:\n    `## More Information`. Optional.\nupdates:\n    `## Updates` (>=1 entry if present). Optional; last section.",
+      "description": "The `dec` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. Keeps the MADR-style general structure\n(MADR headings + an options collection) on the generic `models.md`\nengine -- see the module docstring.\n\nParameters\n----------\ncontext:\n    `## Context and Problem Statement`. Mandatory.\ndrivers:\n    `## Decision Drivers`. Optional.\nconsidered:\n    `## Considered Options`. Optional.\noutcome:\n    `## Decision Outcome` (mandatory lead paragraph, optional further\n    blocks after it -- feat-247 -- + optional\n    `### Consequences`/`### Confirmation`). Mandatory.\nroles_and_responsibilities:\n    `## Roles and Responsibilities` (RASCI composite). Mandatory (unlike\n    `sop`'s own optional equivalent) -- a decision must always have a\n    named accountable owner.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nrelated_artifacts:\n    `## Related Artifacts` (four all-optional H3 bullet lists). Optional.\npros_and_cons:\n    `## Pros and Cons` (`### Option {N}: {name}` entries, >=1 if\n    present). Optional.\nmore_information:\n    `## More Information`. Optional.\nupdates:\n    `## Updates` (>=1 entry if present). Optional; last section.",
       "properties": {
         "considered": {
           "anyOf": [
@@ -255,7 +263,7 @@
       "type": "object"
     },
     "DecisionOutcome": {
-      "description": "`## Decision Outcome` -- the chosen option plus its consequences. Mandatory.\n\nParameters\n----------\nstatement:\n    The mandatory lead paragraph directly under the H2 -- the outcome\n    itself (e.g. \"We chose option 1 because ...\"). Any other block in\n    place of a lead paragraph (a bare list, an H3 first, nothing at\n    all) is a structural error.\nconsequences:\n    `### Consequences` sub-section. Optional.\nconfirmation:\n    `### Confirmation` sub-section. Optional.",
+      "description": "`## Decision Outcome` -- the chosen option plus its consequences. Mandatory.\n\nParameters\n----------\nstatement:\n    The mandatory lead paragraph directly under the H2 -- the outcome\n    itself (e.g. \"We chose option 1 because ...\"). Any other block in\n    place of a lead paragraph (a bare list, an H3 first, nothing at\n    all) is a structural error.\nfurther_blocks:\n    Optional further markdown blocks (paragraphs, bullet lists, ordered\n    lists, fenced code blocks) after the lead paragraph and before the\n    first H3 sub-section (feat-247-dec-outcome-blocks, GitHub issue\n    #247). A block quote, an HTML comment, a horizontal rule, or a\n    heading of any level ends the run and stays unconsumed, failing the\n    parse with the engine's own actionable \"text left over\" error.\nconsequences:\n    `### Consequences` sub-section. Optional.\nconfirmation:\n    `### Confirmation` sub-section. Optional.",
       "properties": {
         "confirmation": {
           "anyOf": [
@@ -280,6 +288,18 @@
           ],
           "default": null,
           "description": "`### Consequences` sub-section. Optional."
+        },
+        "further_blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OutcomeBlocks"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional further markdown blocks (paragraphs, bullet/ordered lists, fenced code blocks) after the lead paragraph and before the first `###` sub-section."
         },
         "statement": {
           "$ref": "#/$defs/MarkdownParagraph",
@@ -405,8 +425,14 @@
       "title": "Option",
       "type": "object"
     },
+    "OutcomeBlocks": {
+      "description": "Further markdown blocks after `DecisionOutcome`'s mandatory lead paragraph\n(feat-247-dec-outcome-blocks, GitHub issue #247).\n\nLeaf class (no declared nested fields, no `@markdown` metadata of its\nown) mirroring this file's own `UpdateEntryContent` precedent: an\ninternal content-holding leaf that the parent's field loop resolves via\n`get_extent` and stores verbatim via the base `MarkdownStr` leaf\n`from_text` (`parse(text)` for the raw-HTML rejection, then `_value =\ntext`) -- which is exactly what makes the round-trip byte-exact\n(REQ-003).\n\nUnlike `UpdateEntryContent` -- which is last on its parent and therefore\nconsumes everything remaining -- `OutcomeBlocks` is *not* last: the\n`### Consequences`/`### Confirmation` H3 sections follow it. Its own\n`get_extent` therefore bounds the run it claims: it only claims an\nextent at all when the first token is one of the four accepted\nblock-start kinds (`_OUTCOME_ACCEPTED_BLOCK_START_KINDS`); otherwise it\nreturns `0` (the field is absent) and the H3 fields match exactly where\nthey always matched before a document carries no further blocks (the\nREQ-004 parity). When it does claim an extent, the run accumulates the\naccepted blocks and STOPS at the first non-accepted top-level block --\nin particular at the first heading of any level (h1-h6) -- by returning\nthat block's start line exclusive, so a block quote, an HTML comment, a\nhorizontal rule, or an H4+ heading left after the run is never consumed\nand fails the parse with the engine's own actionable \"text left over\nafter processing all fields\" error (REQ-001's rejected-kinds contract,\nenforced per distinct token kind).\n\nAdds a `text` computed property (mirroring `UpdateEntryContent`'s own,\nand `qa`'s `IntroductionBody.text` idiom, feat-114) so this\notherwise-private `_value` is reachable through `model_dump()`/\n`model_dump_json()` (REQ-003).",
+      "properties": {},
+      "title": "OutcomeBlocks",
+      "type": "object"
+    },
     "ProsAndCons": {
-      "description": "`## Pros and Cons` -- the structured per-option pros/cons appendix.\n\nOptional as a whole, but present only if it carries at least one\n`### Option {N}: {name}` entry (``min_length=1``) -- an H2 with zero\noptions is a structural error. The ADR heading \"Pros and Cons of the\nOptions\" is deliberately NOT accepted (LITERAL alias).\n\nParameters\n----------\noptions:\n    The `### Option {N}: {name}` entries, in document order. Requires\n    at least one option.",
+      "description": "`## Pros and Cons` -- the structured per-option pros/cons appendix.\n\nOptional as a whole, but present only if it carries at least one\n`### Option {N}: {name}` entry (``min_length=1``) -- an H2 with zero\noptions is a structural error. The heading \"Pros and Cons of the Options\"\nis deliberately NOT accepted (LITERAL alias).\n\nParameters\n----------\noptions:\n    The `### Option {N}: {name}` entries, in document order. Requires\n    at least one option.",
       "properties": {
         "options": {
           "description": "Dynamic collection of `### Option {N}: {name}` entries, in document order. Must contain at least one option.",
@@ -648,7 +674,7 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.\n\nThe H3 heading text carries a full date+time timestamp and a title,\njoined by either ``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space,\ncolon, space): e.g. `### 2026-08-27 14:30:00.000+02:00 - Confirmed` or\n`### 2026-08-27T14:30:00.000+02:00 : Confirmed`. The em-dash separator\nis rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or\nspace) + ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``,\n``-05:00``) or ``Z`` for UTC variant -- the same full format as\nfrontmatter ``created``/``updated`` (both separators accepted, date-only\nrejected; ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is\nscoped to `## Updates` entry headings only, which are hand/LLM-authored\nbody content. Constrained by the regex `@alias` above and enforced by\n`match_alias` (`re.fullmatch`) at parse time -- a heading that does not\nstart with a valid full timestamp (a date-only value fails too), an\nem-dash separator, or a missing `` - ``/`` : `` title all fail the\nparse eagerly.\n\nParameters\n----------\ncontent:\n    This entry's own update text, directly under the H3 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
+      "description": "`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.\n\nThe H3 heading text carries a full date+time timestamp and a title,\njoined by either ``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space,\ncolon, space): e.g. `### 2026-08-27 14:30:00.000+02:00 - Confirmed` or\n`### 2026-08-27T14:30:00.000+02:00 : Confirmed`. The em-dash separator\nis rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or\nspace) + ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``,\n``-05:00``) or ``Z`` for UTC variant -- the same full format as\nfrontmatter ``created``/``updated`` (both separators accepted, date-only\nrejected; DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is\nscoped to `## Updates` entry headings only, which are hand/LLM-authored\nbody content. Constrained by the regex `@alias` above and enforced by\n`match_alias` (`re.fullmatch`) at parse time -- a heading that does not\nstart with a valid full timestamp (a date-only value fails too), an\nem-dash separator, or a missing `` - ``/`` : `` title all fail the\nparse eagerly.\n\nParameters\n----------\ncontent:\n    This entry's own update text, directly under the H3 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
       "properties": {
         "content": {
           "$ref": "#/$defs/UpdateEntryContent",
@@ -668,7 +694,7 @@
       "type": "object"
     },
     "Updates": {
-      "description": "`## Updates` -- a dynamic, newest-first list of timestamp-led `### ` update\nentries. Optional as a whole, and the last section of the document if\npresent. May be preceded by an explanatory HTML comment (e.g. an\nordering hint).\n\nMirrors `tsk`'s `RecentUpdates` shape: no dedicated per-entry tools (no\n`option_create`/`option_list` equivalent) -- entries are prepended\n(newest-first) by editing the whole body.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection2WithComment`.\nupdates:\n    The dynamic collection of `### ` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries is\n    a structural error.",
+      "description": "`## Updates` -- a dynamic, newest-first list of timestamp-led `### ` update\nentries. Optional as a whole, and the last section of the document if\npresent. May be preceded by an explanatory HTML comment (e.g. an\nordering hint).\n\nMirrors `tsk`'s `RecentUpdates` shape: no dedicated per-entry tools\n-- entries are prepended (newest-first) by editing the whole body.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection2WithComment`.\nupdates:\n    The dynamic collection of `### ` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries is\n    a structural error.",
       "properties": {
         "comment": {
           "anyOf": [

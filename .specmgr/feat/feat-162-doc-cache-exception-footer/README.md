@@ -34,7 +34,7 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 - REQ-005: Fresh-exception semantics are preserved -- the reconstruction, not a re-raise of the stored exception instance, remains the mechanism (no shared-traceback mutation across threads/calls).
 
-- REQ-006: Every site that documented the Option B qualification (ADR 9080b37c's Decision Outcome item 3 + Confirmation, the `ParseFailureResult` module+class docstrings, `find_parse_failure`'s docstring, `find_feat_parse_failure`'s docstring, the `repair` prompt/instructions/skill/agent wording, the 12 `get_<d>` tool descriptions/docstrings, `AGENTS.md`, `CHANGELOG.md`, `server.py`'s module docstring, and the regenerated `docs/MCP.md` + `docs/api` pages) is re-tightened back to the unqualified, full byte-identical invariant -- amending ADR 9080b37c in place (same decision, precision fix, not a reversal), not creating a new ADR.
+- REQ-006: Every site that documented the Option B qualification (DEC 9080b37c's Decision Outcome item 3 + Confirmation, the `ParseFailureResult` module+class docstrings, `find_parse_failure`'s docstring, `find_feat_parse_failure`'s docstring, the `repair` prompt/instructions/skill/agent wording, the 12 `get_<d>` tool descriptions/docstrings, `AGENTS.md`, `CHANGELOG.md`, `server.py`'s module docstring, and the regenerated `docs/MCP.md` + `docs/api` pages) is re-tightened back to the unqualified, full byte-identical invariant -- amending DEC 9080b37c in place (same decision, precision fix, not a reversal), not creating a new ADR.
 
 ### Acceptance Criteria
 
@@ -62,7 +62,7 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 - New/updated tests in `tests/general/tools/test__doc_cache.py`.
 
-- The full doc-restoration sweep enumerated in REQ-006 (amending ADR 9080b37c in place), plus a new `CHANGELOG.md` `### Fixed` entry under `[Unreleased]` documenting the behavior change itself -- distinct from, and in addition to, re-tightening the *existing*, now-stale `[Unreleased]` entries feat-150 already wrote.
+- The full doc-restoration sweep enumerated in REQ-006 (amending DEC 9080b37c in place), plus a new `CHANGELOG.md` `### Fixed` entry under `[Unreleased]` documenting the behavior change itself -- distinct from, and in addition to, re-tightening the *existing*, now-stale `[Unreleased]` entries feat-150 already wrote.
 
 #### Explicitly Out Of Scope
 
@@ -74,7 +74,7 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 - Cleaning up feat-170's own, independently-introduced copy of the same qualified language right now -- that lives on a separate branch/worktree not yet merged to `dev`. Not skipped, only deferred: see Phase 900's own task.
 
-- Opening a new ADR for this fix -- the existing ADR 9080b37c is amended in place instead (user decision).
+- Opening a new ADR for this fix -- the existing DEC 9080b37c is amended in place instead (user decision).
 
 ### Dependencies
 
@@ -84,7 +84,7 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 - feat-150-mcp-lifecycle-commands, Task 1a.8 (the Option B deferral decision that filed this feature's GitHub issue, #162, and the doc-restoration list this feature's Phase 140 re-tightens).
 
-- ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c (amended in place by Phase 140, not superseded).
+- DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c (amended in place by Phase 140, not superseded).
 
 #### Blocks
 
@@ -100,13 +100,13 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 - `ValidationError.from_exception_data(...)` raises `KeyError: "Invalid error type: '<type>'"` (not some other exception) when `type=` is not one of pydantic-core's own recognized kinds -- this is the specific exception the fallback-to-custom-wrap path must catch.
 - Every real `ValidationError` this codebase's own `parse_<domain>` functions raise is architecturally homogeneous, never mixed: `parse_frontmatter(...)` (always producing a 100% `PydanticCustomError`-wrapped error, via `enrich_frontmatter_validation_error`) and a domain body's `Body.from_text(...)` (always producing a 100% raw, recognized-builtin-kind error -- no domain body validator anywhere in this codebase uses `PydanticCustomError`) are two structurally separate validation passes, each raising its own complete exception. A single `ValidationError` combining both kinds of per-field detail does not appear reachable via any real call path in this codebase. Task 100.110's "mixed" case is therefore expected to resolve to "not producible"; the spike should confirm this quickly (and record the confirmation) rather than treat it as open-ended, and the implementation can use a single try/except around reconstructing the *whole* exception (attempt the builtin pass-through for every detail; fall back to the full custom-wrap for every detail only on failure) rather than genuinely mixed per-detail branching.
 
-**Why amend ADR 9080b37c instead of opening a new one.** The ADR's Decision Outcome item 3 already documents the *qualified* claim (Option B, 2026-09-26) as an explicit, known interim state with its own "upgrade-ready: re-tighten per #162's doc-restoration list" language. This feature fully realizes that same decision -- the error-text consistency invariant -- rather than reversing or superseding it, so amending the existing ADR's text in place (the same pattern feat-150 itself used when it first qualified the claim) is the correct move, not a new ADR.
+**Why amend DEC 9080b37c instead of opening a new one.** The ADR's Decision Outcome item 3 already documents the *qualified* claim (Option B, 2026-09-26) as an explicit, known interim state with its own "upgrade-ready: re-tighten per #162's doc-restoration list" language. This feature fully realizes that same decision -- the error-text consistency invariant -- rather than reversing or superseding it, so amending the existing ADR's text in place (the same pattern feat-150 itself used when it first qualified the claim) is the correct move, not a new ADR.
 
 **feat-170 coordination (Phase 900).** feat-170-update-edit-parse-failure is implemented in its own git worktree and was not available to this feature's Phase 140 sweep (different branch, not yet merged to `dev`). It independently re-derived the identical "Option B / follow-up issue #162" wording in 4 more tool files, a new ADR (`b8c9bfea`), and 4 more `_strip_pydantic_footer` test helper copies. Once this feature has merged and feat-170's branch has rebased onto the new `dev`, that branch's own Option B language should be tightened the same way this feature's Phase 140 does for its original 12-domain/`get_<d>` surface -- a short, mechanical follow-up pass, not a design question, but easy to forget since it lives outside this feature's own repo checkout/worktree at the time this plan was written. Phase 900 exists purely to not lose track of it; the exact timing and ownership of that pass is a user call, deliberately not pre-decided here.
 
 ### Related Decisions
 
-- ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c -- amended in place by Phase 140 (same decision, precision fix: the qualified error-text claim is re-tightened to the full byte-identical invariant this feature implements).
+- DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c -- amended in place by Phase 140 (same decision, precision fix: the qualified error-text claim is re-tightened to the full byte-identical invariant this feature implements).
 
 ### Task List
 
@@ -144,7 +144,7 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 #### Phase 140: Doc-restoration sweep
 
-- [x] Task 140.100: Amend ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c in place, via the ADR domain's own `update_section` tool (`docs/adr/*.md` is the live file the ADR MCP tools write directly -- it is not regenerated by `specmgr docs`/`adr-toc`), re-tightening the qualified claim back to the full byte-identical invariant in: Decision Outcome item 3, the Confirmation section, **and** Decision Outcome item 2's dangling cross-reference ("...carries the same parse defect as `list_feat`'s failed-row error text (see item 3 below for the consistency claim and its qualification)") -- item 2's parenthetical must drop "and its qualification" once item 3 no longer carries one, or the ADR becomes internally self-contradictory. Record this feature's id in the ADR's own history/changelog if the ADR format supports it.
+- [x] Task 140.100: Amend DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c in place, via the ADR domain's own `update_section` tool (`docs/adr/*.md` is the live file the ADR MCP tools write directly -- it is not regenerated by `specmgr docs`/`adr-toc`), re-tightening the qualified claim back to the full byte-identical invariant in: Decision Outcome item 3, the Confirmation section, **and** Decision Outcome item 2's dangling cross-reference ("...carries the same parse defect as `list_feat`'s failed-row error text (see item 3 below for the consistency claim and its qualification)") -- item 2's parenthetical must drop "and its qualification" once item 3 no longer carries one, or the ADR becomes internally self-contradictory. Record this feature's id in the ADR's own history/changelog if the ADR format supports it.
 
 - [x] Task 140.110: Re-tighten `general/models/parse_failure_result.py`'s module + class docstrings.
 
@@ -206,9 +206,9 @@ PR #176 (base `dev`) has all CI checks green and reports `mergeable: MERGEABLE`,
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-10-01T03:58:00.000Z - Amend ADR 9080b37c in place rather than opening a new ADR
+#### 2026-10-01T03:58:00.000Z - Amend DEC 9080b37c in place rather than opening a new ADR
 
-User decision: since this feature fully realizes (rather than reverses or supersedes) the error-text consistency invariant ADR 9080b37c already documents in its qualified, Option B form, the ADR's own text (Decision Outcome item 3 + Confirmation) is amended in place -- the same pattern feat-150 itself used when it first introduced the qualification -- instead of opening a new ADR.
+User decision: since this feature fully realizes (rather than reverses or supersedes) the error-text consistency invariant DEC 9080b37c already documents in its qualified, Option B form, the ADR's own text (Decision Outcome item 3 + Confirmation) is amended in place -- the same pattern feat-150 itself used when it first introduced the qualification -- instead of opening a new ADR.
 
 #### 2026-10-01T03:57:00.000Z - feat-170 cleanup deferred to an explicit, unchecked Task List item
 
@@ -220,4 +220,4 @@ User decision: rather than deciding now how/when to clean up feat-170's own, ind
 
 ### More Information
 
-See ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c for the full background on the non-raising `ParseFailureResult` workaround chain this feature's Phase 140 re-tightens, and feat-150-mcp-lifecycle-commands's own README (Task 1a.8, the "2026-09-26 17:01:41.000Z" Decisions Made entry) for the original Option A vs. Option B triage that deferred this fix and filed GitHub issue #162.
+See DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c for the full background on the non-raising `ParseFailureResult` workaround chain this feature's Phase 140 re-tightens, and feat-150-mcp-lifecycle-commands's own README (Task 1a.8, the "2026-09-26 17:01:41.000Z" Decisions Made entry) for the original Option A vs. Option B triage that deferred this fix and filed GitHub issue #162.

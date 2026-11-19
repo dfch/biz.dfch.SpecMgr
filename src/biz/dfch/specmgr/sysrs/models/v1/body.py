@@ -22,7 +22,7 @@ Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
 `MarkdownListItem`/`MarkdownListItemWithNotes` engine: each class below
 models one markdown heading (`## `/`### `) or list, and `Sysrs` is the
 top-level H1 container. A `sysrs` document aggregates already-existing
-specmgr artifacts (`gol`, `prb`, `qa`, `uc`, `req`, `rsk`, `dec`/`adr`,
+specmgr artifacts (`gol`, `prb`, `qa`, `uc`, `req`, `rsk`, `dec`,
 `vcr`) into one coherent, navigable specification via per-section
 cross-reference lists, rather than duplicating their content -- see
 `.specmgr/feat/feat-32-sysrs/README.md` Design Notes for the full
@@ -41,7 +41,7 @@ Business Context and Goals (M, container)
     Problem Statement (O, PRB list)
 Stakeholder Needs and Elicitation (O, QA list)
 Operational Concept and Scenarios (O, UC list)
-Decisions (O, DEC|ADR list)
+Decisions (O, DEC list)
 Risks (O, RSK list)
 Assumptions and Dependencies (O, leaf)
 System Overview (M, container)
@@ -271,13 +271,12 @@ class OperationalConceptAndScenarios(MarkdownSection2):
         return validate_cross_reference_items(items, _OPERATIONAL_CONCEPT_PATTERN)
 
 
-#: Matches `## Decisions`'s bullet item text: `DEC <uuid>: <title>` OR `ADR <uuid>: <title>`
-#: (real `sysrs` documents may cross-reference either `dec` or `adr` ids, decided 2026-08-30).
-_DECISIONS_PATTERN = rf"^(DEC|ADR) {UUID_PATTERN}: .+$"
+#: Matches `## Decisions`'s bullet item text: `DEC <uuid>: <title>`.
+_DECISIONS_PATTERN = rf"^DEC {UUID_PATTERN}: .+$"
 
 
 class Decisions(MarkdownSection2):
-    """`## Decisions` -- cross-reference list to `dec`/`adr` -- architecture/
+    """`## Decisions` -- cross-reference list to `dec` -- architecture/
     design choices made in service of the requirements below. Optional as
     a whole; at least one item when present. No 29148 clause (specmgr
     addition).
@@ -285,14 +284,13 @@ class Decisions(MarkdownSection2):
     Parameters
     ----------
     items:
-        Bullet list of `DEC <uuid>: <title>` or `ADR <uuid>: <title>`
-        cross-references. Must contain at least one item.
+        Bullet list of `DEC <uuid>: <title>` cross-references. Must
+        contain at least one item.
     """
 
     items: list[MarkdownListItemWithNotes] = Field(
         min_length=1,
-        description="Bullet list of `DEC <uuid>: <title>` or `ADR <uuid>: <title>` cross-references; "
-        "must contain at least one item.",
+        description="Bullet list of `DEC <uuid>: <title>` cross-references; must contain at least one item.",
     )
 
     @field_validator("items")
@@ -1006,7 +1004,7 @@ class UpdateEntry(MarkdownSection3):
     `### 2026-08-31T07:40:12.500+02:00 : Created`. The em-dash separator is
     rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +
     ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``, ``-05:00``) or
-    ``Z`` for UTC variant -- date-only is rejected (ADR
+    ``Z`` for UTC variant -- date-only is rejected (DEC
     8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC's/VCR's
     `UpdateEntry` shape exactly.
 

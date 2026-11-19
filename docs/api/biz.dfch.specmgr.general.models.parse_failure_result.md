@@ -2,17 +2,17 @@
 
 The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
 failure mode: a document that exists on disk but fails to parse
-(feat-150-mcp-lifecycle-commands Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c,
+(feat-150-mcp-lifecycle-commands Phase 1a, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c,
 "Extend the non-raising structured-result workaround to get_<d>'s parse-failure case").
 
 This is a distinct, purpose-built model shared by every ``get_<d>`` tool
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/
-``sysrs``) -- it is not a reuse or subclass of
+``sysrs``/``txt``/``set``) -- it is not a reuse or subclass of
 :class:`~biz.dfch.specmgr.general.models.validate_result.ValidateResult` (the generic
 ``validate`` tool's own ``{valid, errors}`` shape) or of
 :class:`~biz.dfch.specmgr.general.models.invalid_status_result.InvalidStatusResult` (the
 generic ``set_status`` tool's own ``{valid, ...}`` shape). ``ParseFailureResult`` is the
-third member of the same ADR 519d1206-4d2a-4500-9046-6db635209996 workaround chain:
+third member of the same DEC 519d1206-4d2a-4500-9046-6db635209996 workaround chain:
 ``validate`` (case 1), ``set_status``'s invalid-status case (case 2), and now
 ``get_<d>``'s parse-failure case (case 3) -- each a narrow, non-raising, structured result
 that sidesteps a client-side ``isError: true`` result truncation (empirically confirmed on

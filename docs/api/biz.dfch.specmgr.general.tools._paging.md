@@ -67,8 +67,7 @@ error_count:
     The number of ``items`` that represent a document that failed to
     parse, independent of paging (feat-81-83-validation Phase 3,
     REQ-006). Defaults to ``0`` -- callers that never produce failed
-    entries (e.g. ``list_adr``, out of scope for that feature) do not
-    need to pass this.
+    entries do not need to pass this.
 
 Returns
 -------

@@ -43,7 +43,7 @@ Tracked by GitHub issue #36. Branch/worktree: `feat-36-delete`.
 - REQ-003: Add a **reusable** path-safety module `general/tools/_path_safety.py` providing `assert_no_traversal(id_)`, `assert_uuid(id_)`, `assert_feat_id(id_)`, `validate_id(type_, id_)`, and `assert_within(base_dir, candidate)` (all raising `ValueError` with a meaningful message). It must prevent path-injection via `type` or `id`, and it must be callable unchanged by the `get_<d>`, `update`, and `set_status` tools in the future. This feature wires it into `delete` only; it does not modify `get`/`update`/`set_status`.
 - REQ-004: Locking — each adapter wraps its resolve-then-delete sequence in the domain's existing `<d>_lock(id_)` context manager (the same lock `update`/`set_status` already use), so a concurrent same-id mutation cannot interleave with the delete.
 - REQ-005: Graceful error handling — a missing document raises the domain's own `XNotFoundError` (unchanged); an invalid `id` (non-str, traversal character, or wrong format for the type) raises `ValueError` before any filesystem access; an I/O failure during the actual `unlink`/`rmtree` (`OSError`/`PermissionError`/race) is caught and re-raised as a new `DeleteError` (defined in `delete.py`, subclassing `OSError`) carrying the path and the underlying cause.
-- REQ-006: Delete mechanics — the ten flat-file domains (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`vcr`) remove the single `*.md` file via `Path.unlink()`; `feat` (folder-per-document, ADR 8cf940c5) removes the entire `<base>/<id>/` folder via `shutil.rmtree(folder)`, deleting `README.md`, any `history.md`, and any session transcripts in that folder.
+- REQ-006: Delete mechanics — the ten flat-file domains (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`vcr`) remove the single `*.md` file via `Path.unlink()`; `feat` (folder-per-document, DEC 8cf940c5) removes the entire `<base>/<id>/` folder via `shutil.rmtree(folder)`, deleting `README.md`, any `history.md`, and any session transcripts in that folder.
 - REQ-007: Record and propagate the decision — create a new ADR titled "Replace domain-specific delete tools with a generic type-dispatched delete tool" (via the `create_adr` MCP tool, then `specmgr adr-toc`); update `AGENTS.md` (each of the eleven per-domain Status bullets drops the `delete_<d> stub` mention and the "Still genuinely missing" `delete_*` stubs bullet is removed/rewritten; the `general/` bullet gains the `delete` tool and a note that all domains now implement a `delete` adapter there); update `server.py`'s module docstring (the authoritative tool list — remove the eleven `delete_<d>` stub mentions, add `delete` to the General tools paragraph); add a `CHANGELOG.md` `[Unreleased]` breaking-change entry; regenerate `docs/` (`specmgr docs`, `specmgr mcp-docs`).
 - REQ-008: Tests — add `tests/general/tools/test_delete.py` (parameterized over all eleven types: seed a real persisted document per type, then assert delete succeeds, returns the right path, the file/folder is gone, and a subsequent `get_<d>`/`load_by_id` raises the domain `XNotFoundError`; assert every path-injection attempt raises `ValueError` before any filesystem access; assert an unknown id raises the domain `XNotFoundError`; assert an I/O failure raises `DeleteError`; assert the domain lock is acquired) and `tests/general/tools/test__path_safety.py` (unit tests for every `_path_safety` function, including the UUID and feat-format regexes, the traversal-character rejections, and the containment check).
 
@@ -55,7 +55,7 @@ Tracked by GitHub issue #36. Branch/worktree: `feat-36-delete`.
 - [x] ACC-004: Verifies REQ-004 — each of the eleven adapters acquires its domain's `<d>_lock(id_)` around the resolve-then-delete sequence (verified by a test that mocks/spies the lock, or a concurrency test showing a same-id `update` and `delete` do not interleave). — evidence: `tests.general.tools.test_delete.TestDeleteLocking::test_the_domain_lock_is_entered_around_the_delete` (parameterized over all eleven types) spies each domain's `<d>_lock` on the `delete` module via `mock.patch.object` with an event-recording `spy_lock` and asserts the events equal `["acquire:<id>", "release"]` with the delete having completed inside the lock — OK.
 - [x] ACC-005: Verifies REQ-005 — for a seeded document, `delete` with an unknown id raises that domain's `XNotFoundError`; with an injected id (`../x`, `a/b`, `a\b`, `..`, a non-UUID string for a UUID type, a non-`feat-NNN-slug` for `feat`) it raises `ValueError` and leaves the filesystem untouched; with a mocked `unlink`/`rmtree` that raises `OSError` it raises `DeleteError` whose message names the path. — evidence: `tests.general.tools.test_delete.TestDeleteInjection::test_injection_ids_raise_value_error_and_leave_filesystem_untouched` (every pinned traversal shape plus each type's wrong-format id raises `ValueError`, seeded document left intact), `TestDeleteWholeBodyDomains::test_unknown_id_raises_domain_not_found_and_leaves_the_seed_intact` (well-formed unknown id raises the domain's own `XNotFoundError`), and `TestDeleteIoFailure::test_unlink_failure_raises_delete_error_with_cause_and_path` / `::test_rmtree_failure_raises_delete_error_with_cause_and_path` (mocked `Path.unlink`/`shutil.rmtree` raising `OSError` surface as `DeleteError` with the exact `OSError` as `__cause__` and the path in the message) — all OK.
 - [x] ACC-006: Verifies REQ-006 — for the ten flat domains the `*.md` file is removed and its directory is left intact; for `feat` the whole `<base>/<id>/` folder (including a seeded `history.md`) is removed. — evidence: `tests.general.tools.test_delete.TestDeleteWholeBodyDomains::test_delete_returns_deleted_path_and_removes_the_document` (for all eleven types the returned `str` is exactly the seeded `*.md` file path for the flat domains / the folder path for `feat`, the target no longer exists, the containing directory is left intact, and a follow-up `load_by_id` raises the domain `XNotFoundError`) and `::test_feat_delete_removes_the_whole_folder_including_history_md` (the entire `<base>/<id>/` folder, including a seeded `history.md`, is removed via `shutil.rmtree`) — both OK.
-- [x] ACC-007: Verifies REQ-007 — a new accepted ADR exists in `docs/adr/` (listed in the regenerated `docs/adr/README.md`); `AGENTS.md`, `server.py`'s docstring, and `CHANGELOG.md` are updated per REQ-007; `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all run clean (no drift) after the edits. — evidence: `docs/adr/1af6787b-eaab-4e8f-888f-531c1e76c19d-replace-domain-specific-delete-tools-with-a-generic-type-dis.md` exists with frontmatter `status: accepted` and is listed in `docs/adr/README.md` (grep hit); `grep -cE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|feat|vcr)'` → 0 in `AGENTS.md` and 0 in `server.py` (`CHANGELOG.md`'s `[Unreleased]` entry is the pinned removal/added note per Design Notes §8, not a stub mention); `specmgr adr-toc` + `specmgr docs` + `specmgr mcp-docs` re-ran drift-free — each wrote byte-identical content and `git status` was clean afterwards (no `docs/` changes).
+- [x] ACC-007: Verifies REQ-007 — a new accepted ADR exists in `docs/adr/` (listed in the regenerated `docs/adr/README.md`); `AGENTS.md`, `server.py`'s docstring, and `CHANGELOG.md` are updated per REQ-007; `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all run clean (no drift) after the edits. — evidence: `docs/dec/1af6787b-eaab-4e8f-888f-531c1e76c19d-replace-domain-specific-delete-tools-with-a-generic-type-dis.md` exists with frontmatter `status: accepted` and is listed in `docs/adr/README.md` (grep hit); `grep -cE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|feat|vcr)'` → 0 in `AGENTS.md` and 0 in `server.py` (`CHANGELOG.md`'s `[Unreleased]` entry is the pinned removal/added note per Design Notes §8, not a stub mention); `specmgr adr-toc` + `specmgr docs` + `specmgr mcp-docs` re-ran drift-free — each wrote byte-identical content and `git status` was clean afterwards (no `docs/` changes).
 - [x] ACC-008: Verifies REQ-008 — `tests/general/tools/test_delete.py` and `tests/general/tools/test__path_safety.py` exist and pass; the full `unittest` suite is green; `ruff format --check`, `ruff check`, and `vulture` are clean. — evidence: both files are git-tracked (`git ls-files`) and pass — `tests.general.tools.test_delete` (8 tests, all eleven types parameterized, OK) and `tests.general.tools.test__path_safety` (23 tests, OK); full `unittest` suite green (2713 tests, OK) and `ruff format --check` (1462 files) / `ruff check` / `vulture src/ whitelist.py --min-confidence 60` clean per the Task 5.1 post-fix gate re-run.
 
 ### Scope
@@ -82,10 +82,10 @@ Tracked by GitHub issue #36. Branch/worktree: `feat-36-delete`.
 
 #### Depends On
 
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0 (generic type-dispatched `update`/`set_status` tools — the structural precedent this feature copies for `delete`, including the `Literal` `type` parameter, the private-adapter-per-domain pattern, and the `_ADAPTERS` dispatch table).
-- ADR 8cf940c5-3100-485c-a12d-14b59b631712 (`feat`'s folder-per-document, `feat-NNN-slug` addressing — the reason `feat`'s adapter and id format differ from the ten UUID domains).
+- DEC 36905d5b-8057-4294-8665-c7eed5534db0 (generic type-dispatched `update`/`set_status` tools — the structural precedent this feature copies for `delete`, including the `Literal` `type` parameter, the private-adapter-per-domain pattern, and the `_ADAPTERS` dispatch table).
+- DEC 8cf940c5-3100-485c-a12d-14b59b631712 (`feat`'s folder-per-document, `feat-NNN-slug` addressing — the reason `feat`'s adapter and id format differ from the ten UUID domains).
 - Each domain's existing `<d>/tools/_lock.py` (`<d>_lock`), `<d>/tools/_io.py` (`load_by_id`), and `<d>/tools/_paths.py` (`<d>_base_dir`, `XNotFoundError`) — the adapters reuse all of these rather than introducing new plumbing.
-- ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (filesystem is the sole source of truth) and ADR 898bfcd0-85f9-462f-93a8-747bda4166c8 (author/edit ADRs only through MCP structured tools — governs how the new ADR for this decision is created).
+- DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (filesystem is the sole source of truth) and DEC 898bfcd0-85f9-462f-93a8-747bda4166c8 (author/edit ADRs only through MCP structured tools — governs how the new ADR for this decision is created).
 
 #### Blocks
 
@@ -126,7 +126,7 @@ _UUID_TYPES = frozenset({"req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "
 #: which is what every `create_<d>` tool writes into the frontmatter `id`).
 _UUID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
-#: The `feat` folder-name shape (ADR 8cf940c5): `feat-NNN-slug`, lowercase alnum + hyphen.
+#: The `feat` folder-name shape (DEC 8cf940c5): `feat-NNN-slug`, lowercase alnum + hyphen.
 _FEAT_ID_PATTERN = re.compile(r"^feat-[0-9]+-[a-z0-9-]+$")
 
 
@@ -264,7 +264,7 @@ Notes on the adapter contract:
   public `delete` before dispatch. The `assert_within` **is** repeated per adapter
   because it needs the resolved `path` (available only inside the lock).
 
-The `feat` adapter diverges in exactly two ways (folder-per-document, ADR 8cf940c5):
+The `feat` adapter diverges in exactly two ways (folder-per-document, DEC 8cf940c5):
 it removes the containing folder, not the `README.md` file, and it returns the folder
 path.
 
@@ -327,7 +327,7 @@ resolve-then-delete runs under that same per-id lock, a concurrent `update`/
 
 #### 7. The new ADR (REQ-007)
 
-Created via the `create_adr` MCP tool (per ADR 898bfcd0, ADRs are authored only
+Created via the `create_adr` MCP tool (per DEC 898bfcd0, ADRs are authored only
 through structured tools), then `specmgr adr-toc`. Title: **"Replace domain-specific
 delete tools with a generic type-dispatched delete tool"**. Suggested body:
 - *Context and Problem Statement*: eleven unimplemented `delete_<d>` stubs inflate the
@@ -340,7 +340,7 @@ delete tools with a generic type-dispatched delete tool"**. Suggested body:
   reusable `_path_safety` module (chosen); (2) implement each `delete_<d>` stub
   independently (rejected: eleven near-duplicates, no shared safety); (3) uuid-only
   id resolution scanning all domains (rejected: cross-domain UUID ambiguity, full-dir
-  scan on the write path — same reasons ADR 36905d5b rejected it for `update`).
+  scan on the write path — same reasons DEC 36905d5b rejected it for `update`).
 - *Decision Outcome*: Option 1; ADR excluded (no `delete_adr` ever existed; deleting an
   ADR risks breaking other ADRs' "superseded by X" references); convention — every
   current and future domain implements a `delete` adapter in the generic tool, never a
@@ -409,13 +409,13 @@ no replacement per-domain delete tests are added — coverage moves entirely to
   generic type-dispatched delete tool" — the architecture-level record of this feature's
   decision and of the forward convention that every domain implements a `delete` adapter
   in the generic tool.
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0 — the `update`/`set_status` generic-tool
+- DEC 36905d5b-8057-4294-8665-c7eed5534db0 — the `update`/`set_status` generic-tool
   precedent this feature extends with `delete`.
-- ADR 8cf940c5-3100-485c-a12d-14b59b631712 — `feat`'s folder-per-document addressing,
+- DEC 8cf940c5-3100-485c-a12d-14b59b631712 — `feat`'s folder-per-document addressing,
   which drives `feat`'s distinct adapter and id format.
-- ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 — filesystem is the sole source of truth
+- DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3 — filesystem is the sole source of truth
   (delete removes the on-disk file; there is no separate deletion record).
-- ADR 898bfcd0-85f9-462f-93a8-747bda4166c8 — ADRs are authored/edited only through MCP
+- DEC 898bfcd0-85f9-462f-93a8-747bda4166c8 — ADRs are authored/edited only through MCP
   structured tools (governs Phase 4's `create_adr` step).
 
 ### Task List
@@ -532,7 +532,7 @@ from `_doc_paths.py`. This makes it directly reusable by the `get_<d>`, `update`
 
 #### 2026-08-31 15:37:40.000Z - `feat` deletes its whole folder; the tool returns the deleted path
 
-Because `feat` is folder-per-document (ADR 8cf940c5), its adapter removes the entire
+Because `feat` is folder-per-document (DEC 8cf940c5), its adapter removes the entire
 `<base>/<id>/` folder via `shutil.rmtree` (including any `history.md`/session files),
 while the ten flat domains remove their single `*.md` file via `Path.unlink()`. The
 public `delete` tool returns the deleted path as a `str` (file path for the flat

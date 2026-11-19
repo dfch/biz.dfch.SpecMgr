@@ -23,18 +23,7 @@ narrower test class below (feat-81-83-validation Phase 4, REQ-007): it used
 to redeclare its own separate ``path`` field, and Phase 4 removed that
 redundant declaration, so it is now checked for the same field set as
 every other whole-body domain, plus a direct assertion that ``path`` is no
-longer redeclared. ``AdrSummary`` is a deliberate exception (see
-``biz.dfch.specmgr.models.adr.v1.summary``'s module docstring and this
-feature's Decisions Made log for why it cannot subclass :class:`DocSummary`
-without adding an ``mcp`` dependency to the dependency-free base library)
--- it was originally asserted to be fully *structurally* equivalent (same
-field names, same annotations), but feat-81-83-validation Phase 3
-(REQ-006/REQ-007) added ``path``/``error`` to :class:`DocSummary` for the
-whole-body domains only -- ``adr`` is explicitly out of scope for
-that feature (``list_adr`` untouched), so ``AdrSummary`` deliberately keeps
-its original four-field shape and the two are no longer expected to match
-field-for-field. ``AdrSummary`` is instead asserted to still share
-``DocSummary``'s *original* four-field prefix.
+longer redeclared.
 """
 
 from __future__ import annotations
@@ -43,14 +32,10 @@ import unittest
 
 from biz.dfch.specmgr.feat.models.v1.summary import FeatSummary
 from biz.dfch.specmgr.general.models.summary import DocSummary
-from biz.dfch.specmgr.models.adr.v1.summary import AdrSummary
 from biz.dfch.specmgr.qa.models.v2.summary import QaSummary
 from biz.dfch.specmgr.req.models.v1.summary import ReqSummary
 from biz.dfch.specmgr.tsk.models.v1.summary import TskSummary
 from biz.dfch.specmgr.uc.models.v2.summary import UcSummary
-
-#: The four fields every domain's summary (including the out-of-scope ``AdrSummary``) has always had.
-_ADR_FIELD_NAMES = ["id", "title", "status", "ref"]
 
 #: The current shared `DocSummary` base's fields -- the four original ones plus `path`/`error`,
 #: added in feat-81-83-validation Phase 3 (REQ-006/REQ-007) for the whole-body domains only.
@@ -133,42 +118,8 @@ class TestFeatSummarySharesDocSummaryBase(unittest.TestCase):
         self.assertNotIn("path", FeatSummary.__dict__.get("__annotations__", {}))
 
 
-class TestAdrSummaryIsStructurallyEquivalent(unittest.TestCase):
-    """Tests that AdrSummary, though not a DocSummary subclass, still shares DocSummary's original four fields.
-
-    feat-81-83-validation Phase 3 added ``path``/``error`` to
-    :class:`DocSummary` for the whole-body domains only -- ``adr`` is
-    explicitly out of scope, so ``AdrSummary`` deliberately does NOT gain
-    those two fields, and the two models' field sets are no longer expected
-    to match field-for-field (see this module's own docstring).
-    """
-
-    def test_is_deliberately_not_a_docsummary_subclass(self):
-        self.assertFalse(issubclass(AdrSummary, DocSummary))
-
-    def test_declares_its_original_four_field_names(self):
-        self.assertEqual(list(AdrSummary.model_fields.keys()), _ADR_FIELD_NAMES)
-
-    def test_does_not_declare_path_or_error(self):
-        self.assertNotIn("path", AdrSummary.model_fields)
-        self.assertNotIn("error", AdrSummary.model_fields)
-
-    def test_declares_the_same_annotations_as_docsummary_for_its_shared_fields(self):
-        adr_annotations = {name: field.annotation for name, field in AdrSummary.model_fields.items()}
-        doc_annotations = {name: field.annotation for name, field in DocSummary.model_fields.items()}
-
-        for name in _ADR_FIELD_NAMES:
-            with self.subTest(field=name):
-                self.assertEqual(adr_annotations[name], doc_annotations[name])
-
-
 class TestAllFourWholeBodySummariesShareTheCommonBaseFieldSet(unittest.TestCase):
-    """Side-by-side test across every whole-body domain's summary model (ACC-001/ACC-003).
-
-    Unlike an earlier version of this test, ``AdrSummary`` is deliberately
-    excluded here -- see :class:`TestAdrSummaryIsStructurallyEquivalent`
-    above for its own, narrower four-field expectation.
-    """
+    """Side-by-side test across every whole-body domain's summary model (ACC-001/ACC-003)."""
 
     def test_all_four_summaries_declare_the_same_field_names(self):
         summary_classes = [ReqSummary, UcSummary, TskSummary, QaSummary]

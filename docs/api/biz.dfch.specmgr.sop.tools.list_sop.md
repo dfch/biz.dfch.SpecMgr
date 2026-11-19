@@ -2,10 +2,10 @@
 
 ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
 
-Ships as a paged ``@mcp.tool()`` from day one (ADR
+Ships as a paged ``@mcp.tool()`` from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13: "Expose ``list_<domain>`` as a paged
 MCP tool, not a resource") -- like GOL/DEC (other domains built after that
-ADR was accepted), SOP must not repeat the resource-then-convert history of
+DEC was accepted), SOP must not repeat the resource-then-convert history of
 REQ/UC/TSK/QA/PRB (launched as a ``specmgr://<domain>/list`` resource,
 converted later in feat-13-list-paging). See
 ``.specmgr/feat/feat-13-list-paging/README.md`` for the full paging contract
@@ -33,6 +33,19 @@ byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
 a pattern, not an off-switch (it matches no id and yields a zero-row
 result).
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/6/7).**
+A 1:1 port of ``list_dec``'s ``language`` handling. The optional
+``language`` parameter (default ``"en"``) selects which directory this tool
+scans: omitted/``"en"`` = the flat ``docs/sop/`` directory -- today's exact
+behavior; any other shape-validated code (e.g. ``"de"``) = only the
+``docs/sop/{language}/`` subdirectory, listing exactly the existing
+variants of that language (ACC-007). There is deliberately NO "all
+languages" mode (the ``DocSummary`` row shape carries no language column
+and would repeat ids). The language is shape-guarded before any filesystem
+access, and a shape-valid language without a packaged heading-mapping table
+is rejected up front with the table loader's actionable error. The row
+shape is unchanged -- no language column.
+
 ## Functions
 
 ### `_to_failed_summary(path: 'Path', error: 'Exception') -> 'SopSummary'`
@@ -41,7 +54,7 @@ result).
 ### `_to_summary(doc: 'SopDocument', path: 'Path') -> 'SopSummary'`
 
 
-### `list_sop(max_results: 'int | None' = None, offset: 'int | None' = None, glob: 'str | None' = None) -> 'PagedResult[SopSummary]'`
+### `list_sop(max_results: 'int | None' = None, offset: 'int | None' = None, glob: 'str | None' = None, language: 'str' = 'en') -> 'PagedResult[SopSummary]'`
 
 Return one page of one-line SOP summaries from the configured base directory.
 
@@ -84,6 +97,18 @@ glob:
     ``error_count = 0`` by construction (REQ-003); ``total`` is the
     match count and ``offset``/``max_results`` paging keeps its existing
     meaning on that smaller set.
+language:
+    The language whose directory to list (feat-197-i18n Phase 125, DEC
+    38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
+    scans the flat ``docs/sop/`` directory -- today's exact behavior;
+    any other ISO 639-1-shaped lowercase two-letter code (e.g.
+    ``"de"``) scans only ``docs/sop/{language}/``, listing exactly the
+    existing variants of that language (ACC-007). There is deliberately
+    no "all languages" mode (the row shape carries no language column
+    and would repeat ids). Shape-guarded before any filesystem access
+    (like ``id``); a shape-valid code without a packaged
+    heading-mapping table is rejected up front with the table loader's
+    actionable error.
 
 Returns
 -------
@@ -93,4 +118,11 @@ PagedResult[SopSummary]
     it is given), in filename-sorted order. ``results`` is empty if the
     base directory does not exist, holds no SOPs, ``offset`` is past
     the end of the full list, or no id matches ``glob``.
+
+Raises
+------
+ValueError
+    ``language`` is not an ISO 639-1-shaped lowercase two-letter code (raised
+    before any filesystem access), or a non-default ``language`` has no packaged
+    heading-mapping table (raised before any filesystem access).
 

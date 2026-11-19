@@ -21,7 +21,7 @@ Complements `test_validation_error_baseline.py`'s two pinned, exact-string front
 with tests that probe the *mechanics* `models.md._frontmatter_parse` adds: the block-relative
 -> document-relative line remap math (REQ-004) for `yaml.YAMLError`, the domain/field/line
 context prepended to `pydantic.ValidationError` (Task 2.2), and cross-domain coverage beyond
-`tsk` (`req`/`adr`) showing every domain parser applies the same enrichment uniformly.
+`tsk` (`req`) showing every domain parser applies the same enrichment uniformly.
 """
 
 from __future__ import annotations
@@ -32,7 +32,6 @@ import frontmatter
 import yaml
 from pydantic import BaseModel, ValidationError, field_validator
 
-from biz.dfch.specmgr.models.adr.v1.parser import parse_adr
 from biz.dfch.specmgr.models.md._frontmatter_parse import (
     enrich_frontmatter_validation_error,
     enrich_frontmatter_yaml_error,
@@ -194,8 +193,8 @@ def _validation_error(metadata: dict[str, object]) -> ValidationError:
 
 
 # ---------------------------------------------------------------------------
-# Cross-domain coverage: `parse_tsk`/`parse_req`/`parse_adr` all apply the same enrichment
-# uniformly (REQ-005's "applied uniformly across" every whole-body domain plus ADR, frontmatter scope).
+# Cross-domain coverage: `parse_tsk`/`parse_req` all apply the same enrichment uniformly
+# (REQ-005's "applied uniformly across" every whole-body domain, frontmatter scope).
 # ---------------------------------------------------------------------------
 
 _TSK_BODY = """\
@@ -208,22 +207,6 @@ _TSK_BODY = """\
 ### Entry
 
 Some update text.
-"""
-
-_ADR_BODY = """\
-# Title
-
-## Context and Problem Statement
-
-Some context.
-
-## Considered Options
-
-- Option 1
-
-## Decision Outcome
-
-Chose option 1.
 """
 
 
@@ -243,15 +226,6 @@ class TestCrossDomainFrontmatterErrorCoverage(unittest.TestCase):
             parse_req(text)
 
         self.assertIn("req frontmatter block, field 'status'", str(ctx.exception))
-
-    def test_parse_adr_names_the_frontmatter_block_on_malformed_yaml(self) -> None:
-        text = f"---\nid: adr-1\nstatus: [unterminated\n---\n{_ADR_BODY}"
-
-        with self.assertRaises(yaml.YAMLError) as ctx:
-            parse_adr(text)
-
-        self.assertIn("the frontmatter block", str(ctx.exception))
-        self.assertNotIn("<unicode string>", str(ctx.exception))
 
 
 if __name__ == "__main__":

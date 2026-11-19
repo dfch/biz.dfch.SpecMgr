@@ -55,7 +55,7 @@ _MINIMAL_DOC = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 

@@ -1,0 +1,472 @@
+{
+  "cases": [
+    "smoke-create-system"
+  ],
+  "conditions": [
+    "none",
+    "upstream"
+  ],
+  "finished_at": "2026-11-02T00:05:00Z",
+  "k": 2,
+  "label": "smoke",
+  "order": [
+    {
+      "cached": false,
+      "case": "smoke-create-system",
+      "condition": "none",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "smoke-create-system",
+      "condition": "upstream",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "smoke-create-system",
+      "condition": "none",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "smoke-create-system",
+      "condition": "upstream",
+      "k": 1
+    }
+  ],
+  "run_id": "smoke-2026-11-01T224901Z",
+  "seed": 573341,
+  "trial_timeout_s": 1200,
+  "trials": [
+    {
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/smoke-create-system/none-k0.events.ndjson",
+      "exit_code": 0,
+      "finished_at": "2026-11-01T22:49:31Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (757 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "1 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.011263826047070324,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Bookshop\" has containers, but is missing documentation.",
+          "The software system \"Bookshop\" has containers, but is missing decisions.",
+          "The container named \"Web Store\" is not included on any views - add it to a view.",
+          "The container named \"Order Processor\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Order Processor\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Web Store\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Bookshop\" has containers, but is missing decisions.": "expected",
+          "The software system \"Bookshop\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 8,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 57245,
+          "output": 3263,
+          "reasoning": 0
+        },
+        "tool_calls": 8,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 25.629,
+        "workdir_dsl": "workspace \"Bookshop\" \"A simple online bookshop\" {\n\n    model {\n        customer = person \"Customer\" \"A customer who browses and buys books online\"\n\n        bookshop = softwareSystem \"Bookshop\" \"An online bookshop\" {\n            webStore = container \"Web Store\" \"The web store where customers browse and purchase books\" \"Web\"\n            orderProcessor = container \"Order Processor\" \"Processes and fulfils customer orders\" \"Service\"\n        }\n\n        customer -> webStore \"Browses and purchases books\" \"HTTPS\"\n        webStore -> orderProcessor \"Submits orders for processing\" \"gRPC\"\n    }\n\n    views {\n        systemContext bookshop \"SystemContext\" \"The system context view of the Bookshop\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": true,
+      "plan": {
+        "case_id": "smoke-create-system",
+        "condition": "none",
+        "k_index": 0
+      },
+      "run_id": "smoke-2026-11-01T224901Z",
+      "started_at": "2026-11-01T22:49:04Z",
+      "timeout": false,
+      "wall_time_s": 27.491622300003655,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/smoke-create-system.none-k0.smoke-2026-11-01T224901Z"
+    },
+    {
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/smoke-create-system/upstream-k0.events.ndjson",
+      "exit_code": 0,
+      "finished_at": "2026-11-01T23:34:55Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (909 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "1 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 2112.4262364900205,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Bookshop\" has containers, but is missing documentation.",
+          "The software system \"Bookshop\" has containers, but is missing decisions.",
+          "The container named \"Web Store\" is not included on any views - add it to a view.",
+          "The container named \"Order Processor\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Order Processor\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Web Store\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Bookshop\" has containers, but is missing decisions.": "expected",
+          "The software system \"Bookshop\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-dsl"
+        ],
+        "steps": 10,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 185609,
+          "output": 14645,
+          "reasoning": 0
+        },
+        "tool_calls": 10,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 604.519,
+        "workdir_dsl": "workspace \"Bookshop\" \"A simple online bookshop\" {\n\n    !identifiers hierarchical\n\n    model {\n        customer = person \"Customer\" \"A customer who browses and buys books online\"\n\n        bookshop = softwareSystem \"Bookshop\" \"An online bookshop for browsing and buying books\" {\n            webStore = container \"Web Store\" \"The web application where customers browse the catalogue and place orders\" \"Web application\"\n            orderProcessor = container \"Order Processor\" \"Processes and fulfils customer orders\" \"Batch service\"\n        }\n\n        customer -> bookshop.webStore \"browses the catalogue and places orders through\" \"HTTPS\"\n        bookshop.webStore -> bookshop.orderProcessor \"submits new orders to\" \"Internal API\"\n    }\n\n    views {\n        systemContext bookshop \"BookshopContext\" {\n            include *\n            autoLayout\n            title \"System Context for Bookshop\"\n        }\n    }\n}\n"
+      },
+      "passed": true,
+      "plan": {
+        "case_id": "smoke-create-system",
+        "condition": "upstream",
+        "k_index": 0
+      },
+      "run_id": "smoke-2026-11-01T224901Z",
+      "started_at": "2026-11-01T23:24:47Z",
+      "timeout": false,
+      "wall_time_s": 607.9674972658977,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/smoke-create-system.upstream-k0.smoke-2026-11-01T224901Z"
+    },
+    {
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/smoke-create-system/none-k1.events.ndjson",
+      "exit_code": null,
+      "finished_at": "2026-11-01T23:55:44Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (759 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "1 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 40.05433565110434,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Bookshop\" has containers, but is missing documentation.",
+          "The software system \"Bookshop\" has containers, but is missing decisions.",
+          "The container named \"Web Store\" is not included on any views - add it to a view.",
+          "The container named \"Order Processor\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Order Processor\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Web Store\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Bookshop\" has containers, but is missing decisions.": "expected",
+          "The software system \"Bookshop\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 7,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 44615,
+          "output": 3277,
+          "reasoning": 0
+        },
+        "tool_calls": 7,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 868.423,
+        "workdir_dsl": "workspace \"Bookshop\" \"A simple online bookshop\" {\n\n    model {\n        customer = person \"Customer\" \"A customer who browses and buys books online\"\n\n        bookshop = softwareSystem \"Bookshop\" \"An online bookshop\" {\n            webStore = container \"Web Store\" \"The web store where customers browse and purchase books\" \"Web\"\n            orderProcessor = container \"Order Processor\" \"Processes and fulfils customer orders\" \"Java\"\n        }\n\n        customer -> webStore \"Browses and purchases books\" \"HTTPS\"\n        webStore -> orderProcessor \"Submits orders for processing\" \"REST/JSON\"\n    }\n\n    views {\n        systemContext bookshop \"SystemContext\" \"The system context view of the Bookshop\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "smoke-create-system",
+        "condition": "none",
+        "k_index": 1
+      },
+      "run_id": "smoke-2026-11-01T224901Z",
+      "started_at": "2026-11-01T23:35:39Z",
+      "timeout": true,
+      "wall_time_s": 1200.0084620499983,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/smoke-create-system.none-k1.smoke-2026-11-01T224901Z"
+    },
+    {
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/smoke-create-system/upstream-k1.events.ndjson",
+      "exit_code": 1,
+      "finished_at": "2026-11-02T00:05:00Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "only 0 container(s) in the export JSON",
+          "name": "two_containers",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 531.2494187990669,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 0,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 0,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 0,
+          "output": 0,
+          "reasoning": 0
+        },
+        "tool_calls": 0,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": null,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "smoke-create-system",
+        "condition": "upstream",
+        "k_index": 1
+      },
+      "run_id": "smoke-2026-11-01T224901Z",
+      "started_at": "2026-11-02T00:04:39Z",
+      "timeout": false,
+      "wall_time_s": 20.673880887101404,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/smoke-create-system.upstream-k1.smoke-2026-11-01T224901Z"
+    }
+  ],
+  "version_tuple": {
+    "conditions_cacheable": [
+      "none",
+      "upstream"
+    ],
+    "jq": "1.6",
+    "model_id": "qwen3.8-27b-bf16-896k",
+    "opencode_image": "ghcr.io/anomalyco/opencode:2.2.5",
+    "opencode_image_digest": "sha256:1690aad69864d2f6714772d1e040918feebc6df5286d2bd7e181fbb35d12d4a9",
+    "provider_id": "vllm-sys0",
+    "python": "3.13.13",
+    "sampling_parameters": {
+      "seed": 1337,
+      "temperature": 0.0,
+      "topP": 1.0
+    },
+    "speculative_config": {
+      "externally_verifiable": false,
+      "method": "mtp",
+      "num_speculative_tokens": 5
+    },
+    "structurizr_cli_image": "structurizr/structurizr:2026.10.26-noble",
+    "structurizr_cli_image_digest": "sha256:1081d615e7a539aee8b8360e36a58f42ff6412dd8f0e1b053134cb2c76ab2303",
+    "structurizr_mcp_image": "structurizr/mcp:2026.04.20",
+    "structurizr_mcp_image_digest": "sha256:fc4ef98b7da925d62b08c71a90eb995a527fae30e2c04b39e3041f253c135539",
+    "trial_timeout_s": 1200,
+    "upstream_sha": "e86d8a91d3ed793cdf6c035f01d19f1b18cc8b6b",
+    "vllm_endpoint": "http://127.0.0.1:8081/v1",
+    "vllm_version": "0.26.0"
+  },
+  "version_tuple_hash": "0de1ba9850e9d7e426a2f12a852cf17d25b2f2f5d0d12f528ce3b4cb2395a7b4"
+}

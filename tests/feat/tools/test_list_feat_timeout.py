@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """ACC-001..005 tests for the two-stage dirty/clean ``list_feat`` cold-scan-timeout fix
-(feat-187-list-feat-timeout, GitHub issue #187, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44).
+(feat-187-list-feat-timeout, GitHub issue #187, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44).
 
 Phase 100/110 already implemented the production code this module exercises
 (the feat-local dirty/clean ``DocCache`` pair in ``feat/tools/_cache.py``,
@@ -28,7 +28,7 @@ ACC-009 (REQ-007's four-flag-combination lifespan gating invariant) lives in
 pre-existing ``TestStartSimilarityWarmup``/``TestServerLifespan`` classes it
 extends. ACC-006 (the live one-shot ``uvx`` measurement) is a manual
 protocol recorded in the feature's own ``### Updates``, not a committed
-test. ACC-007 is the gate itself; ACC-008 (the ADR) is already done.
+test. ACC-007 is the gate itself; ACC-008 (the decision) is already done.
 """
 
 from __future__ import annotations

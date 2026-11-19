@@ -61,7 +61,9 @@ generic ``list_references`` tool (``general.tools.list_references``):
 
 The reference *tag* vocabulary consists of the tags the SYSRS/VCR
 structured patterns validate as reference targets, plus ``sysrs`` (the
-aggregator document type may reference in free-form prose), plus ``feat``
+aggregator document type may reference in free-form prose), plus ``txt``
+(feat-229-txt -- the free-form catch-all document type, a reference
+target only in free-form prose, like ``sysrs``), plus ``feat``
 (feat-177-list-ref-feat -- the one tag whose id is not a UUID: a FEAT
 reference carries the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
 number, and :func:`_load_feat` resolves it by its own folder lookup). It
@@ -76,12 +78,11 @@ import re
 from collections.abc import Callable
 from pathlib import Path
 
-from ...adr.tools._io import load_by_id as load_adr_by_id
-from ...adr.tools._paths import adr_base_dir
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, feature_title, iter_feat_paths
+from ...models.md._cross_reference import FEAT_ID_PATTERN as _FEAT_FULL_ID_PATTERN
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._paths import gol_base_dir
 from ...prb.tools._io import load_by_id as load_prb_by_id
@@ -94,12 +95,13 @@ from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._paths import rsk_base_dir
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._paths import sysrs_base_dir
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._paths import txt_base_dir
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._paths import uc_base_dir
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._paths import vcr_base_dir
 from ..models.reference import ReferenceRow
-from ._path_safety import _FEAT_ID_PATTERN as _FEAT_FULL_ID_PATTERN
 
 __all__ = [
     "REFERENCE_TYPES",
@@ -108,30 +110,33 @@ __all__ = [
 ]
 
 #: The UUID-tagged reference types (the reference-tag vocabulary as of
-#: feat-144-ref-artifact, before feat-177-list-ref-feat added ``feat``):
-#: the lowercase target-domain name of each tag, same order.
+#: feat-144-ref-artifact, before feat-177-list-ref-feat added ``feat``;
+#: ``txt`` added by feat-229-txt): the lowercase target-domain name of
+#: each tag, same order.
 #: :data:`_REFERENCE_PATTERN`'s tag group is derived from this constant
 #: (not from :data:`REFERENCE_TYPES`) so the UUID pattern keeps matching
 #: exactly these tags: a feat's id is never a UUID, so ``FEAT
 #: <uuid>``-shaped text matches nothing under the UUID pattern.
-_UUID_REFERENCE_TYPES: tuple[str, ...] = ("gol", "prb", "qa", "uc", "req", "rsk", "dec", "adr", "vcr", "sysrs")
+_UUID_REFERENCE_TYPES: tuple[str, ...] = ("gol", "prb", "qa", "uc", "req", "rsk", "dec", "vcr", "sysrs", "txt")
 
 #: The reference *types* a cross-reference tag can name (feat-144 REQ-002;
-#: ``feat`` added by feat-177-list-ref-feat): the lowercase target-domain
-#: name of each tag -- the tag itself is the uppercase form (``GOL`` ->
-#: ``"gol"``, ``FEAT`` -> ``"feat"``). The tags the SYSRS/VCR
-#: structured patterns validate as reference targets, plus ``sysrs`` (the
-#: aggregator document type may reference in free-form prose), plus
-#: ``feat`` (whose ids are ``feat-NNN-slug`` folder names -- or the bare
-#: ``feat-NNN`` number -- not uuids; see :data:`_FEAT_REFERENCE_PATTERN`).
-#: This set is distinct from the source-domain set the generic tools
-#: dispatch over: ``sop``/``tsk`` are plausible future tag additions.
+#: ``feat`` added by feat-177-list-ref-feat, ``txt`` by feat-229-txt): the
+#: lowercase target-domain name of each tag -- the tag itself is the
+#: uppercase form (``GOL`` -> ``"gol"``, ``FEAT`` -> ``"feat"``). The tags
+#: the SYSRS/VCR structured patterns validate as reference targets, plus
+#: ``sysrs`` (the aggregator document type may reference in free-form
+#: prose), plus ``txt`` (the free-form catch-all document type, a target
+#: only in free-form prose, like ``sysrs``), plus ``feat`` (whose ids are
+#: ``feat-NNN-slug`` folder names -- or the bare ``feat-NNN`` number --
+#: not uuids; see :data:`_FEAT_REFERENCE_PATTERN`). This set is distinct
+#: from the source-domain set the generic tools dispatch over:
+#: ``sop``/``tsk`` are plausible future tag additions.
 REFERENCE_TYPES: tuple[str, ...] = _UUID_REFERENCE_TYPES + ("feat",)
 
 #: The compiled UUID cross-reference extraction pattern (feat-144 REQ-002).
 #: The tag group is derived from :data:`_UUID_REFERENCE_TYPES` (the
 #: uppercase forms, same order -- so the group is exactly
-#: ``GOL|PRB|QA|UC|REQ|RSK|DEC|ADR|VCR|SYSRS`` and the two cannot drift
+#: ``GOL|PRB|QA|UC|REQ|RSK|DEC|VCR|SYSRS|TXT`` and the two cannot drift
 #: apart; ``feat`` is deliberately not in the group, since a feat's id is
 #: never a UUID). The separator is one or more space/tab/dash characters
 #: (so both ``REQ 4f2a...`` and ``GOL-0e15...`` match); the uuid is a
@@ -147,7 +152,7 @@ _REFERENCE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-#: The full feat id shape shared from ``general.tools._path_safety`` (its
+#: The full feat id shape shared from ``models.md._cross_reference`` (its
 #: anchored :data:`_FEAT_FULL_ID_PATTERN` minus the ``^``/``$`` anchors,
 #: e.g. ``feat-[0-9]+-[a-z0-9-]+``): the single source for the FEAT
 #: reference pattern's id shapes below and for :func:`_load_feat`'s
@@ -351,19 +356,19 @@ def _load_sysrs(ref_id: str) -> tuple[str, Path]:
     return result
 
 
-def _load_adr(ref_id: str) -> tuple[str, Path]:
-    """Resolve one ``adr`` reference to ``(title, path)`` (feat-144 Task 2.1).
+def _load_txt(ref_id: str) -> tuple[str, Path]:
+    """Resolve one ``txt`` reference to ``(title, path)`` (feat-229-txt Phase 140).
 
-    ``adr`` is the one target domain that never reads through the doc
-    cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d -- ADR is permanently
-    excluded from the cache mechanism), and ``title`` is the referenced
-    ADR's own ``# {title}`` H1 via ``doc.body.title`` (not
-    ``doc.body.text``). ``AdrNotFoundError`` propagates unchanged (caught
-    by :func:`resolve_reference`).
+    Same as :func:`_load_gol`, for the ``txt`` domain: the free-form
+    catch-all document type reads through its own cache-backed
+    ``load_by_id`` like every other flat target domain, and ``title`` is
+    the referenced document's own ``# {title}`` H1 (``doc.body.text``).
+    ``TxtNotFoundError`` propagates unchanged (caught by
+    :func:`resolve_reference`).
     """
-    base_dir = adr_base_dir()
-    path, doc = load_adr_by_id(base_dir, ref_id)
-    result: tuple[str, Path] = (doc.body.title, path)
+    base_dir = txt_base_dir()
+    path, doc = load_txt_by_id(base_dir, ref_id)
+    result: tuple[str, Path] = (doc.body.text, path)
     return result
 
 
@@ -425,10 +430,9 @@ def _load_feat(ref_id: str) -> tuple[str, Path]:
 #: by feat-177-list-ref-feat Task 100.110): each returns ``(title, path)``
 #: for one reference id and propagates the domain's own ``XNotFoundError``
 #: (a ``LookupError``) if the target is absent on disk. Every target
-#: domain except ``adr`` reads through its own cache-backed
-#: ``load_by_id`` (feat-107-doc-cache; ``feat`` is folder-per-document
-#: rather than flat-file -- see :func:`_load_feat`); ``adr`` never does
-#: (see :func:`_load_adr`).
+#: domain reads through its own cache-backed ``load_by_id`` (feat-107-
+#: doc-cache; ``feat`` is folder-per-document rather than flat-file -- see
+#: :func:`_load_feat`).
 _TARGET_RESOLVERS: dict[str, Callable[[str], tuple[str, Path]]] = {
     "gol": _load_gol,
     "prb": _load_prb,
@@ -439,7 +443,7 @@ _TARGET_RESOLVERS: dict[str, Callable[[str], tuple[str, Path]]] = {
     "dec": _load_dec,
     "vcr": _load_vcr,
     "sysrs": _load_sysrs,
-    "adr": _load_adr,
+    "txt": _load_txt,
     "feat": _load_feat,
 }
 

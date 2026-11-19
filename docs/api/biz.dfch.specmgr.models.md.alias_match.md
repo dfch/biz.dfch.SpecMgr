@@ -37,7 +37,7 @@ A class with no `_alias_metadata` at all (no `@alias` decorator applied,
 directly or inherited) defaults to `AliasType.SPACE_SEPARATED`'s own
 derivation of `cls.__name__` -- equivalent to an implicit
 `@alias(type=AliasType.SPACE_SEPARATED)` -- rather than accepting any
-heading text (see ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0; a
+heading text (see DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0; a
 literal match against `cls.__name__` verbatim was v1.2.0/v1.3.0/v1.3.1's
 incorrect specification of this same default, corrected in v1.4.0).
 `@alias` is opt-in for *customizing* the comparison away from that

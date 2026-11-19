@@ -7,8 +7,8 @@ generalization pattern (``find_doc_path_by_id``): a single module shared
 across every ``list_<domain>`` MCP tool, replacing the copy-pasted
 try/except/append loop that was, until this feature, byte-for-byte
 identical across ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``dec``/
-``sop``/``vcr``/``sysrs`` (``rsk``/``feat`` differ only in how one summary
-is *constructed*, handled below by their own ``to_summary``/
+``sop``/``vcr``/``sysrs``/``txt``/``set`` (``rsk``/``feat`` differ only in how one
+summary is *constructed*, handled below by their own ``to_summary``/
 ``to_failed_summary`` callbacks).
 
 **Before this feature**, a file that failed to parse was silently skipped:
@@ -29,7 +29,7 @@ these types contributes to neither ``results`` nor ``total`` nor
 begin with. A file that vanishes between ``list_<domain>``'s
 directory-listing snapshot and this function's own per-path ``read(path)``
 call (e.g. a concurrent ``delete`` tool call racing this lock-free scan,
-ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3) is the same "deleted outside
+DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3) is the same "deleted outside
 specmgr's own tooling" event REQ-005's reconcile-on-scan already handles
 *silently* when the deletion completes *before* the scan starts -- treating
 a deletion that lands *during* the scan identically, rather than as a
@@ -100,7 +100,7 @@ silent_skip_types:
     file vanishing between the directory-listing snapshot that
     produced ``paths`` and this function's own per-path ``read(path)``
     call (e.g. a concurrent ``delete`` tool call racing this
-    intentionally lock-free scan, ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3)
+    intentionally lock-free scan, DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3)
     is the same "deleted outside specmgr's own tooling" event
     REQ-005's reconcile-on-scan already handles silently for a
     deletion that completes *before* the scan starts -- a deletion

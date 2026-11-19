@@ -23,7 +23,7 @@ allowed" (non-strict `>=`) semantics -- the same matrix `sop.models.v1.body.Upda
 own `_validate_newest_first` `model_validator`s each delegate to. Every
 timestamp passed here is the full date+time form the six entry-heading
 domains' `@alias` regexes enforce (date-only was rejected by feat-146
-Phase 2, ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf, so the helper's former
+Phase 2, DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf, so the helper's former
 mixed date-only/date+time day-granularity rule is gone).
 """
 

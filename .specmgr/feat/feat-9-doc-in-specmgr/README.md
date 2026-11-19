@@ -14,7 +14,7 @@ version: 1.0.0
 
 ### Overview
 
-The repo currently has a `/doc` folder at the top level containing planning, design, and analysis documents (adr-tool-plan.md, refactor-domain.md, use-case examples, etc.). These are development artifacts, not published documentation. Per AGENTS.md and ADR e369ee2e (development artifacts organization), these belong in `.specmgr/feat/` alongside other feature-driven work.
+The repo currently has a `/doc` folder at the top level containing planning, design, and analysis documents (adr-tool-plan.md, refactor-domain.md, use-case examples, etc.). These are development artifacts, not published documentation. Per AGENTS.md and DEC e369ee2e (development artifacts organization), these belong in `.specmgr/feat/` alongside other feature-driven work.
 
 This feature consolidates development planning into a single, consistent location, eliminating the stray `/doc` folder and clarifying the distinction between:
 - `.specmgr/` — development artifacts (plans, progress, work-in-progress)
@@ -80,8 +80,8 @@ This feature consolidates development planning into a single, consistent locatio
 
 ### Related Decisions
 
-- ADR e369ee2e: "Organize development artifacts in `.specmgr` with feature-driven work units"
-- ADR ece4554b: "Organize the codebase by document-type domain"
+- DEC e369ee2e: "Organize development artifacts in `.specmgr` with feature-driven work units"
+- DEC ece4554b: "Organize the codebase by document-type domain"
 
 ### Task List
 

@@ -882,7 +882,9 @@ The number, method, and criterion text all live in the heading itself
 constrained by the regex `@alias` above and enforced by `match_alias`
 (`re.fullmatch`) at parse time -- a missing/out-of-range/malformed
 number, an unknown method word, or a title-less heading all fail the
-parse eagerly (REQ-003). AC numbers need not be contiguous (gaps are
+parse eagerly (REQ-003). The method word is one of the five DTAIS words:
+`Demonstration`, `Test`, `Analysis`, `Inspection`, `Special` (the
+`specmgr://dtais` vocabulary). AC numbers need not be contiguous (gaps are
 allowed, numbers are never renumbered); duplicates are rejected by
 `Vcr`'s own after-validator (the `ValidationError` channel, mirroring
 DEC's `Decision._validate_option_numbers_unique`).
@@ -4251,7 +4253,7 @@ colon, space): e.g. `### 2026-08-31 07:40:12.500+02:00 - Created` or
 `### 2026-08-31T07:40:12.500+02:00 : Created`. The em-dash separator is
 rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +
 ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``, ``-05:00``) or
-``Z`` for UTC variant -- date-only is rejected (ADR
+``Z`` for UTC variant -- date-only is rejected (DEC
 8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC's `UpdateEntry`
 shape exactly.
 

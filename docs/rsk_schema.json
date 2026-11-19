@@ -15,6 +15,7 @@
     },
     "Impact": {
       "description": "`### Impact {1..5}` under `## Initial/Residual Assessment` -- the impact coordinate of the 5x5 matrix.\n\nA leaf H3 section: the value lives in the heading itself (e.g.\n`### Impact 3`), constrained by the regex `@alias` above and enforced by\n`match_alias` (`re.fullmatch`) at parse time -- a missing value digit\n(`### Impact`), an out-of-range digit (`### Impact 6`), or a misspelled\nheading word all fail the parse eagerly. Any body text under the heading\nis absorbed into the leaf like every other leaf `MarkdownSection` (it is\nnot part of the value).\n\nParameters\n----------\nvalue:\n    Computed. The 1..5 impact value carried by the heading (e.g. `3`\n    for `### Impact 3`). Never stored separately -- derived from the\n    retained heading text.",
+      "pattern": "^Impact [1-5]$",
       "properties": {},
       "title": "Impact",
       "type": "object"
@@ -106,6 +107,7 @@
     },
     "Probability": {
       "description": "`### Probability {1..5}` under `## Initial/Residual Assessment` -- the probability coordinate of the 5x5 matrix.\n\nA leaf H3 section: the value lives in the heading itself (e.g.\n`### Probability 4`), constrained by the regex `@alias` above and\nenforced by `match_alias` (`re.fullmatch`) at parse time -- a missing\nvalue digit (`### Probability`), an out-of-range digit\n(`### Probability 6`), or a misspelled heading word all fail the parse\neagerly. Any body text under the heading is absorbed into the leaf like\nevery other leaf `MarkdownSection` (it is not part of the value).\n\nParameters\n----------\nvalue:\n    Computed. The 1..5 probability value carried by the heading (e.g.\n    `4` for `### Probability 4`). Never stored separately -- derived\n    from the retained heading text.",
+      "pattern": "^Probability [1-5]$",
       "properties": {},
       "title": "Probability",
       "type": "object"
@@ -273,6 +275,14 @@
         },
         "status": {
           "default": "open",
+          "enum": [
+            "accepted",
+            "closed",
+            "dropped",
+            "mitigating",
+            "occurred",
+            "open"
+          ],
           "title": "Status",
           "type": "string"
         },

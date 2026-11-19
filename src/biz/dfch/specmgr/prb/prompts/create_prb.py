@@ -20,12 +20,12 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Problem Statement (PRB) document using the
 existing ``prb/tools/``/``prb/resources/`` surface (``list_prb``,
-``specmgr://prb/template``/``specmgr://prb/example``, ``specmgr://prb/schema``,
+``specmgr://prb/template``/``specmgr://prb/example``, ``get_prb_schema``,
 ``create_prb``, generic ``validate`` tool), plus -- when an optional QA id
 is supplied -- the ``qa/tools/`` surface (``get_qa``) to carry over already-
 answered 5W2H questions from that linked Question and Answer (QA) interview.
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_prb`` builds the entire PRB frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown.
@@ -76,7 +76,9 @@ from ...server import mcp
         "optionally carrying over already-answered 5W2H questions from a linked QA document "
         "(qa_id), interviewing the user for whichever 5W2H current-state questions remain, "
         "synthesizing the Summary and Gap, composing the mandatory Problem Statement lead "
-        "sentence, and driving create_prb/validate to author a new PRB document."
+        "sentence, and driving create_prb/validate to author a new PRB document. The structure "
+        "reference is the `get_prb_schema` tool (the generated JSON Schema); the "
+        "`get_prb_template`/`get_prb_example` tools return the authoring template and a complete sample."
     ),
 )
 def create_prb(topic: str, qa_id: str | None = None) -> str:

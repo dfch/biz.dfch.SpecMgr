@@ -18,7 +18,7 @@
 """Pydantic schema and parser for the 5x5 risk-matrix guidance document
 (``rsk/data/rsk_risk_matrix.md``), feat-92-resources REQ-004.
 
-Per ADR 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
+Per DEC 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
 reference resources as raw markdown with model-backed drift-guard tests,
 not structured JSON"), this model is parsed purely to fail fast on
 structural drift -- ``specmgr://rsk/risk-matrix`` (``rsk/resources/
@@ -50,7 +50,7 @@ without leaving any part of the document unaccounted for.
 `ThresholdItem` recovers a bullet's low/high bound and zone name via three
 separate `@computed_field`s (`low: int`, `high: int`, `zone: str`), reusing
 `feat.RequirementItem`/`tsk.TaskItem`'s established `MarkdownListItem` +
-regex precedent (ADR 356d8781-e446-4c26-917a-eda85648ce9d's Decision
+regex precedent (DEC 356d8781-e446-4c26-917a-eda85648ce9d's Decision
 Drivers) rather than inventing a new shared `models/md` primitive. The
 zone name can contain a space (`"very high"`), so the regex's zone group
 allows an internal space.
@@ -360,8 +360,7 @@ class RiskMatrix(MarkdownSection1):
 def parse_risk_matrix(text: str) -> RiskMatrix:
     """Parse the packaged risk-matrix guidance markdown text into a :class:`RiskMatrix`.
 
-    Thin `format_text` + `RiskMatrix.from_text` wrapper -- unlike
-    `parse_adr`/`parse_rsk`, there is no YAML frontmatter to split off
+    Thin `format_text` + `RiskMatrix.from_text` wrapper -- there is no YAML frontmatter to split off
     first, since this is a plain packaged data file, not a user-authored
     document (mirrors `biz.dfch.specmgr.rsk.models.v1.tara.parse_tara`'s
     exact shape).

@@ -4,7 +4,7 @@ Pydantic model for one line of SOP listing output (Phase 2, Task 2.2).
 
 Mirrors :class:`~biz.dfch.specmgr.dec.models.v1.summary.DecSummary`
 field-for-field, for the (Phase-2, not-yet-built) ``list_sop`` tool -- a
-paged MCP tool from day one per ADR ec9f5262-9912-49d0-903f-fcfb54f28c13,
+paged MCP tool from day one per DEC ec9f5262-9912-49d0-903f-fcfb54f28c13,
 so SOP has no ``specmgr://sop/list`` resource. Subclasses
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
 ``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).

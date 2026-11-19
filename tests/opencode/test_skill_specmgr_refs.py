@@ -17,8 +17,8 @@
 
 """feat-152 Phase 110, Task 110.120: ACC-005 consistency test for the specmgr-refs project skill.
 
-The repo's third project OpenCode skill, ``.opencode/skills/specmgr-refs/SKILL.md``
-(feat-163's ``feat-numbering`` skill, ``.opencode/skills/feat-numbering/SKILL.md``,
+The repo's third project OpenCode skill, ``.opencode/skill/specmgr-refs/SKILL.md``
+(feat-163's ``feat-numbering`` skill, ``.opencode/skill/feat-numbering/SKILL.md``,
 being the previous one and feat-150's ``repair`` skill,
 ``.opencode/skill/repair/SKILL.md``, the first), is the agent-initiated router over the
 feat-144 cross-reference retrieval stack (the ``list_references`` MCP tool, the
@@ -35,13 +35,12 @@ included); the single-document delegation pointer (pin d -- the locked delegatio
 in the whitespace-normalized body, plus all three names of the existing stack); the
 read-only posture (pin e -- both locked read-only phrases in the whitespace-normalized
 body); the workflow presence (pin f -- the four codified workflow headings as literal
-body substrings, plus the load-bearing workflow constants (the canonical 12-domain
-string, the ``N = 2`` default-depth wording, and the deliberate ``adr``-exclusion
-wording) in the whitespace-normalized body); and, since feat-207-reference-graph Phase
-140 (the rendered-diagram extension, REQ-011/ACC-005), the diagram workflow (pin g --
-the fifth routing-table row, the frozen rendered-vs-text disambiguation phrases, the
-13-domain (diagram surface, ``adr`` included) vs 12-domain (text workflows, ``adr``
-excluded by design) reconciliation note, and the load-bearing diagram facts: the tool /
+ body substrings, plus the load-bearing workflow constants (the canonical 14-domain
+ string and the ``N = 2`` default-depth wording) in the whitespace-normalized body);
+ and, since feat-207-reference-graph Phase 140 (the rendered-diagram extension,
+ REQ-011/ACC-005), the diagram workflow (pin g -- the fifth routing-table row, the
+ frozen rendered-vs-text disambiguation phrases, the 14-domain (diagram surface and
+ text workflows agree) reconciliation note, and the load-bearing diagram facts: the tool /
 CLI / verdict / rulebook names, ``SPECMGR_DIAGRAM_MAX_TITLE`` default 40, the red
 ``-[#red]->`` cycle syntax, the FEAT switch, and — since feat-214-rel-invalid-diag Phase
 110 (REQ-007) — the scoped reverse mandate (ALWAYS request ``reverse=True`` / ALWAYS
@@ -58,7 +57,7 @@ import unittest
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_SKILL_DIR = _REPO_ROOT / ".opencode" / "skills" / "specmgr-refs"
+_SKILL_DIR = _REPO_ROOT / ".opencode" / "skill" / "specmgr-refs"
 _SKILL_PATH = _SKILL_DIR / "SKILL.md"
 _SKILL_NAME = "specmgr-refs"
 _TRIGGER_KEYWORDS: tuple[str, ...] = (
@@ -96,24 +95,24 @@ _WORKFLOW_HEADINGS: tuple[str, ...] = (
     "## Diagram workflow (rendered reference graph)",  # feat-207 Phase 140: the fifth workflow row's section
 )
 _WORKFLOW_CONSTANTS: tuple[str, ...] = (
-    "req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs",
+    "req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set",
     "N = 2",
-    "deliberate",
 )
 # feat-207-reference-graph Phase 140 (pin g): the rendered-diagram workflow's
 # load-bearing wording -- the routing-table row, the frozen disambiguation, the
-# 13-vs-12-domain reconciliation note, the diagram surface names, and the
+# 14-vs-13-domain reconciliation note, the diagram surface names, and the
 # diagram facts (env var, red-cycle syntax, FEAT switch).
+# (feat-229-txt Phase 170: both counts move with ``txt`` joining the whole-body
+# domains -- the canonical 13-domain string and the reconciliation note;
+# feat-173-req-iso29148-level-set Phase 180 moves them again with ``set``.)
 _DIAGRAM_ROUTING_ROW_PHRASES: tuple[str, ...] = ("Diagram rendering", "The diagram workflow, below")
 _DISAMBIGUATION_PHRASES: tuple[str, ...] = (
     "stays with the multi-hop graph workflow",
     "must not be stolen",
 )
 _RECONCILIATION_PHRASES: tuple[str, ...] = (
-    "13 domains",
-    "12 whole-body",
-    "bfd76370-b59b-4d65-b550-a969f6c93c9d",
-    "intentionally differ",
+    "14 whole-body",
+    "both span the same",
 )
 _DIAGRAM_SURFACE_NAMES: tuple[str, ...] = (
     "get_reference_diagram",
@@ -184,7 +183,7 @@ class TestSkillFileLocation(unittest.TestCase):
     """Pin a: the skill exists at its project-skill path."""
 
     def test_skill_file_exists(self):
-        """Task 110.100's file is committed at .opencode/skills/specmgr-refs/SKILL.md."""
+        """Task 110.100's file is committed at .opencode/skill/specmgr-refs/SKILL.md."""
         self.assertTrue(_SKILL_DIR.is_dir())
         self.assertTrue(_SKILL_PATH.is_file())
 
@@ -303,8 +302,8 @@ class TestSkillDiagramWorkflow(unittest.TestCase):
     workflow row — the rendered reference-graph diagram — and its frozen wording:
     the routing-table row, the rendered-vs-text disambiguation (the bare
     "show me the reference graph[, N levels deep]" phrasing stays with the
-    multi-hop row), the 13-domain (adr included) vs 12-domain (adr excluded by
-    design) reconciliation note, the diagram surface names (the two MCP tools,
+    multi-hop row), the 14-domain reconciliation note (diagram surface and text
+    workflows agree), the diagram surface names (the two MCP tools,
     the CLI, the verdict tools, the rulebook URI), and the load-bearing diagram
     facts (the env var + default, the red-cycle syntax, the FEAT switch)."""
 
@@ -328,9 +327,8 @@ class TestSkillDiagramWorkflow(unittest.TestCase):
             self.assertIn(phrase, normalized_body)
 
     def test_domain_count_reconciliation_note_present(self):
-        """The explicit 13-domain (diagram surface, adr included) vs 12-domain
-        (text workflows, adr excluded by design, ADR bfd76370) reconciliation
-        note is pinned."""
+        """The 14-domain reconciliation note (diagram surface and text workflows
+        span the same set) is pinned."""
         _, body = _split_frontmatter(_skill_text())
 
         normalized_body = _normalize_whitespace(body)

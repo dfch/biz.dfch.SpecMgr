@@ -2,7 +2,7 @@
 
 Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
 
-Backs ADR 750842b2-aca4-4649-ba0c-855ec8e1f505's **provider seam** (REQ-002),
+Backs DEC 750842b2-aca4-4649-ba0c-855ec8e1f505's **provider seam** (REQ-002),
 **long documents** (REQ-010), and **availability contract** (REQ-003)
 sub-decisions.
 
@@ -54,7 +54,7 @@ both tool bodies check :func:`_similarity_availability` first thing. It
 returns the structured, non-raising
 :class:`~biz.dfch.specmgr.general.models.similarity_unavailable.
 SimilarityUnavailableResult` (mirroring the ``set_status``
-``InvalidStatusResult`` precedent, ADR b399f1ce) when either (a) the
+``InvalidStatusResult`` precedent, DEC b399f1ce) when either (a) the
 embedding backend fails to import or to load -- including a first-use
 model-download failure -- or (b) ``SPECMGR_SIMILARITY_DISABLED`` is present
 (presence-based, any value -- read through the central env-var registry's
@@ -69,7 +69,7 @@ in their own ``general/tools/`` modules -- ``find_related.py``/
 (``general/tools/_similarity_search.warmup_similarity_cache``, now invoked
 as the third phase of the unified ``general.tools._startup_warmup.start_startup_warmup``
 daemon thread ``server.py``'s own ``_lifespan`` calls, feat-187-list-feat-timeout,
-Task 110.120, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 -- this phase's own
+Task 110.120, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44 -- this phase's own
 gate is still this module's :data:`SIMILARITY_DISABLED_ENV_VAR` alone,
 checked synchronously and lightweight, and its phase body,
 ``warmup_similarity_cache``, still runs :func:`_similarity_availability`
@@ -264,7 +264,7 @@ Pool a document's chunk vectors as ``normalize(mean(chunk_vectors))`` (REQ-010).
 Element-wise arithmetic mean of the equally-weighted chunk vectors,
 then L2 renormalization -- renormalizing after the mean keeps cosine
 == dot-product comparability between documents of different chunk
-counts (the ADR's own rationale). Pure Python on purpose (no
+counts (the decision's own rationale). Pure Python on purpose (no
 ``numpy`` import, module-level or otherwise -- the dependency-light
 constraint): the backend's ``numpy.ndarray`` chunks are iterated as
 read-only :data:`Vector` sequences, and the pooled vector is a plain

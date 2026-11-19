@@ -25,7 +25,7 @@ sections in an ``rsk`` markdown file -- see ``body.py``/``assessment.py`` for
 the full hierarchy.
 
 Also backs feat-92-resources's cross-cutting reference-resource
-model-backed drift-guard convention (ADR
+model-backed drift-guard convention (DEC
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-003/REQ-004):
 
 - :func:`parse_tara`/:class:`Tara` -- parses the TARA risk-response-
@@ -66,7 +66,7 @@ from .body import (
 )
 from .document import RskDocument
 from .frontmatter import RskFrontmatter
-from .parser import parse_rsk
+from .parser import parse_rsk, parse_rsk_body
 from .risk_matrix import (
     ProductThresholds,
     ReadingTogether,
@@ -130,5 +130,6 @@ __all__ = [
     "level_from_product",
     "parse_risk_matrix",
     "parse_rsk",
+    "parse_rsk_body",
     "parse_tara",
 ]

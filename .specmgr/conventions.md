@@ -217,7 +217,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 # Local imports
-from biz.dfch.specmgr.models import Adr
+from biz.dfch.specmgr.models import VersionInfo
 ```
 
 ### Docstring Style
@@ -247,13 +247,12 @@ count as a cardinal number in prose -- neither as a word (`ten`/`eleven`/`twelve
 nor as a digit (`10`/`11`/`12`/`13`, ...). Use an explicit domain list, or relational phrasing that
 does not depend on a count staying in sync, instead.
 
-- A hardcoded count silently goes stale every time a domain is added -- most recently `sysrs` --
+- A hardcoded count silently goes stale every time a domain is added -- most recently `txt` --
   and no test or lint rule currently catches the mismatch.
 - Prefer an explicit, already-accurate domain list (e.g. `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/
-  `dec`/`sop`/`feat`/`vcr`/`sysrs`) over a count adjective in front of it.
+  `dec`/`sop`/`feat`/`vcr`/`sysrs`/`txt`) over a count adjective in front of it.
 - Prefer relational phrasing over a count when describing a set by contrast to another (e.g.
-  "every domain except `feat`", "every domain except `adr`") rather than restating how many that
-  leaves.
+  "every domain except `feat`") rather than restating how many that leaves.
 
 **Example:**
 ```python
@@ -261,7 +260,7 @@ does not depend on a count staying in sync, instead.
 """Dispatches the generic update across the eleven whole-body domains."""
 
 # ✓ After: an explicit, self-verifying domain list -- nothing to keep in sync by hand
-"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs."""
+"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt."""
 
 # ✓ After: relational phrasing when contrasting against one excluded domain
 """Dispatches the generic update across every whole-body domain except `feat`."""
@@ -273,9 +272,9 @@ does not depend on a count staying in sync, instead.
 `src/biz/dfch/specmgr/general/tools/_domains.py`. Every `src/` and `tests/`
 module that names a set of document types imports the shared names
 (`WHOLE_BODY_DOMAINS`, `WHOLE_BODY_NO_FEAT_DOMAINS`, `UUID_DOMAINS`,
-`ALL_DOMAINS`, `ADR`, `FEAT`) instead of hand-listing the set itself.
+`ALL_DOMAINS`, `FEAT`) instead of hand-listing the set itself.
 `WHOLE_BODY_DOMAINS` is the only hand-listed domain tuple in the repo; a new
-domain registers its name there once (in canonical position), per ADR
+domain registers its name there once (in canonical position), per DEC
 c4efbde6-fd19-4aa8-8668-95316ed62dcc ("Single source of truth for the
 document-type domain-name set", feat-125-domain-lists).
 
@@ -301,10 +300,10 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
 )
 
 # ✗ A hand-listed literal domain-name set that silently drifts from the shared source
-_UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "adr")
+_UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "txt", "set")
 
 # ✓ An explicit prose domain list in a docstring -- the sanctioned exception
-"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs."""
+"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt."""
 ```
 
 ### Error Handling

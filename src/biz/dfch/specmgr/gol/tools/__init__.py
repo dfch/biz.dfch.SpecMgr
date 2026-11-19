@@ -22,12 +22,16 @@ structured document model. ``get_gol_example`` returns a complete, valid
 sample goal document as raw markdown; ``get_gol_template`` returns a document
 with every field present but populated with short placeholder ("blind text")
 content instead -- both read a packaged, build-guaranteed data file rather
-than anything on the caller's filesystem (Task 3.10). ``get_gol`` (Task 3.8)
+than anything on the caller's filesystem (Task 3.10).
+``get_gol_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://gol/schema`` resource). ``get_gol`` (Task 3.8)
 reads, parses, and returns a full goal document by id -- the sole id-based
-read path for GOL (there is no ``specmgr://gol/{id}`` resource, ADR
+read path for GOL (there is no ``specmgr://gol/{id}`` resource, DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_gol`` (Task 3.9) returns one
 page of id/title/status/ref summaries of every goal, shipped as a paged tool
-from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_gol``
+from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_gol``
 (Task 3.3) assigns a fresh id, builds the frontmatter itself, and writes a
 new document (body markdown only, no frontmatter) under the goal base
 directory (``gol.tools._paths``/``_io``). Whole-body and line-range updates
@@ -49,6 +53,7 @@ tools at once::
 from .create_gol import create_gol
 from .get_gol import get_gol
 from .get_gol_example import get_gol_example
+from .get_gol_schema import get_gol_schema
 from .get_gol_template import get_gol_template
 from .list_gol import list_gol
 from .parse_gol import parse_gol
@@ -57,6 +62,7 @@ __all__ = [
     "create_gol",
     "get_gol",
     "get_gol_example",
+    "get_gol_schema",
     "get_gol_template",
     "list_gol",
     "parse_gol",

@@ -46,7 +46,9 @@ generic ``list_references`` tool (``general.tools.list_references``):
 
 The reference *tag* vocabulary consists of the tags the SYSRS/VCR
 structured patterns validate as reference targets, plus ``sysrs`` (the
-aggregator document type may reference in free-form prose), plus ``feat``
+aggregator document type may reference in free-form prose), plus ``txt``
+(feat-229-txt -- the free-form catch-all document type, a reference
+target only in free-form prose, like ``sysrs``), plus ``feat``
 (feat-177-list-ref-feat -- the one tag whose id is not a UUID: a FEAT
 reference carries the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
 number, and :func:`_load_feat` resolves it by its own folder lookup). It
@@ -55,18 +57,6 @@ generic tool dispatches over (``sop``/``tsk`` are plausible future tag
 additions).
 
 ## Functions
-
-### `_load_adr(ref_id: 'str') -> 'tuple[str, Path]'`
-
-Resolve one ``adr`` reference to ``(title, path)`` (feat-144 Task 2.1).
-
-``adr`` is the one target domain that never reads through the doc
-cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d -- ADR is permanently
-excluded from the cache mechanism), and ``title`` is the referenced
-ADR's own ``# {title}`` H1 via ``doc.body.title`` (not
-``doc.body.text``). ``AdrNotFoundError`` propagates unchanged (caught
-by :func:`resolve_reference`).
-
 
 ### `_load_dec(ref_id: 'str') -> 'tuple[str, Path]'`
 
@@ -144,6 +134,18 @@ Same as :func:`_load_gol`, for the ``rsk`` domain.
 Resolve one ``sysrs`` reference to ``(title, path)``.
 
 Same as :func:`_load_gol`, for the ``sysrs`` domain.
+
+
+### `_load_txt(ref_id: 'str') -> 'tuple[str, Path]'`
+
+Resolve one ``txt`` reference to ``(title, path)`` (feat-229-txt Phase 140).
+
+Same as :func:`_load_gol`, for the ``txt`` domain: the free-form
+catch-all document type reads through its own cache-backed
+``load_by_id`` like every other flat target domain, and ``title`` is
+the referenced document's own ``# {title}`` H1 (``doc.body.text``).
+``TxtNotFoundError`` propagates unchanged (caught by
+:func:`resolve_reference`).
 
 
 ### `_load_uc(ref_id: 'str') -> 'tuple[str, Path]'`

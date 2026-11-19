@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `uc` package's tools (`create_uc`, `par
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """The generic ``update`` tool's own success return shape (feat-153-off-by-n Phase 2,
-REQ-002/REQ-003, ADR 19ff316b-cd11-41a7-a616-ffd84917da51, "Revise the generic
+REQ-002/REQ-003, DEC 19ff316b-cd11-41a7-a616-ffd84917da51, "Revise the generic
 update tool's success return to frontmatter plus an optional before/after snippet").
 
 Revises feature feat-69-update-context's "frontmatter-only" return precedent
@@ -26,8 +26,8 @@ feat-69 returned, plus a bounded before/after ``snippet`` of the touched
 range in range mode (``None`` in whole-body mode and for the
 whole-body-equivalent ``offset=1`` + omitted-``limit`` range).
 ``create_<d>``/``set_status``/``set_classification`` keep feat-69's bare-
-frontmatter return, and ``delete``/``edit``/the ADR tools are unchanged --
-the revision is scoped to ``update`` specifically (ADR 19ff316b's
+frontmatter return, and ``delete``/``edit`` are unchanged --
+the revision is scoped to ``update`` specifically (DEC 19ff316b's
 Decision Outcome item 5).
 
 Like :class:`~biz.dfch.specmgr.general.models.parse_failure_result.
@@ -57,16 +57,18 @@ from ...prb.models.v1 import PrbFrontmatter
 from ...qa.models.v2 import QaFrontmatter
 from ...req.models.v1 import ReqFrontmatter
 from ...rsk.models.v1 import RskFrontmatter
+from ...set.models.v1 import SetFrontmatter
 from ...sop.models.v1 import SopFrontmatter
 from ...sysrs.models.v1 import SysrsFrontmatter
 from ...tsk.models.v1 import TskFrontmatter
+from ...txt.models.v1 import TxtFrontmatter
 from ...uc.models.v2 import UcFrontmatter
 from ...vcr.models.v1 import VcrFrontmatter
 
 __all__ = ["UpdateFrontmatter", "UpdateResult"]
 
 #: The whole-body domains' frontmatter types (req/uc/tsk/qa/prb/gol/rsk/dec/
-#: sop/feat/vcr/sysrs), unioned: the type of :class:`UpdateResult`'s
+#: sop/feat/vcr/sysrs/txt/set), unioned: the type of :class:`UpdateResult`'s
 #: ``frontmatter`` field (single source -- the generic ``update`` tool's
 #: dispatch module imports this alias instead of re-listing the frontmatter
 #: classes; add a new domain's frontmatter here and in the tool's dispatch
@@ -84,6 +86,8 @@ UpdateFrontmatter = (
     | SopFrontmatter
     | VcrFrontmatter
     | SysrsFrontmatter
+    | TxtFrontmatter
+    | SetFrontmatter
 )
 
 
@@ -94,7 +98,7 @@ class UpdateResult(BaseModel):
     feat-69-update-context's "frontmatter-only" precedent returned -- the
     document's carried-over frontmatter with only ``updated`` bumped -- so a
     caller that previously read frontmatter fields directly off the result now
-    reads them off ``result.frontmatter`` (the ADR's documented breaking
+    reads them off ``result.frontmatter`` (the DEC's documented breaking
     change). ``snippet`` is the before/after window of the touched range, in
     range mode only: up to 2 unchanged context lines immediately above the
     touched range, the dropped lines (labeled with their **pre-splice** 1-based

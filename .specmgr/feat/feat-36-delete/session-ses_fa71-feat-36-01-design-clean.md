@@ -40,7 +40,7 @@ Actually, let me be strategic about this. The README is a detailed, implementabl
 2. Whether the 11 stubs and their tests exist as described.
 3. Workflow details: how to run the implementation (delegation to phase-implementer via the phase-orchestrator convention? The README says "implementation (phases 1–5) is delegated to the Phase-Orchestrator"), whether to commit per phase, branch strategy (already in the worktree `feat-36-delete`).
 4. Where documents are seeded in tests (the `SPECMGR_DOCS_DIR` / `SPECMGR_FEAT_DIR` environment variables).
-5. Whether the ADR must be created via the MCP tool `create_adr` (ADR 898bfcd0 requires it) — the specmgr MCP server needs to be configured to point at this repo's `docs/adr` (the SPECMGR_ADR_DIR environment variable).
+5. Whether the ADR must be created via the MCP tool `create_adr` (DEC 898bfcd0 requires it) — the specmgr MCP server needs to be configured to point at this repo's `docs/adr` (the SPECMGR_ADR_DIR environment variable).
 
 To verify, let me do a quick parallel exploration. I'll use the explore sub-agent with "medium" thoroughness for codebase checks, and run several targeted reads myself in parallel.
 
@@ -582,7 +582,7 @@ The plan's premise matches the codebase layout. Next, verify the key referenced 
 402: 
 403:     Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
 404:     ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the
-405:     first domain built dispatch-only from day one per ADR 36905d5b, so there
+405:     first domain built dispatch-only from day one per DEC 36905d5b, so there
 406:     was never a per-domain ``set_status_sop`` tool to port -- this adapter
 407:     was written directly in this shape) -- see :func:`_set_status_req` for
 408:     the full semantics.
@@ -2789,7 +2789,7 @@ Also, let me check `docs/adr/README.md` (adr-toc) — will be regenerated.
 
 One more: the plan says Phase 4 Task 4.1 "create a new ADR via the `create_adr` MCP tool". The specmgr MCP server is connected (I can see specmgr tools in my tool list). But — the MCP server instance I have is configured with its own SPECMGR_ADR_DIR, which might point to the main repo, not this worktree. If the worktree is a separate checkout, the ADR created via MCP might land in a different repo (the primary worktree). Hmm. Let me check: my current working directory is the worktree `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-36-delete`. The specmgr MCP server probably runs with its own env var config pointing to the main repo `/home/user/src/biz.dfch.SpecMgr`. The feat-36 feature folder exists here, but does it also exist in the main repo? The main repo is on `dev`, and the worktree was cut from `dev` — the feature README was created in the worktree (it's staged here: `A .specmgr/feat/feat-36-delete/README.md`).
 
-This is a real issue for Phase 4 Task 4.1: if the specmgr MCP server is configured with SPECMGR_ADR_DIR pointing to the main repo, then `create_adr` will write the ADR to the main repo's `docs/adr/`, not the worktree's. In that case, the ADR would have to be hand-crafted in the worktree (violating ADR 898bfcd0) or the MCP server env vars would need to be reconfigured. Let me check the specmgr MCP server config to see where SPECMGR_ADR_DIR points.
+This is a real issue for Phase 4 Task 4.1: if the specmgr MCP server is configured with SPECMGR_ADR_DIR pointing to the main repo, then `create_adr` will write the ADR to the main repo's `docs/adr/`, not the worktree's. In that case, the ADR would have to be hand-crafted in the worktree (violating DEC 898bfcd0) or the MCP server env vars would need to be reconfigured. Let me check the specmgr MCP server config to see where SPECMGR_ADR_DIR points.
 
 Let me check opencode's config / MCP server env vars. Config might be in `~/.config/opencode/` or in the repo's `.opencode/`. Let me look.
 
@@ -3067,7 +3067,7 @@ Actually, there's a cleaner test: the worktree has staged changes (the feat-36 R
 Options for handling the ADR-creation ambiguity in Phase 4:
 
 1. Before `create_adr`, probe which directory the MCP server uses (e.g., list ADRs and compare with `git status` in the worktree vs. the main repo).
-2. Ask the user to confirm, or instruct that the ADR file must be verified to exist in the worktree's `docs/adr/` after creation, and if it was written to the main repo, move/copy it (hand-writing ADRs is forbidden by ADR 898bfcd0… well, moving a file is editing outside the tool — borderline. Better: reconfigure, or accept the probe result).
+2. Ask the user to confirm, or instruct that the ADR file must be verified to exist in the worktree's `docs/adr/` after creation, and if it was written to the main repo, move/copy it (hand-writing ADRs is forbidden by DEC 898bfcd0… well, moving a file is editing outside the tool — borderline. Better: reconfigure, or accept the probe result).
 
 Actually, there's a practical resolution path: the `specmgr-test` server is disabled but points to the main repo with `--directory`. The enabled uvx server has no env var, and opencode launches the local MCP server with the session's working directory (the worktree). I'm fairly confident opencode launches the MCP server with the current project directory as CWD. I can verify at implementation time with a simple probe: create nothing, just call `list_adr` and check if there are ADRs in the worktree that aren't in the main repo, or vice versa… they're identical now. Alternative probe: check the main repo's `git status` — if the MCP server were writing to the main repo, a new file would show up there. Probe during Phase 4: after `create_adr`, run `git status` in both the worktree and the main repo, confirm the new ADR file is in the worktree, and if it landed in the main repo, stop and consult the user.
 
@@ -3549,7 +3549,7 @@ Regarding #1: My thoughts:
 - Option A: Create the ADR in Phase 4 via `create_adr` MCP (as planned), verify with the git status probe, and commit it together with the other Phase 4 files. The user is saying "it will be created in the correct location... that's fine. Just make sure the generated file is committed together with the other files." So the user has confirmed my assumption about CWD is correct and is asking that the commit include the ADR file.
 - Option B: Create the ADR now (during plan mode). But plan mode is READ-ONLY — creating the ADR would write a file to docs/adr/, which is a system change. So it's not possible right now due to plan mode. I should point this out.
 
-My thoughts: keep ADR creation in Phase 4 (design-wise this is a "decision record" — per REQ-007/Design Notes §7, Task 4.1, and it should be created after stub deletion in Phase 3. The ADR's "Decision Outcome" describes the final state). Also, ADR 898bfcd0 mandates creation via MCP structured tools — that's fine, I can call `create_adr` from within the session (I have the specmgr MCP tool). One consideration: the ADR content references the final state; creating it earlier would be premature, and the ADR's "date" frontmatter reflects when the decision was made. Phase 4 timing is appropriate.
+My thoughts: keep ADR creation in Phase 4 (design-wise this is a "decision record" — per REQ-007/Design Notes §7, Task 4.1, and it should be created after stub deletion in Phase 3. The ADR's "Decision Outcome" describes the final state). Also, DEC 898bfcd0 mandates creation via MCP structured tools — that's fine, I can call `create_adr` from within the session (I have the specmgr MCP tool). One consideration: the ADR content references the final state; creating it earlier would be premature, and the ADR's "date" frontmatter reflects when the decision was made. Phase 4 timing is appropriate.
 
 Also note: I (the orchestrator) can call `create_adr`/`set_status` MCP tools myself in Phase 4, rather than delegating to phase-implementer (the subagent may or may not have MCP access — actually, subagents usually inherit tools; but the phase-implementer description says it implements code/tests/gates/progress. Creating the ADR via MCP is a documentation task, and per the README's Task 4.1 it's Phase 4 work). I can have phase-implementer execute it, or do it myself. Either way, commit together with Phase 4.
 
@@ -6445,7 +6445,7 @@ Now let me write the README edits. First, re-read the current Progress section t
 523: 
 524: #### 2026-08-31 15:37:40.000Z — `feat` deletes its whole folder; the tool returns the deleted path
 525: 
-526: Because `feat` is folder-per-document (ADR 8cf940c5), its adapter removes the entire
+526: Because `feat` is folder-per-document (DEC 8cf940c5), its adapter removes the entire
 527: `<base>/<id>/` folder via `shutil.rmtree` (including any `history.md`/session files),
 528: while the ten flat domains remove their single `*.md` file via `Path.unlink()`. The
 529: public `delete` tool returns the deleted path as a `str` (file path for the flat

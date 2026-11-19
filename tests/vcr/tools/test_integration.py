@@ -182,7 +182,7 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
 
     def test_set_status_rejects_dec_only_accepted_status(self) -> None:
         """set_status (type="vcr") must reject `accepted` (DEC's/GOL's value, outside VCR's closed
-        four-set), returning a non-raising ``InvalidStatusResult`` (ADR
+        four-set), returning a non-raising ``InvalidStatusResult`` (DEC
         b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_vcr(_INITIAL_BODY)
         expected_path = vcr_base_dir() / f"vcr-{created.id}-sample-verification-case.md"

@@ -4107,7 +4107,7 @@ the existing ``qa/tools/`` surface (``get_qa``, ``update_qa``,
 ``req.prompts.update_req``, with the instructional content rewritten to
 describe QA's own schema and lifecycle instead of REQ's. Like ``get_req``,
 step 1 points at the ``get_qa`` tool, not a ``specmgr://qa/{id}`` resource
--- there is no such resource; see ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614.
+-- there is no such resource; see DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614.
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: QA's lifecycle surface is deliberately small
@@ -5635,7 +5635,7 @@ _Thinking:_
 54:                         characteristics (and sub-characteristics), each with a description.
 55: 
 56: REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
-57: through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+57: through the ``get_req`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 58: UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
 59: reads go through the ``get_uc`` tool only. TSK has no ``specmgr://tsk/{id}``
 60: resource either -- id-based reads go through the ``get_tsk`` tool only, and
@@ -5687,7 +5687,7 @@ _Thinking:_
 106: e369ee2e-3353-4f92-991c-6367d76d832e.
 107: 
 108: Modules are grouped domain-first
-109: (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+109: (DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 110: document-type domain"): each document
 111: domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, and later ``ac``) is a top-level package
 112: with its own ``tools``/``prompts``/``resources`` sub-packages, self-
@@ -5925,7 +5925,7 @@ index 9f8c2c1..e0f1772 100644
 @@ -48,8 +48,20 @@ shared versioned models"):
    (`specmgr://qa/schema`, `specmgr://qa/example`,
    `specmgr://qa/template`; no `specmgr://qa/{id}` — id-based reads are
-   `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614); `qa/prompts/`
+   `get_qa`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614); `qa/prompts/`
 -  (`create_qa`/`update_qa`). Its schema lives at `qa/models/v1/`, inside the
 -  domain package itself, not under top-level `models/`.
 +  (`create_qa`/`update_qa`, plus `refine`). Schema at `qa/models/v1/`

@@ -30,8 +30,8 @@ printing each line's 1-based body-line number, ready to feed into
 below). There is no ``specmgr://prb/{id}`` resource to point at -- id-based
 reads always go through the ``get_prb`` tool only.
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: PRB's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: PRB's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="prb"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="prb"``) -- mirroring
@@ -86,7 +86,9 @@ from ...server import mcp
         "current state (recovering an old-shape document missing the mandatory lead sentence "
         "via a raw re-read if needed), showing which of the 7 5W2H questions are answered, "
         "eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right "
-        "tool, and validating."
+        "tool, and validating. The structure reference is the `get_prb_schema` tool (the generated "
+        "JSON Schema); the `get_prb_template`/`get_prb_example` tools return the authoring template "
+        "and a complete sample."
     ),
 )
 def update_prb(id: str, instructions: str | None = None) -> str:

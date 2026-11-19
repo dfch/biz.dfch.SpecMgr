@@ -20,7 +20,7 @@ FEAT feat-7-no-feat: No Feat Feature
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

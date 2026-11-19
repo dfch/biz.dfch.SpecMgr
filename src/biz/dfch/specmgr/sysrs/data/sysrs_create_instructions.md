@@ -20,7 +20,7 @@ step 1 if this is genuinely a new SYSRS.
 ## 1. Structure recap (body markdown only, no frontmatter block)
 
 A SYSRS aggregates already-existing specmgr artifacts (`gol`, `prb`,
-`qa`, `uc`, `req`, `rsk`, `dec`/`adr`, `vcr`) into one coherent,
+`qa`, `uc`, `req`, `rsk`, `dec`, `vcr`) into one coherent,
 navigable specification, rather than duplicating their content: every
 cross-reference list below is a bullet list of
 `<TYPE> <uuid>: <title>` lines (a literal type tag, a real 8-4-4-4-12
@@ -48,9 +48,8 @@ paraphrasing why it is referenced here.
 - `## Operational Concept and Scenarios` -- optional; a
   cross-reference list to `uc` (`UC <uuid>: <title>`), at least one
   item when present.
-- `## Decisions` -- optional; a cross-reference list to `dec` or `adr`
-  (`DEC <uuid>: <title>` or `ADR <uuid>: <title>`), at least one item
-  when present.
+- `## Decisions` -- optional; a cross-reference list to `dec`
+  (`DEC <uuid>: <title>`), at least one item when present.
 - `## Risks` -- optional; a cross-reference list to `rsk`
   (`RSK <uuid>: <title>`), at least one item when present.
 - `## Assumptions and Dependencies` -- optional prose.
@@ -124,13 +123,13 @@ use the `question` tool to elicit the mandatory fields first, then
 each optional field in turn, explicitly telling the user they may skip
 any optional field they cannot or do not want to answer yet.
 
-## 4. Use the template/example/schema as references
+## 4. Use the template/example tools as references
 
-Fetch `specmgr://sysrs/template` or `specmgr://sysrs/example` as a
-starting point/style reference, then check `specmgr://sysrs/schema`
-(the generated JSON Schema) to confirm field names and constraints
-before drafting the body. Do not invent field names or section
-headings that are not present there.
+Call the `get_sysrs_template` and `get_sysrs_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_sysrs_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 5. Tool call sequence
 

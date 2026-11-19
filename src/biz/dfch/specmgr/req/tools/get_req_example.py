@@ -22,7 +22,7 @@ useful as a learning example for drafting a new REQ document by hand, or for
 an LLM to see the expected shape without re-deriving it from the JSON Schema
 alone. Named ``get_req_example`` rather than the bare ``get_example`` (Task
 3.6's own wording) since tool names are global across the whole MCP server --
-domain-qualifying it now avoids a future collision if ADR/UC ever grow their
+domain-qualifying it now avoids a future collision if UC ever grows its
 own equivalent.
 """
 

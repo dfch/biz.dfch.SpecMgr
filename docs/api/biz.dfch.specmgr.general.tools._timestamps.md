@@ -8,9 +8,9 @@ A private, cross-domain helper in the same package and in the same style as
 ``mcp`` dependency and performs **no filesystem access** -- the functions
 only inspect/format :class:`~datetime.datetime` values and return ``str``.
 
-The machine-written canonical date+time variant (feat-146, ADR
+The machine-written canonical date+time variant (feat-146, DEC
 8c889262-152b-4b8e-ae2c-75371f7a9edf) is ``yyyy-MM-ddTHH:mm:ss.SSS``
-(``T``-separated -- ISO 8601's standard extended combined form per ADR
+(``T``-separated -- ISO 8601's standard extended combined form per DEC
 23a14195) followed by either ``Z`` (UTC, i.e. a zero UTC offset) or a signed
 ``±HH:mm`` offset, with milliseconds truncated to *exactly* three digits.
 The read side (``MarkdownFrontmatter``'s ``created``/``updated`` pattern)

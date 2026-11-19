@@ -17,7 +17,7 @@
 
 """Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 
-Backs ADR 750842b2-aca4-4649-ba0c-855ec8e1f505's **embedding input**
+Backs DEC 750842b2-aca4-4649-ba0c-855ec8e1f505's **embedding input**
 sub-decision (REQ-005/REQ-009): the embedding input text for a document
 is its title, plus its frontmatter fields excluding the bookkeeping-only
 keys :data:`BOOKKEEPING_FRONTMATTER_KEYS`, plus its raw frontmatter-
@@ -80,7 +80,7 @@ __all__ = [
     "first_h1",
 ]
 
-#: The frontmatter keys excluded from the embedding input (ADR
+#: The frontmatter keys excluded from the embedding input (DEC
 #: 750842b2, **embedding input** sub-decision; REQ-005): bookkeeping
 #: metadata with no semantic similarity signal. ``status`` is part of
 #: this exclusion by an explicit decision (the feature README's

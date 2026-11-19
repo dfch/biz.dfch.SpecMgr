@@ -12,6 +12,11 @@ started, in work, complete, and approved"), see
 outcome field exists anywhere in this domain -- `## Coverage` is the only
 outcome signal.
 
+This module also owns the verification-case-record status state machine
+(feat-108-fsm, GitHub issue #108): the ``_STATUS_TRANSITIONS`` table, next
+to ``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
+
 ## Classes
 
 ### `VcrFrontmatter`

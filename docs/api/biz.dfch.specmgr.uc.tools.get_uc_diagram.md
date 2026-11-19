@@ -31,7 +31,7 @@ str | ParseFailureResult
     the document exists but fails to parse, a
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
     (``error``/``path``/``id``) is returned instead of raising (the
-    feat-150 precedent, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c).
+    feat-150 precedent, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c).
     Raises :class:`._paths.UcNotFoundError` if no use case has this id.
 
 Raises

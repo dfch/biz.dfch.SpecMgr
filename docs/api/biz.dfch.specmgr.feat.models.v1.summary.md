@@ -4,7 +4,7 @@ Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
 
 Mirrors :class:`~biz.dfch.specmgr.dec.models.v1.summary.DecSummary`'s shape.
 ``FeatSummary`` originally redeclared its own extra ``path`` field, a
-deliberate `feat`-only divergence at the time, since ADR
+deliberate `feat`-only divergence at the time, since DEC
 e369ee2e-3353-4f92-991c-6367d76d832e's whole governing convention *is*
 direct hand/agent markdown editing of ``.specmgr/feat/<id>/README.md``,
 which remains normal and sanctioned even after `feat`'s own MCP tools

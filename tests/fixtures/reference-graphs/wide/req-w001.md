@@ -22,7 +22,7 @@ GOL c00bc00b-c00b-4c0b-8c0b-c00bc00bc00b: Wide Goal
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

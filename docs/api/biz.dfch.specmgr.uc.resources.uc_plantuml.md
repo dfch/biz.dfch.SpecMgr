@@ -22,7 +22,7 @@ role instead. The content is the Phase 100 freeze of the feature plan's §2–§
 and §8; a change to the rulebook is a spec change, not a content edit.
 
 The resource's URI is deliberately unversioned (no ``/v2``), matching
-``specmgr://uc/schema``'s own precedent.
+``specmgr://uc/template``'s own precedent.
 
 ## Functions
 

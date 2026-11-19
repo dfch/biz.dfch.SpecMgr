@@ -56,7 +56,7 @@ This feature tracks three independent maintenance/quality-gap issues opened on 2
 
 Cross-referenced `sysrs`'s actual tools/resources/prompts/dispatch-tool coverage (verified against
 source, not just AGENTS.md prose) against every other whole-body domain, using `sop`/`vcr` as the
-closest "dispatch-only from day one" baselines (ADR 36905d5b-8057-4294-8665-c7eed5534db0):
+closest "dispatch-only from day one" baselines (DEC 36905d5b-8057-4294-8665-c7eed5534db0):
 
 - **`specmgr://config` missing `sysrs` entry** -- confirmed missing (`general/resources/config.py`
   had no `sysrs_base_dir` import or `"sysrs"` key in the `domains` dict, and no `sysrs` in the

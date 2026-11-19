@@ -17,7 +17,7 @@
 
 """The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
 failure mode: an out-of-vocabulary ``status`` value for the dispatched domain ``type``
-(feat-103-set-status-error, ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
+(feat-103-set-status-error, DEC b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
 structured-result workaround to set_status's invalid-status case").
 
 This is a distinct, purpose-built model for ``set_status`` -- it is not a reuse or subclass of
@@ -26,8 +26,8 @@ tool's own (``general.tools.validate``) ``{valid, errors}`` shape for a differen
 (disk-free/id-free content validation, potentially multiple errors). ``InvalidStatusResult``
 instead carries exactly one rejected value plus its domain's full allowed-values list, matching
 the single guarded vocabulary check ``set_status`` performs before dispatching to any per-domain
-adapter. Every other ``set_status`` failure mode (unknown id, path-injection/wrong-shape id,
-``superseded_by`` misuse on a non-``adr`` type) continues to raise unchanged -- see ADR
+adapter. Every other ``set_status`` failure mode (unknown id,
+path-injection/wrong-shape id) continues to raise unchanged -- see DEC
 b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome for the full rationale and scope.
 """
 
@@ -54,10 +54,7 @@ class InvalidStatusResult(BaseModel):
     status:
         The rejected status value, echoed back verbatim.
     allowed_values:
-        The domain's allowed values, sorted. For ``type="adr"``: the sorted 6-value fixed status
-        set plus one literal trailing descriptive entry ``"superseded by <target-id>"``,
-        documenting the ``"superseded by ..."`` pattern rather than trying to enumerate its
-        infinite matches.
+        The domain's allowed values, sorted.
     message:
         The exact wording ``"Invalid status '{status}' for type '{type}'. Allowed values:
         {allowed_values}"``, where ``{allowed_values}`` is ``allowed_values`` comma-and-space-joined

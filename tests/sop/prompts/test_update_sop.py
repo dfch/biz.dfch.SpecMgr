@@ -72,7 +72,7 @@ class TestUpdateSopPrompt(unittest.TestCase):
     def test_mentions_both_generic_mutation_tools(self):
         """Both the generic `update` (type="sop") and `set_status`
         (type="sop") call shapes must be named -- sop has no per-domain
-        mutation tools (ADR 36905d5b)."""
+        mutation tools (DEC 36905d5b)."""
         result = update_sop("id-abc-123")
         for tool in ('update(id, type="sop", content)', 'set_status(id, type="sop", status)'):
             self.assertIn(tool, result)

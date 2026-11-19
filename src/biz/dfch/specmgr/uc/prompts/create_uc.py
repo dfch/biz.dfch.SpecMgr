@@ -20,10 +20,10 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Use Case (UC) document using the existing
 ``uc/tools/``/``uc/resources/`` surface (``list_uc``,
-``specmgr://uc/template``/``specmgr://uc/example``, ``specmgr://uc/schema``,
+``specmgr://uc/template``/``specmgr://uc/example``, ``get_uc_schema``,
 ``create_uc``, generic ``validate`` tool).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_uc`` builds the entire UC frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown.
@@ -57,7 +57,10 @@ from ...server import mcp
     title="Create a use case",
     description=(
         "Guides the LLM through checking for an existing similar use case, gathering the "
-        "required information, and driving create_uc/validate to author a new UC document."
+        "required information, and driving create_uc/validate to author a new UC document. The "
+        "structure reference is the `get_uc_schema` tool (the generated JSON Schema); the "
+        "`get_uc_template`/`get_uc_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_uc(topic: str) -> str:

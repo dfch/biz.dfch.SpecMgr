@@ -6,21 +6,6 @@ Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-0
 subclass :class:`DocSummary` instead of independently redeclaring the same
 four fields.
 
-**ADR is a deliberate exception.** ``biz.dfch.specmgr.models.adr.v1.summary.
-AdrSummary`` does *not* subclass :class:`DocSummary`: that module is part of
-the dependency-free base library (``models/adr`` has no dependency on
-``mcp``/``tools``/``resources``/``prompts`` -- see ``AGENTS.md``'s "models
-location" note), whereas this ``general`` package's own ``__init__.py``
-unconditionally imports its ``tools``/``resources``/``prompts``
-sub-packages, which in turn import ``server.mcp`` -- so importing anything
-under ``general`` (this module included) already requires the ``mcp``
-extra to be installed. Making ``AdrSummary`` subclass :class:`DocSummary`
-would therefore silently add a new, previously-absent ``mcp`` dependency to
-the base library. ``AdrSummary`` instead keeps its own, field-identical
-declaration; a structural (not inheritance-based) test asserts the two
-stay in sync. See ``.specmgr/feat/feat-13-list-paging/README.md``'s
-Decisions Made log for the full rationale.
-
 ## Classes
 
 ### `DocSummary`

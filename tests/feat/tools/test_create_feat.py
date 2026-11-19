@@ -311,7 +311,7 @@ class TestCreateFeatWithExplicitId(TempFeatDirTestCase):
         self.assertFalse((colliding_folder / README_FILENAME).exists())
 
     def test_invalid_content_with_existing_id_returns_validate_result_not_file_exists_error(self) -> None:
-        """Compound-failure precedence (feat-204-create-error, REQ-003 -- ADR f14f125e's item 3):
+        """Compound-failure precedence (feat-204-create-error, REQ-003 -- DEC f14f125e's item 3):
         invalid content plus an already-existing id returns ``ValidateResult(valid=False, ...)`` --
         NOT ``FileExistsError``: content validation runs before the existence check in the existing
         execution order (not re-ordered), so "first-in-execution-order wins" and the guard never
@@ -331,7 +331,7 @@ class TestCreateFeatWithExplicitId(TempFeatDirTestCase):
         self.assertEqual(first.id, parse_feat(before.decode("utf-8")).frontmatter.id)
 
     def test_invalid_content_with_malformed_id_returns_validate_result_not_value_error(self) -> None:
-        """Compound-failure precedence (feat-204-create-error, REQ-003 -- ADR f14f125e's item 3):
+        """Compound-failure precedence (feat-204-create-error, REQ-003 -- DEC f14f125e's item 3):
         invalid content plus a malformed id returns ``ValidateResult(valid=False, ...)`` -- NOT
         ``ValueError``: content validation runs before the id-shape guard in the existing execution
         order (not re-ordered), so "first-in-execution-order wins" and the guard never runs in that

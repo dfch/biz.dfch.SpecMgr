@@ -22,7 +22,7 @@ own instructions) rather than folding these in: that file's own docstring
 scopes it narrowly to ACC-008's *existence*-of-routing claim, while this
 file covers three distinct races the generic ``delete`` tool's per-id-lock
 (not whole-domain-lock) unlink can trigger against a concurrent, by-design
-lock-free ``get_*``/``list_*`` call (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3).
+lock-free ``get_*``/``list_*`` call (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3).
 
 **ACC-016**: ``general.tools._doc_paths.find_doc_path_by_id``'s per-file
 scan loop must skip (not propagate) a ``FileNotFoundError`` raised by

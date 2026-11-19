@@ -29,7 +29,7 @@ its non-raising result model (``chain``).
 (the dependency direction is always specmgr-domain → ``plantuml``, never the
 reverse), and **stdlib-only** (no new dependency or extra; ``pyproject.toml``
 is unchanged). Both properties keep extraction as a standalone library cheap
-if the subset contract ever outgrows specmgr (ADR
+if the subset contract ever outgrows specmgr (DEC
 7a626b12-b189-4561-a51d-ffb2e9e193b4). It is deliberately not a separate
 PyPI library: the structure checker's contract is specmgr's emitted subset,
 and consuming projects already depend on specmgr (one published artifact).

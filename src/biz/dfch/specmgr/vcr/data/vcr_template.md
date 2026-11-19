@@ -9,6 +9,8 @@ version: 1.0.0
 
 # Level 1 Heading is the Title of the Verification Case Record
 
+<!-- Closed set: `## Coverage` is one of full, partial, none. -->
+
 ## Verifies
 
 <!-- Optional HTML comment giving context for this verification case, e.g. when/why it was drafted. Below: exactly one REQ or UC reference (mandatory, single-line "REQ|UC <uuid>: <title>"), followed by a mandatory one-paragraph paraphrase. -->

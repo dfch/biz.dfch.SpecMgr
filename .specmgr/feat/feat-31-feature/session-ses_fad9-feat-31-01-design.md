@@ -1227,7 +1227,7 @@ _Thinking:_
 101-  adapters, just resolving paths differently).
 102:- REQ-007: MCP resources: `specmgr://feat/schema`, `/example`, `/template`
 103:  (no `/list` — REQ-005 covers listing as a tool; no `/{id}` — id-based reads
-104-  are `get_feat`-only, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+104-  are `get_feat`-only, per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 105:- REQ-008: MCP prompts `create_feat(topic)`/`update_feat(id, instructions=None)` — narrated instruction flows reusing the
 106-  dedup-check-first pattern (`list_feat`) and the `TodoWrite`/`question`-tool
 107-  narration pattern from `gol`/`dec`/`prb`'s prompts; both read their own
@@ -1342,7 +1342,7 @@ _Thinking:_
 ```
 102:- REQ-007: MCP resources: `specmgr://feat/schema`, `/example`, `/template`
 103-  (no `/list` — REQ-005 covers listing as a tool; no `/{id}` — id-based reads
-104-  are `get_feat`-only, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+104-  are `get_feat`-only, per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 105-- REQ-008: MCP prompts `create_feat(topic)`/`update_feat(id, instructions=None)` — narrated instruction flows reusing the
 106-  dedup-check-first pattern (`list_feat`) and the `TodoWrite`/`question`-tool
 107-  narration pattern from `gol`/`dec`/`prb`'s prompts; both read their own
@@ -2064,7 +2064,7 @@ in-memory cache of a parsed :class:`DecDocument`: the ``.md`` file itself is
 always the source of truth.
 
 This tool is the sole id-based read path for DEC: there is no
-``specmgr://dec/{id}`` resource (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
+``specmgr://dec/{id}`` resource (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614,
 same reasoning as GOL/REQ/UC/TSK/QA/PRB's own ``get_*`` tools).
 
 ``raw=True`` (feat-22-consolidate-mutation-tools, Phase 8) returns the
@@ -2355,7 +2355,7 @@ Now let's view and update the Addressing section to add the `path`/`FeatSummary`
 <path>/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-31-feature/README.md</path>
 <type>file</type>
 <content>
-432: every one of the 17 existing feature files and ADR e369ee2e's own template,
+432: every one of the 17 existing feature files and DEC e369ee2e's own template,
 433: a deliberate divergence from the rest of the codebase's frontmatter
 434: timestamp convention.
 435: 
@@ -2548,7 +2548,7 @@ ______________________________________________________________________
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-31-feature/README.md",
   "oldString": "  `DependsOn`/`\"Depends on\"` →\n  `\"Depends On\"` (matches the derivation exactly; reusing the parent's\n  own name \"Dependencies\" for this child was considered and rejected as\n  a confusing tautology). `RelatedPrsCommits` keeps its `LITERAL` alias\n  — the slash in \"Related PRs / Commits\" has no casing-only fix, unlike\n  the three eliminated here. Updated Design Notes' ASCII diagram, Model\n  classes prose, REQ-001, and Task 1.3 to match; `example.md` needs no\n  further heading changes since it always used the intended spelling\n  (only the `Design Notes` heading text itself and `## Related ADRs`\n  cross-reference label conceptually rename to \"Related Decisions\" — no\n  content change needed in the example beyond that heading).\n\n### Related PRs / Commits",
-  "newString": "  `DependsOn`/`\"Depends on\"` →\n  `\"Depends On\"` (matches the derivation exactly; reusing the parent's\n  own name \"Dependencies\" for this child was considered and rejected as\n  a confusing tautology). `RelatedPrsCommits` keeps its `LITERAL` alias\n  — the slash in \"Related PRs / Commits\" has no casing-only fix, unlike\n  the three eliminated here. Updated Design Notes' ASCII diagram, Model\n  classes prose, REQ-001, and Task 1.3 to match; `example.md` needs no\n  further heading changes since it always used the intended spelling\n  (only the `Design Notes` heading text itself and `## Related ADRs`\n  cross-reference label conceptually rename to \"Related Decisions\" — no\n  content change needed in the example beyond that heading).\n- **2026-08-30**: Fifth design-review round — three more questions\n  resolved: (1) **No partial-id-match support** in `find_feat_path_by_id`\n  — considered and rejected; an agent that only has a bare `\"feat-31\"`\n  can already resolve the real id for free via `list_feat` (whose\n  `FeatSummary` entries carry the real `id`) followed by `get_feat` with\n  the resolved id, so adding boundary-matching regex/an ambiguous-match\n  error/a scan fallback to the addressing layer would solve a need the\n  existing tools already cover. (2) **Confirmed `SPECMGR_FEAT_DIR` is\n  mandatory, not optional** — every existing domain has an equivalent env\n  var (`SPECMGR_ADR_DIR`, the shared `SPECMGR_DOCS_DIR`), specifically for\n  test isolation; omitting it would make `feat` the only domain without\n  test isolation for its base directory (and `feat`'s real base directory\n  is `.specmgr/feat/`, the very folder this plan file lives in). (3)\n  **`FeatSummary(DocSummary)` gains one extra field, `path: str`** (the\n  real filesystem path to the document's `README.md`) — a deliberate,\n  explained divergence from every other domain's summary, whose `ref`\n  field is deliberately *not* a path specifically to discourage direct\n  file access; `feat` is the opposite case, since ADR e369ee2e's whole\n  governing convention for `.specmgr/feat/` *is* direct hand/agent\n  markdown editing, which stays normal and sanctioned even after `feat`'s\n  own MCP tools exist. `id`/`ref` stay on `FeatSummary` — `path` is\n  additive, not a replacement. Updated REQ-004, the Addressing section,\n  and Task 1.4 to match.\n\n### Related PRs / Commits"
+  "newString": "  `DependsOn`/`\"Depends on\"` →\n  `\"Depends On\"` (matches the derivation exactly; reusing the parent's\n  own name \"Dependencies\" for this child was considered and rejected as\n  a confusing tautology). `RelatedPrsCommits` keeps its `LITERAL` alias\n  — the slash in \"Related PRs / Commits\" has no casing-only fix, unlike\n  the three eliminated here. Updated Design Notes' ASCII diagram, Model\n  classes prose, REQ-001, and Task 1.3 to match; `example.md` needs no\n  further heading changes since it always used the intended spelling\n  (only the `Design Notes` heading text itself and `## Related ADRs`\n  cross-reference label conceptually rename to \"Related Decisions\" — no\n  content change needed in the example beyond that heading).\n- **2026-08-30**: Fifth design-review round — three more questions\n  resolved: (1) **No partial-id-match support** in `find_feat_path_by_id`\n  — considered and rejected; an agent that only has a bare `\"feat-31\"`\n  can already resolve the real id for free via `list_feat` (whose\n  `FeatSummary` entries carry the real `id`) followed by `get_feat` with\n  the resolved id, so adding boundary-matching regex/an ambiguous-match\n  error/a scan fallback to the addressing layer would solve a need the\n  existing tools already cover. (2) **Confirmed `SPECMGR_FEAT_DIR` is\n  mandatory, not optional** — every existing domain has an equivalent env\n  var (`SPECMGR_ADR_DIR`, the shared `SPECMGR_DOCS_DIR`), specifically for\n  test isolation; omitting it would make `feat` the only domain without\n  test isolation for its base directory (and `feat`'s real base directory\n  is `.specmgr/feat/`, the very folder this plan file lives in). (3)\n  **`FeatSummary(DocSummary)` gains one extra field, `path: str`** (the\n  real filesystem path to the document's `README.md`) — a deliberate,\n  explained divergence from every other domain's summary, whose `ref`\n  field is deliberately *not* a path specifically to discourage direct\n  file access; `feat` is the opposite case, since DEC e369ee2e's whole\n  governing convention for `.specmgr/feat/` *is* direct hand/agent\n  markdown editing, which stays normal and sanctioned even after `feat`'s\n  own MCP tools exist. `id`/`ref` stay on `FeatSummary` — `path` is\n  additive, not a replacement. Updated REQ-004, the Addressing section,\n  and Task 1.4 to match.\n\n### Related PRs / Commits"
 }
 ```
 
@@ -2839,7 +2839,7 @@ _Thinking:_
 111:   adapters, just resolving paths differently).
 112: - REQ-007: MCP resources: `specmgr://feat/schema`, `/example`, `/template`
 113:   (no `/list` — REQ-005 covers listing as a tool; no `/{id}` — id-based reads
-114:   are `get_feat`-only, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+114:   are `get_feat`-only, per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 115: - REQ-008: MCP prompts `create_feat(topic)`/`update_feat(id, instructions=None)` — narrated instruction flows reusing the
 116:   dedup-check-first pattern (`list_feat`) and the `TodoWrite`/`question`-tool
 117:   narration pattern from `gol`/`dec`/`prb`'s prompts; both read their own
@@ -2954,20 +2954,20 @@ _Thinking:_
 226: 
 227: ### Dependencies
 228: 
-229: - Depends on: ADR e369ee2e-3353-4f92-991c-6367d76d832e (the governing
+229: - Depends on: DEC e369ee2e-3353-4f92-991c-6367d76d832e (the governing
 230:   `.specmgr/feat/` convention this feature formalizes), ADR
 231:   ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy), ADR
 232:   bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic `MarkdownFrontmatter` base),
-233:   ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based reads), ADR
+233:   DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based reads), ADR
 234:   ec9f5262-9912-49d0-903f-fcfb54f28c13 (paged `list_<d>` tool, not a
-235:   resource), ADR 36905d5b-8057-4294-8665-c7eed5534db0 (generic
+235:   resource), DEC 36905d5b-8057-4294-8665-c7eed5534db0 (generic
 236:   `update`/`set_status` dispatch — `feat` must use these from day one), the
 237:   existing `models/md` engine (feat-5, done) and
 238:   `general/tools/_packaged_data.py`/`_paging.py`/`_splice.py` infrastructure.
 239:   The `### Updates`/`UpdateEntry` ISO8601 shape is copied from
 240:   `feat-30-sop`'s **plan** (not its code — `sop` is not yet implemented, this
 241:   feature independently implements its own copy one heading level deeper).
-242:   ADR 8cf940c5-3100-485c-a12d-14b59b631712 (UUID/flat-file addressing) is
+242:   DEC 8cf940c5-3100-485c-a12d-14b59b631712 (UUID/flat-file addressing) is
 243:   cited as the precedent this feature *deviates from*, not one it follows.
 244: - Blocks: `feat-7-various-improvements` Task 0.31 (existing-folder
 245:   migration), which cannot start until this feature ships.
@@ -3157,7 +3157,7 @@ _Thinking:_
 429: revision history is tracked via `created`/`updated` plus git history
 430: instead, per user direction. `created`/`updated` stay plain `YYYY-MM-DD`
 431: (not the other domains' microsecond `T`-separator timestamp) — matching
-432: every one of the 17 existing feature files and ADR e369ee2e's own template,
+432: every one of the 17 existing feature files and DEC e369ee2e's own template,
 433: a deliberate divergence from the rest of the codebase's frontmatter
 434: timestamp convention.
 435: 
@@ -3700,7 +3700,7 @@ _Thinking:_
 942: 
 943: - Completed: Full design discussion with the user across two planning
 944:   rounds: (1) extracted the common structure from all 17 existing
-945:   `.specmgr/feat/*/README.md` files plus ADR e369ee2e and the two most
+945:   `.specmgr/feat/*/README.md` files plus DEC e369ee2e and the two most
 946:   recent "add artifact type" features (`feat-18-goal`, `feat-21-decision`)
 947:   and the in-flight `feat-30-sop`; (2) resolved every open design question
 948:   (body-modeling depth → mostly opaque leaves with a structured `Updates`
@@ -3903,7 +3903,7 @@ _Thinking:_
 1115:   real filesystem path to the document's `README.md`) — a deliberate,
 1116:   explained divergence from every other domain's summary, whose `ref`
 1117:   field is deliberately *not* a path specifically to discourage direct
-1118:   file access; `feat` is the opposite case, since ADR e369ee2e's whole
+1118:   file access; `feat` is the opposite case, since DEC e369ee2e's whole
 1119:   governing convention for `.specmgr/feat/` *is* direct hand/agent
 1120:   markdown editing, which stays normal and sanctioned even after `feat`'s
 1121:   own MCP tools exist. `id`/`ref` stay on `FeatSummary` — `path` is
@@ -4335,7 +4335,7 @@ ______________________________________________________________________
 1128:   real filesystem path to the document's `README.md`) — a deliberate,
 1129:   explained divergence from every other domain's summary, whose `ref`
 1130:   field is deliberately *not* a path specifically to discourage direct
-1131:   file access; `feat` is the opposite case, since ADR e369ee2e's whole
+1131:   file access; `feat` is the opposite case, since DEC e369ee2e's whole
 1132:   governing convention for `.specmgr/feat/` *is* direct hand/agent
 1133:   markdown editing, which stays normal and sanctioned even after `feat`'s
 1134:   own MCP tools exist. `id`/`ref` stay on `FeatSummary` — `path` is

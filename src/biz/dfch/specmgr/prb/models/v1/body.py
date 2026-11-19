@@ -145,6 +145,14 @@ class Summary(MarkdownSection3):
     """
 
 
+# feat-189 Phase 135: the Phase 120 (C13) per-class singleton `enum` keys on
+# these seven `QuestionN` classes' object-typed JSON Schema entries were
+# removed -- the MCP SDK validates every `structuredContent` payload against
+# the generated output schema, and an object instance can never equal a
+# string `enum` member (round-trip-rerun.md, feat-189). Each class's fixed
+# heading -- the `@alias` REGEX below, enforced by `match_alias` at parse
+# time -- remains documented in the class's own docstring, which is the
+# generated `description`.
 @alias(value=r"What Is the Problem\?", type=AliasType.REGEX)
 class Question1(MarkdownSection3):
     """`### What Is the Problem?` under `## Current State` -- the 1st 5W2H question. Optional.
@@ -337,7 +345,16 @@ class Prb(MarkdownSection1WithComment):
             "Mandatory lead paragraph directly under the H1 title, holding exactly one sentence "
             "following the fixed template `[Current state] is causing [specific issue], for "
             "[stakeholder] because [underlying cause].`."
-        )
+        ),
+        # feat-189 Phase 120 (C13): the `_PROBLEM_STATEMENT_PATTERN`
+        # skeleton as a `pattern` key in the generated JSON Schema --
+        # metadata only (the field's own schema is a `$ref` to
+        # `MarkdownParagraph`, so the key lands sibling to the `$ref`): the
+        # pattern's own `re.DOTALL` flag is a Python-engine detail (soft-
+        # wrapped sentences), not part of the schema-level shape, and
+        # `_validate_problem_statement` below remains the sole enforcement
+        # point.
+        json_schema_extra={"pattern": _PROBLEM_STATEMENT_PATTERN.pattern},
     )
     current_state: CurrentState = Field(description="`## Current State` section. Mandatory.")
     gap: Gap = Field(description="`## Gap` section. Mandatory.")

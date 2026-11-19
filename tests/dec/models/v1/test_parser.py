@@ -33,7 +33,7 @@ import frontmatter
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.dec.models.v1 import DecDocument
-from biz.dfch.specmgr.dec.models.v1.parser import parse_dec
+from biz.dfch.specmgr.dec.models.v1.parser import parse_dec, parse_dec_body
 from biz.dfch.specmgr.models.md._markdown import format_text
 
 from tests.dec.tools._helpers import MANDATORY_ROLES_AND_SOURCE
@@ -683,7 +683,7 @@ class TestParseDecStructuralViolations(unittest.TestCase):
             parse_dec(text)
 
     def test_old_adr_pros_and_cons_heading_raises_assertion_error(self) -> None:
-        """The old ADR heading `## Pros and Cons of the Options` is rejected (LITERAL alias)."""
+        """The old decision-record heading `## Pros and Cons of the Options` is rejected (LITERAL alias)."""
         text = _FULL_DOC.replace("## Pros and Cons", "## Pros and Cons of the Options")
 
         with self.assertRaises(AssertionError):
@@ -776,6 +776,177 @@ class TestUnquotedTimestampNormalization(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             parse_dec(text.replace("created: 2026-08-26T00:00:00.000Z", "created: 2026-08-26"))
+
+
+class TestParseDecBody(unittest.TestCase):
+    """:func:`parse_dec_body` -- the body-only, language-aware validation entry point the write side shares
+    (feat-197-i18n Phase 120)."""
+
+    _EN_BODY = _MINIMAL_DOC.split("---\n", 2)[2]
+    _DE_BODY = (
+        _EN_BODY.replace("## Context and Problem Statement", "## Kontext und Problembeschreibung")
+        .replace("## Decision Outcome", "## Entscheidungsergebnis")
+        .replace("## Roles and Responsibilities", "## Rollen und Verantwortlichkeiten")
+        .replace("### Accountable", "### Endverantwortlich")
+        .replace("### Responsible", "### Durchf\u00fchrend")
+        .replace("## Source", "## Quelle")
+    )
+
+    def test_default_language_is_identical_to_the_pre_i18n_body_parse(self):
+        """With language omitted/None/'en' the result equals ``Decision.from_text(format_text(content))``."""
+        from biz.dfch.specmgr.dec.models.v1 import Decision
+
+        expected = Decision.from_text(format_text(self._EN_BODY))
+        for kwargs in ({}, {"language": None}, {"language": "en"}):
+            with self.subTest(kwargs=kwargs):
+                self.assertEqual(parse_dec_body(self._EN_BODY, **kwargs), expected)
+
+    def test_german_headings_parse_to_the_canonical_model_through_the_table(self):
+        """A DE body parses (via the de table) to the same canonical model as its EN counterpart."""
+        self.assertEqual(parse_dec_body(self._DE_BODY, language="de"), parse_dec_body(self._EN_BODY))
+
+    def test_german_headings_fail_without_the_table(self):
+        """The same DE body is an engine AssertionError for the default language (no table applied)."""
+        with self.assertRaises(AssertionError):
+            parse_dec_body(self._DE_BODY)
+
+    def test_tableless_language_is_a_value_error(self):
+        """A shape-valid language without a packaged table raises the loader's actionable ValueError."""
+        with self.assertRaises(ValueError) as ctx:
+            parse_dec_body(self._EN_BODY, language="fr")
+        self.assertIn("no heading-mapping table", str(ctx.exception))
+
+
+class TestParseDecOutcomeBlocks(unittest.TestCase):
+    """`parse_dec` with the relaxed `## Decision Outcome` lead (feat-247-dec-outcome-blocks, ACC-001/ACC-002/ACC-003).
+
+    The fixture document below is `_MINIMAL_DOC`'s section set plus the two
+    `### ` outcome sub-sections and, in the outcome lead, a second paragraph,
+    a bullet list, and a fenced code block after the mandatory lead paragraph.
+    """
+
+    _DOC = (
+        textwrap.dedent(
+            """\
+            # Choose a Document Store
+
+            ## Context and Problem Statement
+
+            The current store cannot serve the dashboard read path.
+
+            ## Decision Outcome
+
+            We chose the document store because it meets the latency budget.
+
+            The choice carries two sub-decisions.
+
+            - The read path stays synchronous.
+            - Writes go through the existing queue.
+
+            ```python
+            p95_ms = 80
+            ```
+
+            ### Consequences
+
+            Reporting reads from the nightly export.
+
+            ### Confirmation
+
+            A two-week load test.
+            """
+        )
+        + MANDATORY_ROLES_AND_SOURCE
+    )
+
+    def test_parses_document_with_further_blocks(self) -> None:
+        """ACC-001: the full parser accepts the relaxed lead; `statement` holds the first
+        paragraph, `further_blocks` the remainder, the H3s their sections."""
+        document = parse_dec(self._DOC)
+
+        outcome = document.body.outcome
+        self.assertEqual(outcome.statement.text, "We chose the document store because it meets the latency budget.")
+        assert outcome.further_blocks is not None
+        self.assertIn("- The read path stays synchronous.", outcome.further_blocks.text)
+        self.assertIn("p95_ms = 80", outcome.further_blocks.text)
+        assert outcome.consequences is not None
+        self.assertIn("nightly export", outcome.consequences.text)
+        assert outcome.confirmation is not None
+        self.assertIn("two-week load test", outcome.confirmation.text)
+
+    def test_further_blocks_document_round_trips_and_dumps(self) -> None:
+        """ACC-003: the body round-trips byte-exact and `model_dump(mode='json')` carries the extra
+        blocks under `outcome.further_blocks.text`."""
+        document = parse_dec(self._DOC)
+
+        self.assertEqual(str(document.body), format_text(self._DOC))
+        dump = document.model_dump(mode="json")
+        self.assertEqual(
+            dump["body"]["outcome"]["further_blocks"]["text"],
+            "The choice carries two sub-decisions.\n"
+            "\n"
+            "- The read path stays synchronous.\n"
+            "- Writes go through the existing queue.\n"
+            "\n"
+            "```python\n"
+            "p95_ms = 80\n"
+            "```\n",
+        )
+
+    def test_rejected_block_in_the_outcome_lead_is_an_assertion_error(self) -> None:
+        """ACC-009: swapping the fenced code block for a block quote puts a rejected kind inside the
+        outcome lead -- the parser fails with the engine's actionable error, end to end."""
+        text = self._DOC.replace("```python\np95_ms = 80\n```", "> A quoted block.")
+
+        with self.assertRaises(AssertionError):
+            parse_dec(text)
+
+    def test_bare_list_in_place_of_the_lead_is_an_assertion_error(self) -> None:
+        """ACC-002: a bare list in place of the lead paragraph is rejected end to end."""
+        text = self._DOC.replace(
+            "We chose the document store because it meets the latency budget.\n"
+            "\n"
+            "The choice carries two sub-decisions.\n"
+            "\n"
+            "- The read path stays synchronous.\n"
+            "- Writes go through the existing queue.\n"
+            "\n"
+            "```python\n"
+            "p95_ms = 80\n"
+            "```\n",
+            "- A bare list in place of the lead paragraph.\n",
+        )
+
+        with self.assertRaises(AssertionError):
+            parse_dec(text)
+
+    def test_empty_outcome_body_is_an_assertion_error(self) -> None:
+        """ACC-002: an empty `## Decision Outcome` body (no lead paragraph at all) is rejected end
+        to end."""
+        text = self._DOC.replace(
+            "We chose the document store because it meets the latency budget.\n"
+            "\n"
+            "The choice carries two sub-decisions.\n"
+            "\n"
+            "- The read path stays synchronous.\n"
+            "- Writes go through the existing queue.\n"
+            "\n"
+            "```python\n"
+            "p95_ms = 80\n"
+            "```\n"
+            "\n"
+            "### Consequences\n"
+            "\n"
+            "Reporting reads from the nightly export.\n"
+            "\n"
+            "### Confirmation\n"
+            "\n"
+            "A two-week load test.\n",
+            "",
+        )
+
+        with self.assertRaises(AssertionError):
+            parse_dec(text)
 
 
 if __name__ == "__main__":

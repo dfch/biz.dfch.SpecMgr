@@ -10,11 +10,25 @@ markdown file the caller points it at directly. A content-validation
 failure of an existing file (the parser's
 ``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``) is
 caught and returned as the non-raising ``ValidateResult``
-(feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case
-5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+(feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case
+5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
 structured-result workaround chain); only the file-access errors raised
 by ``Path.read_text()`` for a truly-absent or unreadable path still
 surface as MCP tool errors to the caller.
+
+**Path-derived language (feat-197-i18n Phase 125, DEC 38efdb66 item 5).**
+A 1:1 port of ``parse_dec``'s handling. This tool takes no ``language``
+parameter: it derives the effective language from the file's own position
+relative to the use case base directory
+(``general.tools._doc_paths.language_for_doc_path``) -- a file directly in
+the flat ``docs/uc/`` directory parses canonical (no heading-mapping
+table), a file directly in a shape-validated ``docs/uc/{language}/``
+subdirectory parses with that language's table, and any other location
+(outside the base, a non-shape-validated subdirectory, a deeper nesting)
+parses canonical. A derived language without a table file therefore fails
+with the table loader's actionable ``ValueError`` (propagated, like every
+other caller-usage error -- the non-raising ``ValidateResult`` channel
+covers content-validation failures only).
 
 ## Functions
 
@@ -25,14 +39,13 @@ Parse the use-case file at ``path`` into a :class:`UcDocument`.
 Reads the file from disk, then parses and validates its content. "Parse"
 here also means "validate": letting :class:`UseCase`/
 :class:`UcFrontmatter`/:class:`UcDocument`'s own Pydantic validators
-run during parsing is the only validation pass there is, exactly like
-`adr.tools.validate_adr`'s own docstring describes for ADRs -- there is
-no separate validation step. Any structural problem (an unrecognized/
+run during parsing is the only validation pass there is -- there is no
+separate validation step. Any structural problem (an unrecognized/
 misplaced heading, a list the schema doesn't expect) or field/
 cross-field validation failure raises ``AssertionError``/``pydantic.ValidationError``
 (a malformed frontmatter block raises ``yaml.YAMLError``) internally, but
-this tool catches all three (feat-204-create-error, ADR
-f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+this tool catches all three (feat-204-create-error, DEC
+f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the DEC
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain) and returns the enriched message (domain/tool context
 prepended by the shared tool-boundary wrapper,
@@ -52,6 +65,12 @@ path:
     The filesystem path to the ``.md`` file to parse (absolute or
     relative to the current working directory).
 
+    The file's language is derived from this path's position relative to the
+    use case base directory (feat-197-i18n Phase 125, DEC 38efdb66 item 5):
+    flat ``docs/uc/`` = canonical (no table), a direct shape-validated
+    ``docs/uc/{language}/`` subdirectory = that language's table, any
+    other location = canonical.
+
 Returns
 -------
 UcDocument | ValidateResult
@@ -63,8 +82,8 @@ UcDocument | ValidateResult
     exactly as the generic ``validate`` tool caps it (feat-110, via
     :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
     ``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``
-    (feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
-    case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+    (feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+    case 5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
     structured-result workaround chain).
 
 Raises
@@ -75,4 +94,8 @@ FileNotFoundError / PermissionError / OSError
     so a truly-absent or unreadable path still surfaces the ``OSError``-
     family error to the caller unchanged (the documented file-access
     contract, feat-204-create-error REQ-002).
+ValueError
+    The path sits in a direct ``{language}`` subdirectory whose language
+    has no packaged heading-mapping table (the table loader's actionable
+    error, feat-197-i18n Phase 125).
 

@@ -46,7 +46,7 @@ anything else       —                                                         
 ``400 + placeholder`` combination and the recognised ``200 + crash page``
 line are. A timeout (transport failure) also classifies INCONCLUSIVE.
 INCONCLUSIVE ⇒ one retry ⇒ persistent ⇒ source state (the result carries
-the §3.6 ``source_state`` vocabulary). Import-free and stdlib-only (ADR
+the §3.6 ``source_state`` vocabulary). Import-free and stdlib-only (DEC
 7a626b12; ``urllib`` only — no third-party HTTP stack).
 """
 

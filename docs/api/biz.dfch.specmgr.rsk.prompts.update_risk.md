@@ -11,11 +11,11 @@ flow's line numbers, with ``numbered=True`` additionally printing each
 line's 1-based body-line number, ready to feed into ``update``'s
 ``offset``). There is no ``specmgr://rsk/{id}`` resource to point at
 -- id-based reads always go through the ``get_rsk`` tool only (there was no
-earlier resource to remove, unlike REQ's own history -- ADR
+earlier resource to remove, unlike REQ's own history -- DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: RSK's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: RSK's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="rsk"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="rsk"``) -- so the tool-mapping section

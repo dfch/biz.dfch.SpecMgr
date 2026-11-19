@@ -64,7 +64,7 @@ from .body import (
 )
 from .document import QaDocument
 from .frontmatter import QaFrontmatter
-from .parser import parse_qa
+from .parser import parse_qa, parse_qa_body
 from .question_answer import QaAnswer, QaQuestionAnswer
 from .summary import QaSummary
 
@@ -91,4 +91,5 @@ __all__ = [
     "Safety",
     "Security",
     "parse_qa",
+    "parse_qa_body",
 ]

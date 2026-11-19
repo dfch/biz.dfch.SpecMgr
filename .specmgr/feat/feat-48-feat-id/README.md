@@ -84,13 +84,13 @@ known), keeping the document addressable end-to-end.
 
 #### Depends On
 
-- ADR 8cf940c5-3100-485c-a12d-14b59b631712: establishes that `feat`'s id is a chosen `feat-NNN-slug` folder name, not a server-generated UUID — this feature builds directly on that addressing convention.
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e: establishes the `.specmgr/feat/feat-NNN-slug/README.md` convention where `NNN` is the GitHub issue number — the motivating convention this feature lets `create_feat`/`set_feat_id` actually honor.
+- DEC 8cf940c5-3100-485c-a12d-14b59b631712: establishes that `feat`'s id is a chosen `feat-NNN-slug` folder name, not a server-generated UUID — this feature builds directly on that addressing convention.
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e: establishes the `.specmgr/feat/feat-NNN-slug/README.md` convention where `NNN` is the GitHub issue number — the motivating convention this feature lets `create_feat`/`set_feat_id` actually honor.
 
 ### Related Decisions
 
-- ADR 8cf940c5-3100-485c-a12d-14b59b631712: feat's id genuinely deviates from every other domain's UUID convention (chosen `feat-NNN-slug` folder name).
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e: `.specmgr` feature-folder convention, `NNN` = GitHub issue number.
+- DEC 8cf940c5-3100-485c-a12d-14b59b631712: feat's id genuinely deviates from every other domain's UUID convention (chosen `feat-NNN-slug` folder name).
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e: `.specmgr` feature-folder convention, `NNN` = GitHub issue number.
 
 ### Task List
 

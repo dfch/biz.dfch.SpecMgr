@@ -29,8 +29,10 @@ them as "extras" (see [Installation](#installation)).
 - [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
 - [Reference Graph Diagrams](#reference-graph-diagrams)
 - [MCP Server](#mcp-server)
+- [Installing the specmgr Harness Files](#installing-the-specmgr-harness-files)
 - [Usage](#usage)
 - [Referencing Artifacts](#referencing-artifacts)
+- [Multi-Language Artifacts](#multi-language-artifacts)
 - [Development](#development)
 - [Testing](#testing)
 - [Make a Release](#make-a-release)
@@ -53,12 +55,12 @@ structured, validated read/write/list/status tools (see
 | UC — Use Case | Actor/system interaction describing a specific usage scenario |
 | RSK — Risk | Risk-register entry: cause/trigger/consequence, 5x5 probability/impact assessment (initial + residual), TARA response strategy |
 | DEC — Decision | General-purpose decision record (MADR-style), not limited to architecture |
-| ADR — Architecture Decision Record | Architecture-specific decision record; **deprecated**, use DEC instead |
 | TSK — Task List | Checklist of implementation tasks, e.g. for a requirement or feature |
 | VCR — Verification Case Record | Verifies **exactly one** REQ or UC; holds a collection of `AC-NNN` acceptance criteria (each with a DTAIS verification method) plus one overall coverage outcome (full/partial/none) |
 | SOP — Standard Operating Procedure | Step-by-step operational procedure with RASCI responsibility assignment and approval lifecycle |
 | FEAT — Feature | Development work-unit plan/progress tracking (`.specmgr/feat/<id>/README.md`) |
-| SYSRS — System Requirements Spec | Aggregates GOL/PRB/QA/UC/REQ/RSK/DEC-ADR/VCR via cross-reference lists into one navigable spec; its structure follows **ISO/IEC/IEEE 29148:2018** (Systems and software engineering — Life cycle processes — Requirements engineering), with a few specmgr-only additions (e.g. `## Decisions`, `## Risks`) |
+| SYSRS — System Requirements Spec | Aggregates GOL/PRB/QA/UC/REQ/RSK/DEC/VCR via cross-reference lists into one navigable spec; its structure follows **ISO/IEC/IEEE 29148:2018** (Systems and software engineering — Life cycle processes — Requirements engineering), with a few specmgr-only additions (e.g. `## Decisions`, `## Risks`) |
+| TXT — Free-Form Text | Generic, minimally structured catch-all for unstructured markdown that does not warrant a dedicated domain (ad hoc notes, meeting minutes, review/audit write-ups, scratch analysis); free body (any markdown, incl. H2..H6) plus a mandatory newest-first `## Updates` log |
 
 A typical spec effort starts with a **QA** elicitation interview, which
 surfaces **GOL**s (goals) and **PRB**s (problems). Those inform **REQ**s
@@ -67,7 +69,9 @@ and **UC**s, which get risk-assessed (**RSK**) and backed by
 acceptance criteria), and tracked via **TSK** task lists. A **SYSRS**
 ties all of it together into one ISO/IEC/IEEE 29148-structured
 specification. **SOP** and **FEAT** support the process itself rather
-than sitting in this chain.
+than sitting in this chain, and **TXT** is the free-form catch-all that
+likewise sits outside it (any markdown that does not warrant a dedicated
+artifact type).
 
 ```
 QA -> GOL / PRB -> REQ / UC -> RSK / DEC -> TSK, VCR -> SYSRS (aggregates all)
@@ -123,7 +127,11 @@ for the full list)._
 
 ```bash
 specmgr version
+specmgr lint [paths]... [--type T [--dir D]] [--all] [--skip-unrecognized]  # in-tree spec artifact parseability gate: full model-level parse of the paths (type inferred from the layout, --type overrides) or a --type/--all sweep (exit 0 parsed / 1 parse failure or missing mcp extra / 2 usage-or-resolution)
 ```
+
+`specmgr lint` requires the `mcp` extra, like `specmgr diagram` (the
+decoupling is tracked as issue #238).
 
 ## UC → PlantUML Diagrams
 
@@ -164,7 +172,7 @@ Specmgr can render the deterministic cross-reference network between its
 artifacts (the `<TYPE> <id>` tag vocabulary behind the `list_references`
 tool) as a PlantUML component diagram — one node per artifact (label = the
 document title, truncated to the `SPECMGR_DIAGRAM_MAX_TITLE` limit, default
-`40`), a stereotype + colour per artifact type (a frozen 14-entry palette),
+`40`), a stereotype + colour per artifact type (a frozen 15-entry palette),
 nodes grouped into per-domain curly `component "TYPE" { … }` domain groups,
 one label-free edge per unique reference (`{src} --> {dst}`), every edge
 that lies on a cycle (self-loops and same-SCC ≥ 2) drawn with a red
@@ -179,7 +187,7 @@ neighbourhood (the forward walk to `depth`, 1..5; `reverse=True` adds the
 direct incoming references, additive and direct-only);
 `get_reference_diagram_all(include_feat=True, title=None)` renders the
 registry-wide graph. Both return the PlantUML source directly (no file
-writes); the scoped tool accepts all 13 domains (`adr` included) and returns
+writes); the scoped tool accepts all 14 whole-body domains and returns
 the non-raising `ParseFailureResult` for an existing-but-broken source; the
 registry-wide tool never raises for content.
 
@@ -233,16 +241,13 @@ Every document type stores its `.md` files in a base directory on disk —
 the file is always the source of truth, re-read and re-parsed on every
 tool call, so hand-editing a file between calls is safe.
 
-- ADRs: base directory defaults to `docs/adr`, configurable via the
-  `SPECMGR_ADR_DIR` environment variable. This is ADR-specific and not
-  shared with other document types.
 - Requirements (REQ) and future document types: share one root directory,
   configurable via the `SPECMGR_DOCS_DIR` environment variable (default
   `docs`), with each type's own subdirectory appended automatically (e.g.
   `docs/req` for requirements).
 - Features (FEAT): base directory defaults to `.specmgr/feat`, configurable
-  via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific,
-  like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
+  via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific and
+  not shared via `SPECMGR_DOCS_DIR`.
 - PlantUML validation source (UC diagrams): `SPECMGR_PLANTUML_JAR` (a
   plantuml.jar path), `SPECMGR_PLANTUML_BIN` (an executable speaking the
   PlantUML CLI contract), and `SPECMGR_PLANTUML_URL` (a PlantUML server base
@@ -412,7 +417,7 @@ To add the `specmgr` MCP server to your OpenCode configuration:
 
    **A bare `uvx --from biz-dfch-specmgr[mcp] specmgr mcp` command with no
    `--directory` and no `SPECMGR_*_DIR` env vars is unsafe**: the server
-   resolves every base directory (`docs`, `docs/adr`, `.specmgr/feat`, ...)
+   resolves every base directory (`docs`, `.specmgr/feat`, ...)
    relative to its own process's current working directory, which an MCP
    host is free to launch from anywhere — not necessarily your project
    root. Pick one of the two options below instead of the plain form:
@@ -456,11 +461,10 @@ To add the `specmgr` MCP server to your OpenCode configuration:
        "specmgr",
        "mcp"
      ],
-     "environment": {
-       "SPECMGR_DOCS_DIR": "<path-to-your-project>/docs",
-       "SPECMGR_ADR_DIR": "<path-to-your-project>/docs/adr",
-       "SPECMGR_FEAT_DIR": "<path-to-your-project>/.specmgr/feat"
-     }
+      "environment": {
+        "SPECMGR_DOCS_DIR": "<path-to-your-project>/docs",
+        "SPECMGR_FEAT_DIR": "<path-to-your-project>/.specmgr/feat"
+      }
    }
    ```
 
@@ -513,6 +517,74 @@ To add the `specmgr` MCP server to your OpenCode configuration:
 
 3. Save the file and restart OpenCode
 
+## Installing the specmgr Harness Files
+
+Beyond the MCP server itself, this repo ships its agent harness files —
+every markdown file under `.opencode/{agent,command,skill}/` (the
+subagents, slash commands, and skills the commands above drive) — as a
+single packaged bundle: the `specmgr://harness-bundle` MCP resource
+(`application/json`), an `instructions` field carrying the complete
+install protocol plus a `files` array with each file's `path` (relative
+to `.opencode/`), `sha256`, and verbatim `content`. The bundle is
+generated from the repo's own tree by the `specmgr harness-bundle` CLI
+command and drift-guarded by a pre-commit hook and a CI check, so the
+published bundle always matches the released `.opencode/` files
+exactly. The [Add to OpenCode](#add-to-opencode) section above covers
+the MCP server setup the harness files pair with — it is not repeated
+here.
+
+**Agent-driven install (recommended).** Ask your agent to install the
+specmgr harness files: it reads `specmgr://harness-bundle` (discoverable
+via the MCP host's resource listing) and follows the bundle's
+`instructions` field — picking its harness config root via the harness's
+own configuration skill (OpenCode: `customize-opencode`), writing every
+file byte-exact (skipping sha256-identical ones, asking you via the
+`question` tool before overwriting a differing one), re-verifying every
+write, and reporting installed/skipped/updated/failed per file. The
+install never reads, writes, or merges `opencode.json`.
+
+**What gets installed.** Every `.opencode/agent/*.md` subagent,
+`.opencode/command/*.md` slash command, and `.opencode/skill/*/SKILL.md`
+skill of the published package — the bundle is all-inclusive on purpose,
+since the commands' dependency closure (e.g. `/implement-feature`
+driving `phase-orchestrator` → `phase-implementer`) needs the existing
+agents too.
+
+**Manual / Claude Code path.** Claude Code's structurally similar
+`.claude/agents/*.md` and `.claude/commands/*.md` conventions (one
+markdown file per agent/command, YAML frontmatter plus prose body) make
+the bundle's files hand-portable: copy each file's frontmatter and body
+into the matching `.claude/` file, translating the permission model. The
+two models do not map one-to-one — OpenCode carries per-pattern
+`bash`/`edit`/`read` permission rules (last matching rule wins), while
+Claude Code's frontmatter takes a coarse tool allow-list (`tools:`) — so
+a hand-ported file is a simplified equivalent, not an automatic
+translation:
+
+```yaml
+# .claude/agents/ref-finder.md -- hand-ported from the bundle's
+# agent/ref-finder.md: the description and the prose body are unchanged,
+# and the OpenCode per-pattern permission rules (read/glob/grep/list
+# allowed, edit/write/task/bash denied) collapse to a coarse read-only
+# tool allow-list.
+---
+name: ref-finder
+description: >-
+  Lists and resolves the artifacts a single specmgr document references --
+  its `<TYPE> <id>` cross-reference lines -- by calling the `list_references`
+  MCP tool and reporting each referenced artifact's `type`/`id`/`title`/`path`,
+  flagging any that could not be resolved on disk. Read-only -- never edits,
+  writes, or commits.
+tools: Read, Grep, Glob, mcp__specmgr__list_references
+---
+
+<the file's prose body, unchanged>
+```
+
+OpenCode's skills (`.opencode/skill/*/SKILL.md`) have no Claude Code
+counterpart with the same self-triggering semantics; keep them as plain
+reference documents if you need their content.
+
 ## Usage
 
 Once connected, your AI assistant sees two kinds of tools per document
@@ -520,9 +592,8 @@ domain: **per-domain** tools (`create_<d>`, `get_<d>`, `list_<d>`,
 `parse_<d>`, plus `get_<d>_example`/`get_<d>_template`), and **generic
 dispatch** tools that take a `type=` parameter and behave the same way
 across every domain: `update` (whole-body or line-range edits),
-`set_status`, `set_classification`, `delete`, and `validate` (ADR is the
-one exception, predating this pattern, with its own dedicated tools
-instead). See [docs/MCP.md](docs/MCP.md) for the full list.
+`set_status`, `set_classification`, `delete`, and `validate`. See
+[docs/MCP.md](docs/MCP.md) for the full list.
 
 The server also ships **prompts** (e.g. `create_req`, `update_req`,
 `implement_task`) — guided, multi-turn interview flows that are the
@@ -564,12 +635,76 @@ references. `/refs` requires opencode — the tool itself is plain MCP,
 callable directly from any MCP client.
 
 Also in [opencode](https://opencode.ai), the project-local
-`specmgr-refs` skill (`.opencode/skills/specmgr-refs/SKILL.md`) is the
+`specmgr-refs` skill (`.opencode/skill/specmgr-refs/SKILL.md`) is the
 agent-initiated surface: it loads itself when a task matches
 reference-retrieval phrasings, routes single-document requests to the
 `list_references` tool, the `ref-finder` subagent, or the `/refs`
 command, and codifies the graph, batch, and reverse workflows that
 `/refs` and `ref-finder` do not cover.
+
+## Multi-Language Artifacts
+
+The same artifact can exist in several languages. English is the default
+and keeps its location (`docs/<type>/`); every other language is a
+`docs/<type>/<language>/` subfolder (`<language>` is a lowercase
+two-letter code such as `de`) that holds the variant under the **exact
+same file name** as its English source, with the **same `id`** and the
+identical frontmatter and body structure. The language lives in the
+file's location only — there is no `language` frontmatter field. It
+applies to the twelve domains `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
+`rsk`, `dec`, `sop`, `vcr`, `sysrs` and `txt`.
+
+**`feat` is always English**, permanently: no `feat` tool, resource or
+prompt takes a `language`, and the generic tools reject a non-default
+`language` for that type (`language="en"`, the default, is accepted and
+behaves as before).
+
+- **Reading and writing.** `get_<d>`, `list_<d>` and `create_<d>`, and
+  the generic `update`, `edit`, `set_status`, `set_classification` and
+  `delete` tools take an optional `language` (default `"en"`; leaving it
+  out behaves exactly as before). `list_<d>(language="de")` lists only
+  the German variants. A variant is created from an existing English
+  document: `create_<d>(content, language="de", id=<id of the EN source>)`.
+  `validate` stays English-only.
+- **Headings.** A translated heading is mapped back to its canonical
+  English heading through a per-language table, so a variant is checked
+  against the exact same schema as the English document. The file keeps
+  its translation. Closed-vocabulary values (`status`, `classification`,
+  RSK `Strategy`/`Probability`/`Impact`, VCR `Coverage` and `AC-NNN
+  (Method)`, `Option N:`/`Step N:` tokens, `[ ]`/`[x]`, cross-reference
+  tags, SOP lifecycle values) are never translated, and neither is the
+  PRB `problem_statement` sentence.
+- **Translating.** The MCP prompt `translate_artifact` (`type`, `id`,
+  `language`, optional `source_language`) drives the translation; the
+  resources `specmgr://i18n` and `specmgr://i18n/headings/{language}`
+  document the rules and return a language's heading table. In
+  [opencode](https://opencode.ai): the `translate-artifact` skill and
+  `/translate <type> <id> <language> [source_language]`. No tool
+  translates by itself — the model does the translating around the
+  deterministic tools.
+- **Status and drift.** `list_languages(type, id)` reports the languages
+  an artifact exists in. `check_translation_drift(type, id, language)`
+  reports structural drift (missing, extra or reordered sections) and
+  staleness (the English source is newer than the translation). In
+  opencode: the `translation-status` skill and
+  `/translation-status <type> <id> [language]`.
+- **English-only search and references.** `find_related`,
+  `find_similar_text`, `list_references` and `get_reference_diagram(_all)`
+  never see a language variant: a hit or a resolved reference is always
+  the English document.
+- **Adding a language.** Add one file,
+  `src/biz/dfch/specmgr/general/data/headings/<language>.json` — a flat
+  JSON object `{"<translated heading>": "<canonical English heading>"}`
+  that covers exactly the fixed-text headings of the document models, with
+  distinct values. No code change is needed. The drift test
+  `tests/general/models/test_heading_table_drift.py` checks every shipped
+  table and names each missing or surplus heading. Without a table file a
+  language code is rejected when a document of that language is read or
+  written.
+- **Titles and headings.** Only the section headings (levels 2-6) are
+  mapped through the table. The document title (the level-1 `#` line) is
+  free text in every language and is never looked up or rewritten, even
+  when it equals a table entry (a German title `Quelle` stays `Quelle`).
 
 ## Development
 
@@ -707,7 +842,7 @@ a manual fallback command for every step):
 
 ```bash
 scripts/release.sh resolve minor         # print the target version (e.g. 0.15.0); no mutation
-scripts/release.sh precheck 0.15.0       # fail-fast pre-release checks
+scripts/release.sh precheck 0.15.0       # fail-fast pre-release checks, incl. the feat closeout gate and the previous-release branch cleanup
 scripts/release.sh bump 0.15.0           # pyproject.toml + uv.lock
 scripts/release.sh changelog 0.15.0      # [Unreleased] -> dated section
 scripts/release.sh commit-push 0.15.0    # 3-file release commit, push dev, wait for CI
@@ -719,6 +854,18 @@ scripts/release.sh release-notes 0.15.0  # verify the release + set the GH relea
 scripts/release.sh status 0.15.0         # where does this release stand?
 scripts/release.sh all 0.15.0            # the whole chain, TTY only (interactive merge gate)
 ```
+
+`precheck` ends with two sub-items added by feat-233 (issue #233): the
+**feat closeout gate** — every `.specmgr/feat/feat-*/` folder shipped in
+the current release window (since the last tag) must be closed out to
+`status: done` in its README frontmatter, and a violation fails the
+precheck with one actionable line per offending feat (remediation: close
+out the named feats to `done` on `dev`, commit, re-run `precheck`); and
+the **previous-release branch cleanup** — stale `feat-*`/`fix/*` branches
+from the previous release or older are deleted on the local and `origin`
+side, each deletion proven by the branch's merged PR and guarded by four
+hazard checks (`--dry-run` makes this sub-item report-only: the
+would-delete/would-keep table, no ref is deleted).
 
 Changelog *curation* (SOP step 3) is an agent or manual step: the
 `changelog` stage only moves the already-curated `[Unreleased]` section

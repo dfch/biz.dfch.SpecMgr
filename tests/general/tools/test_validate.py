@@ -17,8 +17,8 @@
 
 """Tests for the generic ``validate`` ``@mcp.tool()`` wrapper (feat-81-83-validation, Phase 2).
 
-Parameterized over the whole-body document types the generic tool covers (``adr`` is
-excluded, mirroring ``update``/``set_classification``/``delete``'s own precedent); the
+Parameterized over the whole-body document types the generic tool covers (mirroring
+``update``/``set_classification``/``delete``'s own precedent); the
 per-domain fixture bodies below are 1:1 ports of the retired per-domain ``test_validate_<d>.py``
 files' own ``_MINIMAL_BODY``/``_MALFORMED_BODY``/``_FULL_DOCUMENT`` constants (Task 2.5's
 coverage-superseded rationale).
@@ -32,7 +32,7 @@ Covers, per REQ-004/ACC-004:
 - A field/cross-field-invalid body-only content likewise never raises -- same shape (the
   ``pydantic.ValidationError`` channel), for every domain with a straightforward field/
   cross-field failure mode ported from its own retired test.
-- ``validate(type="adr", ...)`` and any other unsupported ``type`` still raise ``ValueError``.
+- ``validate(type=...)`` with any unsupported ``type`` still raises ``ValueError``.
 - For a representative sample of domains (``req``, ``dec``, ``vcr``), a ``full``/content-shape
   mismatch (``full=True`` with body-only content, and ``full=False`` with a complete document)
   still raises ``ValueError`` through the generic tool, rather than being swallowed into
@@ -80,7 +80,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -88,7 +88,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
     """
 )
 _REQ_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized requirement sections.\n"
-_REQ_BAD_FIELD_BODY = _REQ_MINIMAL_BODY.replace("MUST", "NOT-A-VALID-LEVEL")
+_REQ_BAD_FIELD_BODY = _REQ_MINIMAL_BODY.replace("SRS", "NOT-A-VALID-LEVEL")
 _REQ_FULL_DOCUMENT = (
     textwrap.dedent(
         """\
@@ -753,6 +753,57 @@ _SYSRS_FULL_DOCUMENT = (
     + _SYSRS_MINIMAL_BODY
 )
 
+#: A minimal, valid ``txt`` body (H1, opaque free-form body, one newest-first ``## Updates`` entry).
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+_TXT_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized free-form text sections.\n"
+_TXT_BAD_FIELD_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    ### 2026-01-01 10:00:00.000Z - Older note
+
+    The older note content.
+
+    ### 2026-06-01 10:00:00.000Z - Newer note
+
+    The newer note content.
+    """
+)
+_TXT_FULL_DOCUMENT = (
+    textwrap.dedent(
+        """\
+    ---
+    id: txt-001
+    type: txt
+    version: 1.0.0
+    status: draft
+    created: '2026-08-31T00:00:00.000Z'
+    updated: '2026-08-31T00:00:00.000Z'
+    ---
+
+    """
+    )
+    + _TXT_MINIMAL_BODY
+)
+
 
 @dataclass(frozen=True)
 class _Case:
@@ -780,6 +831,7 @@ _CASES: list[_Case] = [
     _Case("feat", _FEAT_MINIMAL_BODY, _FEAT_MALFORMED_BODY, _FEAT_FULL_DOCUMENT, _FEAT_BAD_FIELD_BODY),
     _Case("vcr", _VCR_MINIMAL_BODY, _VCR_MALFORMED_BODY, _VCR_FULL_DOCUMENT, _VCR_BAD_FIELD_BODY),
     _Case("sysrs", _SYSRS_MINIMAL_BODY, _SYSRS_MALFORMED_BODY, _SYSRS_FULL_DOCUMENT, _SYSRS_BAD_FIELD_BODY),
+    _Case("txt", _TXT_MINIMAL_BODY, _TXT_MALFORMED_BODY, _TXT_FULL_DOCUMENT, _TXT_BAD_FIELD_BODY),
 ]
 
 
@@ -834,11 +886,7 @@ class TestValidateAllDomains(unittest.TestCase):
 
 
 class TestValidateUnsupportedType(unittest.TestCase):
-    """ACC-004: an unsupported `type` (including `"adr"`) must still raise `ValueError`."""
-
-    def test_adr_type_raises_value_error(self) -> None:
-        with self.assertRaises(ValueError):
-            validate(type="adr", content=_REQ_MINIMAL_BODY)  # type: ignore[arg-type]
+    """ACC-004: an unsupported `type` must raise `ValueError`."""
 
     def test_unknown_type_raises_value_error(self) -> None:
         with self.assertRaises(ValueError):

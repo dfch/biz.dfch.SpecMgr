@@ -2,7 +2,7 @@
 
 Verification Case Record (VCR) domain -- how a single REQ/UC is verified.
 
-This is a domain-first package, mirroring ``dec``'s layout (per ADR
+This is a domain-first package, mirroring ``dec``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts, and
 resources for managing ``vcr`` documents. A VCR captures a coverage
 assessment plus a list of acceptance criteria, each with its own closed
@@ -19,9 +19,8 @@ resources against the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import vcr  # noqa: F401 (side-effects only)
 
 ``tools`` (``create_vcr``, ``parse_vcr``,
-``list_vcr``, ``get_vcr``, ``get_vcr_example``, ``get_vcr_template``),
-``resources`` (``specmgr://vcr/schema``,
-``specmgr://vcr/example``, ``specmgr://vcr/template``), and ``prompts``
+``list_vcr``, ``get_vcr``, ``get_vcr_example``, ``get_vcr_template``, ``get_vcr_schema``),
+``resources`` (``specmgr://vcr/example``, ``specmgr://vcr/template``), and ``prompts``
 (``create_vcr``, ``update_vcr``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="vcr"``), and status changes go through the
@@ -31,9 +30,14 @@ Disk-free, id-free dry-run content validation goes through the generic
 ``validate_vcr`` tool was removed in favor of it (feat-81-83-validation).
 Like DEC, VCR has no
 ``specmgr://vcr/{id}`` resource -- id-based reads go through the ``get_vcr``
-tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
+tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://vcr/list`` resource -- ``list_vcr`` ships as a paged
-``@mcp.tool()`` from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+``@mcp.tool()`` from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
+
+The former ``specmgr://vcr/schema`` resource was converted into the
+``get_vcr_schema`` tool, so that the generated JSON Schema is discoverable
+from the always-in-context tool surface (feat-189 Phase 105, DEC
+112b6498-078b-4a59-88b8-8ffb7a5041b3).
 
 The closed DTAIS verification-method vocabulary that this domain's
 ``## Acceptance Criteria`` depends on is documented by the cross-cutting

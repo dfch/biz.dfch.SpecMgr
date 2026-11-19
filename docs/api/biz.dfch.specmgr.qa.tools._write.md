@@ -6,8 +6,7 @@ the generic ``update`` tool in ``general.tools`` (``type="qa"``).
 Deliberately **not** part of ``qa.tools._io`` -- that module's own docstring
 rules out a ``write_qa``/``render_qa`` counterpart to ``read_qa``, since this
 design never renders a body back out from a parsed
-:class:`~biz.dfch.specmgr.qa.models.v2.QaDocument` model (unlike
-``adr.tools._io.write_adr``, which does via ``render_adr``). What
+:class:`~biz.dfch.specmgr.qa.models.v2.QaDocument` model. What
 :func:`write_qa_file` does instead is a strictly narrower thing: combine an
 already-constructed, already-validated
 :class:`~biz.dfch.specmgr.qa.models.v2.QaFrontmatter` with the caller's own

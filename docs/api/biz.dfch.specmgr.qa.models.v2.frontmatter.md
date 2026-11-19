@@ -6,7 +6,7 @@ Mirrors the pattern established by `tsk/models/v1/frontmatter.py::TskFrontmatter
 a subtype of `MarkdownFrontmatter` that restricts `type` to a fixed
 ``Literal["qa"]`` and narrows the free-form ``status`` to TSK's own closed
 vocabulary (reused verbatim -- a Q&A document's lifecycle doesn't map
-naturally to REQ's larger, ADR-like proposed/accepted/rejected/implemented
+naturally to REQ's larger proposed/accepted/rejected/implemented
 set, see the feature README's Design Notes/Decisions Made).
 
 Lives directly in `qa/models/v2/` -- QA's frontmatter shape has never been
@@ -14,6 +14,11 @@ versioned independently of the body schema, so it sits alongside the rest
 of the (now single-schema, v2-only) QA models rather than under its own
 `v1`/`v2` split (feat-14 Phase 8: `qa/models/v1/` was removed once v2 became
 the domain's only tool-reachable schema).
+
+This module also owns the QA-document status state machine (feat-108-fsm,
+GitHub issue #108): the ``_STATUS_TRANSITIONS`` table, next to
+``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
 
 ## Classes
 

@@ -6,16 +6,16 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new System Requirements Specification (SYSRS)
 document using the existing ``sysrs/tools/``/``sysrs/resources/`` surface
 (``list_sysrs``, ``specmgr://sysrs/template``/``specmgr://sysrs/example``,
-``specmgr://sysrs/schema``, ``create_sysrs``, generic ``validate`` tool) plus the
+``get_sysrs_schema``, ``create_sysrs``, generic ``validate`` tool) plus the
 existing cross-cutting ``specmgr://iso25010`` resource (read before grouping
 ``## Requirements`` by its nine canonical characteristic names).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_sysrs`` builds the entire SYSRS frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown (and ``status`` is always fixed
 to ``"draft"``). The body aggregates already-existing specmgr artifacts
-(``gol``, ``prb``, ``qa``, ``uc``, ``req``, ``rsk``, ``dec``/``adr``,
+(``gol``, ``prb``, ``qa``, ``uc``, ``req``, ``rsk``, ``dec``,
 ``vcr``) into one coherent, navigable specification via per-section
 type-tagged cross-reference lists, rather than duplicating their content.
 

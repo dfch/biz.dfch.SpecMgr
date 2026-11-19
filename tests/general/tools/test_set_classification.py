@@ -17,8 +17,7 @@
 
 """Tests for the generic ``set_classification`` ``@mcp.tool()`` wrapper (feat-56-classification, Phase 2).
 
-Parameterized over the whole-body document types (``adr`` is out of
-scope for this feature, unlike ``set_status``, which also covers ``adr``); seeds a real,
+Parameterized over the whole-body document types; seeds a real,
 persisted document per type via the domain's own ``create_<d>`` tool in a
 temp ``SPECMGR_DOCS_DIR``/``SPECMGR_FEAT_DIR`` (mirroring the fixture
 strategy of ``tests/general/tools/test_set_status.py``), and covers:
@@ -93,6 +92,10 @@ from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument, SysrsFrontmatter
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.sysrs.tools.list_sysrs import list_sysrs
+from biz.dfch.specmgr.txt.models.v1 import TxtDocument, TxtFrontmatter
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError, txt_base_dir
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
+from biz.dfch.specmgr.txt.tools.list_txt import list_txt
 from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, VcrFrontmatter
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
@@ -122,7 +125,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -401,6 +404,23 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+#: A minimal, valid ``txt`` body (H1, opaque free-form body, one newest-first ``## Updates`` entry).
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+
 _FEAT_MINIMAL_BODY = textwrap.dedent(
     """\
     # Feature: Example Widget
@@ -512,6 +532,16 @@ _CASES: list[_Case] = [
         _FEAT_SLUG_ID,
     ),
     _Case(
+        "txt",
+        create_txt,
+        txt_base_dir,
+        TxtNotFoundError,
+        TxtFrontmatter,
+        TxtDocument,
+        _TXT_MINIMAL_BODY,
+        _FEAT_SLUG_ID,
+    ),
+    _Case(
         "feat",
         create_feat,
         feat_base_dir,
@@ -564,6 +594,7 @@ _PARSE_FAILURE_CASES: list[_ParseFailureCase] = [
     _ParseFailureCase("feat", create_feat, feat_base_dir, FeatNotFoundError, list_feat, _FEAT_MINIMAL_BODY),
     _ParseFailureCase("vcr", create_vcr, vcr_base_dir, VcrNotFoundError, list_vcr, _VCR_MINIMAL_BODY),
     _ParseFailureCase("sysrs", create_sysrs, sysrs_base_dir, SysrsNotFoundError, list_sysrs, _SYSRS_MINIMAL_BODY),
+    _ParseFailureCase("txt", create_txt, txt_base_dir, TxtNotFoundError, list_txt, _TXT_MINIMAL_BODY),
 ]
 
 
@@ -684,17 +715,6 @@ class TestSetClassificationInvalidType(TempDocsDirTestCase):
 
         self.assertIs(type(classification_ctx.exception), type(status_ctx.exception))
 
-    def test_adr_type_is_not_supported(self) -> None:
-        """``type="adr"`` must be rejected -- ADR's separate frontmatter model is out of scope for this feature.
-
-        ``adr`` is one of ``_path_safety``'s known UUID-shaped types, so ``validate_id`` accepts a
-        well-formed UUID id for it (same as the generic ``update`` tool, which also excludes ``adr``
-        from its own dispatch table); the rejection surfaces as a ``KeyError`` from the dispatch-table
-        lookup itself, mirroring ``update``'s own undocumented-but-real behavior for ``type="adr"``.
-        """
-        with self.assertRaises(KeyError):
-            set_classification(id=_MISSING_UUID, type="adr", classification="Confidential")
-
 
 #: The pinned path-injection shapes (mirrors ``test_set_status.py``'s own ``_TRAVERSAL_IDS``).
 _TRAVERSAL_IDS = ("../x", "a/b", "a\\b", "..")
@@ -740,12 +760,12 @@ class TestSetClassificationAssertWithinSpy(TempDocsDirTestCase):
 
 
 class TestSetClassificationParseFailure(TempDocsDirTestCase):
-    """feat-170 Phase 110 (Bug 1, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
+    """feat-170 Phase 110 (Bug 1, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
     on-disk file fails to parse must return the non-raising ``ParseFailureResult`` (never the
     domain's ``XNotFoundError``) from the generic ``set_classification`` tool's single protected
     ``load_by_id`` call site, with nothing written to disk -- the ``error`` carries the same
     parse defect as the domain's own ``list_<d>`` failed row for the same file (the ``get_<d>``
-    precedent, ADR 9080b37c). All 12 whole-body domains, ``feat`` included (this module's
+    precedent, DEC 9080b37c). All 12 whole-body domains, ``feat`` included (this module's
     unified case shape).
 
     A truly-absent id still raises the domain's own not-found error (REQ-002): the regression

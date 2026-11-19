@@ -16,7 +16,7 @@ Add a new markdown artifact type, `Goal` (abbreviation `gol`), for capturing
 high-level business goals — the strategic "what the organization wants to
 achieve" level that sits above individual requirements. `gol` follows the
 domain-first hierarchy and MCP surface already established by `req`/`prb`
-(ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and mirrors `req`'s body schema
+(DEC ece4554b-725c-4f76-bc04-5d2b760363d2) and mirrors `req`'s body schema
 with exactly two deliberate omissions: no `## Characteristics` section (ISO
 25010:2023 quality characteristics are a requirement-level attribute — a
 business goal stays deliberately free of them) and no `## Level` section
@@ -34,8 +34,8 @@ mechanism) and `req`'s 7-value frontmatter status set.
 - REQ-001: Define the `gol` markdown schema — frontmatter (`type="gol"`, 7-value status set `draft`/`proposed`/`accepted`/`superseded`/`deprecated`/`rejected`/`implemented`, `req`'s exact set) and body (H1 title, mandatory `statement` lead paragraph, optional `## Description`, optional `## Priority`, optional `## Tags`, mandatory `## Source`, optional `## Related Artifacts` holding four optional, fixed-heading `### ` cross-reference sub-lists — `Requirements`/`Decisions`/`Goals`/`Acceptance Criteria` — optional `## More Information`, optional `## Notes`). No `## Characteristics` and no `## Level` (see Design Notes).
 - REQ-002: Pydantic models under `gol/models/v1/` (frontmatter, body, document, parser, summary), domain-first, mirroring `req`/`prb`'s exact file shapes. No `models/md` engine changes are needed — every field is buildable with the existing declarative heading-mapped parser.
 - REQ-003: Parse/validate `gol` documents from markdown, mirroring `parse_req`/`parse_prb`'s two-error-channel convention (`AssertionError` for structural problems, `pydantic.ValidationError` for field-level problems).
-- REQ-004: MCP tools mirroring REQ/PRB's lifecycle surface, **plus** `list_gol` as a paged tool from day one (per ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 — new domains must not add a `specmgr://gol/list` resource and convert it later): `parse_gol`, `create_gol`, `update_gol`, `set_status_gol`, `delete_gol` (stub), `validate_gol`, `get_gol`, `get_gol_example`, `get_gol_template`, `list_gol`.
-- REQ-005: MCP resources: `specmgr://gol/schema`, `/example`, `/template` (no `/list` — REQ-004 covers listing as a tool; no `/{id}` — id-based reads are `get_gol`-only, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+- REQ-004: MCP tools mirroring REQ/PRB's lifecycle surface, **plus** `list_gol` as a paged tool from day one (per DEC ec9f5262-9912-49d0-903f-fcfb54f28c13 — new domains must not add a `specmgr://gol/list` resource and convert it later): `parse_gol`, `create_gol`, `update_gol`, `set_status_gol`, `delete_gol` (stub), `validate_gol`, `get_gol`, `get_gol_example`, `get_gol_template`, `list_gol`.
+- REQ-005: MCP resources: `specmgr://gol/schema`, `/example`, `/template` (no `/list` — REQ-004 covers listing as a tool; no `/{id}` — id-based reads are `get_gol`-only, per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 - REQ-006: MCP prompts `create_gol`/`update_gol` — narrated, `TodoWrite` + `question`-tool-driven interview flows reusing the dedup-check-first pattern from `req/prompts/create_req.py` and the `TodoWrite`/`question`-tool narration pattern from `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use their own packaged instructions data file (`gol_create_instructions.md`/`gol_update_instructions.md` under `gol/data/`), not an inline string.
 - REQ-007: Packaged example/template/schema data (`gol/data/`) via the existing generic `general/tools/_packaged_data.py`, with the matching `pyproject.toml` package-data entry, pre-commit hook, and CI step.
 - REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema` (new `gol` entry in the doc-type registry, `commands/schema.py`), `specmgr mcp-docs`, all kept drift-free via pre-commit/CI; `AGENTS.md` updated to eight domain/cross-cutting packages.
@@ -101,9 +101,9 @@ in this feature:
 
 #### Depends On
 
-- ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
-  hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
-  `MarkdownFrontmatter` base), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614
+- DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+  hierarchy), DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
+  `MarkdownFrontmatter` base), DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614
   (tool-only id-based reads, no `specmgr://gol/{id}` resource), ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13 (`list_<domain>` as a paged tool,
   not a resource — `list_gol` must follow this from day one), the existing
@@ -177,7 +177,7 @@ parser does not special-case a document's own id).
 
 **Update mechanism: whole-body `update_gol(id, content)`**, not an
 ADR-style `update_section`. The generic `adr/tools/update_section.py`
-mechanism (ADR 71fd95d7-07f2-466f-81aa-d29b7e3ef34c) is currently
+mechanism (DEC 71fd95d7-07f2-466f-81aa-d29b7e3ef34c) is currently
 ADR-specific code, not a shared cross-domain component — the same decision
 as feat-16's for `prb`. Individual sections stay addressable by grepping/
 editing their fixed heading text within the whole-body markdown.
@@ -429,9 +429,9 @@ the `### Goals` sub-list cross-references peer/superseding goals (user decision)
 
 #### 2026-08-25T19:07:01.000Z : `update_gol` is a single whole-body replace tool (REQ/PRB convention), not an ADR-style `update_section`/option-style granular tool —
 
-the latter is currently ADR-specific code (ADR 71fd95d7), same decision as feat-16's for `prb`. Individual sections remain addressable by their fixed heading text within the whole-body markdown.
+the latter is currently ADR-specific code (DEC 71fd95d7), same decision as feat-16's for `prb`. Individual sections remain addressable by their fixed heading text within the whole-body markdown.
 
-#### 2026-08-25T19:07:01.000Z : `list_gol` is a paged tool from day one per ADR ec9f5262 —
+#### 2026-08-25T19:07:01.000Z : `list_gol` is a paged tool from day one per DEC ec9f5262 —
 
 no `specmgr://gol/list` resource, no resource-then-convert history.
 

@@ -47,9 +47,9 @@ artifact type" feature's own branch-per-feature convention (e.g.
 - REQ-002: Pydantic models under `feat/models/v1/` (frontmatter, body, document, parser, summary, `_util.py` with `SCHEMA_COMMENT_VERSION = "v1"`), domain-first, mirroring `dec`/`gol`'s exact file shapes. `Updates`/ `UpdateEntry` copies `feat-30-sop`'s planned ISO8601-enforced shape one heading level deeper (`### Updates`/`#### {timestamp} — {title}` instead of SOP's `## Updates`/`### {timestamp} — {title}`) — see Design Notes for the exact regex. No `models/md` engine changes needed: `MarkdownSection1` through `MarkdownSection6` already exist, so the H3→H4 dynamic-list pattern is the same generic mechanism TSK's/DEC's H2→H3 `Updates`/`UpdateEntry` already exercises, just one level deeper.
 - REQ-003: Parse/validate `feat` documents from markdown, mirroring `parse_dec`/`parse_gol`'s two-error-channel convention (`AssertionError` for structural problems, `pydantic.ValidationError` for field-level problems). Additionally: the invariant "frontmatter `id` equals the containing folder's name" is enforced at the **tool** layer (`feat/tools/_paths.py`/ `_io.py`), not the model layer — the model-layer `parse_feat(text: str)` has no path/folder-name to check against, matching every other domain's pure-text model-layer parser signature.
 - REQ-004: Bespoke, folder-per-document addressing (`feat/tools/_paths.py`, hand-rolled like ADR's own `adr/tools/_paths.py`, **not** the shared flat-file `general/tools/_doc_paths.py`): base directory `.specmgr/feat`, documents at `<base>/<id>/README.md`. **`SPECMGR_FEAT_DIR` (mandatory, not optional)** overrides the base directory — this is not a `feat`-only nicety: every existing domain has an equivalent env var (`SPECMGR_ADR_DIR` in `adr/tools/_paths.py`; the shared `SPECMGR_DOCS_DIR` in `general/tools/_doc_paths.py`, used by `req`/`uc`/`tsk`/`qa`/`prb`/ `gol`/`rsk`/`dec`), specifically so tests never read/write the real base directory (for `feat`, that would mean the real `.specmgr/feat/` — the very folder this plan file itself lives in). Omitting it would make `feat` the only domain in the codebase without test isolation for its base directory. Since `id` is the folder name by convention, `find_feat_path_by_id` shortcuts straight to `<base>/<id>/README.md` and verifies the frontmatter `id` matches (raising `FeatNotFoundError` otherwise) instead of a full directory scan. `create_feat` derives the next `NNN` by scanning existing `feat-*` folder names under a **global** create-lock (distinct from every other domain's per-id lock, since the id doesn't exist yet when the lock must be taken). No partial-id-match support (e.g. resolving a bare `"feat-31"` to `"feat-31-feature"`) — considered and rejected, see Decisions Made.
-- REQ-005: 8 MCP tools, sop-style generic dispatch (**no** `update_feat`/`set_status_feat` — see Overview): `create_feat`, `parse_feat`, `list_feat` (paged tool from day one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13), `get_feat(id, raw=False)`, `get_feat_example`, `get_feat_template`, `delete_feat` (stub), `validate_feat` — plus private `_paths`/`_io`/`_lock`/`_write` helpers per REQ-004.
+- REQ-005: 8 MCP tools, sop-style generic dispatch (**no** `update_feat`/`set_status_feat` — see Overview): `create_feat`, `parse_feat`, `list_feat` (paged tool from day one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13), `get_feat(id, raw=False)`, `get_feat_example`, `get_feat_template`, `delete_feat` (stub), `validate_feat` — plus private `_paths`/`_io`/`_lock`/`_write` helpers per REQ-004.
 - REQ-006: Add `"feat"` to the generic cross-domain mutation tools — `_update_feat`/`_set_status_feat` adapters and `type="feat"` dispatch table entries in `general/tools/update.py`/`set_status.py`, built on REQ-004's bespoke `_paths`/`_io`/`_lock`/`_write` (same shape as the eight existing adapters, just resolving paths differently).
-- REQ-007: MCP resources: `specmgr://feat/schema`, `/example`, `/template` (no `/list` — REQ-005 covers listing as a tool; no `/{id}` — id-based reads are `get_feat`-only, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+- REQ-007: MCP resources: `specmgr://feat/schema`, `/example`, `/template` (no `/list` — REQ-005 covers listing as a tool; no `/{id}` — id-based reads are `get_feat`-only, per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 - REQ-008: MCP prompts `create_feat(topic)`/`update_feat(id, instructions=None)` — narrated instruction flows reusing the dedup-check-first pattern (`list_feat`) and the `TodoWrite`/`question`-tool narration pattern from `gol`/`dec`/`prb`'s prompts; both read their own packaged instructions data file (`feat/data/feat_create_instructions.md`/ `feat_update_instructions.md`), not an inline string.
 - REQ-009: `generate_feat_schema()` + `_GENERATORS["feat"]` in `commands/schema.py`; packaged `feat/data/feat_schema.json`.
 - REQ-010: Cross-cutting registration (`server.py`, `pyproject.toml`, `.pre-commit-config.yaml`, CI, `AGENTS.md`, root `README.md`, regenerated docs) and a new backlog task in `feat-7-various-improvements` (Task 0.31) tracking the future migration of the 17 pre-existing feature folders into this schema — added as part of this feature's own scope, the migration itself is explicitly out of scope (see Scope).
@@ -122,20 +122,20 @@ artifact type" feature's own branch-per-feature convention (e.g.
 
 #### Depends On
 
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e (the governing
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e (the governing
   `.specmgr/feat/` convention this feature formalizes), ADR
   ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy), ADR
   bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic `MarkdownFrontmatter` base),
-  ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based reads), ADR
+  DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based reads), ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13 (paged `list_<d>` tool, not a
-  resource), ADR 36905d5b-8057-4294-8665-c7eed5534db0 (generic
+  resource), DEC 36905d5b-8057-4294-8665-c7eed5534db0 (generic
   `update`/`set_status` dispatch — `feat` must use these from day one), the
   existing `models/md` engine (feat-5, done) and
   `general/tools/_packaged_data.py`/`_paging.py`/`_splice.py` infrastructure.
   The `### Updates`/`UpdateEntry` ISO8601 shape is copied from
   `feat-30-sop`'s **plan** (not its code — `sop` is not yet implemented, this
   feature independently implements its own copy one heading level deeper).
-  ADR 8cf940c5-3100-485c-a12d-14b59b631712 (UUID/flat-file addressing) is
+  DEC 8cf940c5-3100-485c-a12d-14b59b631712 (UUID/flat-file addressing) is
   cited as the precedent this feature *deviates from*, not one it follows.
 #### Blocks
 
@@ -344,7 +344,7 @@ instead, per user direction. `created`/`updated` use the same
 microsecond ISO timestamp (`datetime.now().isoformat(timespec="microseconds")`)
 as every other whole-body domain — **this reverses an earlier, deliberate
 divergence** (plain `YYYY-MM-DD` dates, matching every one of the 17
-pre-existing hand-authored feature files and ADR e369ee2e's own
+pre-existing hand-authored feature files and DEC e369ee2e's own
 template), reversed as a Phase 6 follow-up for cross-domain consistency;
 see Decisions Made for the rationale. The 17 pre-existing feature files
 themselves remain out of scope/unaffected by this change (see Scope) —

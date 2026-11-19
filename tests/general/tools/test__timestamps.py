@@ -19,7 +19,7 @@
 form since feat-146 Phase 1).
 
 Covers the machine-written canonical date+time formatting shape (feat-146,
-ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf): `T`-separated (ISO 8601's
+DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf): `T`-separated (ISO 8601's
 standard extended combined form; the read side accepts the space separator
 too, but the MCP write side always emits `T`), `Z` for a zero UTC offset, a
 signed `±HH:mm` offset otherwise, milliseconds truncated (not rounded) to
@@ -115,7 +115,7 @@ class TestTSeparator(unittest.TestCase):
     """Tests for the `T`-separator switch itself (feat-146 Phase 1, REQ-004)."""
 
     def test_separator_is_t_not_space(self) -> None:
-        """The date/time separator must be a literal `T`, not a space (feat-146, ADR 8c889262)."""
+        """The date/time separator must be a literal `T`, not a space (feat-146, DEC 8c889262)."""
         dt = datetime(2026, 9, 1, 12, 30, 45, 123000, tzinfo=timezone.utc)
         value = format_timestamp(dt)
         self.assertEqual(value[10], "T")

@@ -25,8 +25,10 @@ Built on the generic `models.md` `MarkdownSectionN`/`MarkdownParagraph`/
 deliberate omissions (see the feature README's Scope/Design Notes): no
 `Characteristics` section (ISO 25010:2023 quality attributes are a
 requirement-level attribute -- a business goal states *what* to achieve,
-not *which quality dimension* it loads) and no `Level` section (RFC 2119
-obligation strength is implicit -- a goal is always a MUST). Consequently
+not *which quality dimension* it loads) and no `Level` section (the
+ISO/IEC/IEEE 29148:2018 requirement-specification kind is a
+requirement-level attribute -- a business goal states *what* to achieve,
+not which specification kind the requirements below it are). Consequently
 the only mandatory body fields are `statement` and `Source`; the rest are
 optional. Field declaration order on `Goal`/`RelatedArtifacts` enforces
 markdown order (statement -> `Description` -> `Priority` -> `Tags` ->

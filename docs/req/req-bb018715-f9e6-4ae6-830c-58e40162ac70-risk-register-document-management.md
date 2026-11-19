@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `rsk` package's tools (`parse_rsk`, `ge
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

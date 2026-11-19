@@ -186,7 +186,7 @@ file: `_paths.py` (`VCR_TYPE_NAME`, `VcrNotFoundError`, `vcr_base_dir`/
 (fresh `uuid.uuid4()` id, `type="vcr"`, `status="draft"` always on create,
 filename `vcr-{id}-{slug}.md`), `parse_vcr`, `get_vcr` (with `raw: bool =
 False`), `get_vcr_example`/`get_vcr_template` (reading new packaged data),
-`list_vcr` (paged from day one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13),
+`list_vcr` (paged from day one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13),
 `delete_vcr` (stub, always `NotImplementedError`), and `validate_vcr`
 (disk-free/id-free dry run, `full: bool = False`). Copied the
 already-finalized `example.md`/`template.md` planning drafts byte-for-byte

@@ -90,7 +90,7 @@ instead.
    inspect `git diff`/`git status`, re-run the quality gate commands yourself
    (`uv run --frozen ruff format --check`, `uv run --frozen ruff check`,
    `uv run --frozen vulture ...`, the `unittest` suite, and any
-   `specmgr docs`/`specmgr adr-toc`/`specmgr schema` drift checks the phase
+   `specmgr docs`/`specmgr schema` drift checks the phase
    touches). Never take "tests pass" on trust — run them.
 5. **Correct or accept.** If verification fails, resume the same subagent
    (`task_id`) with the specific failures and required fixes; do not fix it
@@ -98,9 +98,37 @@ instead.
 6. **Commit.** Ask the user to confirm, then stage and commit that phase as
    one Conventional Commit (see the `conventional_commit_message` tooling).
 7. **Advance.** Move to the next phase per plan dependency order. Repeat.
-8. **Finish.** After the plan's final verification phase, walk every
-   acceptance criterion, confirm each with concrete evidence, and report a
-   final summary to the user.
+8. **Finish (at `review`).** After the plan's final verification phase,
+   walk every acceptance criterion and confirm each with concrete
+   evidence. The feature is then at `review`, not yet `done` -- the
+   `done` closeout happens in step 10, only after the step-9 loop exits
+   clean.
+9. **Review-fix loop (capped at 3 cycles).** Run the `feat-reviewer`
+   subagent for the feature. If its report contains no Errors, Gaps, or
+   Discrepancies, the loop exits clean. If it contains any and carries
+   the conditional "Proposed Fix Phase" block: resolve any `[NEEDS
+   DECISION]` items with the user via `question` first (never guess),
+   then delegate the fix phase to one more `phase-implementer` cycle
+   exactly like a normal phase (steps 3-6) -- with the delegation
+   prompt adding an explicit first step: append the reviewer's
+   ready-to-paste block to the plan's Task List, since you cannot edit
+   files (`edit`/`write` are denied to you). Verify the fix phase as in
+   step 4 and commit it as in step 6. If the report contains any
+   Errors, Gaps, or Discrepancies but omits the conditional "Proposed
+   Fix Phase" block (a non-conforming report -- the block is mandated
+   by the reviewer's own report format), re-run the reviewer once; if
+   the re-run still reports findings without the block, hand the
+   findings to the user (as after the 3-cycle cap) and exit the loop
+   without further cycles -- the re-run neither resets nor extends the
+   3-cycle cap, and the loop never stalls on a non-conforming report.
+   Repeat until the reviewer reports no Errors, Gaps, or Discrepancies
+   left. The loop is capped at 3
+   review-fix cycles: after the third, hand any remaining findings to
+   the user instead of auto-fixing them again.
+10. **Done closeout (only after a clean loop exit).** Set the feature
+    status to `done` (the generic `set_status` tool, `type="feat"`),
+    commit, and report the final summary to the user. Never set `done`
+    while Errors, Gaps, or Discrepancies remain open.
 
 ## Hard rules
 

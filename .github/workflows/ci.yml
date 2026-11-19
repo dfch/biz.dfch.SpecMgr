@@ -74,15 +74,6 @@ jobs:
           exit 1
         }
 
-    - name: Make sure `docs/adr/README.md` is correct
-      if: matrix.python-version == '3.13'
-      run: |
-        uv run --frozen --all-extras --python 3.13.13 specmgr adr-toc
-        git diff --exit-code -- docs/adr/README.md || {
-          echo "::error::docs/adr/README.md is out of date -- run 'uv run --frozen --all-extras specmgr adr-toc' and commit the result (see AGENTS.md)."
-          exit 1
-        }
-
     - name: Make sure `docs/MCP.md` is correct
       if: matrix.python-version == '3.13'
       run: |
@@ -92,12 +83,29 @@ jobs:
           exit 1
         }
 
+    - name: Make sure `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` is correct
+      # The generated harness bundle (feat-167-mcp-lifecycle-commands-2 Phase 130): the
+      # flat `specmgr harness-bundle` command re-enumerates the repo-root
+      # .opencode/{agent,command,skill}/ markdown tree deterministically (no timestamps,
+      # two runs byte-identical) and rewrites the single package-data file; a diff is
+      # drift. The specmgr-harness-bundle pre-commit hook runs the same
+      # regenerate + git diff --exit-code pair locally (scoped to the bundled files);
+      # this step is its CI backstop, pinned to Python 3.13 like the docs drift steps
+      # above.
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr harness-bundle
+        git diff --exit-code -- src/biz/dfch/specmgr/general/data/general_harness_bundle.json || {
+          echo "::error::src/biz/dfch/specmgr/general/data/general_harness_bundle.json is out of date -- run 'uv run --frozen --all-extras specmgr harness-bundle' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
     - name: Make sure `docs/*_schema.json` is correct
       # `specmgr schema` without --type regenerates/checks ALL registered doc types
-      # (dec, feat, gol, prb, qa, req, rsk, sop, sysrs, tsk, uc, vcr) in a single run, and the command itself
+      # (dec, feat, gol, prb, qa, req, rsk, sop, sysrs, tsk, txt, uc, vcr) in a single run, and the command itself
       # exits 1 when the regenerated content differs from what was already on disk
       # (or the file didn't exist yet), so no separate `git diff --exit-code` step
-      # is needed here, unlike the `docs/`/`docs/adr/README.md` checks above.
+      # is needed here, unlike the `docs/`/`docs/MCP.md` checks above.
       # One step covers every `docs/<type>_schema.json` -- including `tsk` and
       # `rsk`, which never got their own dedicated step (their docs copies are
       # checked incidentally via this run).
@@ -109,7 +117,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/req/data/req_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://req/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_req_schema` MCP tool
       # via importlib.resources (Task 3.8) so it works from a real, non-editable install.
       # Same generator as the step above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -120,7 +128,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/uc/data/uc_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://uc/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_uc_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the step above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -131,7 +139,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/tsk/data/tsk_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://tsk/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_tsk_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -142,7 +150,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/rsk/data/rsk_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://rsk/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_rsk_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -153,7 +161,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/qa/data/qa_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://qa/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_qa_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -164,7 +172,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/prb/data/prb_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://prb/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_prb_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -175,7 +183,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/gol/data/gol_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://gol/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_gol_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -186,7 +194,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/dec/data/dec_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://dec/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_dec_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -197,7 +205,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/sop/data/sop_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://sop/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_sop_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -208,7 +216,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/feat/data/feat_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://feat/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_feat_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -219,7 +227,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/vcr/data/vcr_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://vcr/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_vcr_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -230,13 +238,24 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/sysrs/data/sysrs_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://sysrs/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_sysrs_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
       run: |
         uv run --frozen --all-extras --python 3.13.13 specmgr schema --type sysrs --output-dir src/biz/dfch/specmgr/sysrs/data || {
           echo "::error::src/biz/dfch/specmgr/sysrs/data/sysrs_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type sysrs --output-dir src/biz/dfch/specmgr/sysrs/data' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
+    - name: Make sure `src/biz/dfch/specmgr/txt/data/txt_schema.json` is correct
+      # Packaged copy of the same schema, read by the `get_txt_schema` MCP tool
+      # via importlib.resources so it works from a real, non-editable install.
+      # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr schema --type txt --output-dir src/biz/dfch/specmgr/txt/data || {
+          echo "::error::src/biz/dfch/specmgr/txt/data/txt_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type txt --output-dir src/biz/dfch/specmgr/txt/data' and commit the result (see AGENTS.md)."
           exit 1
         }
 
@@ -248,6 +267,75 @@ jobs:
           echo "::error::docs/coverage.svg is out of date -- run 'uv run --frozen --all-extras specmgr coverage-badge' and commit the result (see AGENTS.md)."
           exit 1
         }
+
+    - name: Lint the in-tree spec artifacts changed in the pull request (feat-218)
+      # The feat-218 parseability gate, CI half: full-parse (never the
+      # frontmatter+H1 listing stage) every in-tree spec artifact the pull
+      # request changed against its base branch -- the feature README.md
+      # files under .specmgr/feat/ and the documents under docs/{type}/,
+      # selected with the same anchored pattern the specmgr-lint pre-commit
+      # hook uses (a drift test pins the identity of the two). A document
+      # that fails to parse fails the step: the command's own report names
+      # the file, carries the parse error and the per-type repair pointer
+      # (REQ-001/REQ-008), so no extra ::error:: echo is needed.
+      #
+      # pull_request events only: a push to main/dev carries no base ref to
+      # diff against, and the commit path is already covered locally by the
+      # hook. Pinned to Python 3.13 like the docs drift steps above (same
+      # `--python 3.13.13` interpreter pin as their invocations).
+      #
+      # `--all-extras` is mandatory: the command's registry import chain
+      # forces the mcp extra. The base ref and the PR number arrive through
+      # the BASE_REF/PR_NUMBER env variables (the step's only expressions,
+      # kept out of the script body). The step computes the PR diff the way
+      # GitHub itself does -- three-dot semantics: merge base of the base
+      # branch tip and the PR head tip, then diff to the head tip -- and
+      # never touches HEAD: the PR checkout is shallow (the default
+      # actions/checkout is fetch-depth 1) and HEAD is the synthetic PR
+      # merge commit sitting at the shallow boundary, whose parents are not
+      # in the object store and which the shallow graft gives no traversable
+      # ancestry, so `git merge-base HEAD ...` can never find a common
+      # ancestor there (the silent exit 1 that failed PR #241). Both fetches
+      # are PLAIN, and the step is state-independent because of that: in the
+      # shallow PR checkout a plain fetch of a ref that is not in the
+      # shallow set brings that ref's full history (the clone stays
+      # shallow), and in a complete checkout a plain fetch is just a full
+      # fetch -- so neither fetch needs `--unshallow` (which would fatal on
+      # a complete repository), and the step behaves the same whichever
+      # state the checkout is in. The head fetch (`refs/pull/N/head`, which
+      # GitHub exposes for same-repo and fork PRs alike) ends in FETCH_HEAD
+      # and is the one that carries the head's commits for fork PRs; the
+      # shared checkout's fetch-depth is never changed. The changed files are
+      # NUL-delimited end to end (git diff -z, grep -z, xargs -0); when none
+      # of them is an in-tree artifact the filtered list is empty and xargs
+      # -r runs nothing -- the step skips cleanly.
+      if: matrix.python-version == '3.13' && github.event_name == 'pull_request'
+      env:
+        BASE_REF: ${{ github.base_ref }}
+        PR_NUMBER: ${{ github.event.number }}
+      run: |
+        artifact_pattern='^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$'
+        # Both fetches are plain: in a shallow PR checkout a plain fetch of
+        # a ref not in the shallow set brings that ref's full history (the
+        # clone stays shallow), in a complete checkout a plain fetch is just
+        # a full fetch -- state-independent, no --unshallow (which would
+        # fatal on a complete repository). The head fetch (refs/pull/N/head,
+        # same-repo and fork PRs alike) ends in FETCH_HEAD and carries the
+        # head's commits for fork PRs; HEAD (the PR merge commit at the
+        # shallow boundary, whose parents are not in the object store and
+        # which the shallow graft gives no traversable ancestry) is never
+        # touched by merge-base.
+        git fetch origin "$BASE_REF"
+        git fetch origin "refs/pull/${PR_NUMBER}/head"
+        merge_base=$(git merge-base FETCH_HEAD "origin/$BASE_REF")
+        # grep exits 1 when the filtered list is empty (the pull request
+        # changed no in-tree spec artifact): that is the clean-skip case,
+        # not an error -- tolerate exactly 1, let >= 2 (a grep malfunction)
+        # fail the step. The runner's default shell is `bash -eo pipefail`,
+        # so the unhandled no-match would fail the pipeline on its own.
+        git diff --name-only -z --diff-filter=ACMR "$merge_base" FETCH_HEAD \
+          | { grep -zE "$artifact_pattern" || [ "$?" -le 1 ]; } \
+          | xargs -0 -r uv run --frozen --all-extras --python 3.13.13 specmgr lint --skip-unrecognized
 
   plantuml-parser:
     env:

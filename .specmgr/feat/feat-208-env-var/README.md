@@ -57,7 +57,7 @@ Verified state at planning time (2026-10-09):
 #### Explicitly Out Of Scope
 
 - Adding new env vars, or renaming/changing any existing default or semantics (pure consolidation).
-- Migrating the `SPECMGR_PLANTUML_*` trio's read sites in `plantuml/chain.py` to the registry accessor -- impossible while `plantuml/` stays import-free (the dependency-direction invariant, ADR 7a626b12); those read sites keep their own direct `os.environ` reads.
+- Migrating the `SPECMGR_PLANTUML_*` trio's read sites in `plantuml/chain.py` to the registry accessor -- impossible while `plantuml/` stays import-free (the dependency-direction invariant, DEC 7a626b12); those read sites keep their own direct `os.environ` reads.
 - The hosting-platform probe vars (`KUBERNETES_SERVICE_HOST`, `RAILWAY_PROJECT_ID`, `RENDER` in `commands/mcp.py`) -- not specmgr-defined, already declared out of scope by feat-126.
 - Auto-generating the README "Environment Variables" prose or the `server.json` manifest (both stay hand-maintained, now test-checked against the registry); introducing a new doc-generation stage.
 - Changes to `.env`/dotenv loading behaviour (`cli.py`'s module-level `load_dotenv`, the `SPECMGR_TESTS_NO_DOTENV` sentinel semantics).
@@ -69,9 +69,9 @@ Verified state at planning time (2026-10-09):
 #### Depends On
 
 - FEAT feat-126-server-json-env-drift (GitHub issue #126, status: review): the `server.json` manifest state and read-site scan shapes this feature extends; this feature's branch should include it.
-- ADR 750842b2-aca4-4649-ba0c-855ec8e1f505 (feat-134): `SPECMGR_SIMILARITY_DISABLED` semantics.
-- ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 (feat-187): `SPECMGR_FEAT_WARMUP_DISABLED` semantics.
-- ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4 (feat-185): the plantuml trio's first-set-wins policy and `plantuml/`'s import-free invariant.
+- DEC 750842b2-aca4-4649-ba0c-855ec8e1f505 (feat-134): `SPECMGR_SIMILARITY_DISABLED` semantics.
+- DEC 3982712a-a46b-4b2b-809f-9c6925a49b44 (feat-187): `SPECMGR_FEAT_WARMUP_DISABLED` semantics.
+- DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4 (feat-185): the plantuml trio's first-set-wins policy and `plantuml/`'s import-free invariant.
 
 #### Blocks
 
@@ -81,7 +81,7 @@ Verified state at planning time (2026-10-09):
 
 **Registry placement.** A new top-level private module `biz.dfch.specmgr/_envregistry.py` (sibling of `_paths.py`, the existing top-level private-module precedent). The deciding constraint is import-chain safety in a `[cli]`-only install (no `mcp` extra): the registry must be importable at module level from `cli.py` and `commands/mcp.py` (import-time registration of their own vars, Typer option defaults sourced from it), and neither of those modules may trigger the `server`/third-party-`mcp` chain. The originally drafted home, `general/tools/_envregistry.py`, fails this: `general/tools/__init__.py` eagerly imports all ten `@mcp.tool()` modules, each of which imports `server`, which imports the third-party `mcp` package -- so any module-level `from ...general.tools._envregistry import ...` in the CLI path would pull the whole chain in and crash every CLI command (`specmgr version` included) in a `[cli]`-only install, and would defeat the deliberate lazy `server` import + friendly "install the `mcp` extra" error in `commands/mcp.py`. The `_domains.py` "no `mcp` dependency here" precedent is true only in the file-level sense (that file never imports `mcp`), which is exactly the sense that fails here -- and CI (`--all-extras`) and the test suite cannot catch the breakage, since it surfaces only for `[cli]`-only consumers. The top-level `__init__.py` intentionally carries no imports (its docstring says so), so `biz.dfch.specmgr._envregistry`'s import chain is just itself: the module is therefore stdlib-only, and an AST import-graph test pins that (mirroring `plantuml/`'s import-free pin). Registration sites (the domain `_paths.py`/gate modules, `general/resources/config.py`, `cli.py`, `commands/mcp.py`) import it the same way in every context.
 
-**The plantuml carve-out.** `plantuml/` is import-free (no `biz.dfch.specmgr.*` imports anywhere; the dependency direction is always specmgr-domain -> `plantuml`, ADR 7a626b12), so `plantuml/chain.py`'s own read sites of `SPECMGR_PLANTUML_JAR`/`_BIN`/`_URL` keep their direct `os.environ` reads (behind the existing injectable `env` mapping). The trio is still registered in the registry -- by its uc-domain consumer (e.g. `uc/tools/validate_plantuml.py`, importing `plantuml/chain.py`'s own `ENV_VAR_*` constants), with owner `plantuml`/`uc` -- so the registry stays complete for documentation tracking and the Phase 150 scan-based completeness test covers the `plantuml/` read sites like any others. No behaviour change: the trio is presence-based with no defaults, so the registry adds nothing to its selection semantics (first-set-wins, no fall-through).
+**The plantuml carve-out.** `plantuml/` is import-free (no `biz.dfch.specmgr.*` imports anywhere; the dependency direction is always specmgr-domain -> `plantuml`, DEC 7a626b12), so `plantuml/chain.py`'s own read sites of `SPECMGR_PLANTUML_JAR`/`_BIN`/`_URL` keep their direct `os.environ` reads (behind the existing injectable `env` mapping). The trio is still registered in the registry -- by its uc-domain consumer (e.g. `uc/tools/validate_plantuml.py`, importing `plantuml/chain.py`'s own `ENV_VAR_*` constants), with owner `plantuml`/`uc` -- so the registry stays complete for documentation tracking and the Phase 150 scan-based completeness test covers the `plantuml/` read sites like any others. No behaviour change: the trio is presence-based with no defaults, so the registry adds nothing to its selection semantics (first-set-wins, no fall-through).
 
 **Record shape.** A frozen dataclass `EnvVar`: `name` (str), `default` (str | None; None = presence-based/no default), `description` (str, non-empty), `owner` (str, the registering domain/feature), plus optional `format` (str | None, mirroring the manifest's `format` -- `number` on `SPECMGR_MCP_PORT`, `filepath` on the three base-dir vars and on `FASTEMBED_CACHE_PATH`; None = absent), `choices` (tuple, for manifest `choices` fidelity), and `empty_falls_back_to_default` (bool, the four-variable empty-fallback set: `SPECMGR_ADR_DIR`, `SPECMGR_DOCS_DIR`, `SPECMGR_FEAT_DIR`, `FASTEMBED_CACHE_PATH` -- the user-approved Option A decision, 2026-10-10 update entry).
 
@@ -95,10 +95,10 @@ Verified state at planning time (2026-10-09):
 
 - FEAT feat-126-server-json-env-drift (GitHub issue #126): the `server.json` env-drift detection this feature extends (registry-anchored).
 - FEAT feat-51-mcp-cwd (GitHub issue #51): the `specmgr://config` resource that reports the same vars' presence.
-- ADR c4efbde6-fd19-4aa8-8668-95316ed62dcc (feat-125): the single-source-of-truth registry pattern this feature applies to env vars.
-- ADR 750842b2-aca4-4649-ba0c-855ec8e1f505 (feat-134): `SPECMGR_SIMILARITY_DISABLED` semantics.
-- ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 (feat-187): `SPECMGR_FEAT_WARMUP_DISABLED` semantics.
-- ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4 (feat-185): the plantuml trio's first-set-wins policy and `plantuml/`'s import-free invariant.
+- DEC c4efbde6-fd19-4aa8-8668-95316ed62dcc (feat-125): the single-source-of-truth registry pattern this feature applies to env vars.
+- DEC 750842b2-aca4-4649-ba0c-855ec8e1f505 (feat-134): `SPECMGR_SIMILARITY_DISABLED` semantics.
+- DEC 3982712a-a46b-4b2b-809f-9c6925a49b44 (feat-187): `SPECMGR_FEAT_WARMUP_DISABLED` semantics.
+- DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4 (feat-185): the plantuml trio's first-set-wins policy and `plantuml/`'s import-free invariant.
 
 ### Task List
 

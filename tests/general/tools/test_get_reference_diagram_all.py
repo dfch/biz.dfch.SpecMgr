@@ -47,7 +47,6 @@ from biz.dfch.specmgr.plantuml.structure import MODE_PREFLIGHT, MODE_STANDALONE,
 
 from ._reference_graph_helpers import (
     _SeededRegistryTestCase,
-    _A001,
     _C001,
     _D002,
     _N001,
@@ -66,16 +65,15 @@ def _checker_clean(text: str) -> None:
 
 
 class TestWideRegistryAllTool(_SeededRegistryTestCase):
-    """The registry-wide tool over the multi-domain registry (the never-cached adr leg included,
-    a deliberately broken dec present): byte-stable return, the frozen default title,
-    checker-clean over the tool's actual return -- and the never-raises-for-content property
-    (the broken dec is skipped, its id and title absent from the diagram)."""
+    """The registry-wide tool over the multi-domain registry (a deliberately broken dec
+    present): byte-stable return, the frozen default title, checker-clean over the tool's
+    actual return -- and the never-raises-for-content property (the broken dec is skipped, its
+    id and title absent from the diagram)."""
 
     SEEDS = (
         ("wide/req-w001.md", f"docs/req/{_W001}.md"),
         ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
         ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-        ("wide/adr-a001.md", f"adr/{_A001}.md"),
         ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
     )
 
@@ -97,13 +95,6 @@ class TestWideRegistryAllTool(_SeededRegistryTestCase):
         self.assertNotIn(_D002, result)  # never a node (no alias, no verbatim-id label)
         self.assertNotIn("Broken Decision", result)
         self.assertNotIn(f"[DEC-{_D002}]", result)  # never an edge source
-
-    def test_the_adr_leg_is_carried(self):
-        """The never-cached adr leg (ADR bfd76370): the ADR document is a node and its reference
-        an edge in the registry-wide diagram too."""
-        result = get_reference_diagram_all()
-        self.assertIn('component "ADR" {', result)
-        self.assertIn(f"[ADR-{_A001}] --> [REQ-{_W001}]", result)
 
 
 class TestNoFeatRegistryAllTool(_SeededRegistryTestCase):

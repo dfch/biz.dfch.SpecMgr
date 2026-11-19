@@ -19,13 +19,13 @@ conditions:
   `T0`'s absolute paths **raw** (the `T0` prefix of this capture is
   visible in the file; normalization happens only in the Phase 140
   comparison test).
-- **Environment**: none of the 13 registered env vars set (`SPECMGR_ADR_DIR`,
-  `SPECMGR_DOCS_DIR`, `SPECMGR_FEAT_DIR`, `SPECMGR_MCP_TRANSPORT`,
-  `SPECMGR_MCP_HOST`, `SPECMGR_MCP_PORT`, `SPECMGR_SIMILARITY_DISABLED`,
-  `SPECMGR_FEAT_WARMUP_DISABLED`, `SPECMGR_PLANTUML_JAR`,
-  `SPECMGR_PLANTUML_BIN`, `SPECMGR_PLANTUML_URL`, `SPECMGR_TESTS_NO_DOTENV`,
-  `FASTEMBED_CACHE_PATH`) — hence every `env_var_set`/`disabled`/`set`
-  flag is `false` and `selected` is `"none"`.
+ - **Environment**: none of the 12 registered env vars set
+   (`SPECMGR_DOCS_DIR`, `SPECMGR_FEAT_DIR`, `SPECMGR_MCP_TRANSPORT`,
+   `SPECMGR_MCP_HOST`, `SPECMGR_MCP_PORT`, `SPECMGR_SIMILARITY_DISABLED`,
+   `SPECMGR_FEAT_WARMUP_DISABLED`, `SPECMGR_PLANTUML_JAR`,
+   `SPECMGR_PLANTUML_BIN`, `SPECMGR_PLANTUML_URL`, `SPECMGR_TESTS_NO_DOTENV`,
+   `FASTEMBED_CACHE_PATH`) — hence every `env_var_set`/`disabled`/`set`
+   flag is `false` and `selected` is `"none"`.
 - **Install**: the standard all-extras venv, so the `similarity` section's
   `extra_installed` (`find_spec("fastembed")`, a spec lookup, never an
   import) is stably `true`.

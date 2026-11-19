@@ -6,7 +6,7 @@ Selection is strict and configuration-driven over **exactly three** env vars
 (§3.1 — no defaults, no PATH discovery, no opt-in flags): the first of
 ``SPECMGR_PLANTUML_JAR`` → ``SPECMGR_PLANTUML_BIN`` → ``SPECMGR_PLANTUML_URL``
 that is **set** is the *only* source used. **No fall-through on
-misconfiguration** (the privacy invariant, ADR 7a626b12): a set-but-unavailable
+misconfiguration** (the privacy invariant, DEC 7a626b12): a set-but-unavailable
 JAR with a set public URL never contacts the public URL — a typo'd local
 source must never silently send diagram content to plantuml.com. A
 set-but-unavailable source is a **hard validation failure** (``source_state``
@@ -21,10 +21,10 @@ short-circuit, §3.7) and the result carries the structure errors with
 ``valid=None``/``rendered=None``/``checked_by="structure"`` (``None`` means
 "not run", never "run and failed").
 
-The result model (§3.6) is a non-raising structured result — the ADR 519d1206
+The result model (§3.6) is a non-raising structured result — the DEC 519d1206
 chain precedent: :func:`validate_plantuml` never raises for validation
 content; it returns a :class:`PlantumlValidationResult` carrying the verdict.
-Import-free and stdlib-only (ADR 7a626b12).
+Import-free and stdlib-only (DEC 7a626b12).
 
 ## Classes
 

@@ -26,8 +26,11 @@ step 1 if this is genuinely a new decision.
 - `## Considered Options` -- optional prose: a free-form summary of
   the options that were weighed.
 - `## Decision Outcome` -- mandatory: a lead paragraph naming the
-  chosen option (e.g. "We chose option 1 because ..."), followed by
-  optional `### Consequences` and `### Confirmation` H3 sections.
+  chosen option (e.g. "We chose option 1 because ...") -- the lead
+  MUST be a paragraph -- optionally followed by further blocks
+  (additional paragraphs, bullet or ordered lists, or code blocks)
+  before any H3, then the optional `### Consequences` and
+  `### Confirmation` H3 sections.
 - `## Roles and Responsibilities` -- mandatory RASCI composite: every
   decision always names an accountable owner, so this whole section is
   always present (unlike SOP's own optional equivalent):
@@ -51,7 +54,7 @@ step 1 if this is genuinely a new decision.
   (each bullet MUST match `<TAG> <uuid>: <title>` -- a space-separated
   tag, a lowercase 8-4-4-4-12 hex UUID, and a title, e.g.
   `REQ 550e8400-e29b-41d4-a716-446655440000: <title>`; `Decisions`
-  accepts only the `DEC` tag, not `ADR`).
+  accepts only the `DEC` tag).
 - `## Pros and Cons` -- optional appendix of `### Option {N}: {name}`
   sections, one per weighed option (the title after the colon is
   mandatory, numbers start at 1 and are never renumbered). The H2 is
@@ -72,9 +75,8 @@ step 1 if this is genuinely a new decision.
 Section order is binding: Context and Problem Statement -> Decision
 Drivers -> Considered Options -> Decision Outcome -> Roles and
 Responsibilities -> Tags -> Source -> Related Artifacts -> Pros and Cons
--> More Information -> Updates. The ADR heading
-`## Pros and Cons of the Options` is not part of this schema and must
-not be used.
+-> More Information -> Updates. The heading `## Pros and Cons of the
+Options` is not part of this schema and must not be used.
 
 ## 2. Build a todo list, then gather the information one at a time
 
@@ -104,13 +106,13 @@ Support/Consulted/Informed may each be present with zero items). Unlike
 SOP's own optional `## Roles and Responsibilities`, this section is
 mandatory on every `dec` document, so this step is never skipped.
 
-## 4. Use the template/example/schema as references
+## 4. Use the template/example tools as references
 
-Fetch `specmgr://dec/template` or `specmgr://dec/example` as a starting
-point/style reference, then check `specmgr://dec/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+Call the `get_dec_template` and `get_dec_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_dec_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 5. Tool call sequence
 

@@ -2,7 +2,7 @@
 
 The ``feat`` domain's own two-phase cache warmup (feat-187-list-feat-timeout, Task 110.120).
 
-Fixes GitHub issue #187's ``list_feat`` cold-scan timeout (ADR
+Fixes GitHub issue #187's ``list_feat`` cold-scan timeout (DEC
 3982712a-a46b-4b2b-809f-9c6925a49b44) from the background: :func:`warmup_feat_caches`
 is a plain, synchronously runnable function -- independent of any thread --
 that runs two phases over the live ``feat`` corpus, in order:
@@ -11,7 +11,7 @@ that runs two phases over the live ``feat`` corpus, in order:
    dirty (frontmatter-stage) cache (:func:`~biz.dfch.specmgr.feat.tools._cache.read_feat_dirty`).
    Cheap: a PyYAML frontmatter parse plus a plain-text H1 line scan, no
    markdown-it body tokenizing. Completes in well under a second for this
-   repo's own corpus (measured at ADR-authoring time).
+   repo's own corpus (measured at decision-authoring time).
 2. **Full-parse phase** -- the same live paths, this time through the
    clean (full-parse) cache (:func:`~biz.dfch.specmgr.feat.tools._cache.read_feat`).
    Expensive (on the order of several minutes for this repo's own corpus),

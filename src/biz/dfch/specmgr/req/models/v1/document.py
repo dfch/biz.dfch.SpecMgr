@@ -17,9 +17,8 @@
 
 """Pydantic model for a full requirement document (frontmatter + body).
 
-Mirrors `models.adr.v1.Adr`'s own frontmatter+body pairing. ``ReqDocument`` holds
-no file/id/path information itself -- that lives on ``frontmatter.id``, same
-convention as ``AdrFrontmatter.id``.
+``ReqDocument`` holds
+no file/id/path information itself -- that lives on ``frontmatter.id``.
 
 Frontmatter *stripping* is deliberately not this module's responsibility:
 a caller splits a raw ``.md`` file's ``---...---`` block from its body via

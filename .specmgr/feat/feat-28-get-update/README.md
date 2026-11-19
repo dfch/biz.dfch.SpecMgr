@@ -27,7 +27,7 @@ document. The rename is hard (no `begin`/`end` compatibility alias): every
 LLM-facing text (packaged prompt instructions, tool descriptions,
 docstrings, `AGENTS.md`, `CHANGELOG.md`) moves to the new vocabulary in the
 same release, and the revised contract is recorded in a new ADR that
-references ADR 36905d5b without superseding it.
+references DEC 36905d5b without superseding it.
 
 ### Requirements
 
@@ -39,7 +39,7 @@ references ADR 36905d5b without superseding it.
 
 - REQ-004: Every LLM-facing contract moves to the new vocabulary in the same release: the ten `*_update_instructions.md` packaged data files plus `qa_refine_instructions.md`, the `update` and eleven `get_<d>` tool descriptions, the `server.py` and `general/tools/__init__.py` docstrings, `AGENTS.md`, and `CHANGELOG.md`'s `[Unreleased]` section, with no `begin`/`end` range references remaining in `src/`.
 
-- REQ-005: The revised range/windowing contract is recorded in a new ADR (created as draft at implementation start, set to accepted at close) that references ADR 36905d5b (whose Consequences record the old `begin`/`end` + `N+1` contract) without superseding it, since that ADR's dispatch-only decision stands.
+- REQ-005: The revised range/windowing contract is recorded in a new ADR (created as draft at implementation start, set to accepted at close) that references DEC 36905d5b (whose Consequences record the old `begin`/`end` + `N+1` contract) without superseding it, since that ADR's dispatch-only decision stands.
 
 ### Acceptance Criteria
 
@@ -136,11 +136,11 @@ tests move together in the LLM-contract phase.
 
 ### Related Decisions
 
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0: the dispatch-only generic `update`/`set_status`/`delete` tools and the old `begin`/`end` + `N+1` range contract this feature revises (referenced, not superseded).
+- DEC 36905d5b-8057-4294-8665-c7eed5534db0: the dispatch-only generic `update`/`set_status`/`delete` tools and the old `begin`/`end` + `N+1` range contract this feature revises (referenced, not superseded).
 
-- ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614: id-based document reads are tools (`get_<d>`), not resources — the tools this feature extends.
+- DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614: id-based document reads are tools (`get_<d>`), not resources — the tools this feature extends.
 
-- ADR ec9f5262-9912-49d0-903f-fcfb54f28c13: paged `list_<d>` tools and the "clamped, not errored" paging convention the `get_<d>` windowing reuses.
+- DEC ec9f5262-9912-49d0-903f-fcfb54f28c13: paged `list_<d>` tools and the "clamped, not errored" paging convention the `get_<d>` windowing reuses.
 
 - New ADR (to be created at implementation start, Task 0.5): the revised `offset`/`limit` range/windowing contract.
 
@@ -256,7 +256,7 @@ convention the worktree already follows; decided (user direction) to use the
 tool and then rename the folder + frontmatter id to `feat-28-get-update`
 manually — the underlying gap is filed as issue #48 rather than fixed here.
 #### 2026-09-01 14:09:43.294+02:00 - New ADR for the revised range/windowing contract
-ADR 36905d5b's Consequences record the old `begin`/`end` + `N+1` contract, so
+DEC 36905d5b's Consequences record the old `begin`/`end` + `N+1` contract, so
 the revision gets its own ADR (draft at implementation start, accepted at
 close) referencing 36905d5b without superseding it — that ADR's dispatch-only
 decision stands unchanged.

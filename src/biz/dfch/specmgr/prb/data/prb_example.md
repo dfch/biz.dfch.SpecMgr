@@ -9,7 +9,7 @@ version: 1.0.0
 
 # Widget Registry Migration Rollback Failures
 
-<!-- Captured during the platform team's weekly incident review. -->
+<!-- Captured during the platform team's weekly incident review. The lead sentence follows the fixed template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` -- only the four bracketed blanks are filled in, the surrounding wording and punctuation stay verbatim. -->
 
 The migration tool's lack of a rollback step is causing widgets to become
 half-migrated, for the on-call platform engineer because the

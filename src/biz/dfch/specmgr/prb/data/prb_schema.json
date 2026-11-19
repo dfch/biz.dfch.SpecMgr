@@ -188,7 +188,8 @@
         },
         "problem_statement": {
           "$ref": "#/$defs/MarkdownParagraph",
-          "description": "Mandatory lead paragraph directly under the H1 title, holding exactly one sentence following the fixed template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`."
+          "description": "Mandatory lead paragraph directly under the H1 title, holding exactly one sentence following the fixed template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`.",
+          "pattern": "^(?:.+)\\s+is\\s+causing\\s+(?:.+),\\s+for\\s+(?:.+)\\s+because\\s+(?:.+)\\.$"
         },
         "references": {
           "anyOf": [
@@ -254,6 +255,12 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "active",
+            "cancelled",
+            "draft",
+            "resolved"
+          ],
           "title": "Status",
           "type": "string"
         },

@@ -1,0 +1,83 @@
+{
+  "cases": [
+    "smoke-create-system"
+  ],
+  "comparison": "upstream",
+  "conditions": [
+    "none",
+    "upstream"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 17.3,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1201.3,
+    "mean_wall_time_s": 656.2,
+    "measured_trials": 4,
+    "median_wall_time_s": 690.6,
+    "within_budget_at_median": true
+  },
+  "k": 2,
+  "label": "smoke",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 0,
+        "contended": 0,
+        "timeout": 2
+      },
+      "gate_failures": {
+        "cli_export": 1,
+        "cli_valid": 1,
+        "has_person": 1,
+        "has_system": 1,
+        "has_view": 1,
+        "relationship_technology": 1,
+        "two_containers": 1
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "smoke-create-system": {
+          "passes": 0,
+          "trials": 2
+        }
+      },
+      "trials": 2,
+      "wilson": [
+        0.0,
+        0.6576197760453506
+      ]
+    },
+    "upstream": {
+      "flags": {
+        "cached": 0,
+        "contended": 0,
+        "timeout": 0
+      },
+      "gate_failures": {},
+      "pass_power_k": 1.0,
+      "pass_rate": 1.0,
+      "passes": 2,
+      "per_case": {
+        "smoke-create-system": {
+          "passes": 2,
+          "trials": 2
+        }
+      },
+      "trials": 2,
+      "wilson": [
+        0.34238022395464934,
+        1.0
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "smoke-2026-11-02T053217Z",
+  "seed": 597537,
+  "skill_margins": null,
+  "version_tuple_hash": "0de1ba9850e9d7e426a2f12a852cf17d25b2f2f5d0d12f528ce3b4cb2395a7b4"
+}

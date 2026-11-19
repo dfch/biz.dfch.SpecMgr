@@ -39,22 +39,23 @@ class TestCreateReqPrompt(unittest.TestCase):
         result = create_req("Some topic")
         self.assertIn("list_req", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_req_template/get_req_example
+        tools and name the conditional get_req_schema fetch."""
         result = create_req("Some topic")
-        self.assertIn("specmgr://req/template", result)
-        self.assertIn("specmgr://req/example", result)
-        self.assertIn("specmgr://req/schema", result)
+        self.assertIn("get_req_template", result)
+        self.assertIn("get_req_example", result)
+        self.assertIn("get_req_schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_req tool, the template/example
-        resources, specmgr://req/schema, and create_req, in that order,
+        tools, get_req_schema, and create_req, in that order,
         matching the intended sequence."""
         result = create_req("Some topic")
         markers = [
             "list_req",
-            "specmgr://req/template",
-            "specmgr://req/schema",
+            "get_req_template",
+            "get_req_schema",
             "create_req(content)",
         ]
         positions = [result.index(marker) for marker in markers]
@@ -77,6 +78,34 @@ class TestCreateReqPrompt(unittest.TestCase):
         self.assertIn("`update_req` prompt", result)
         self.assertIn('update(id, type="req", content)', result)
         self.assertIn('set_status(id, type="req", status)', result)
+
+    def test_mentions_iso29148_read_first_step_before_level(self):
+        """The prompt must name specmgr://iso29148 as a read-first step taken
+        before filling in ## Level, positioned after the structure recap and
+        before the template/example tools."""
+        result = create_req("Some topic")
+        step = "Read the ISO 29148 requirement specifications before drafting"
+        self.assertIn(step, result)
+        self.assertIn("Before filling in `## Level`, fetch the cross-cutting", result)
+        self.assertIn("`specmgr://iso29148` resource and read the four requirement", result)
+        self.assertLess(result.index(step), result.index("get_req_template"))
+
+    def test_elicits_the_iso29148_kind(self):
+        """The prompt must elicit the ISO 29148 requirement specification kind:
+        the four kind tokens and the question-tool ask must both appear."""
+        result = create_req("Some topic")
+        self.assertIn("one of BRS / StRS / SyRS / SRS", result)
+        for kind in ("BRS", "StRS", "SyRS", "SRS"):
+            with self.subTest(kind=kind):
+                self.assertIn(kind, result)
+        self.assertIn("via the `question` tool) which of the four", result)
+
+    def test_directs_obligation_into_statement_phrasing_with_ears_pointer(self):
+        """The prompt must carry obligation in the requirement statement's
+        phrasing (not by a field) and point at specmgr://ears."""
+        result = create_req("Some topic")
+        self.assertIn("Obligation is carried by the statement's phrasing,", result)
+        self.assertIn("Read `specmgr://ears`", result)
 
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from req/data/req_create_instructions.md,

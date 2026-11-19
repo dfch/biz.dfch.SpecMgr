@@ -18,7 +18,7 @@
 """Pydantic schema and parser for the TARA risk-response-strategy guidance
 document (``rsk/data/rsk_tara.md``), feat-92-resources REQ-003.
 
-Per ADR 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
+Per DEC 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
 reference resources as raw markdown with model-backed drift-guard tests,
 not structured JSON"), this model is parsed purely to fail fast on
 structural drift -- ``specmgr://rsk/tara`` (``rsk/resources/tara.py``)
@@ -35,7 +35,7 @@ leading `list[MarkdownListItem]` field directly under the H1, followed by
 further `MarkdownSection2` children. Closed-vocabulary bullets are modeled
 as `MarkdownListItem` subclasses with a `@computed_field` regex-extracting
 the leading TARA strategy word, reusing `feat.RequirementItem`/
-`tsk.TaskItem`'s established precedent (ADR 356d8781-e446-4c26-917a-
+`tsk.TaskItem`'s established precedent (DEC 356d8781-e446-4c26-917a-
 eda85648ce9d's Decision Drivers) rather than inventing a new shared
 `models/md` primitive. All four regexes use `re.DOTALL` except
 `_STRATEGY_ITEM_PATTERN` (the intro list's bullets are always a single
@@ -531,8 +531,7 @@ class Tara(MarkdownSection1):
 def parse_tara(text: str) -> Tara:
     """Parse the packaged TARA guidance markdown text into a :class:`Tara`.
 
-    Thin `format_text` + `Tara.from_text` wrapper -- unlike `parse_adr`/
-    `parse_rsk`, there is no YAML frontmatter to split off first, since
+    Thin `format_text` + `Tara.from_text` wrapper -- there is no YAML frontmatter to split off first, since
     this is a plain packaged data file, not a user-authored document
     (mirrors `biz.dfch.specmgr.general.models.dtais.parse_dtais`'s exact
     shape).

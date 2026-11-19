@@ -2,13 +2,12 @@
 
 Parse an on-disk Use Case ``.md`` file into a :class:`UseCase` (feature plan Task 1.3A).
 
-Pipeline stage 1 of "parse -> validate" (mirrors ``models/adr/v1/parser.py``'s "parse ->
-validate -> render" split). This module only does the "parse" half; "validate"
+Pipeline stage 1 of "parse -> validate". This module only does the "parse" half; "validate"
 is letting :class:`UseCase`/its nested models' own Pydantic validators run -- including the
 cross-field ``model_validator`` checks added in Task 1.3B (step numbering, action numbering,
 step-reference cross-resolution) -- there is no separate validation pass here.
 
-Two error channels, by design (same split as ADR's parser):
+Two error channels, by design:
 
 - :class:`UcParseError` -- the markdown *structure* doesn't fit the Cockburn-derived heading/
   list layout documented in ``uc_schema.json``/``uc_example.md``: an unrecognized/duplicate/
@@ -21,7 +20,7 @@ Two error channels, by design (same split as ADR's parser):
   mandatory section, bad ``level``, non-contiguous step numbers, a dangling extension
   ``step_reference``, ...). Deliberately not caught/wrapped here.
 
-Unlike ADR's fixed all-heading layout, the Use Case markdown format (``uc_example.md``) also
+The Use Case markdown format (``uc_example.md``) also
 uses ordinary Markdown lists for structured content: numbered lists for
 ``Main Success Scenario`` steps and ``Extension`` actions, bullet lists for most other
 ``list[str]`` fields. Heading titles in the example additionally carry a
@@ -53,8 +52,7 @@ cross-field invariant) is invalid (see this module's docstring for the full spli
 
 One heading, resolved into the document's nesting (outline) tree.
 
-Directly adapted from ``models/adr/v1/parser.py``'s ``_Node`` -- same "table of contents"
-nesting rule, same ``heading_line``/``content_start``/``end`` line-index bookkeeping.
+A "table of contents" nesting node with ``heading_line``/``content_start``/``end`` line-index bookkeeping.
 
 
 ## Functions
@@ -63,8 +61,7 @@ nesting rule, same ``heading_line``/``content_start``/``end`` line-index bookkee
 
 Turn a flat, document-order heading token list into a heading *outline* tree.
 
-Identical "table of contents" nesting rule to ``models/adr/v1/parser.py``'s
-``_build_outline``.
+The "table of contents" nesting rule.
 
 
 ### `_heading_level(token: 'Token') -> 'int'`

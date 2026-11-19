@@ -103,13 +103,13 @@ class TestEnvVarRecord(unittest.TestCase):
 
     def test_blank_name_is_rejected(self):
         with self.assertRaises(AssertionError) as ctx:
-            EnvVar(name="", default=None, description="A test variable.", owner="adr")
+            EnvVar(name="", default=None, description="A test variable.", owner="example")
 
         self.assertIn("name", str(ctx.exception))
 
     def test_blank_description_is_rejected(self):
         with self.assertRaises(AssertionError) as ctx:
-            EnvVar(name="ENVREG_X", default=None, description="   ", owner="adr")
+            EnvVar(name="ENVREG_X", default=None, description="   ", owner="example")
 
         self.assertIn("description", str(ctx.exception))
 
@@ -149,18 +149,18 @@ class TestRegister(_IsolatedRegistry):
     def test_stores_and_returns_the_record(self):
         expected = EnvVar(
             name=_NAME_WITH_DEFAULT,
-            default="docs/adr",
-            description="ADR base directory override.",
-            owner="adr",
+            default="docs/example",
+            description="Example base directory override.",
+            owner="example",
             format="filepath",
             choices=("stdio", "sse"),
         )
 
         result = register(
             _NAME_WITH_DEFAULT,
-            default="docs/adr",
-            description="ADR base directory override.",
-            owner="adr",
+            default="docs/example",
+            description="Example base directory override.",
+            owner="example",
             format="filepath",
             choices=("stdio", "sse"),
         )
@@ -171,26 +171,30 @@ class TestRegister(_IsolatedRegistry):
 
     def test_idempotent_for_identical_metadata(self):
         first = register(
-            _NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr"
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
         )
 
         second = register(
-            _NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr"
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
         )
 
         self.assertIs(second, first)
         self.assertEqual(len(all_vars()), 1)
 
     def test_conflicting_re_registration_fails_naming_var_and_field(self):
-        register(_NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr")
+        register(
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
+        )
 
         with self.assertRaises(AssertionError) as ctx:
-            register(_NAME_WITH_DEFAULT, default="other", description="ADR base directory override.", owner="adr")
+            register(
+                _NAME_WITH_DEFAULT, default="other", description="Example base directory override.", owner="example"
+            )
 
         message = str(ctx.exception)
         self.assertIn(_NAME_WITH_DEFAULT, message)
         self.assertIn("default", message)
-        self.assertIn("'docs/adr'", message)
+        self.assertIn("'docs/example'", message)
         self.assertIn("'other'", message)
 
     def test_conflict_report_names_each_conflicting_field(self):
@@ -211,11 +215,13 @@ class TestRegister(_IsolatedRegistry):
 
     def test_re_registration_leaves_the_stored_record_unchanged(self):
         first = register(
-            _NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr"
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
         )
 
         with self.assertRaises(AssertionError):
-            register(_NAME_WITH_DEFAULT, default="other", description="ADR base directory override.", owner="adr")
+            register(
+                _NAME_WITH_DEFAULT, default="other", description="Example base directory override.", owner="example"
+            )
 
         self.assertIs(_envregistry._REGISTRY[_NAME_WITH_DEFAULT], first)
         self.assertEqual(all_vars(), (first,))
@@ -233,7 +239,9 @@ class TestGet(_IsolatedRegistry):
         self.assertIsNone(result)
 
     def test_returns_the_set_value(self):
-        register(_NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr")
+        register(
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
+        )
         sut = get
 
         with mock.patch.dict(os.environ, {_NAME_WITH_DEFAULT: "override"}):
@@ -242,7 +250,9 @@ class TestGet(_IsolatedRegistry):
         self.assertEqual(result, "override")
 
     def test_returns_a_set_but_empty_value_unchanged(self):
-        register(_NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr")
+        register(
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
+        )
         sut = get
 
         with mock.patch.dict(os.environ, {_NAME_WITH_DEFAULT: ""}):
@@ -251,7 +261,9 @@ class TestGet(_IsolatedRegistry):
         self.assertEqual(result, "")
 
     def test_reads_the_environment_at_call_time(self):
-        register(_NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr")
+        register(
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
+        )
         sut = get
 
         self.assertIsNone(sut(_NAME_WITH_DEFAULT))
@@ -273,15 +285,19 @@ class TestGetWithDefault(_IsolatedRegistry):
     """``get_with_default``: at-call-time read, default inserted only when unset."""
 
     def test_inserts_the_registered_default_when_unset(self):
-        register(_NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr")
+        register(
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
+        )
         sut = get_with_default
 
         result = sut(_NAME_WITH_DEFAULT)
 
-        self.assertEqual(result, "docs/adr")
+        self.assertEqual(result, "docs/example")
 
     def test_returns_the_set_value(self):
-        register(_NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr")
+        register(
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
+        )
         sut = get_with_default
 
         with mock.patch.dict(os.environ, {_NAME_WITH_DEFAULT: "override"}):
@@ -290,7 +306,9 @@ class TestGetWithDefault(_IsolatedRegistry):
         self.assertEqual(result, "override")
 
     def test_set_but_empty_stays_set_unless_flagged(self):
-        register(_NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr")
+        register(
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
+        )
         sut = get_with_default
 
         with mock.patch.dict(os.environ, {_NAME_WITH_DEFAULT: ""}):
@@ -378,7 +396,7 @@ class TestAllVars(_IsolatedRegistry):
     def test_returns_every_record_in_registration_order(self):
         first = register(_NAME_PRESENCE, description="Presence gate.", owner="general")
         second = register(
-            _NAME_WITH_DEFAULT, default="docs/adr", description="ADR base directory override.", owner="adr"
+            _NAME_WITH_DEFAULT, default="docs/example", description="Example base directory override.", owner="example"
         )
 
         result = all_vars()

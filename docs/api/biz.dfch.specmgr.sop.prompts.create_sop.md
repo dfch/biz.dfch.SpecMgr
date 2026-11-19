@@ -6,11 +6,11 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Standard Operating Procedure (SOP) document
 using the existing ``sop/tools/``/``sop/resources/`` surface (``list_sop``,
 ``specmgr://sop/template``/``specmgr://sop/example``,
-``specmgr://sop/schema``, ``create_sop``, generic ``validate`` tool) plus the
+``get_sop_schema``, ``create_sop``, generic ``validate`` tool) plus the
 cross-cutting ``specmgr://rasci`` resource (read before drafting
 ``## Roles and Responsibilities``).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_sop`` builds the entire SOP frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown (and ``status`` is always fixed

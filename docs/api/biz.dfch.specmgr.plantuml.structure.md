@@ -111,7 +111,7 @@ variant keeps the common tail "or convert the group to the ``component
 unclosed block over component declarations is a parser syntax error"
 clause was factually false for the accepted shapes.
 
-Import-free and stdlib-only (ADR 7a626b12): no specmgr imports. The
+Import-free and stdlib-only (DEC 7a626b12): no specmgr imports. The
 UNATTRIBUTED marker prefix lives here as ONE shared constant used by both the
 renderer (``uc/models/v2/renderer.py``) and this checker, so the two cannot
 drift (rulebook §2.9.4).

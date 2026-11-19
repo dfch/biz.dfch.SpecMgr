@@ -13,7 +13,7 @@ for "structured"/"no dedicated model"/"parsed into a structured" near
 these six resource names: every hit found is either a model's own
 docstring correctly describing its *own* structured internal
 representation, or a resource docstring correctly stating what the
-resource is now, per ADR 356d8781-e446-4c26-917a-eda85648ce9d ("not
+resource is now, per DEC 356d8781-e446-4c26-917a-eda85648ce9d ("not
 structured JSON") -- no stale claim survived from before this feature.
 Checked the repo-root `README.md` and `AGENTS.md` for the same six
 resource names: no claim about output shape (JSON vs. markdown) is made
@@ -551,7 +551,7 @@ tests) passed.
 
 #### 2026-09-04 00:00:00.000Z - Phase 0 (ADR) complete
 Created and accepted ADR
-`docs/adr/356d8781-e446-4c26-917a-eda85648ce9d-expose-cross-cutting-reference-resources-as-raw-markdown-wit.md`
+`docs/dec/356d8781-e446-4c26-917a-eda85648ce9d-expose-cross-cutting-reference-resources-as-raw-markdown-wit.md`
 ("Expose cross-cutting reference resources as raw markdown with
 model-backed drift-guard tests, not structured JSON") via the `create_adr`
 MCP tool, covering all three considered options (chosen: uniform raw

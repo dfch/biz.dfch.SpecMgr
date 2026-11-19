@@ -5,7 +5,7 @@
 The generic, cross-domain, surgical exact-match string-replacement tool for
 the frontmatter-stripped body of the whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``feat``/``vcr``/``sysrs``/``txt``/``set``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_edit_<d>``), each mirroring
 the generic ``update`` tool's own adapter shape (same domain lock, same
 ``load_by_id``, same frontmatter carry-over with only ``updated`` bumped,
@@ -71,14 +71,11 @@ fallback. ``replace_all`` rewrites every exact occurrence; an empty
 the result.
 
 **Explicit type check (REQ-004, D4).** Unlike ``update``/``delete``/
-``set_classification`` -- whose dispatch-table lookup inherits a
-``KeyError`` for ``type="adr"`` -- the public :func:`edit` raises an
-explicit ``ValueError`` for an unknown or ``adr`` ``type`` before
-dispatch, following the generic ``validate`` tool's own precedent (ADR
-078bf395-0a5f-4afd-84f6-b7a2191a00e6). ADR is deliberately *not* a
-``type`` here: its section-level MADR mutation contract
-(``update_frontmatter``/``update_section``/``option_*``) has no whole-body
-replace by design, and an exact-match body edit is outside it.
+``set_classification`` -- whose dispatch-table lookup raises a
+``KeyError`` for an unknown ``type`` -- the public :func:`edit` raises an
+explicit ``ValueError`` for an unknown ``type`` before dispatch, following
+the generic ``validate`` tool's own precedent (DEC
+078bf395-0a5f-4afd-84f6-b7a2191a00e6).
 
 **Persistence (REQ-006).** On success the existing frontmatter is carried
 over with only ``updated`` bumped (via ``now_timestamp()``), the edited
@@ -92,7 +89,7 @@ serialization, the inherited ``_write.py`` caveat identical to
 frontmatter only is returned (no body).
 
 **Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
-issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain).** Two failures now return a structured result instead
 of raising, with nothing written in either case. (1) On a target ``id``
@@ -125,8 +122,8 @@ exactly (the shared ``_CAUGHT_EXCEPTIONS`` tuple defined in
 :mod:`~biz.dfch.specmgr.general.models.validate_result` and re-exported by
 ``general.tools.validate``). Stage-1's OC-parity ``ValueError``s (identical input, empty
 ``old_str``, not found, multiple matches) and every pre-dispatch
-caller-usage ``ValueError`` (invalid ``id`` shape, unknown or ``adr``
-``type``) are never caught and still raise exactly as before.
+caller-usage ``ValueError`` (invalid ``id`` shape, unknown ``type``)
+are never caught and still raise exactly as before.
 
 **Safety (REQ-005).** The public :func:`edit` validates ``id`` via
 ``_path_safety.validate_id`` before any filesystem access (a
@@ -148,13 +145,23 @@ whichever concrete frontmatter model is returned.
 
 ## Functions
 
-### `_edit_dec(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'DecFrontmatter | ParseFailureResult | ValidateResult'`
+### `_edit_dec(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the decision identified by ``id_``.
 
 Mirror of :func:`_edit_req`'s shape (same ``dec_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_dec_file``,
 ``DecNotFoundError``).
+
+**Language variants (feat-197-i18n Phase 120, DEC 38efdb66 items 2/5).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects the variant file: the
+id is scanned for in ``dec_base_dir(language)``, the lock is the
+variant's own (``dec_lock(dec_lock_key(id_, language))``), the stage-1 match runs
+against that variant's on-disk body, the stage-2 validation of the
+edited body goes through the variant's heading table
+(:func:`~biz.dfch.specmgr.dec.models.v1.parse_dec_body`), and only that
+one file is written -- the EN document stays untouched.
 
 
 ### `_edit_feat(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'FeatFrontmatter | ParseFailureResult | ValidateResult'`
@@ -168,7 +175,7 @@ divergence (see the module docstring): ``id_`` resolves via
 ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
 
 
-### `_edit_gol(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'GolFrontmatter | ParseFailureResult | ValidateResult'`
+### `_edit_gol(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the goal identified by ``id_``.
 
@@ -176,8 +183,17 @@ Mirror of :func:`_edit_req`'s shape (same ``gol_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_gol_file``,
 ``GolNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+variant's own (``gol_lock(gol_lock_key(id_, language))``), the stage-1 match runs against that
+variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+heading table (:func:`~biz.dfch.specmgr.gol.models.v1.parse_gol_body`), and only that one file
+is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+non-default ``language`` call.
 
-### `_edit_prb(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'PrbFrontmatter | ParseFailureResult | ValidateResult'`
+
+### `_edit_prb(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'PrbFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the problem statement identified by ``id_``.
 
@@ -185,8 +201,17 @@ Mirror of :func:`_edit_req`'s shape (same ``prb_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_prb_file``,
 ``PrbNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+variant's own (``prb_lock(prb_lock_key(id_, language))``), the stage-1 match runs against that
+variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+heading table (:func:`~biz.dfch.specmgr.prb.models.v1.parse_prb_body`), and only that one file
+is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+non-default ``language`` call.
 
-### `_edit_qa(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'QaFrontmatter | ParseFailureResult | ValidateResult'`
+
+### `_edit_qa(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'QaFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the QA document identified by ``id_``.
 
@@ -194,8 +219,17 @@ Mirror of :func:`_edit_req`'s shape (same ``qa_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_qa_file``,
 ``QaNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+variant's own (``qa_lock(qa_lock_key(id_, language))``), the stage-1 match runs against that
+variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+heading table (:func:`~biz.dfch.specmgr.qa.models.v2.parse_qa_body`), and only that one file is
+written -- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+``language`` call.
 
-### `_edit_req(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'ReqFrontmatter | ParseFailureResult | ValidateResult'`
+
+### `_edit_req(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'ReqFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the requirement identified by ``id_``.
 
@@ -214,8 +248,17 @@ stage-2 content-validation failure of the edited body yields the
 non-raising ``ValidateResult(valid=False, ...)`` instead of
 ``AssertionError``/``pydantic.ValidationError``.
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+variant's own (``req_lock(req_lock_key(id_, language))``), the stage-1 match runs against that
+variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+heading table (:func:`~biz.dfch.specmgr.req.models.v1.parse_req_body`), and only that one file
+is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+non-default ``language`` call.
 
-### `_edit_rsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'RskFrontmatter | ParseFailureResult | ValidateResult'`
+
+### `_edit_rsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'RskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the risk identified by ``id_``.
 
@@ -223,8 +266,35 @@ Mirror of :func:`_edit_req`'s shape (same ``rsk_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_rsk_file``,
 ``RskNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+variant's own (``rsk_lock(rsk_lock_key(id_, language))``), the stage-1 match runs against that
+variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+heading table (:func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk_body`), and only that one file
+is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+non-default ``language`` call.
 
-### `_edit_sop(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SopFrontmatter | ParseFailureResult | ValidateResult'`
+
+### `_edit_set(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'SetFrontmatter | ParseFailureResult | ValidateResult'`
+
+Surgically replace exact occurrences of ``old_str`` in the set document identified by ``id_``.
+
+Mirror of :func:`_edit_req`'s shape (same ``set_lock``, ``load_by_id``,
+frontmatter carry-over with only ``updated`` bumped, ``write_set_file``,
+``SetNotFoundError``).
+
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
+variant's own (``set_lock(set_lock_key(id_, language))``), the stage-1 match runs against
+that variant's on-disk body, the stage-2 validation of the edited body goes through the
+variant's heading table (:func:`~biz.dfch.specmgr.set.models.v1.parse_set_body`), and only
+that one file is written -- the EN document (bytes, ``updated``, cache entry) is never touched
+by a non-default ``language`` call.
+
+
+### `_edit_sop(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the SOP identified by ``id_``.
 
@@ -232,8 +302,17 @@ Mirror of :func:`_edit_req`'s shape (same ``sop_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_sop_file``,
 ``SopNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+variant's own (``sop_lock(sop_lock_key(id_, language))``), the stage-1 match runs against that
+variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+heading table (:func:`~biz.dfch.specmgr.sop.models.v1.parse_sop_body`), and only that one file
+is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+non-default ``language`` call.
 
-### `_edit_sysrs(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SysrsFrontmatter | ParseFailureResult | ValidateResult'`
+
+### `_edit_sysrs(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'SysrsFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the System Requirements Specification for ``id_``.
 
@@ -241,8 +320,17 @@ Mirror of :func:`_edit_req`'s shape (same ``sysrs_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped,
 ``write_sysrs_file``, ``SysrsNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), the stage-1 match runs against
+that variant's on-disk body, the stage-2 validation of the edited body goes through the
+variant's heading table (:func:`~biz.dfch.specmgr.sysrs.models.v1.parse_sysrs_body`), and only
+that one file is written -- the EN document (bytes, ``updated``, cache entry) is never touched
+by a non-default ``language`` call.
 
-### `_edit_tsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'TskFrontmatter | ParseFailureResult | ValidateResult'`
+
+### `_edit_tsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'TskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the task list identified by ``id_``.
 
@@ -250,8 +338,35 @@ Mirror of :func:`_edit_req`'s shape (same ``tsk_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_tsk_file``,
 ``TskNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+variant's own (``tsk_lock(tsk_lock_key(id_, language))``), the stage-1 match runs against that
+variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+heading table (:func:`~biz.dfch.specmgr.tsk.models.v1.parse_tsk_body`), and only that one file
+is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+non-default ``language`` call.
 
-### `_edit_uc(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'UcFrontmatter | ParseFailureResult | ValidateResult'`
+
+### `_edit_txt(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'TxtFrontmatter | ParseFailureResult | ValidateResult'`
+
+Surgically replace exact occurrences of ``old_str`` in the free-form text document identified by ``id_``.
+
+Mirror of :func:`_edit_req`'s shape (same ``txt_lock``, ``load_by_id``,
+frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
+``TxtNotFoundError``).
+
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+variant's own (``txt_lock(txt_lock_key(id_, language))``), the stage-1 match runs against
+that variant's on-disk body, the stage-2 validation of the edited body goes through the
+variant's heading table (:func:`~biz.dfch.specmgr.txt.models.v1.parse_txt_body`), and only
+that one file is written -- the EN document (bytes, ``updated``, cache entry) is never touched
+by a non-default ``language`` call.
+
+
+### `_edit_uc(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the use case identified by ``id_``.
 
@@ -259,14 +374,32 @@ Mirror of :func:`_edit_req`'s shape (same ``uc_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_uc_file``,
 ``UcNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+variant's own (``uc_lock(uc_lock_key(id_, language))``), the stage-1 match runs against that
+variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+heading table (:func:`~biz.dfch.specmgr.uc.models.v2.parse_uc_body`), and only that one file is
+written -- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+``language`` call.
 
-### `_edit_vcr(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'VcrFrontmatter | ParseFailureResult | ValidateResult'`
+
+### `_edit_vcr(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'VcrFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the verification case record identified by ``id_``.
 
 Mirror of :func:`_edit_req`'s shape (same ``vcr_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 ``VcrNotFoundError``).
+
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+variant's own (``vcr_lock(vcr_lock_key(id_, language))``), the stage-1 match runs against that
+variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+heading table (:func:`~biz.dfch.specmgr.vcr.models.v1.parse_vcr_body`), and only that one file
+is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+non-default ``language`` call.
 
 
 ### `_match_and_replace(body: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'str'`
@@ -319,13 +452,13 @@ ValueError
     wrap prefix), nothing written.
 
 
-### `edit(id: 'str', type: 'Literal[*WHOLE_BODY_DOMAINS,]', old_str: 'str', new_str: 'str', replace_all: 'bool' = False) -> '_EditFrontmatter'`
+### `edit(id: 'str', type: 'Literal[*WHOLE_BODY_DOMAINS,]', old_str: 'str', new_str: 'str', replace_all: 'bool' = False, language: 'str' = 'en') -> '_EditFrontmatter'`
 
 Surgically replace a byte-exact occurrence of ``old_str`` in an existing document's body.
 
 Cross-domain generic for the whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+``feat``/``vcr``/``sysrs``/``txt``/``set``); dispatches on ``type`` to the domain's own
 private adapter (same lock, same id resolution, same frontmatter
 carry-over, same verbatim persistence, same domain not-found error).
 The signature and the stage-1 runtime error strings mirror the
@@ -348,8 +481,8 @@ field/cross-field (``pydantic.ValidationError``) failure returns the
 non-raising ``ValidateResult(valid=False, ...)`` (the single
 ``errors[].message`` capped at 300 chars exactly as the generic
 ``validate`` tool caps it, feat-110 -- feat-170-update-edit-parse-
-failure, GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
-case 4 of the ADR 519d1206 chain), with nothing written in either case.
+failure, GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
+case 4 of the DEC 519d1206 chain), with nothing written in either case.
 
 **2-fold write (REQ-003).** The disk write happens strictly after both
 stages pass: the domain lock is held across the entire read -> match ->
@@ -369,9 +502,9 @@ nothing is written and the file is byte-unchanged.
 Safety (REQ-005): ``id`` is validated via ``_path_safety.validate_id``
 **before** any filesystem access, so a path-injection attempt or a
 wrong-format id is a ``ValueError`` raised before dispatch; an unknown
-or ``adr`` ``type`` is likewise an explicit ``ValueError`` before
-dispatch (REQ-004, D4 -- the generic ``validate`` tool's precedent, a
-deliberate divergence from ``update``'s inherited ``KeyError``); the
+``type`` is likewise an explicit ``ValueError`` before dispatch
+(REQ-004, D4 -- the generic ``validate`` tool's precedent, a deliberate
+divergence from ``update``'s inherited ``KeyError``); the
 identical-input and empty-``old_str`` guards (the OC messages verbatim,
 plain ``ValueError``s with no wrap prefix, REQ-008) fire after them and
 still before any filesystem access. Each adapter additionally confines
@@ -392,7 +525,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``.
+    ``vcr``, ``sysrs``, ``txt``, ``set``.
 old_str:
     The exact text to find in the current frontmatter-stripped on-disk
     body (byte-exact, including whitespace, indentation, and line
@@ -405,6 +538,20 @@ replace_all:
     ``False`` (default): ``old_str`` must match exactly once (multiple
     matches are an error). ``True``: every exact occurrence is
     rewritten.
+language:
+    The language variant to edit (feat-197-i18n Phase 120, DEC
+    38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
+    it) edits the flat default-language document -- today's exact
+    behavior; any other ISO 639-1-shaped lowercase two-letter code
+    (e.g. ``"de"``) edits that language's variant, located by id-scan
+    of ``docs/<type>/{language}/``: ``old_str`` is matched against that
+    variant's own on-disk body, the edited body is validated through
+    that language's heading-mapping table, and only that one file is
+    written -- the EN document's bytes, ``updated`` timestamp, and
+    cache entry stay untouched. Shape-guarded before any filesystem
+    access (like ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+    (``feat`` is always English: a non-default language for it raises a
+    ``ValueError``).
 
 Returns
 -------
@@ -419,7 +566,7 @@ VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
     (``error``/``path``/``id``) instead of the domain's not-found error --
     ``error`` is byte-identical to the domain's ``list_<d>`` failed row's
     ``error`` for the same file (identical field path and cause, including
-    the trailing pydantic documentation line; ADR
+    the trailing pydantic documentation line; DEC
     9080b37c-82b3-4f63-81f1-79641d0bf14c). On a stage-2 content-validation
     failure of the edited body, a non-raising
     :class:`~biz.dfch.specmgr.general.models.ValidateResult`
@@ -428,7 +575,7 @@ VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
     ``validate`` tool caps it (feat-110), instead of
     ``AssertionError``/``pydantic.ValidationError``. Nothing is written in
     either failure case (feat-170-update-edit-parse-failure, GitHub issue
-    #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+    #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
     workaround chain).
 
@@ -437,9 +584,8 @@ Raises
 ValueError
     ``id`` is a path-injection attempt or not in the dispatched
     domain's own format (raised before any filesystem access);
-    ``type`` is not one of the supported domains, including
-    ``"adr"`` (raised before dispatch, REQ-004 -- ``"adr"`` with a
-    well-formed UUID id reaches the edit-specific message; any other
+    ``type`` is not one of the supported domains
+    (raised before dispatch, REQ-004 -- any
     unknown type is rejected first by ``validate_id``'s own
     message); ``old_str`` is
     identical to ``new_str`` or empty (raised before any filesystem
@@ -448,7 +594,10 @@ ValueError
     lock after the on-disk body is read). All four guard/stage-1
     ``ValueError``s carry the OC message verbatim with no
     ``domain tool (channel)`` wrap prefix (REQ-002/REQ-008). Nothing
-    is written in any of these cases.
+    is written in any of these cases. Also raised, before any filesystem
+    access, for a malformed ``language`` (not an ISO 639-1-shaped
+    lowercase two-letter code), a non-default ``language`` with ``type`` ``feat`` (always English), or a non-
+    default ``language`` without a packaged heading-mapping table.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
 FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError

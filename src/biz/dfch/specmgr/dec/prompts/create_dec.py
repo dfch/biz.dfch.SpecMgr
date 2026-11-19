@@ -21,20 +21,19 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Decision (DEC) document using the existing
 ``dec/tools/``/``dec/resources/`` surface (``list_dec``,
 ``specmgr://dec/template``/``specmgr://dec/example``,
-``specmgr://dec/schema``, ``create_dec``, generic ``validate`` tool) plus
+``get_dec_schema``, ``create_dec``, generic ``validate`` tool) plus
 the cross-cutting ``specmgr://rasci`` resource (read before drafting
 ``## Roles and Responsibilities``).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_dec`` builds the entire DEC frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
-the caller only ever supplies body markdown. The body keeps the ADR's
-general structure (context, drivers, considered options, outcome, related
-artifacts, pros/cons, more information, updates) but is narrated through
-DEC's own section names, with ``## Pros and Cons`` -- not ADR's
-``## Pros and Cons of the Options`` -- as the options container, plus
-three sections absent from ADR (feat-29-dec-source-roles, GitHub issue
-#29): a mandatory RASCI ``## Roles and Responsibilities``, an optional
+the caller only ever supplies body markdown. The body keeps the
+MADR-style general structure (context, drivers, considered options,
+outcome, related artifacts, pros/cons, more information, updates) but is
+narrated through DEC's own section names, with ``## Pros and Cons`` as the
+options container, plus three sections (feat-29-dec-source-roles, GitHub
+issue #29): a mandatory RASCI ``## Roles and Responsibilities``, an optional
 ``## Tags``, and a mandatory ``## Source``, positioned between
 ``## Decision Outcome`` and ``## Related Artifacts``.
 
@@ -78,7 +77,10 @@ from ...server import mcp
     title="Create a decision",
     description=(
         "Guides the LLM through checking for an existing similar decision, gathering the "
-        "required information, and driving create_dec/validate to author a new DEC document."
+        "required information, and driving create_dec/validate to author a new DEC document. The "
+        "structure reference is the `get_dec_schema` tool (the generated JSON Schema); the "
+        "`get_dec_template`/`get_dec_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_dec(topic: str) -> str:

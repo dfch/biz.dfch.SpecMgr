@@ -4,12 +4,12 @@ The two similarity tools' shared non-raising, structured "unavailable" result (f
 
 Mirrors the non-raising structured-result precedent of
 :class:`~biz.dfch.specmgr.general.models.invalid_status_result.InvalidStatusResult`
-(ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) and
+(DEC b399f1ce-ed42-4929-b01c-7a57d18e8014) and
 :class:`~biz.dfch.specmgr.general.models.validate_result.ValidateResult`
 (feat-81-83-validation, REQ-004): when the embedding feature is unavailable at
 runtime, the ``find_related``/``find_similar_text`` tools (general.tools,
 Phase 3) return one of these instead of raising -- one code path, two
-triggers, per ADR 750842b2-aca4-4649-ba0c-855ec8e1f505's Availability
+triggers, per DEC 750842b2-aca4-4649-ba0c-855ec8e1f505's Availability
 sub-decision. A successful call never returns this model: its mere presence
 in a tool result signals unavailability, exactly as
 :class:`InvalidStatusResult` signals rejection.

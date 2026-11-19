@@ -47,14 +47,14 @@ line count defaulting through end of body capped at the remaining
 lines, `offset > N` → empty string, coordinates with `raw=False` →
 `ValueError`, served by the new no-I/O `window_body` helper in
 `general/tools/_splice.py`, clamping per the `list_<d>` convention,
-GitHub issue #28 + ADR 4ec08dcb) and a `### Changed` bullet for the
+GitHub issue #28 + DEC 4ec08dcb) and a `### Changed` bullet for the
 breaking hard rename (`offset` 1..N+1 with N+1 the virtual append
 position, `limit` a count, omitted = through end of body, `0` = pure
 insert; strict `ValueError` out-of-range, `limit` without `offset`
 before any file access; splice-then-validate-whole/verbatim
 persistence/frontmatter carry-over unchanged; every LLM-facing surface
-moved in the same release; ADR 4ec08dcb referencing, not superseding,
-ADR 36905d5b; GitHub issue #28), styled after the file's existing
+moved in the same release; DEC 4ec08dcb referencing, not superseding,
+DEC 36905d5b; GitHub issue #28), styled after the file's existing
 **BREAKING** (0.x) bullet. Task 4.2: `uv run --frozen specmgr docs`
 changed exactly the two docstring pages (`docs/api/biz.dfch.specmgr.
 server.md`, `docs/api/biz.dfch.specmgr.general.tools.md` — the

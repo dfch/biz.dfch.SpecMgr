@@ -170,13 +170,13 @@ The lead sentence has four blanks: `[Current state]`, `[specific issue]`, `[stak
 The final sentence must match the template exactly except for the four
 filled-in blanks: `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`.
 
-## 10. Use the template/example/schema as references
+## 10. Use the template/example tools as references
 
-Fetch `specmgr://prb/template` or `specmgr://prb/example` as a starting
-point/style reference, then check `specmgr://prb/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+Call the `get_prb_template` and `get_prb_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_prb_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 11. Tool call sequence
 

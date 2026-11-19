@@ -419,7 +419,7 @@ Phase 2's Task 2.1 and Phase 3's Task 3.1 task descriptions were scoped
 too narrowly -- "add the model + its `tests/models/test_*.py` suite"
 only -- leaving `general/resources/dtais.py`/`rsk/resources/tara.py`
 themselves un-wired to call `parse_dtais`/`parse_tara` at request time,
-which contradicted ADR 356d8781-e446-4c26-917a-eda85648ce9d's Decision
+which contradicted DEC 356d8781-e446-4c26-917a-eda85648ce9d's Decision
 Outcome ("That model is parsed on every resource call purely to fail
 fast on structural drift at request time... the parsed result is
 discarded and the original raw text returned unchanged" -- stated for

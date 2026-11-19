@@ -100,13 +100,17 @@ class TestFindSimilarTextRanking(SimilarityTestCase):
     def test_target_types_restricts_the_candidate_set(self) -> None:
         self.seed_req("First Req", "alpha")
         self.seed_gol("First Goal", "alpha")
+        self.seed_txt("First Notes", "alpha")
         self.install_fake()
 
         only_req = find_similar_text(query="alpha", target_types=["req"])
+        only_txt = find_similar_text(query="alpha", target_types=["txt"])
         default = find_similar_text(query="alpha")
 
         self.assertEqual({hit.type for hit in only_req}, {"req"})
+        self.assertEqual({hit.type for hit in only_txt}, {"txt"})
         self.assertIn("gol", {hit.type for hit in default})
+        self.assertIn("txt", {hit.type for hit in default})
 
     def test_top_k_and_min_score_shape_the_results(self) -> None:
         self.seed_req("First Doc", "alpha alpha beta")  # 0.894
@@ -171,9 +175,9 @@ class TestFindSimilarTextAvailability(SimilarityTestCase):
                 self.assertIsInstance(result, SimilarityUnavailableResult)
                 self.assertFalse(result.available)
                 self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
-            with self.subTest(target_types=["adr"]):
-                # structurally excluded -> ValueError when available
-                result = find_similar_text(query="alpha", target_types=["adr"])
+            with self.subTest(target_types=["bogus"]):
+                # unknown target type -> ValueError when available
+                result = find_similar_text(query="alpha", target_types=["bogus"])
                 self.assertIsInstance(result, SimilarityUnavailableResult)
                 self.assertFalse(result.available)
                 self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
@@ -209,14 +213,6 @@ class TestFindSimilarTextErrorContract(SimilarityTestCase):
             with self.subTest(min_score=bad_min_score):
                 with self.assertRaises(ValueError):
                     find_similar_text(query="alpha", min_score=bad_min_score)
-
-    def test_adr_target_rejected_before_filesystem_access(self) -> None:
-        self.seed_req("Alpha Doc", "alpha")
-        self.install_fake()
-
-        with self._nonexistent_docs_dir():
-            with self.assertRaises(ValueError):
-                find_similar_text(query="alpha", target_types=["adr"])
 
     def test_unknown_target_rejected_before_filesystem_access(self) -> None:
         self.seed_req("Alpha Doc", "alpha")
@@ -256,7 +252,7 @@ class TestSetextH1EndToEnd(SimilarityTestCase):
 
         ## Level
 
-        MUST
+        SRS
 
         ## Source
 

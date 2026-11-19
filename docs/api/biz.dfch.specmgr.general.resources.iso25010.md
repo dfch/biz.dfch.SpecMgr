@@ -8,7 +8,7 @@ Reads the packaged ISO/IEC 25010:2023 product quality model markdown
 verbatim as raw markdown, mirroring ``specmgr://dtais``/``specmgr://rsk/tara``'s
 raw-passthrough style. Unlike its plain-passthrough siblings, it still
 parses the text into a :class:`~biz.dfch.specmgr.models.Iso25010` on every
-call purely to fail fast on structural drift (ADR
+call purely to fail fast on structural drift (DEC
 356d8781-e446-4c26-917a-eda85648ce9d): the parsed result is discarded and
 the original raw text is what's returned.
 

@@ -7,8 +7,545 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The new `refine_feat` MCP prompt (`feat/prompts/refine_feat.py` + the
+  packaged `feat/data/feat_refine_instructions.md`): narrates a
+  pre-implementation plan-readiness review of a `feat-NNN-slug` feature
+  plan (testable acceptance criteria, phase ordering and dependencies,
+  scope clarity, unresolved decisions) fully over the MCP-native path —
+  read via `get_feat(id, raw=True)` (the edit coordinates only from
+  `get_feat(id, raw=True, numbered=True)`, never from a raw file read),
+  the findings triaged with the user via the `question` tool, the
+  approved fixes applied with the generic `update` tool with
+  `type="feat"` (line-range replace preferred, so unchanged regions stay
+  byte-identical), and the re-check via the generic `validate` tool with
+  `type="feat"`, `full=True` — host file tools only as a fallback for
+  hosts without those specmgr tools. The OpenCode host surface for it:
+  the new `feat-planner` subagent (`.opencode/agent/feat-planner.md` —
+  the same review with real file access, its plan-README-only edit scope
+  mechanically enforced by its `edit`/`write` permission rules
+  `{"*": deny, ".specmgr/feat/**/README.md": allow}`, distinct from the
+  pre-existing read-only `feat-refiner` agent) and the new
+  `/plan-feature <id>` command (`.opencode/command/plan-feature.md`,
+  `agent: feat-planner` — the name settled by the D1 decision, 2026-11-08:
+  the pre-existing `/refine-feature`/`feat-refiner`/`refine-feature`-skill
+  surface stays untouched; Phase 100 is purely additive). The harness
+  bundle grows from 30 to 32 files (the two new `.opencode/` files) and
+  is regenerated accordingly, with the count-pin test updated (feat-167-
+  mcp-lifecycle-commands-2 Phase 100, GitHub issue #167).
+
+- The new flat `specmgr harness-bundle` CLI command (`[cli]`-only, no
+  `mcp` import, `commands/harness_bundle.py`): reads the repo-root layout
+  from the current working directory, enumerates every `*.md` file
+  recursively under exactly `.opencode/{agent,command,skill}/` (exact
+  top-level directory-name match, singular names, sorted by
+  `.opencode/`-relative path; a stray markdown file outside that scope
+  warns on stderr and is never bundled; a missing `.opencode/` directory
+  is a usage error, exit 2, nothing written), and regenerates the single
+  package-data file
+  `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` of shape
+  `{"instructions": <install protocol>, "files": [{"path", "sha256",
+  "content"}]}` — serialized via `json.dumps(indent=2, ensure_ascii=False)`
+  plus a trailing newline, no timestamps, so two runs over an unchanged
+  tree are byte-identical. The new `specmgr://harness-bundle` MCP resource
+  (`application/json`, the `rasci.py` pattern: packaged read + fail-fast
+  `json.loads` on every call, the raw text returned unchanged — no model,
+  the bundle has no schema of its own) serves that file verbatim from an
+  editable checkout or a real, non-editable install: its top-level
+  `instructions` field carries the complete agent-driven install protocol
+  (harness config root via the harness's own configuration skill,
+  OpenCode: `customize-opencode`; byte-exact writes; the sha256
+  skip/ask/verify loop; the per-file installed/skipped/updated/failed
+  report; never touching `opencode.json`), making the resource the
+  agent's sole discoverable entry point for installing the published
+  harness files (every `.opencode/agent/*.md` subagent,
+  `.opencode/command/*.md` slash command, and `.opencode/skill/*/SKILL.md`
+  skill) into a fresh harness setup — no install CLI, no `--force`, no
+  sibling-directory detection, no MCP prompt (OpenCode exposes MCP tools
+  but not prompts to the agent). Drift guards: the `specmgr-harness-bundle`
+  pre-commit hook (the regenerate + `git diff --exit-code` pair, scoped to
+  `^\.opencode/(agent|command|skill)/.*\.md$`) and a Python 3.13-pinned
+  CI parity check in the `build` job alongside the existing `specmgr docs`/`mcp-docs` steps;
+  the README gains a new "Installing the specmgr Harness Files" section
+  (agent-driven install + what gets installed + the manual Claude Code
+  path with its permission-model gap) (feat-167-mcp-lifecycle-commands-2
+   Phase 130, GitHub issue #167).
+
+- The cross-cutting `specmgr://iso29148` resource: the four
+  ISO/IEC/IEEE 29148:2018 requirement specifications (`BRS`, `StRS`,
+  `SyRS`, `SRS` — the standard's own §3.2 abbreviations), with the §5.4
+  mapping sentence, the §6.2-6.4 processes, the §8.2-8.5 example
+  outlines, the §9.3-9.6 content clauses, the mapping to specmgr
+  document types, and the §5.2.6 "Characteristics of a set of
+  requirements" list — the closed set `req`'s `## Level` carries.
+  Served as raw markdown with a model-backed drift guard (a structural
+  edit of the packaged markdown fails its parse model) — the
+  `specmgr://ears` shape (DEC 356d8781-e446-4c26-917a-eda85648ce9d;
+  feat-173-req-iso29148-level-set, GitHub issue #173).
+
+- The new `set` artifact domain (issue #173's second work package): a
+  convenience bundle of one or more already-existing specmgr artifacts
+   of any (mixed) type via forward references only — `SET` is not a tag
+   of the shared 11-tag reference vocabulary and nothing in an item ever
+  points back to the set (the items remain the source of truth). The
+  body is strictly H1 → `## Description` (mandatory, opaque free
+  markdown) → `## Items` (mandatory flat bullet list, at least one
+   `<TAG> <uuid>: <title>` bullet from the shared 11-tag vocabulary in
+  any mix — `FEAT` carrying a `feat-NNN-slug` or bare `feat-NNN` id —
+  optional per-bullet notes, a duplicate `(tag, id)` pair rejected); no
+  other sections. `SetFrontmatter.status` is the SET-specific
+  four-value closed set `draft`/`progress`/`done`/`review`. Full
+  dispatch-only surface per DEC 36905d5b (7 tools: `create_set`,
+  `parse_set`, `list_set`, `get_set` with `raw`/`offset`/`limit`/
+  `numbered`/`language` + the non-raising `ParseFailureResult` channel,
+  `get_set_example`, `get_set_template`, `get_set_schema`; 2 resources:
+  `specmgr://set/example`/`specmgr://set/template`; 2 prompts:
+  `create_set`/`update_set`; schema at `set/models/v1/`; flat documents
+  `docs/set/set-{uuid}-{slug}.md`), the `set` entries in every generic
+  tool's dispatch table (forced by their import-time asserts), and the
+  self-triggering OpenCode skill `specmgr-set` as the host surface (no
+  dedicated `/set` command). `set` is the 13th language-aware domain
+  (the `## Description`/`## Items` headings join the packaged heading
+  tables, e.g. `de.json`'s `Beschreibung`/`Elemente`, plus the
+  never-translate line in `specmgr://i18n` and the
+   `translate_artifact` instructions), and the reference graph carries
+   the 15th palette entry (`SET` coloured `Wheat`, after `TXT`, before
+   `UNRESOLVED`) with its dated rulebook §2.5/§3.2/§3.3 amendment note
+   (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180).
+
+- The new `implement_feat` and `review_feat` MCP prompts
+  (`feat/prompts/implement_feat.py`/`feat/prompts/review_feat.py` + the
+  packaged `feat/data/feat_implement_instructions.md`/
+  `feat/data/feat_review_instructions.md`): `implement_feat` narrates
+  the orchestrator discipline for driving a `feat-NNN-slug` plan to
+  completion phase by phase (read the plan in full, a phase-by-phase
+  `TodoWrite` list, each phase delegated to a fresh subagent via "your
+  host's task-delegation tool, if one exists" — the optional-delegation
+  pattern of DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2, never assumed
+  present — with the explicit fallback to direct single-session
+  implementation when no delegation tool exists, and independent
+  verification of every subagent's result before advancing), then the
+  capped review-fix loop after the final verification phase (the feature
+  at `review`, not yet `done`; `[NEEDS DECISION]` items resolved with
+  the user via the `question` tool; the implementer appends the
+  reviewer's ready-to-paste fix phase to the plan's Task List; up to 3
+  review-fix cycles, `done` only after a clean loop exit); `review_feat`
+  is the portable mirror of the `feat-reviewer` checklist and report
+  format (the nine ISO/IEC 25010:2023 product-quality characteristics
+  plus the feature-plan convention layer and the optional local layer,
+  the five report sections as TSK-compatible checklist items each with
+  a file:line citation, report-only — never edits, writes, or commits),
+  including the conditional "Proposed Fix Phase" section (the
+  ready-to-paste `### Task List` block with the NEXT UNUSED phase
+  number, tasks derived from the report's own
+  Errors/Gaps/Discrepancies only, and the `[NEEDS DECISION]` flagging
+  rule). The OpenCode host surface stays in sync:
+  `.opencode/agent/feat-reviewer.md` gains the conditional "Proposed
+  Fix Phase" section, `.opencode/agent/phase-orchestrator.md`'s
+  Workflow gains the capped (3-cycle) review-fix loop with the
+  verify-at-`review` -> loop -> `done`-only-after-clean-exit ordering,
+  `.opencode/command/implement-feature.md` names the FSM-aligned
+  `progress` -> `review` status hop (precondition: the `planning` ->
+  `progress` start hop at the first implementation action), the
+  automatic review-fix step, and fixes its "a a" typo, and
+  `.opencode/command/review-feature.md`'s report-section enumeration
+  gains the new conditional section. The harness bundle is regenerated
+  over the four edited `.opencode/` files (their sha256/content entries
+  change; the file count stays 32, the count pin unchanged)
+  (feat-263-delegation-prompts Phase 110, GitHub issue #263).
+
 ### Changed
 
+- The `specmgr harness-bundle` generator and its install protocol, refined
+  by the feat-167-mcp-lifecycle-commands-2 Phase 170 fix phase (review
+  cycle 3, GitHub issue #167): the feat-numbering skill
+  (`.opencode/skill/feat-numbering/SKILL.md`) no longer references the
+  deleted TSK `tsk-2687d267` (the feat-150 plan-document numbering
+  migration is deferred without a live tracker; the successor
+  `tsk-1b36c754` is named as the TSK whose repair scope a future migration
+  would need its own tracker or an explicit scope extension of); the
+  bundle's `instructions` install protocol gains the both-spellings
+  collision case in step 2 (a root containing both a singular and a plural
+  directory for the same first path segment -- do not guess, ask the user
+  which one to install into, and report the other as needing manual
+  cleanup); the `specmgr harness-bundle` exit-2 usage-error contract now
+  also covers a scoped `.md` file that is not decodable as UTF-8 and an
+  unwritable/uncreatable output path (a deterministic stderr message
+  naming the problem + "nothing was written", no traceback, no partial
+  bundle); and `generate_bundle_text` returns the bundle text together
+  with the bundled-file count, so the command enumerates the scoped
+  `.opencode/` tree exactly once.
+- The `dec` `## Decision Outcome` lead is relaxed so that, after the
+  mandatory lead paragraph (the `statement` field, position and meaning
+  unchanged), zero or more further blocks — additional paragraphs,
+  bullet lists, ordered lists, and fenced code blocks — may follow
+  before the first `###` sub-section, carried by the new optional
+  `further_blocks` field (the `dec`-local `OutcomeBlocks` leaf) declared
+  between `statement` and `consequences` in `dec/models/v1` — an
+  additive, non-breaking schema evolution: a section whose first block
+  is not a paragraph (a bare list, a `###` heading, nothing) is still
+  rejected, `### Consequences`/`### Confirmation` keep their position,
+  optionality and meaning, and every previously valid document parses to
+  the same result with a byte-exact round-trip. The rejected kinds stay
+  rejected per distinct token kind (block quotes, HTML comments,
+  horizontal rules, H4+/H5/H6 headings, raw HTML); pipe-table content is
+  a plain paragraph to the shared commonmark tokenizer (which has no
+  table token) and is therefore accepted, consistent with the lead
+  paragraph's existing behavior. This unblocks the UUID-preserving ADR to
+  DEC conversion (GitHub issue #46), whose ~20 of 46 blocked ADRs (e.g.
+  `750842b2`, `92cc4ce8`, `356d8781`) carry multi-block outcomes
+   (feat-247-dec-outcome-blocks, GitHub issue #247).
+
+- **BREAKING**: `req`'s `## Level` is a mandatory single-line
+  closed-value field carrying the ISO/IEC/IEEE 29148:2018
+  requirement-specification kind — exactly one of `BRS`, `StRS`, `SyRS`,
+  `SRS` (the standard's §3.2 abbreviations) — enforced in
+  `req/models/v1` by its own `_LEVEL_PATTERN`. This is an in-place
+  `req/models/v1` schema evolution (the feat-132-prb-update precedent:
+  no v2, no dual-schema read support), so an existing `req` document
+  with any other `## Level` value fails to parse until its value is one
+  of the four kinds; the `update_req` prompt carries a present-tense
+  recovery directive for that case (host-read the file at the
+  parse-failure `path`, replace the value, confirming read). The RFC
+  2119 obligation keywords (`MUST`/`SHOULD`/`MUST NOT`/`SHOULD NOT`/
+  `MAY`) are gone from the `req` schema — obligation is carried by the
+  requirement statement's phrasing (EARS, `specmgr://ears`), as
+  documented by the resource's `## Requirement obligation` section. All
+  14 in-repo `docs/req/` documents carry `SRS` (they specify the
+  specmgr tool itself); the packaged `req` template/example carry the
+  kind (`SyRS`); the `create_req` prompt reads `specmgr://iso29148`
+  first and elicits the kind; the i18n never-translate `## Level`
+  vocabulary is the four kinds; and the GOL model module docstring and
+  the `create_gol` prompt carry the current fact (a goal has no
+   `## Level` section; obligation lives on the requirements below it, in
+   each one's ISO 29148 kind plus its statement's own phrasing)
+    (feat-173-req-iso29148-level-set, GitHub issue #173).
+
+- The generic `set_status` tool now enforces each whole-body domain's
+  own `_STATUS_TRANSITIONS` state machine post-load/pre-write: a
+  `set_status` call is honoured only when the transition from the
+  document's current (loaded from disk) status to the requested target
+  is allowed by that domain's machine. The 14 whole-body domains
+  (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set) each own
+  their table next to their `_ALLOWED_STATUSES` in their own
+  `models/<v>/frontmatter.py`; the central `_STATUS_TRANSITIONS_BY_TYPE`
+  aggregation in `general/tools/_status_fsm.py` is keyed to the shared
+  `general/tools/_domains` registry, with a full-coverage import-time
+  assert. A disallowed transition is rejected before any write
+  (nothing is persisted, `updated` not bumped) with the new non-raising
+  `InvalidStatusTransitionResult` (`general/models/`, a sibling to
+  `InvalidStatusResult`): `valid: false`, `type`, `from_status`
+  (current), `to_status` (requested), `allowed_values` (sorted,
+  current-state-relative — NOT the domain's full vocabulary), plus the
+  exact message forms (normal: the allowed targets joined; terminal
+  current state: empty `allowed_values` plus the "Status '...' is
+  terminal (no outgoing transitions)" form). The channel order is
+  undisturbed: the pre-existing pre-load out-of-vocabulary
+  `InvalidStatusResult` (the domain's full flat vocabulary) still runs
+  first, and the unchanged-status no-op (issue #109) still runs before
+  the transition check. This is the sixth extension of the DEC
+  519d1206 client-side-`isError`-truncation non-raising
+  structured-result workaround chain, taking the case-6 slot for the
+  `set_status` transition surface (f14f125e's "delete as the later
+  candidate (case 6)" prediction is overtaken — `delete` remains the
+  later candidate; no accepted DEC is edited)
+   (feat-108-fsm, GitHub issue #108, DEC
+   a79608e4-88cd-498f-8ca1-445df4d04f92).
+
+### Removed
+
+- **BREAKING**: the ADR (Architecture Decision Record) artifact type is
+  removed (GitHub issue #46, feat-46-remove-adr): the `adr/` domain
+  package and its `models/adr/` schema package are deleted with their
+  tests, the 11 ADR MCP tools (`get_adr`, `list_adr`, `create_adr`,
+  `update_frontmatter`, `update_section`, the five `option_*` tools, and
+  `validate_adr`), the `specmgr://adr/{id}` resource, the ADR prompts,
+  the `specmgr adr-toc` CLI command, the `SPECMGR_ADR_DIR` environment
+  variable, and the `specmgr-adr-toc` pre-commit hook and CI step. The
+  47 ADR documents are converted to DECs at `docs/dec/<uuid>-<slug>.md`
+  reusing each ADR's UUID and file name (per the "Convert an ADR to a
+  DEC" SOP), every citation of a migrated id is retargeted
+  `ADR <uuid>` -> `DEC <uuid>`, and the original ADR sources are
+  archived, not deleted, under `docs/archive/adr/` (the preserved
+  generated TOC as `adr-toc.md`; the conversion SOP at
+  `docs/archive/sop/`). `set_status` loses its ADR-only `superseded_by`
+  parameter with the adr branch, `sysrs`'s `## Decisions` section
+  accepts `DEC` bullets only, and the `ADR` tag is out of the shared
+  reference-tag vocabulary (11 tags) and the reference-graph palette
+  (15 entries). No new ADRs are created — new decisions are DEC
+  documents (the removal freeze, announced in AGENTS.md before the
+  rollout, held for the whole migration).
+
+### Fixed
+
+- The `specmgr://i18n` resource's §5.1 11-tag reference-vocabulary
+  correction in the packaged data file `general/data/general_i18n.md`:
+  the stale `SOP` tag (not a reference tag) is replaced by `TXT`
+  (which is), matching the code authority in
+  `general/tools/_references.py` — the resource serves the packaged
+  file verbatim, so the fix ships to every consumer, and the
+  coordinated content pin in `tests/general/resources/test_i18n.py`
+  now asserts `TXT` (feat-255-i18n-typo, GitHub issue #255).
+- The last model→tools import edge (owed by feat-197-i18n) is
+  removed: `DEFAULT_LANGUAGE` now has its canonical model-side home in
+  `general/models/heading_table.py`, and `general/tools/_path_safety.py`
+  aliases it from there (the name stays in its `__all__`, so every
+  existing tools-layer consumer is untouched) — importing the model
+  module no longer pulls the `mcp` extra into the model import graph
+  (feat-255-i18n-typo, GitHub issue #255).
+
+## [0.38.0] - 2026-10-31
+
+### Added
+
+- The new `specmgr lint` command (the in-tree spec artifact parseability
+  gate): runs the model-level FULL parse of each document's own domain
+  over the repo's own in-tree spec artifacts (the feature README.md files
+  under `.specmgr/feat/` and the documents under `docs/{type}/`) and
+  reports every unparseable document (file path + parse error), not just
+  the first — full parses only, never the `list_<d>`/`DocCache` listing
+  path, whose `list_feat` dirty stage (frontmatter+H1 only, DEC 3982712a)
+  is precisely the masking that hid the feat-214 defect for three
+  consecutive commits. Three scopes, so the cost scales with the size of
+  a change and never with the size of the corpus: explicit paths with the
+  type inferred from the path layout alone (`--type` overrides inference,
+  `--skip-unrecognized` skips unknown layouts) — the `specmgr-lint`
+  pre-commit hook lints every staged in-tree artifact and the new
+  pull_request-only CI step lints every artifact changed against the base
+  branch (pinned to Python 3.13 like the docs drift steps, a clean skip
+  on an empty filtered list, the identical anchored file pattern in both)
+  — and the `--type T` / `--all` full-corpus sweeps, CLI-only (never on
+  the commit path or in the test suite), usable on demand or in a later
+  nightly job. The generated `docs/adr/README.md` table of contents is
+  unconditionally excluded (resolved type `adr` + base name `README.md`,
+  in whichever directory; `feat/{id}/README.md` is never excluded); each
+  failure report ends with a per-type repair pointer (`/repair {type}
+  {id}` for the whole-body domains, the id derived from the path, falling
+  back to `/repair {type}`; ADR — which the repair flow does not cover —
+  a fix-manually line); exit codes follow the plantuml-check family:
+  **0** every document parsed (incl. a run where every path was skipped
+  or excluded), **1** at least one document failed to parse or the `mcp`
+  extra is missing (required, like `specmgr diagram`; the decoupling is
+  tracked as issue #238), **2** a usage-or-resolution error. Accepted
+  limitation (the gate is change-scoped by design): a schema or parser
+  change can break untouched documents without failing the change-scoped
+  gate — the full sweep, manual or the follow-up nightly workflow, finds
+  them (feat-218-in-tree-spec-artifact-parseability-gate, GitHub issue
+  #218).
+- **Thirteenth domain feature (TXT/Free-Form Text tooling)**: new
+  document-type domain, `txt` — a generic, minimally structured catch-all
+  for unstructured markdown text that does not warrant a dedicated domain
+  (ad hoc notes, meeting minutes, review/audit write-ups, scratch
+  analysis): everything between the H1 and `## Updates` is opaque to the
+  parser (any markdown — paragraphs, lists, code blocks, H2..H6 headings —
+  accepted verbatim, mandatory), and the body ends at the first top-level
+  `## Updates` (mandatory, the last H2; a second `## Updates` or any H2
+  after it is rejected by the engine's own trailing-completeness error),
+  which holds at least one `### {timestamp} ( - | : ) {title}` entry,
+  newest first (the same entry heading regex, computed
+  `timestamp`/`title` fields and shared `validate_newest_first` helper as
+  `vcr`/`dec`/`sop`). Deliberately not a report and not a formal notes
+  type, and — unlike every other domain — no per-domain mutation tools of
+  any kind: `txt` is built dispatch-only from day one (ADR
+  36905d5b-8057-4294-8665-c7eed5534db0, like `sop`/`vcr`/`sysrs`), so
+  whole-body and line-range updates go through the generic `update` tool
+  (`type="txt"`), surgical exact-match replacements through the generic
+  `edit` tool (`type="txt"`), status changes through the generic
+  `set_status` tool (`type="txt"` — the closed three-value vocabulary
+  `draft`/`progress`/`done`), classification changes through the generic
+  `set_classification` tool (`type="txt"`), deletions through the generic
+  `delete` tool (`type="txt"`), and disk-free/id-free dry-run content
+  validation through the generic `validate` tool (`type="txt"`); the
+  similarity tools (`find_related`/`find_similar_text`) and
+  `list_references` serve it by registration only:
+  - `txt/models/v1/`: Pydantic schema (`TxtFrontmatter` with the closed
+    three-value status set, the opaque `TxtBody` with the one boundary
+    `get_extent` override, the `Updates`/`UpdateEntry` leaf classes copied
+    from `vcr`, `TxtDocument`, `TxtSummary`), parser (`parse_txt`), and
+    JSON schema generation, inside the domain package itself.
+  - `txt/tools/`: `@mcp.tool()` wrappers for the TXT lifecycle
+    (`create_txt`, `parse_txt`, `list_txt` paged with `error_count` and
+    inline failed rows, `get_txt` with `raw`/`offset`/`limit`/`numbered`
+    and the non-raising `ParseFailureResult` channel, `get_txt_example`,
+    `get_txt_template`, `get_txt_schema`).
+  - `txt/resources/` (`specmgr://txt/example`, `specmgr://txt/template` —
+    no `specmgr://txt/{id}`, no `specmgr://txt/list`) and `txt/prompts/`
+    (`create_txt`/`update_txt` narrated instruction flows; `create_txt`
+    first checks `list_txt` for a near-duplicate).
+  - The `TXT <uuid>` reference tag (both a reference source and a
+    reference target, free-floating tokens in the body) with its
+    `_load_txt` resolver, and the frozen reference-graph palette's 15th
+    entry `TXT` coloured `LightGrey` (after `SYSRS`, before
+    `UNRESOLVED`).
+  - Documents live flat under the shared docs root as
+    `docs/txt/txt-{uuid}-{slug}.md` (the shared `SPECMGR_DOCS_DIR`-rooted
+    default like `req`/`vcr` — no `SPECMGR_TXT_DIR`).
+  - `server.py` updated to import the new `txt` domain package;
+    `.pre-commit-config.yaml` (the widened shared `files:` regex plus a
+    new `specmgr-schema-txt-package` hook), `AGENTS.md`, the root
+    `README.md`, the agent/skill text, and the generated docs all updated
+    for the thirteenth domain (feat-229-txt, GitHub issue #229).
+- Multi-language variants of the same artifact (feat-197-i18n, GitHub issue
+  #197, DEC 38efdb66): for the twelve domains `req`/`uc`/`tsk`/`qa`/`prb`/
+  `gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`, an artifact can exist in several
+  languages. English keeps `docs/<type>/`; every other language is a
+  `docs/<type>/<language>/` subfolder (`<language>` a lowercase two-letter
+  code) holding the variant under the English source's exact file name, with
+  the same `id` and the identical frontmatter and body schema (the language
+  lives in the file location only). `get_<d>`/`list_<d>`/`create_<d>` and the
+  generic `update`/`edit`/`set_status`/`set_classification`/`delete` tools
+  take an optional `language` (default `"en"`; omitting it is byte-identical
+  to the behavior before); `create_<d>` also takes the English source's
+  shared `id` for a non-default language. A caller-supplied `language` is
+  validated (`^[a-z]{2}$`) before any filesystem access. A per-language
+  heading-mapping table (`general/data/headings/<language>.json`, `de`
+  shipped) maps translated headings back to the canonical English headings at
+  the parse boundary, so a variant validates against the exact same schema;
+  closed-vocabulary values and schema-constant tokens are never translated,
+  and `prb`'s `problem_statement` stays English. A new language is added by
+  adding one JSON file, checked by a drift test against the document models.
+  `feat` and `adr` are permanently English-only (no `language` parameter on
+  any of their tools, resources or prompts).
+- The read-only tools `list_languages(type, id)` and
+  `check_translation_drift(type, id, language, source_language="en")`
+  (structural drift: missing/extra/reordered sections; staleness: the source
+  is newer than the translation), the `translate_artifact` prompt, the
+  `specmgr://i18n` resource and the `specmgr://i18n/headings/{language}`
+  resource template, plus the OpenCode `translate-artifact` and
+  `translation-status` skills and the `/translate` and `/translation-status`
+  commands.
+- `find_related`, `find_similar_text`, `list_references` and
+  `get_reference_diagram(_all)` stay English-only: a language variant is never
+  indexed, listed or resolved, and every hit or resolved reference is the
+  English document's path (pinned by regression tests, including a
+  non-recursive-scan guard).
+
+### Changed
+
+- `scripts/release.sh precheck` (SOP 98537416, step 2) now ends with the
+  feat closeout gate (sub-item (g), after the six standing checks
+  (a)–(f)): every `.specmgr/feat/feat-*/` folder shipped in the current
+  release window (`vPrev..HEAD`, `vPrev` the latest tag reachable from
+  `dev`; with no prior tag the window is `HEAD`) must be closed out to
+  `status: done` in its README frontmatter. "Merged" is the newest merged
+  PR under the folder id (its exact head ref, extended by the folder's
+  `feat-<NNN>-` issue-number prefix for work merged from a renamed branch
+  — the fallback is a single `per_page=100` page of the most recently
+  closed PRs, fetched once per run, so a renamed-branch delivery merged
+  beyond that page is outside the fallback's reach). A violation fails
+  the precheck with one actionable line per offending feat (feat id,
+  current status, PR number, delivery sha) plus the remediation pointer
+  (close out to `done` on `dev`, commit, re-run `precheck`); a missing or
+  unparseable `status:` line is a violation in its own right — the gate
+  blocks, never skips — and feats with no merged PR (plan-only or
+  in-flight) and deliveries inside `vPrev` are never gated
+  (feat-233-update-release, GitHub issue #233).
+- `scripts/release.sh precheck` (SOP 98537416, step 2) now ends with the
+  previous-release branch cleanup (sub-item (h), after the closeout
+  gate): the stale local and `origin` `feat-*`/`fix/*` branches whose
+  delivery commit (the newest merged PR's `merge_commit_sha` for the
+  branch's head ref) is an ancestor of `vPrev` are deleted on every side
+  that exists, each side independently (the local ref via `git branch -d`
+  with the `-D` fallback justified by the merged-PR proof, the `origin`
+  ref via `git push origin --delete`), guarded by the four hazard checks
+  (worktree-checked-out, no merged PR, in-window delivery, local≠origin
+  tips — the first guard to fire wins, emitting exactly one report
+  line). `--dry-run` makes the cleanup report-only (the
+  would-delete/would-keep table, no ref is deleted), and with no prior
+  tag nothing is deleted; the gate runs before the cleanup, so a gate
+  failure stops the precheck with zero ref mutations, and both sub-items
+  are idempotent — a re-run after the gate's remediation passes and after
+  a successful cleanup reports nothing to delete. The synced doc surfaces
+  (the SOP's step 2 sub-items (g)/(h), its new *delivery commit* / *stale
+  branch* / *issue-number prefix* definitions, the Safety-and-Precautions
+  entry recording the cleanup as the only mutating precheck sub-item, its
+  dated Updates entry, the script's header/usage comment, the `/release`
+  command's step 3, and the README "Make a Release" note) and
+  `tests/test_release_sh.py`'s new full-`precheck` gate and cleanup
+  coverage close the gap the 2026-10-23 manual cleanup surfaced — feats
+  shipping with their plans still at `status: review` and ~30 stale
+   feature branches accumulating per release (feat-233-update-release,
+   GitHub issue #233).
+- `scripts/release.sh release-notes` is notes-only again: it no longer
+  composes or PATCHes a `vX.Y.Z - <text>` release name — the name is
+  whatever the publish workflow's "Make GitHub Release" job sets (the bare
+  version string), and the procedure never modifies it (the stage's
+  idempotency check compares the stored body alone). This reverts the
+  name-text behavior introduced in v0.17.0; every release actually cut
+  (v0.16.0–v0.37.0) already carried the bare version name, so no shipped
+  release changes — the SOP's step 9, the `/release` command, and the
+  `GH_SHIM` test pins follow.
+
+### Security
+
+- `uv.lock` transitive entries bumped to resolve 20 Dependabot security
+  alerts (lock-only change — no manifest or code change): `certifi`
+  2026.7.22 → 2026.10.23 (alert 29, GHSA-6q48-6c7w-9gw2, critical),
+  `virtualenv` 21.7.13 → 21.14.13 (15 alerts, high/medium/low), `filelock`
+  3.32.2 → 4.2.4 (3 alerts, 1 high / 2 low), `opentelemetry-api` 1.44.0 →
+  1.45.1 (1 alert, medium); the resolver forced `packaging` 26.2 → 26.3
+  (a new `virtualenv → packaging` edge, no added exposure). The 41 pillow
+  alerts (locked 12.3.0, blocked on the upstream fastembed `pillow<13.0`
+  cap) remain risk-accepted until the carved-out work of GitHub issue #235
+  lands (feat-232-dependabot-security-alerts, GitHub issue #232).
+
+## [0.37.0] - 2026-10-22
+
+### Added
+
+- The 12 `get_<d>_schema` MCP tools (one per whole-body domain: req/uc/tsk/
+  qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs), replacing the former 12
+  `specmgr://<domain>/schema` resources: each returns the domain's generated
+  JSON schema with a usage-oriented description (the parsed-JSON view,
+  pointing at the one-hop `get_<d>_template`/`get_<d>_example` tools), so an
+  agent no longer has to know to read a resource to discover a domain's
+  structure; the deliberate absence of a `specmgr://adr/schema` counterpart
+  is documented in the `create_adr` tool description (the tool's own typed
+  input parameters are the ADR structure reference) (DEC 112b6498,
+  feat-189-reduce-agent-round-trips, GitHub issue #189).
+- An env-gated golden parser sweep (every reference-graph golden through
+  `chain.validate_plantuml`, asserting `valid=True` + `rendered=True` + a
+  node-title render proof) and a new `plantuml-parser` CI job (pinned Python
+  3.13.13) that downloads the pinned PlantUML 1.2026.8 release jar (pinned
+  URL + SHA-256, hash-verified before use) and runs the full suite with
+  `pytest -n auto -rs` — the env-gated real-parser tests (incl. the
+  reference-graph subset gate and the golden sweep) now execute and pass on
+  the commit path instead of skipping (feat-214-rel-invalid-diag, GitHub
+  issue #214).
+- The `specmgr-refs` skill's diagram workflow now requests `reverse` for
+  every SCOPED diagram (MCP `reverse=True` / CLI `--reverse`) and states the
+  O(registry-size) 13-domain scan cost; the builder/tool/CLI API defaults
+  stay `reverse=False` (feat-214-rel-invalid-diag, GitHub issue #214).
+
+### Changed
+
+- The markdown artifacts a create agent fetches in one hop now carry the
+  closed-form guidance the agents previously failed on: the prb template and
+  example both state the mandatory lead-sentence bracketed frame verbatim,
+  the tsk template no longer induces task-text rewrites, and the req/rsk/qa
+  templates name their closed sets in template comments as does the vcr
+  coverage set; all 12 create and 12 update instruction files now reference
+  the one-hop `get_<d>_template`/`get_<d>_example` tools and make the schema
+  fetch conditional (on whole-body or structural changes for updates), and
+  the agent-facing metadata (the 12 `create_<d>` tool descriptions, the
+  generic `update` and `validate` tool descriptions, and the 24 create/
+  update prompt descriptions) names the structure reference without
+  prescribing a fetch -- a fresh-agent re-run of the feat-128 methodology
+  met all three round-trip targets (T1 create-without-prompt first-try
+  success at <=5 calls, T2 create-with-prompt <=7 calls with no timeouts,
+  T3 update at or below the baseline call count) with zero schema fetches
+  (feat-189-reduce-agent-round-trips, GitHub issue #189).
+- The 12 generated domain schemas now carry the closed sets as
+  machine-readable `json_schema_extra` metadata (enum/pattern) with zero
+  change to parse/validation behavior; the metadata is wire-inert by
+  construction -- no `enum` on object-typed schema nodes, because the MCP
+  SDK validates every tool's `structuredContent` against the generated
+  schema and an object instance can never satisfy a string `enum` -- and the
+  11 object-node enums an earlier phase emitted were removed with the
+  closed-set facts retained in the field/class descriptions, pinned by the
+  new 12-domain output-schema satisfiability test
+  (feat-189-reduce-agent-round-trips, GitHub issue #189).
 - Removed the inert (fully commented-out, no-op)
   `validate_heading_structure`/`validate_headings` Pydantic
   `model_validator`s from `models/md`'s `MarkdownSection`/
@@ -21,6 +558,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `MarkdownSection.get_extent`'s stop condition plus
   `MarkdownStr.from_text`'s trailing-completeness check
   (feat-129-remove-inert-heading-validators, GitHub issue #129).
+- The MCP server singleton (`server.py`) is now a thin
+  `SpecMgrServer(MCPServer)` subclass overriding only the public
+  `call_tool`, which re-raises `UnexpectedToolError.__cause__` (the
+  original handler exception, `from None`): since `mcp` v2.1.0 (upstream
+  #3314) a tool handler's raised exception reached the client wrapped as
+  `UnexpectedToolError("Error executing tool <name>")` with the handler's
+  own message swallowed, while this repo's documented tool contract is
+  that the still-raising usage errors (the `_path_safety` invalid-id
+  `ValueError`s, the whole-body domains' `XNotFoundError`s,
+  `create_feat`'s `FileExistsError`, ...) surface to the caller as that
+  message text. The SDK's own `_handle_call_tool` catch then stringifies
+  the re-raised original into the `is_error=True` result -- the v2.0.0
+  wire shape minus the `Error executing tool <name>: ` prefix, uniform
+  for every registered tool, no per-domain logic. The behavioral guard
+  for future 2.x bumps is the new in-process wire-level regression
+  `tests/test_mcp_error_contract.py` (4 tests over anyio memory streams:
+  malformed id -> original `ValueError` text, well-formed-but-absent id
+  -> the domain's not-found text, healthy call -> unchanged success
+  shape), not the locked version number (DEC 80305c52,
+  feat-221-mcp-220-error-contract, GitHub issue #221).
+- The `specmgr docs` generator now ruff-formats the embedded code blocks
+  of its own generated markdown (the per-module `api/*.md` pages, the
+  `api/README.md` index, and `GENERATED.md`; prose stays byte-identical)
+  as one in-place `ruff format` pass over all the written files, after
+  the writes -- closing the pre-commit `ruff-format` vs `specmgr-docs`
+  byte-identity loop for any module docstring that embeds ruff-not-clean
+  code. When ruff is unavailable (the `test` extra is not in published
+  `[cli]`/`[mcp]`-only installs) one warning goes to stderr and the pass
+  is skipped (the files stay as written), so the command never fails
+  (the `similarity` extra's availability-decided-at-call-time precedent);
+  a non-zero ruff exit likewise degrades to one warning (naming ruff and
+  the exit code) with the command still succeeding and the files left as
+  ruff left them; pinned by `TestDocsRuffFormat` in `tests/commands/
+  test_docs.py` (feat-221-mcp-220-error-contract, GitHub issue #221).
+
+### Removed
+
+- The 12 `specmgr://<domain>/schema` MCP resources (req/uc/tsk/qa/prb/
+  gol/rsk/dec/sop/feat/vcr/sysrs), superseded by the `get_<d>_schema`
+  tools (see Added) (DEC 112b6498, feat-189-reduce-agent-round-trips,
+  GitHub issue #189).
 
 ### Fixed
 
@@ -65,21 +643,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fragments holding sequence content (the UC subset) are unaffected
   (feat-214-rel-invalid-diag, GitHub issue #214).
 
-### Added
+### Security
 
-- An env-gated golden parser sweep (every reference-graph golden through
-  `chain.validate_plantuml`, asserting `valid=True` + `rendered=True` + a
-  node-title render proof) and a new `plantuml-parser` CI job (pinned Python
-  3.13.13) that downloads the pinned PlantUML 1.2026.8 release jar (pinned
-  URL + SHA-256, hash-verified before use) and runs the full suite with
-  `pytest -n auto -rs` — the env-gated real-parser tests (incl. the
-  reference-graph subset gate and the golden sweep) now execute and pass on
-  the commit path instead of skipping (feat-214-rel-invalid-diag, GitHub
-  issue #214).
-- The `specmgr-refs` skill's diagram workflow now requests `reverse` for
-  every SCOPED diagram (MCP `reverse=True` / CLI `--reverse`) and states the
-  O(registry-size) 13-domain scan cost; the builder/tool/CLI API defaults
-  stay `reverse=False` (feat-214-rel-invalid-diag, GitHub issue #214).
+- The `mcp` extra moved `mcp>=2.0.0` -> `mcp>=2.2.0`; the lock resolves
+  `mcp` 2.3.0 and lockstep `mcp-types` 2.3.0 with no interpreter-marker
+  restriction, so the resolution applies to the full CI-matrix floor
+  including Python 3.11. This resolves Dependabot alert #27 (GHSA-
+  84m7-p3x7-pcfv, CVE-2026-59951, medium, CVSS 7.5 -- unbounded session
+  accumulation in StreamableHTTP stateful mode; this repo is effectively
+  not exposed: `stdio`/`sse` only, and the one `streamable-http` path
+  already passes `stateless_http=True`) (feat-221-mcp-220-error-contract,
+  GitHub issue #221).
 
 ## [0.36.0] - 2026-10-13
 
@@ -319,7 +893,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The formalised UC → PlantUML diagram pipeline (feat-185-uc-diagrams,
-  GitHub issue #185, ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4): the
+  GitHub issue #185, DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4): the
   import-free, stdlib-only `plantuml/` package — the classic `SoWkI…`-form
   URL text encoder, the two-mode structure checker, the jar/bin/url
   validation backends, and the strict first-set-wins, no-fall-through
@@ -388,7 +962,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `raw=False` guard, now factored into the shared `validate_read_args`
   helper in `general/tools/_splice.py`), and a numbered read of a
   document that exists but fails to parse returns the non-raising
-  `ParseFailureResult` (feat-150, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c),
+  `ParseFailureResult` (feat-150, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c),
   never numbered text. The default (`numbered=False`) output remains
   byte-identical to the existing `raw=True` text, and the `numbered`
   prefix is one format family with the new `update` `snippet` (each
@@ -479,8 +1053,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ParseFailureResult` (`error`/`path`/`id`) -- instead of raising the
   domain's not-found error -- when the target id's only matching on-disk
   file fails to parse (GitHub issue #170, feat-170-update-edit-
-  parse-failure, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, the fourth
-  extension of the ADR 519d1206 client-side-`isError`-truncation
+  parse-failure, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, the fourth
+  extension of the DEC 519d1206 client-side-`isError`-truncation
   non-raising structured-result workaround chain, after `validate`'s
   `{valid, errors}` result, `set_status`'s `InvalidStatusResult`, and
   `get_<d>`'s `ParseFailureResult`): the per-domain adapters catch the
@@ -504,7 +1078,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   result): the single `errors[].message` is capped at 300 characters
   exactly as the generic `validate` tool caps it (feat-110), mirroring
   `validate` including its own caught-exception set (GitHub issue #170,
-  ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f).
+  DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f).
 - `vcr`/`feat`/`dec`/`sop`/`sysrs`/`tsk`: the timestamped entries'
   `content` field now accepts any markdown content -- multiple
   paragraphs, lists, code blocks, block quotes -- not just a single
@@ -552,7 +1126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and get-first), not merely the same defect modulo that trailing line
   (GitHub issue #162).
 - `list_feat`'s cold-scan timeout (feat-187-list-feat-timeout, GitHub
-  issue #187, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44): the tool's very
+  issue #187, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44): the tool's very
   first call against a cold server process now returns the complete
   directory (`total` correct from call one) well under any client request
   timeout, regardless of corpus size, instead of potentially timing out
@@ -637,7 +1211,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (identical field path and cause, including the trailing pydantic
   documentation line -- feat-162-doc-cache-exception-footer, GitHub issue #162),
   plus `path`, the absolute on-disk file; a truly absent id still raises
-  the domain's not-found error; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)
+  the domain's not-found error; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c)
   or `list_<d>()`'s `<failed to parse>` failed row (without one, whose
   `title`/`status` carry the marker and whose `id` is null while
   `ref`/`path`/`error` are populated), read the raw file with the host's
@@ -673,8 +1247,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   commands, GitHub issue #150, Phase 1, REQ-012).
 - `ParseFailureResult`, a new shared, non-raising Pydantic model in
   `general/models/` (feat-150-mcp-lifecycle-commands, GitHub issue #150,
-  Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- the third member of
-  the ADR 519d1206 client-side-`isError`-truncation workaround chain (after
+  Phase 1a, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- the third member of
+  the DEC 519d1206 client-side-`isError`-truncation workaround chain (after
   `validate`'s `{valid, errors}` and `set_status`'s `InvalidStatusResult`):
   fields `error` (the parse-failure message), `path` (absolute on-disk file
   path), and `id` (the requested id, echoed). Backed by a new shared helper
@@ -740,7 +1314,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now returns the non-raising `ParseFailureResult` (`error`/`path`/`id`) for
   a document that exists but fails to parse, instead of raising the domain's
   not-found error (feat-150-mcp-lifecycle-commands, GitHub issue #150,
-  Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text
+  Phase 1a, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text
   is byte-identical to the domain's `list_<d>` tool's failed-row `error`
   for the same file (identical field path and cause, including the trailing
   pydantic documentation line -- feat-162-doc-cache-exception-footer,
@@ -904,7 +1478,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **BREAKING**: Every whole-body document type's timestamps now use one
   uniform full ISO 8601 date+time form (`yyyy-MM-dd` + `T` or space +
-  `HH:mm:ss.fff` + `Z`/`±HH:mm`) (ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf,
+  `HH:mm:ss.fff` + `Z`/`±HH:mm`) (DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf,
   GitHub issue #146, feat-146-date-time):
   - Frontmatter `created`/`updated` of all twelve whole-body domains (ADR
     excluded) are now written in the `T`-separated canonical form by the
@@ -971,7 +1545,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   actionable message, so the MCP-registered `type` enums can no longer
   drift from the dispatch tables. **Note**: `set_status`'s registered
   `type` enum now lists `adr` first (ordering-only, non-normative). New
-  ADR c4efbde6-fd19-4aa8-8668-95316ed62dcc refines the future-domain
+  DEC c4efbde6-fd19-4aa8-8668-95316ed62dcc refines the future-domain
   convention: a new domain now also registers its name in
   `general/tools/_domains.py`'s `WHOLE_BODY_DOMAINS` in addition to the
   existing dispatch entries.
@@ -1435,7 +2009,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   numbers a client sees in any `get_<d>(raw=True)` read, windowed or not,
   index byte-for-byte into the same text the generic `update` tool splices
   against) is defined once and shared by all eleven tools (GitHub issue
-  #28; ADR 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d).
+  #28; DEC 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d).
 
 - `confluence_update` MCP tool (`general/tools/`): writes a local Markdown
   file's rendered content into an existing Confluence page's body via the
@@ -1545,7 +2119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   URL's host (e.g. to an SSO login page) and raises instead of returning
   that content, and supports binary/image download via a
   `destination_path` parameter (content-type based). GitHub issue #50,
-  ADR a156fdf9-052c-4f43-93a2-eeec04a91eac.
+  DEC a156fdf9-052c-4f43-93a2-eeec04a91eac.
 
 - **BREAKING**: frontmatter `created`/`updated` now strictly require the
   date+time variant `yyyy-MM-dd HH:mm:ss.fff` followed by `Z` (UTC) or a
@@ -1789,8 +2363,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   criteria. Fills a gap identified during `feat-32-sysrs` planning (no
   existing domain modeled ISO/IEC/IEEE 29148's/MITRE SE Guide's
   "Verification / Test and Evaluation" concept). Follows the domain-first
-  hierarchy (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
-  "simple surface" from day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0
+  hierarchy (DEC ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
+  "simple surface" from day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0
   -- no per-domain mutation tools, including no per-AC create/read/update/
   delete tools):
   - `vcr/models/v1/`: Pydantic schema (`VcrFrontmatter` with a closed
@@ -1836,7 +2410,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Eleventh domain feature (FEAT/Feature tooling)**: formalized the ad hoc
-  `.specmgr/feat/<id>/README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e)
+  `.specmgr/feat/<id>/README.md` convention (DEC e369ee2e-3353-4f92-991c-6367d76d832e)
   into a real, schema-backed `feat` document-type domain, with full MCP tool surface,
   resources, prompts, and cross-cutting registration. Deliberately special among domains:
   uses non-UUID `feat-NNN-slug` ids (chosen by user, derived from H1 title) and
@@ -1959,10 +2533,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (`create_dec`, `update_dec`, `set_status_dec`, `parse_dec`, `list_dec`,
     `get_dec`, `get_dec_example`, `get_dec_template`, `validate_dec`),
     plus a stub for `delete_dec`. `list_dec` ships as a paged tool from day
-    one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+    one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `dec/resources/`: `specmgr://dec/schema`, `specmgr://dec/example`,
     `specmgr://dec/template` (no `specmgr://dec/{id}` — id-based reads are
-    `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+    `get_dec`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
     `specmgr://dec/list` — listing is the `list_dec` tool, ADR
     ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `dec/prompts/`: `create_dec(topic)`/`update_dec(id, instructions?)`
@@ -1993,10 +2567,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (`create_gol`, `update_gol`, `set_status_gol`, `parse_gol`, `list_gol`,
     `get_gol`, `get_gol_example`, `get_gol_template`, `validate_gol`),
     plus a stub for `delete_gol`. `list_gol` ships as a paged tool from day
-    one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+    one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `gol/resources/`: `specmgr://gol/schema`, `specmgr://gol/example`,
     `specmgr://gol/template` (no `specmgr://gol/{id}` — id-based reads are
-    `get_gol`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+    `get_gol`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
     `specmgr://gol/list` — listing is the `list_gol` tool, ADR
     ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `gol/prompts/`: narrated `create_gol`/`update_gol` prompts driving a
@@ -2025,7 +2599,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (`create_rsk`, `update_rsk`, `set_status_rsk`, `parse_rsk`, `list_rsk`,
     `get_rsk`, `get_rsk_example`, `get_rsk_template`, `validate_rsk`),
     plus a stub for `delete_rsk`. `list_rsk` ships as a paged tool from day
-    one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13), and its `RskSummary`
+    one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13), and its `RskSummary`
     lines carry the residual-risk coordinates so a register-wide
     risk-matrix view can be built from the listing alone.
   - `rsk/resources/`: `specmgr://rsk/schema`, `specmgr://rsk/example`,
@@ -2035,7 +2609,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     zone table, and product thresholds) (no `specmgr://rsk/{id}` —
     id-based reads are `get_rsk`-only, ADR
     ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://rsk/list` — listing
-    is the `list_rsk` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+    is the `list_rsk` tool, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `rsk/prompts/`: `create_risk`/`update_risk` prompts (the issue's
     literal wording, not the `rsk`-prefixed convention the tools/resources
     use) driving a narrated `TodoWrite` + `question`-tool interview flow.

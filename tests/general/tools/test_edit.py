@@ -17,7 +17,7 @@
 
 """Tests for the generic ``edit`` ``@mcp.tool()`` wrapper (feat-159-edit, Phase 3).
 
-Parameterized over all 12 whole-body document types; seeds a real, persisted
+Parameterized over all 13 whole-body document types; seeds a real, persisted
 document per type in a temp ``SPECMGR_DOCS_DIR`` (plus ``SPECMGR_FEAT_DIR`` for
 ``feat``, the folder-per-document domain) via the domain's own ``create_<d>``
 tool -- the fixture strategy and the per-domain ``_Case`` harness mirror
@@ -35,15 +35,16 @@ Covers ACC-001..ACC-006 and ACC-008..ACC-010 (ACC-007's docs are Phase 4):
 - The byte-unchanged-on-every-failure-path regression (raw bytes) -- ACC-002/
   003/004, Task 3.3.
 - The registration/input-schema test (live ``mcp.list_tools()``) and the pinned
-  ``type="adr"`` explicit-``ValueError`` test (Task 3.4, REQ-004/ACC-006).
+  unknown-``type`` explicit-``ValueError`` test (Task 3.4, REQ-004/ACC-006).
 
 Two notes on derivation (as in ``test_update.py``'s own approach note):
 
 - The per-type stage-2 field-failure cases: ``req``, ``uc``, ``tsk``, ``gol``,
-  ``rsk``, ``dec``, ``sop``, ``feat``, ``vcr``, and ``sysrs`` each have a
-  genuine field-level ``pydantic.ValidationError`` path (closed vocabularies,
-  cross-field validators, or a model validator that eagerly forces an
-  item-pattern check), while ``qa`` and ``prb`` bodies fail structurally with
+  ``rsk``, ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, and ``txt`` each
+  have a genuine field-level ``pydantic.ValidationError`` path (closed
+  vocabularies, cross-field validators, or a model validator that eagerly
+  forces an item-pattern check -- ``txt``'s is the ``Updates`` newest-first
+  ordering validator), while ``qa`` and ``prb`` bodies fail structurally with
   ``AssertionError`` instead (an unrecognized section heading) -- each case's
   ``field_error_is_validation`` flag pins which channel its edit raises.
 - ``prb``'s multi-occurrence case seeds a dedicated optional ``## More
@@ -121,6 +122,10 @@ from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.tsk.tools.list_tsk import list_tsk
+from biz.dfch.specmgr.txt.models.v1 import TxtDocument, TxtFrontmatter
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError, txt_base_dir
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
+from biz.dfch.specmgr.txt.tools.list_txt import list_txt
 from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
@@ -152,14 +157,6 @@ _EMPTY_OLD_STR_MESSAGE = (
     "Provide the exact text to replace, "
     "or use update for an intentional full-file replacement."
 )
-
-
-def _unknown_type_message(type_: str) -> str:
-    """The public dispatcher's explicit pre-dispatch ``type`` rejection message (REQ-004)."""
-    result = (
-        f"unknown document type {type_!r}; expected one of {', '.join(WHOLE_BODY_DOMAINS)} ('adr' is not supported)"
-    )
-    return result
 
 
 #: A fixed date+time timestamp (feat-146 shape, ``T``-separated canonical form)
@@ -200,7 +197,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -482,6 +479,23 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+#: A minimal, valid ``txt`` body (H1, opaque free-form body, one newest-first ``## Updates`` entry).
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+
 _FEAT_MINIMAL_BODY = textwrap.dedent(
     """\
     # Feature: Example Widget
@@ -544,7 +558,7 @@ _CORE_DEFECT = "Token[0]: expected 'heading_open', got 'paragraph_open'."
 class _ParseFailureCase:
     """Per-domain test data for the parse-failure (Bug 1) coverage of the generic ``edit`` tool.
 
-    All 12 whole-body domains, ``feat`` included (this module's own ``_CASES`` already carries
+    All 13 whole-body domains, ``feat`` included (this module's own ``_CASES`` already carries
     ``feat`` in the unified shape, unlike ``test_update.py``/``test_set_status.py``).
     """
 
@@ -570,6 +584,7 @@ _PARSE_FAILURE_CASES: list[_ParseFailureCase] = [
     _ParseFailureCase("feat", create_feat, FeatNotFoundError, feat_base_dir, list_feat, _FEAT_MINIMAL_BODY),
     _ParseFailureCase("vcr", create_vcr, VcrNotFoundError, vcr_base_dir, list_vcr, _VCR_MINIMAL_BODY),
     _ParseFailureCase("sysrs", create_sysrs, SysrsNotFoundError, sysrs_base_dir, list_sysrs, _SYSRS_MINIMAL_BODY),
+    _ParseFailureCase("txt", create_txt, TxtNotFoundError, txt_base_dir, list_txt, _TXT_MINIMAL_BODY),
 ]
 
 
@@ -643,7 +658,7 @@ _CASES: list[_Case] = [
         multi_marker="the",
         multi_replacement="that",
         multi_seed_suffix="",
-        field_error_marker="MUST",
+        field_error_marker="SRS",
         field_error_fragment="NOT-A-VALID-LEVEL",
         field_error_is_append=False,
         field_error_is_validation=True,
@@ -896,6 +911,28 @@ _CASES: list[_Case] = [
         field_error_is_append=False,
         field_error_is_validation=True,
     ),
+    _Case(
+        doc_type="txt",
+        create=create_txt,
+        not_found_error=TxtNotFoundError,
+        frontmatter_type=TxtFrontmatter,
+        document_type=TxtDocument,
+        base_dir=txt_base_dir,
+        missing_id=_MISSING_UUID,
+        wrong_format_id=_FEAT_SLUG_ID,
+        minimal_body=_TXT_MINIMAL_BODY,
+        edit_marker="Free-form notes body with a single paragraph.",
+        edit_replacement="Free-form notes body, revised.",
+        h1_line="# Meeting notes for the incident review",
+        deletable_suffix="\n### 2026-01-01 10:00:00.000Z - Older note\n\nThe older note content.\n",
+        multi_marker="note",
+        multi_replacement="nota",
+        multi_seed_suffix="",
+        field_error_marker="## Updates",
+        field_error_fragment="\n### 2026-12-01 10:00:00.000Z - Newer note\n\nThe newer note content.\n",
+        field_error_is_append=True,
+        field_error_is_validation=True,
+    ),
 ]
 
 
@@ -924,7 +961,7 @@ def _wrapped_prefix(doc_type: str) -> str:
 class TempEditDirTestCase(unittest.TestCase):
     """Common fixture: temp dirs set as the docs root via ``SPECMGR_DOCS_DIR`` and
     ``SPECMGR_FEAT_DIR`` (mirrors ``test_update.py``'s ``TempUpdateInjectionDirTestCase``,
-    since every test class below spans all 12 whole-body domains, feat included)."""
+    since every test class below spans all 13 whole-body domains, feat included)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -1089,37 +1126,25 @@ class TestEditPublicGuards(TempEditDirTestCase):
 
 
 class TestEditUnsupportedType(TempEditDirTestCase):
-    """REQ-004/ACC-006: an unknown or ``adr`` ``type`` is an explicit pre-dispatch ``ValueError``
-    (the generic ``validate`` tool's precedent; a deliberate divergence from ``update``'s
-    inherited ``KeyError``), before any filesystem access."""
+    """REQ-004/ACC-006: an unknown ``type`` is a pre-dispatch ``ValueError`` (before any
+    filesystem access), raised by ``validate_id`` which runs ahead of ``edit``'s own
+    defensive explicit check."""
 
-    def test_adr_type_raises_explicit_value_error_before_any_filesystem_access(self) -> None:
-        """REQ-004/ACC-006: ``type="adr"`` raises the edit-specific explicit pre-dispatch
-        ``ValueError``, before any filesystem access."""
+    def test_unknown_type_raises_value_error_before_any_filesystem_access(self) -> None:
+        """REQ-004: an unknown type is rejected with a pre-dispatch ``ValueError`` before any
+        filesystem access (containment, not full equality: ``validate_id`` raises first with its
+        own message)."""
         with self.assertRaises(ValueError) as ctx:
-            edit(id=_MISSING_UUID, type="adr", old_str="old text", new_str="new text")  # type: ignore[arg-type]
+            edit(id=_MISSING_UUID, type="bogus", old_str="old text", new_str="new text")  # type: ignore[arg-type]
 
-        self.assertEqual(str(ctx.exception), _unknown_type_message("adr"))
+        self.assertIn("bogus", str(ctx.exception))
         self.assertFalse(any(self.docs_root.iterdir()))
         self.assertFalse(any(self.feat_dir.iterdir()))
 
-    def test_adr_type_precedes_identical_input_guard(self) -> None:
-        """Guard order (REQ-008): the explicit ``type`` check fires before the input guards."""
+    def test_unknown_type_precedes_identical_input_guard(self) -> None:
+        """Guard order (REQ-008): the ``type`` check fires before the input guards."""
         with self.assertRaises(ValueError) as ctx:
-            edit(id=_MISSING_UUID, type="adr", old_str="identical text", new_str="identical text")  # type: ignore[arg-type]
-
-        self.assertEqual(str(ctx.exception), _unknown_type_message("adr"))
-
-    def test_unknown_type_raises_value_error(self) -> None:
-        """REQ-004: an unknown non-``adr`` type is rejected with a plain pre-dispatch ``ValueError``.
-
-        Containment (not full equality) is deliberate: for every type other than ``"adr"``,
-        ``validate_id`` -- which runs before ``edit``'s own explicit check -- raises first with
-        its own message (naming the UUID domains, ``adr`` included); the edit-specific message
-        is reachable only for ``type="adr"`` (pinned by full equality in the adjacent test).
-        """
-        with self.assertRaises(ValueError) as ctx:
-            edit(id=_MISSING_UUID, type="bogus", old_str="old text", new_str="new text")  # type: ignore[arg-type]
+            edit(id=_MISSING_UUID, type="bogus", old_str="identical text", new_str="identical text")  # type: ignore[arg-type]
 
         self.assertIn("bogus", str(ctx.exception))
 
@@ -1375,7 +1400,7 @@ class TestEditAssertWithinSpy(TempEditDirTestCase):
 
 class TestEditRegistration(unittest.TestCase):
     """Task 3.4: the live ``mcp`` registration carries ``edit`` exactly once, with the pinned
-    input schema (ACC-006): the 12-value ``type`` enum (no ``adr``),
+    input schema (ACC-006): the full whole-body-domain ``type`` enum,
     ``required == [id, type, old_str, new_str]``, optional boolean ``replace_all``
     defaulting to ``false``, and no ``minLength`` on ``new_str`` (REQ-001/D1)."""
 
@@ -1386,8 +1411,8 @@ class TestEditRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_edit_registered_exactly_once_with_pinned_input_schema(self) -> None:
-        """ACC-006: the live MCP registration carries ``edit`` exactly once, with the
-        12-value ``type`` enum (no ``adr``)."""
+        """ACC-006: the live MCP registration carries ``edit`` exactly once, with the full
+        whole-body-domain ``type`` enum."""
         matching = [t for t in self._tools if t.name == "edit"]
         self.assertEqual(len(matching), 1)
 
@@ -1395,8 +1420,7 @@ class TestEditRegistration(unittest.TestCase):
         type_prop = schema["properties"]["type"]
         self.assertEqual(type_prop["enum"], list(WHOLE_BODY_DOMAINS))
         self.assertEqual(type_prop["type"], "string")
-        self.assertEqual(len(type_prop["enum"]), 12)
-        self.assertNotIn("adr", type_prop["enum"])
+        self.assertEqual(len(type_prop["enum"]), 14)
         self.assertEqual(schema["required"], ["id", "type", "old_str", "new_str"])
 
         replace_all_prop = schema["properties"]["replace_all"]
@@ -1408,17 +1432,17 @@ class TestEditRegistration(unittest.TestCase):
 
 
 class TestEditParseFailure(TempEditDirTestCase):
-    """feat-170 Phase 110 (Bug 1, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
+    """feat-170 Phase 110 (Bug 1, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
     on-disk file fails to parse must return the non-raising ``ParseFailureResult`` (never the
     domain's ``XNotFoundError``) from the generic ``edit`` tool's single protected
     ``load_by_id`` call site (the lock is held across the whole read -> match -> validate ->
     write sequence, so stage 1/stage 2 are never reached), with nothing written to disk -- the
     ``error`` carries the same parse defect as the domain's own ``list_<d>`` failed row for
-    the same file (the ``get_<d>`` precedent, ADR 9080b37c). All 12 whole-body domains,
+    the same file (the ``get_<d>`` precedent, DEC 9080b37c). All 13 whole-body domains,
     ``feat`` included (this module's unified case shape).
 
     A truly-absent id still raises the domain's own not-found error (REQ-002): the regression
-    is this module's existing ``TestEditDomainNotFound`` (unchanged by this phase, all 12
+    is this module's existing ``TestEditDomainNotFound`` (unchanged by this phase, all 13
     domains including ``feat``).
     """
 
@@ -1453,13 +1477,13 @@ class TestEditParseFailure(TempEditDirTestCase):
 
 
 class TestEditValidateFailure(TempEditDirTestCase):
-    """feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an edit whose
+    """feat-170 Phase 120 (Bug 2, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an edit whose
     *post-edit* result is structurally/field invalid must return the non-raising
     ``ValidateResult(valid=False, ...)`` (never raise) -- the single ``errors[].message`` capped
     exactly as the generic ``validate`` tool caps it (300 chars via ``snippet``, feat-110) -- with
     nothing written to disk. Stage 1's OC-parity ``ValueError``s (not found / multiple matches)
     and the pre-dispatch guards stay plain-raising (REQ-004) and are pinned by this module's
-    existing guard/match-stage tests, unchanged. All 12 whole-body domains (this module's
+    existing guard/match-stage tests, unchanged. All 13 whole-body domains (this module's
     unified case shape, ``feat`` included).
 
     The combined-failure case (REQ-010/ACC-007: broken existing document AND an edit that would

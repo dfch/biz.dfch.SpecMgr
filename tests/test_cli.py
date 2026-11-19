@@ -125,8 +125,9 @@ class TestDiagramAndPlantumlCommands(unittest.TestCase):
     """
 
     def test_all_commands_still_registered(self):
-        """The full registered command set: the ten pre-existing commands + plantuml-check,
-        plantuml-encode, and the diagram sub-group."""
+        """The full registered command set: the pre-existing commands + plantuml-check,
+        plantuml-encode, the diagram sub-group, lint (feat-218, Phase 100), and
+        harness-bundle (feat-167-mcp-lifecycle-commands-2, Phase 130)."""
         names = set(get_command(app).commands)
 
         self.assertEqual(
@@ -136,7 +137,7 @@ class TestDiagramAndPlantumlCommands(unittest.TestCase):
                 "mcp",
                 "docs",
                 "mcp-docs",
-                "adr-toc",
+                "harness-bundle",
                 "coverage-badge",
                 "schema",
                 "unused-code",
@@ -145,6 +146,7 @@ class TestDiagramAndPlantumlCommands(unittest.TestCase):
                 "plantuml-check",
                 "plantuml-encode",
                 "diagram",
+                "lint",
             },
         )
 
@@ -182,6 +184,19 @@ class TestDiagramAndPlantumlCommands(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(result.stdout.strip(), version("biz-dfch-specmgr"))
+
+
+class TestLintCommand(unittest.TestCase):
+    """Registration + help smoke for the feat-218 Phase 100 ``lint`` command."""
+
+    def test_lint_help_renders(self):
+        """``specmgr lint --help`` renders and documents the sweep/skip options."""
+        result = runner.invoke(app, ["lint", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+        stdout = _strip_ansi(result.stdout)
+        for option in ("--type", "--all", "--dir", "--skip-unrecognized"):
+            self.assertIn(option, stdout)
 
 
 if __name__ == "__main__":

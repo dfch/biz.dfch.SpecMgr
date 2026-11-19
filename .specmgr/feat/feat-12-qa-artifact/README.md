@@ -29,7 +29,7 @@ mechanism in the shared `models/md` engine.
 - REQ-002: Define the `qa` markdown schema (frontmatter + body) — H1 title; fixed H2s (`General`, the 9 ISO 25010:2023 characteristics, `More Information`); repeating `QaSection` (H3) Q&A pairs inside each ISO-characteristic H2; special fixed `Introduction`/`Raw Requirements` H3s inside `General`.
 - REQ-003: Pydantic models under `qa/models/v1/` (frontmatter, body, document, parser, summary), status set reused from TSK (`draft`/`active`/`done`/`cancelled`).
 - REQ-004: Parse/validate `qa` documents from markdown, mirroring `parse_req`/`parse_tsk`'s two-error-channel convention (`AssertionError`/`pydantic.ValidationError`).
-- REQ-005: MCP tools/resources/prompts mirroring REQ's surface: `parse_qa`, `get_qa`, `get_qa_example`, `get_qa_template`, `create_qa`, `update_qa`, `set_status_qa`, `delete_qa` (stub), `validate_qa`; resources `specmgr://qa/schema`, `/example`, `/template`, `/list` (no `/{id}`, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614); prompts `create_qa`, `update_qa`.
+- REQ-005: MCP tools/resources/prompts mirroring REQ's surface: `parse_qa`, `get_qa`, `get_qa_example`, `get_qa_template`, `create_qa`, `update_qa`, `set_status_qa`, `delete_qa` (stub), `validate_qa`; resources `specmgr://qa/schema`, `/example`, `/template`, `/list` (no `/{id}`, per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614); prompts `create_qa`, `update_qa`.
 - REQ-006: Full cross-cutting registration (`server.py`, `commands/schema.py`, `pyproject.toml`, `.pre-commit-config.yaml`, CI, `AGENTS.md`) and test coverage mirroring `tests/req/`'s layout.
 
 ### Acceptance Criteria
@@ -66,9 +66,9 @@ in this feature:
 
 #### Depends On
 
-- ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
-  hierarchy), ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure),
-  ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based reads);
+- DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+  hierarchy), DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure),
+  DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based reads);
   the existing, already-tested `MarkdownBlockQuote` class
   (`models/md/markdown_block_quote.py`); the existing `Iso25010`/
   `parse_iso25010` model and `specmgr://iso25010` resource

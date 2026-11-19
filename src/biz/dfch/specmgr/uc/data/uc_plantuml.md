@@ -6,10 +6,10 @@ The frozen mapping and validation spec for turning specmgr `uc` documents (use c
 the structure checker, the validation chain, and the `generate_uc_sequence_diagram`
 prompt implement against. Provenance: FEAT feat-185-uc-diagrams (GitHub issue #185),
 Phase 100; the `plantuml/` package placement and the strict chain policy are decided by
-the Phase 100 ADR cited in §8.
+the Phase 100 DEC cited in §8.
 
 **Status: frozen.** A change to any rule below is a spec change — revise this file, the
-feature plan, and (where it reverses a frozen decision) the ADR. Never reinterpret a
+feature plan, and (where it reverses a frozen decision) the DEC. Never reinterpret a
 rule locally in a renderer, checker, or prompt.
 
 ## 1. Overview
@@ -530,7 +530,7 @@ by every renderer:
 Validation of a `.puml` diagram runs as a chain: the structure checker always, then the
 authoritative source when one is configured. Source selection is strict and
 configuration-driven; both the placement of the library implementing it and the policy
-itself are architecture decisions (the Phase 100 ADR, §8).
+itself are architecture decisions (the Phase 100 DEC, §8).
 
 ### 3.1 Environment variables (exactly three — no defaults, no PATH discovery, no opt-in flags)
 
@@ -589,7 +589,7 @@ running MCP server) until it is restarted, or the probe caches are cleared (the
 rationale (the agent's validate loop must not re-probe on every call) covers re-probing
 cost, which is exactly what an outcome-agnostic cache delivers.
 
-### 3.6 Result model (frozen shape — non-raising structured result, the ADR 519d1206 chain precedent)
+### 3.6 Result model (frozen shape — non-raising structured result, the DEC 519d1206 chain precedent)
 
 ```
 {
@@ -802,7 +802,7 @@ servers.
 Placement: `src/biz/dfch/specmgr/plantuml/structure.py` (Phase 110) — import-free (no
 specmgr imports), stdlib-only, deliberately extractable; not a separate PyPI library
 (the contract is specmgr's emitted subset; consuming projects already depend on
-specmgr; one published artifact — the Phase 100 ADR, §8).
+specmgr; one published artifact — the Phase 100 DEC, §8).
 
 ### 6.1 Scope — a line-oriented subset linter, not a grammar engine
 
@@ -952,7 +952,7 @@ A self-hosted `plantuml/plantuml-server` container behind `SPECMGR_PLANTUML_URL`
 - Feature plan (requirements, acceptance criteria, phase task list):
   `.specmgr/feat/feat-185-uc-diagrams/README.md` — FEAT feat-185-uc-diagrams (GitHub
   issue #185).
-- Phase 100 ADR (`plantuml/` package placement + strict chain policy): created with
+- Phase 100 DEC (`plantuml/` package placement + strict chain policy): created with
   this rulebook; its id is cited in the feature plan's Related Decisions.
 - v1 renderer precedent (`_actor_label`, `_BARE_ALIAS_PATTERN`, `@startuml {title}`,
   `-->` associations, the `actor{N}` alias scheme):
@@ -961,5 +961,5 @@ A self-hosted `plantuml/plantuml-server` container behind `SPECMGR_PLANTUML_URL`
   `uc/models/v2/use_case.py:373`): `src/biz/dfch/specmgr/uc/models/v2/`.
 - Shared reference-tag vocabulary (package-edge reference resolution):
   `src/biz/dfch/specmgr/general/tools/_references.py`.
-- Non-raising structured-result precedent (the §3.6 result model): ADR
+- Non-raising structured-result precedent (the §3.6 result model): DEC
   519d1206-4d2a-4500-9046-6db635209996.

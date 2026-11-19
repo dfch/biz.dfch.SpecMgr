@@ -923,7 +923,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Eleventh domain feature (FEAT/Feature tooling)**: formalized the ad hoc
-  `.specmgr/feat/<id>/README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e)
+  `.specmgr/feat/<id>/README.md` convention (DEC e369ee2e-3353-4f92-991c-6367d76d832e)
   into a real, schema-backed `feat` document-type domain, with full MCP tool surface,
   resources, prompts, and cross-cutting registration. Deliberately special among domains:
   uses non-UUID `feat-NNN-slug` ids (chosen by user, derived from H1 title) and
@@ -3247,7 +3247,7 @@ Let me check how the specmgr MCP is launched in the user's config (read-only).
   - Step 8: wait for publish (4 jobs)
   - Step 9: release notes + verify assets
   - Each step: "Automated" (command/stage) + "Manual fallback" (raw commands)
-- Related Artifacts: ADRs (ece4554b domain-first? more relevant: ADR 9c687bb1 pre-commit, the sop domain's ADR 36905d5b? Actually the Related Artifacts section has Requirements/Decisions/Goals/ACs/Sops subsections — what to cite: ADRs about the release process? There's the CI/publish workflow; feat-30-sop (the domain that hosts this SOP), the README's Make a Release section.
+- Related Artifacts: ADRs (ece4554b domain-first? more relevant: DEC 9c687bb1 pre-commit, the sop domain's DEC 36905d5b? Actually the Related Artifacts section has Requirements/Decisions/Goals/ACs/Sops subsections — what to cite: ADRs about the release process? There's the CI/publish workflow; feat-30-sop (the domain that hosts this SOP), the README's Make a Release section.
 - Updates: created entry.
 - Status: draft → (after review) → active. Plan: create as draft, user reviews, we flip to active via set_status (or manually).
 
@@ -4602,7 +4602,7 @@ Step 9: Verify and finalize the GitHub Release notes
 **Related Artifacts**:
 
 - Requirements: none yet (hmm — the section probably needs at least something; the template shows a bullet list. In the example there are bullets under all subsections. Is an empty subsection allowed? The body schema — "each question/answer category holds zero or more" was for QA. For SOP, let's not guess: to be safe, put at least one bullet under each subsection, or check the body model. Let me quickly check the SOP body schema for which Related Artifacts subsections are required/optional.)
-- Decisions: feat-30-sop ADR 36905d5b (dispatch-only generic tools — the convention the release command follows)... no, that's about the tools. Better: there's no DEC document in the repository. Use ADR references? The "Decisions" subsection says "DEC-0001: title" — the dec domain. There are no dec documents in the repo. Hmm. Let me check the body model for which subsections are optional.
+- Decisions: feat-30-sop DEC 36905d5b (dispatch-only generic tools — the convention the release command follows)... no, that's about the tools. Better: there's no DEC document in the repository. Use ADR references? The "Decisions" subsection says "DEC-0001: title" — the dec domain. There are no dec documents in the repo. Hmm. Let me check the body model for which subsections are optional.
 
 Let me check the related-artifacts section of sop/models/v1/body.py to figure out the required/optional subsections.
 

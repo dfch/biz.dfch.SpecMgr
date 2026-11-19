@@ -12,7 +12,7 @@ helper directly, so neither sub-package depends on the other just for this
 one file read.
 
 The resource's URI is deliberately unversioned (no ``/v2``), matching
-``specmgr://uc/schema``'s own precedent.
+``specmgr://uc/template``'s own precedent.
 
 ## Functions
 

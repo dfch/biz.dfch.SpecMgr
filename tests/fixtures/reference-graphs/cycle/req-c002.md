@@ -22,7 +22,7 @@ REQ c002c002-c002-4c02-8c02-c002c002c002: Cycle Requirement Two
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

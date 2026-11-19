@@ -29,8 +29,8 @@ line's 1-based body-line number, ready to feed into ``update``'s
 ``offset``). There is no ``specmgr://gol/{id}`` resource to point at
 -- id-based reads always go through the ``get_gol`` tool only.
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: GOL's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: GOL's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="gol"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="gol"``) -- mirroring
@@ -76,7 +76,9 @@ from ...server import mcp
     description=(
         "Guides the LLM through revising an existing goal by id: reading current "
         "state, showing which sections are present vs. empty, eliciting revisions, "
-        "applying the change with the right tool, and validating."
+        "applying the change with the right tool, and validating. The structure reference is the "
+        "`get_gol_schema` tool (the generated JSON Schema); the `get_gol_template`/`get_gol_example` "
+        "tools return the authoring template and a complete sample."
     ),
 )
 def update_gol(id: str) -> str:

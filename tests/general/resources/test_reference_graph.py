@@ -21,7 +21,7 @@ The resource serves the frozen reference-graph rulebook
 (``general/data/general_reference_graph.md``) as raw markdown (no dedicated
 parse model — like ``specmgr://uc/plantuml``). Because the rulebook is the
 spec the renderers, builders, and checker implement against, these tests pin
-the load-bearing frozen strings (the 14-entry palette in block order, the
+the load-bearing frozen strings (the 15-entry palette in block order, the
 red-arrow syntax + the 2026-10-15 real-parser gate verdict (replacing the
 2026-10-10 skip verdict) incl. the "not frozen on a skipped gate"
 convention + the Phase 120 amendment note (the gate now RUNS in CI on the
@@ -45,10 +45,11 @@ from biz.dfch.specmgr.general.tools import _packaged_data
 from biz.dfch.specmgr.server import mcp
 from tests.plantuml.test_reference_graph_subset import _EMITTED_SUBSET
 
-#: The frozen 14-entry palette, exactly in the skinparam block's order
-#: (ALL_DOMAINS order + UNRESOLVED last).
+#: The frozen 15-entry palette, exactly in the skinparam block's order
+#: (ALL_DOMAINS order + UNRESOLVED last; the TXT entry added by
+#: feat-229-txt Phase 150, the SET entry by feat-173-req-iso29148-level-set
+#: Phase 180).
 _PALETTE_LINES = [
-    "backgroundColor<<ADR>> LightYellow",
     "backgroundColor<<REQ>> LightBlue",
     "backgroundColor<<UC>> Pink",
     "backgroundColor<<TSK>> Honeydew",
@@ -61,6 +62,8 @@ _PALETTE_LINES = [
     "backgroundColor<<FEAT>> PaleTurquoise",
     "backgroundColor<<VCR>> Khaki",
     "backgroundColor<<SYSRS>> Thistle",
+    "backgroundColor<<TXT>> LightGrey",
+    "backgroundColor<<SET>> Wheat",
     "backgroundColor<<UNRESOLVED>> DarkRed",
 ]
 

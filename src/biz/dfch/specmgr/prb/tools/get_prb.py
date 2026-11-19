@@ -20,16 +20,16 @@
 """``@mcp.tool()`` wrapper: get_prb (Task 3.8).
 
 Mirrors ``tsk.tools.get_tsk``/``qa.tools.get_qa`` -- a thin file-I/O/id-lookup
-adapter. The ``.md`` file itself remains the sole source of truth (ADR
+adapter. The ``.md`` file itself remains the sole source of truth (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` now
-routes through a content-hash-validated, per-domain in-memory cache (ADR
+routes through a content-hash-validated, per-domain in-memory cache (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips re-parsing
 when a file's content hash is unchanged since its last read, so a stale
 entry is structurally impossible.
 
 Implemented as a tool, not a resource, from the start -- id-based single-
 document reads for PRB never had a ``specmgr://prb/{id}`` resource in the
-first place (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614: "Expose id-based
+first place (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614: "Expose id-based
 document reads as a tool, not a resource").
 
 ``raw=True`` (feat-22-consolidate-mutation-tools, Phase 2) returns the
@@ -46,13 +46,34 @@ out-of-range values, never erroring). With an optional ``numbered=True``
 (feat-153-off-by-n, Phase 3), each returned body line is additionally
 prefixed with its 1-based absolute body-line number in the ``"<n>: "``
 form.
+
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/5/6/7).**
+A 1:1 port of ``get_dec``'s ``language`` handling. The optional ``language``
+parameter (default ``"en"``) selects which on-disk variant of the id to
+read: omitted/``"en"`` = the flat ``docs/prb/<id>.md`` document, exactly
+today's behavior; any other shape-validated ISO 639-1-shaped code (e.g.
+``"de"``) = the variant at ``docs/prb/{language}/<id>.md`` (the EN source's
+exact basename). The language is shape-guarded by
+:func:`biz.dfch.specmgr.general.tools._path_safety.assert_language` before
+any filesystem access (the same discipline as ``id``), and a shape-valid
+language without a packaged heading-mapping table is rejected up front with
+the table loader's actionable error, also before any filesystem access.
+A ``raw=True`` read of a variant returns the variant's on-disk body
+verbatim (its translation preserved); a ``raw=False`` read parses through
+the variant's heading table, so the structured model holds canonical
+heading text (ACC-004/ACC-011). The non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
+for a broken variant file exactly as for EN: the ``error`` text is
+byte-identical to ``list_prb(language=...)``'s failed row for the same
+file (DEC 9080b37c).
 """
 
 from __future__ import annotations
 
 from ...general.models import ParseFailureResult
+from ...general.models.heading_table import resolve_heading_table
 from ...general.tools._doc_paths import find_parse_failure
-from ...general.tools._path_safety import assert_within, validate_id
+from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language, assert_within, validate_id
 from ...general.tools._splice import body_text, validate_read_args, window_body
 from ...server import mcp
 from ..models.v1 import PrbDocument
@@ -74,7 +95,7 @@ from ._paths import PrbNotFoundError, prb_base_dir
         "(`error`/`path`/`id`) instead of raising; "
         "its `error` text is byte-identical to the domain's own `list` tool's failed-row `error` "
         "for the same file (identical field path and cause, including the trailing pydantic "
-        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
+        "documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
         "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
         "any file access."
         " With raw=True, an optional `numbered=True` prefixes every returned body line with its 1-based "
@@ -86,10 +107,26 @@ from ._paths import PrbNotFoundError, prb_base_dir
         "`ParseFailureResult` described above, never numbered text. Numbered output must never be fed back "
         'verbatim into `content` for `update` or `create_prb` -- strip the `"<n>: "` prefix from each '
         "line first (it is likewise never a valid `edit` `old_str`)."
+        " The optional `language` parameter (default 'en') selects the language variant to read: "
+        "omitted/'en' = the flat docs/prb/ document, exactly the default behavior; any other "
+        "ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
+        "docs/prb/{language}/ (the EN source's exact basename). The language is shape-validated "
+        "before any file access (a path-injection-shaped payload is a ValueError, like an invalid "
+        "id), and a shape-valid language without a packaged heading-mapping table is rejected "
+        "up front with an actionable ValueError, also before any file access. A raw=True read of "
+        "a variant returns the variant's on-disk body verbatim (translation preserved); a "
+        "raw=False read parses it through the variant's heading table, so the structured model "
+        "holds canonical heading text. The `ParseFailureResult` `error` of a broken variant is "
+        "byte-identical to list_prb(language=...)'s failed row for the same file."
     ),
 )
-def get_prb(
-    id: str, raw: bool = False, offset: int | None = None, limit: int | None = None, numbered: bool = False
+def get_prb(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    id: str,
+    raw: bool = False,
+    offset: int | None = None,
+    limit: int | None = None,
+    numbered: bool = False,
+    language: str = DEFAULT_LANGUAGE,
 ) -> PrbDocument | str | ParseFailureResult:
     """Read and return the problem statement identified by ``id``.
 
@@ -124,6 +161,19 @@ def get_prb(
         each line first (it is likewise never a valid ``edit`` ``old_str``).
         Combining it with ``raw=False`` raises ``ValueError`` (see
         ``Raises``).
+    language:
+        The language variant to read (feat-197-i18n Phase 125, DEC
+        38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
+        reads the flat ``docs/prb/`` document -- today's exact behavior;
+        any other ISO 639-1-shaped lowercase two-letter code (e.g.
+        ``"de"``) reads the variant at ``docs/prb/{language}/`` under the
+        EN source's exact basename. Shape-guarded before any filesystem
+        access (like ``id``); a shape-valid code without a packaged
+        heading-mapping table is rejected up front with the table
+        loader's actionable error, also before any filesystem access. For
+        a variant, ``raw=True`` returns its on-disk body verbatim and
+        ``raw=False`` parses through its heading table (canonical heading
+        text in the model).
 
     Returns
     -------
@@ -139,7 +189,7 @@ def get_prb(
         (``error``/``path``/``id``) is returned instead of raising --
         ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
         the same file (identical field path and cause, including the trailing pydantic
-        documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+        documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c);
         ``raw=True`` never returns a broken document's raw text.
         Raises :class:`._paths.PrbNotFoundError` if no problem statement has
         this id.
@@ -147,6 +197,9 @@ def get_prb(
     Raises
     ------
     ValueError
+        ``language`` is not an ISO 639-1-shaped lowercase two-letter code, or a
+        non-default ``language`` has no packaged heading-mapping table (both raised
+        before any filesystem access, the same guard discipline as ``id``);
         ``id`` is a path-injection attempt or not a well-formed id for this domain
         (raised before any filesystem access), or ``offset``/``limit`` coordinates
         are given with ``raw=False`` (a parsed document requires the whole body),
@@ -155,9 +208,12 @@ def get_prb(
         any file access.
     """
     validate_id("prb", id)
+    assert_language(language)
     validate_read_args(raw, offset, limit, numbered)
+    if language != DEFAULT_LANGUAGE:
+        resolve_heading_table(language)
 
-    base_dir = prb_base_dir()
+    base_dir = prb_base_dir(language)
     try:
         path, doc = load_by_id(base_dir, id)
     except PrbNotFoundError:

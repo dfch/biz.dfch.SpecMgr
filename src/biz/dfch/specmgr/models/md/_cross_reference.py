@@ -24,7 +24,10 @@ only, see `vcr.models.v1.body._VERIFIES_PATTERN`), and the new
 `RequirementsBase`/`DecisionsBase`/`GoalsBase`/`RisksBase` base classes in
 `common_sections.py` (feat-135-related-artifacts-risks, REQ-007/REQ-010),
 rather than a third/fourth independent reimplementation of the same
-`"<TAG> <uuid>: <title>"` format check.
+`"<TAG> <uuid>: <title>"` format check. The module additionally hosts the
+shared, anchored `FEAT_ID_PATTERN` (the ``feat-NNN-slug`` folder-name
+shape, relocated model-side from ``general.tools._path_safety`` by
+feat-173's second-review I1/I2).
 
 Like every other private (`_`-prefixed) shared helper in `models/md`
 (`_ordering.py`, `_errors.py`, `_markdown.py`), this module is **not**
@@ -45,14 +48,23 @@ from .markdown_list_item import MarkdownListItemWithNotes
 #: inline `_VERIFIES_PATTERN` UUID fragment).
 UUID_PATTERN = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
+#: The ``feat`` folder-name shape (DEC 8cf940c5): ``feat-NNN-slug``,
+#: lowercase alnum + hyphen. The single source for the tools-layer feat-id
+#: validation (``general.tools._path_safety``), the FEAT reference pattern
+#: (``general.tools._references``), and the `## Items` FEAT bullet shape
+#: (`set.models.v1.body`); kept anchored and compiled so every consumer
+#: reads ``.match``/``.pattern`` off the same object (the feat-177
+#: single-source precedent, relocated model-side by feat-173's
+#: second-review I1/I2).
+FEAT_ID_PATTERN = re.compile(r"^feat-[0-9]+-[a-z0-9-]+$")
+
 
 def build_cross_reference_pattern(*tags: str) -> str:
     """Build a `"^<TAG(S)> {UUID_PATTERN}: .+$"` full-line match pattern for one or more type tags.
 
     A single tag renders as a bare literal (`"^REQ ...: .+$"`); two or more
     render as a parenthesized alternation (`"^(REQ|UC) ...: .+$"`, mirroring
-    `sysrs.models.v1.body._DECISIONS_PATTERN`'s `(DEC|ADR)` shape and
-    `vcr.models.v1.body._VERIFIES_PATTERN`'s `(REQ|UC)` shape).
+    `vcr.models.v1.body._VERIFIES_PATTERN`'s own `(REQ|UC)` shape).
 
     Args:
         tags: one or more allowed type tags (e.g. `"REQ"`, or `"REQ", "UC"`

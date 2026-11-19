@@ -35,7 +35,7 @@ model; the pinning test in ``tests/uc/models/v2/test_renderer.py`` keeps
 it from drifting from the renderer).
 
 The resource's URI is deliberately unversioned (no ``/v2``), matching
-``specmgr://uc/schema``'s own precedent.
+``specmgr://uc/template``'s own precedent.
 """
 
 from __future__ import annotations

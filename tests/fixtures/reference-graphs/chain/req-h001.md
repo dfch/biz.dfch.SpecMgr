@@ -20,7 +20,7 @@ GOL c004c004-c004-4c04-8c04-c004c004c004: Chain Middle Goal
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

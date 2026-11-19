@@ -77,7 +77,7 @@ Add an optional, free-text `classification` attribute to the shared frontmatter 
 
 - Adding `classification` as a settable parameter directly on the 11 `create_<d>` tools -- explicitly rejected in favor of the single generic `set_classification` tool.
 
-- Any per-domain `set_classification_<d>` tools -- only the one generic dispatch tool is added, consistent with ADR 36905d5b-8057-4294-8665-c7eed5534db0's "generic tool, not per-domain" convention.
+- Any per-domain `set_classification_<d>` tools -- only the one generic dispatch tool is added, consistent with DEC 36905d5b-8057-4294-8665-c7eed5534db0's "generic tool, not per-domain" convention.
 
 - Adding `uc/prompts/create_uc.py`/`update_uc.py` -- `uc` has no prompts sub-package at all yet; this pre-existing gap was discovered while drafting this feature and was filed separately as GitHub issue #57 rather than folded into this feature's scope.
 

@@ -20,7 +20,7 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through rotating older ``### Recent Updates`` entries out of a `.specmgr`
 feature folder's ``README.md`` and into an optional sibling ``history.md``,
-per ADR e369ee2e-3353-4f92-991c-6367d76d832e's chosen option (which
+per DEC e369ee2e-3353-4f92-991c-6367d76d832e's chosen option (which
 documents this rotation mechanism but deliberately leaves its exact
 trigger/cutoff undecided, to be resolved case-by-case). This complements
 the domain-specific ``create_*``/``update_*``/``refine`` prompts but is
@@ -39,7 +39,7 @@ The actual instructional text lives in its own packaged data file,
 ``general/data/general_compact_history_instructions.md``, read fresh on
 every call via ``general.tools._packaged_data.read_packaged_text`` --
 following the same packaging convention already used for prompt
-instructions in the ``qa``/``adr``/``req``/``tsk`` domains (Task 0.19.1,
+instructions in the ``qa``/``req``/``tsk`` domains (Task 0.19.1,
 Task 0.20). Placeholders use ``string.Template``
 (``$feature_id``/``$cutoff_hint``), not ``str.format``, so the packaged
 file is free to use plain, unescaped ``{...}`` braces of its own.
@@ -59,7 +59,7 @@ from ...server import mcp
     description=(
         "Guides the LLM through rotating older 'Recent Updates' entries out of a .specmgr "
         "feature folder's README.md and into an optional sibling history.md, leaving a pointer "
-        "line behind, per ADR e369ee2e-3353-4f92-991c-6367d76d832e."
+        "line behind, per DEC e369ee2e-3353-4f92-991c-6367d76d832e."
     ),
 )
 def compact_history(feature_id: str, cutoff_hint: str | None = None) -> str:

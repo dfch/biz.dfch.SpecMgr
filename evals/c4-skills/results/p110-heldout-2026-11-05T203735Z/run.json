@@ -1,0 +1,1456 @@
+{
+  "cases": [
+    "heldout-validate"
+  ],
+  "conditions": [
+    "none",
+    "skill"
+  ],
+  "finished_at": "2026-11-05T20:42:43Z",
+  "k": 5,
+  "label": "p110-heldout",
+  "order": [
+    {
+      "cached": true,
+      "case": "heldout-validate",
+      "condition": "none",
+      "k": 3
+    },
+    {
+      "cached": true,
+      "case": "heldout-validate",
+      "condition": "none",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "heldout-validate",
+      "condition": "skill",
+      "k": 4
+    },
+    {
+      "cached": true,
+      "case": "heldout-validate",
+      "condition": "none",
+      "k": 4
+    },
+    {
+      "cached": true,
+      "case": "heldout-validate",
+      "condition": "none",
+      "k": 2
+    },
+    {
+      "cached": true,
+      "case": "heldout-validate",
+      "condition": "none",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "heldout-validate",
+      "condition": "skill",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "heldout-validate",
+      "condition": "skill",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "heldout-validate",
+      "condition": "skill",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "heldout-validate",
+      "condition": "skill",
+      "k": 3
+    }
+  ],
+  "run_id": "p110-heldout-2026-11-05T203735Z",
+  "seed": 743505,
+  "skill_variant_hash": "927d6c3fc039ee80552aac68fc6e0719ce9c0fbb8b6a3d71ee0263158f09e434",
+  "trial_timeout_s": 1200,
+  "trials": [
+    {
+      "cache_reason": "hit",
+      "cached": true,
+      "contended": false,
+      "event_file": "trials/heldout-validate/none-k3.events.ndjson",
+      "event_file_bytes": 60016,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-04T18:10:45Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (948 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "1 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no terminal parse call in the event stream",
+          "name": "parse_called",
+          "passed": false
+        },
+        {
+          "detail": "1 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "no terminal inspect call in the event stream",
+          "name": "inspect_called",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker with a dsl input",
+          "name": "validated_before_return",
+          "passed": false
+        },
+        {
+          "detail": "3 of 5 finding(s) untriaged: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "name": "triage_complete",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 370.4324173760833,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions.",
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 15,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 156701,
+          "output": 8007,
+          "reasoning": 0
+        },
+        "tool_calls": 14,
+        "validate_calls": 4,
+        "validate_ok_calls": 1,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 67.465,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A minimal C4 model of a hospital appointment system.\" {\n\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n\n        appointmentSystem = softwareSystem \"Appointment System\" \"Allows patients to book and manage hospital appointments.\" {\n            bookingWebApp = container \"Booking Web App\" \"A web application that patients use to book appointments.\" \"ASP.NET Core MVC\"\n            schedulingService = container \"Scheduling Service\" \"Manages appointment scheduling and room availability.\" \"Java\"\n        }\n\n        patient -> bookingWebApp \"Books and manages appointments\" \"HTTPS\"\n        bookingWebApp -> schedulingService \"Creates and updates appointments\" \"gRPC\"\n    }\n\n    views {\n        systemContext appointmentSystem \"SystemContext\" \"Shows the Patient and the Appointment System.\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "none",
+        "k_index": 3
+      },
+      "run_id": "p110-prove2-2026-11-04T174854Z",
+      "skills_installed": [],
+      "started_at": "2026-11-04T18:09:34Z",
+      "timeout": false,
+      "wall_time_s": 70.89691691508051,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.none-k3.p110-prove2-2026-11-04T174854Z"
+    },
+    {
+      "cache_reason": "hit",
+      "cached": true,
+      "contended": false,
+      "event_file": "trials/heldout-validate/none-k1.events.ndjson",
+      "event_file_bytes": 20227,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-04T18:13:04Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (978 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 3 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "1 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no terminal parse call in the event stream",
+          "name": "parse_called",
+          "passed": false
+        },
+        {
+          "detail": "1 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "no terminal inspect call in the event stream",
+          "name": "inspect_called",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker with a dsl input",
+          "name": "validated_before_return",
+          "passed": false
+        },
+        {
+          "detail": "3 of 5 finding(s) untriaged: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "name": "triage_complete",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009655269095674157,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions.",
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 6,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 58819,
+          "output": 7658,
+          "reasoning": 0
+        },
+        "tool_calls": 5,
+        "validate_calls": 1,
+        "validate_ok_calls": 1,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 71.937,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A C4 model of a hospital appointment system.\" {\n\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n\n        appointmentSystem = softwareSystem \"Appointment System\" \"Allows patients to book and manage hospital appointments.\" {\n            bookingWebApp = container \"Booking Web App\" \"Web application that patients use to book appointments.\" \"ASP.NET Core MVC\"\n            schedulingService = container \"Scheduling Service\" \"Schedules appointments and manages doctor availability.\" \"Java\"\n\n            bookingWebApp -> schedulingService \"Requests appointment slots\" \"gRPC\"\n        }\n\n        patient -> appointmentSystem \"Books appointments\" \"HTTPS\"\n        patient -> bookingWebApp \"Books appointments through\" \"HTTPS\"\n    }\n\n    views {\n        systemContext appointmentSystem \"SystemContext\" \"Shows the Patient and the Appointment System.\" {\n            include *\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "none",
+        "k_index": 1
+      },
+      "run_id": "p110-prove2-2026-11-04T174854Z",
+      "skills_installed": [],
+      "started_at": "2026-11-04T18:11:49Z",
+      "timeout": false,
+      "wall_time_s": 74.92443259502761,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.none-k1.p110-prove2-2026-11-04T174854Z"
+    },
+    {
+      "cache_reason": "n/a",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-validate/skill-k4.events.ndjson",
+      "event_file_bytes": 91994,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-05T20:38:31Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1181 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "1 terminal parse call(s)",
+          "name": "parse_called",
+          "passed": true
+        },
+        {
+          "detail": "3 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "2 terminal inspect call(s)",
+          "name": "inspect_called",
+          "passed": true
+        },
+        {
+          "detail": "returned DSL is byte-identical to the validated OK text (the on-disk file)",
+          "name": "validated_before_return",
+          "passed": true
+        },
+        {
+          "detail": "all 6 finding(s) labeled fix/expected/reported",
+          "name": "triage_complete",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.009593666065484285,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.",
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.": "fix",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.": "fix",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-validate-loop"
+        ],
+        "steps": 13,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 161960,
+          "output": 5334,
+          "reasoning": 0
+        },
+        "tool_calls": 13,
+        "validate_calls": 3,
+        "validate_ok_calls": 3,
+        "validated_before_return": true,
+        "validated_by_file": true,
+        "validated_by_final_text": false,
+        "wall_time_s": 49.591,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A small C4 model of a hospital appointment system\" {\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n        appointmentSystem = softwareSystem \"Appointment System\" \"Manages hospital appointments, from booking to scheduling.\" {\n            bookingWebApp = container \"Booking Web App\" \"A web application where patients book and view appointments.\" \"React\"\n            schedulingService = container \"Scheduling Service\" \"Assigns appointments to clinicians and rooms.\" \"Java/Spring\"\n        }\n\n        patient -> bookingWebApp \"Books and views appointments through\" \"HTTPS/HTML\"\n        bookingWebApp -> schedulingService \"Submits booking requests to\" \"REST/JSON\"\n    }\n\n    views {\n        systemContext appointmentSystem \"AppointmentSystemContext\" \"System context view of the Appointment System.\" {\n            include *\n            autoLayout\n        }\n        container appointmentSystem \"AppointmentSystemContainers\" \"Container view of the Appointment System.\" {\n            include *\n            autoLayout\n        }\n    }\n\n    configuration {\n        scope softwaresystem\n    }\n}\n"
+      },
+      "passed": true,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "skill",
+        "k_index": 4
+      },
+      "run_id": "p110-heldout-2026-11-05T203735Z",
+      "skills_installed": [
+        "structurizr-validate-loop"
+      ],
+      "started_at": "2026-11-05T20:37:38Z",
+      "timeout": false,
+      "wall_time_s": 52.71505005203653,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.skill-k4.p110-heldout-2026-11-05T203735Z"
+    },
+    {
+      "cache_reason": "hit",
+      "cached": true,
+      "contended": false,
+      "event_file": "trials/heldout-validate/none-k4.events.ndjson",
+      "event_file_bytes": 42930,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-04T20:49:56Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (902 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "1 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no terminal parse call in the event stream",
+          "name": "parse_called",
+          "passed": false
+        },
+        {
+          "detail": "1 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "no terminal inspect call in the event stream",
+          "name": "inspect_called",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker with a dsl input",
+          "name": "validated_before_return",
+          "passed": false
+        },
+        {
+          "detail": "3 of 5 finding(s) untriaged: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "name": "triage_complete",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009557356941513717,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions.",
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 10,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 114296,
+          "output": 9148,
+          "reasoning": 0
+        },
+        "tool_calls": 11,
+        "validate_calls": 2,
+        "validate_ok_calls": 1,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 345.053,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A minimal C4 model of a hospital appointment system.\" {\n\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n\n        appointmentSystem = softwareSystem \"Appointment System\" \"Allows patients to book and manage hospital appointments.\" {\n            bookingWebApp = container \"Booking Web App\" \"A web application that patients use to book and manage appointments.\" \"Web\"\n            schedulingService = container \"Scheduling Service\" \"Manages appointment scheduling and slot availability.\" \"Service\"\n        }\n\n        patient -> bookingWebApp \"Books and manages appointments\" \"Browser\"\n        bookingWebApp -> schedulingService \"Reserves appointment slots\" \"REST/JSON\"\n    }\n\n    views {\n        systemContext appointmentSystem \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "none",
+        "k_index": 4
+      },
+      "run_id": "p110-prove2-2026-11-04T200612Z",
+      "skills_installed": [],
+      "started_at": "2026-11-04T20:44:08Z",
+      "timeout": false,
+      "wall_time_s": 347.968497312977,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.none-k4.p110-prove2-2026-11-04T200612Z"
+    },
+    {
+      "cache_reason": "hit",
+      "cached": true,
+      "contended": false,
+      "event_file": "trials/heldout-validate/none-k2.events.ndjson",
+      "event_file_bytes": 30370,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-04T21:28:13Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (939 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "1 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no terminal parse call in the event stream",
+          "name": "parse_called",
+          "passed": false
+        },
+        {
+          "detail": "1 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "no terminal inspect call in the event stream",
+          "name": "inspect_called",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker with a dsl input",
+          "name": "validated_before_return",
+          "passed": false
+        },
+        {
+          "detail": "3 of 5 finding(s) untriaged: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "name": "triage_complete",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009357896051369607,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions.",
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 8,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 74750,
+          "output": 5725,
+          "reasoning": 0
+        },
+        "tool_calls": 8,
+        "validate_calls": 1,
+        "validate_ok_calls": 1,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 51.871,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A C4 model of a hospital appointment system\" {\n\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n\n        appointmentSystem = softwareSystem \"Appointment System\" \"Manages hospital appointments for patients.\" {\n            bookingWebApp = container \"Booking Web App\" \"Web application that patients use to view and book appointments.\" \"Web\"\n            schedulingService = container \"Scheduling Service\" \"Service that manages appointment slots and allocates them to patients.\" \"Service\"\n        }\n\n        patient -> bookingWebApp \"Books appointments through\" \"HTTPS\"\n        bookingWebApp -> schedulingService \"Requests available appointment slots\" \"REST\"\n    }\n\n    views {\n        systemContext appointmentSystem \"SystemContext\" \"System context view of the Appointment System\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "none",
+        "k_index": 2
+      },
+      "run_id": "p110-prove2-2026-11-04T200612Z",
+      "skills_installed": [],
+      "started_at": "2026-11-04T21:27:18Z",
+      "timeout": false,
+      "wall_time_s": 54.72747207293287,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.none-k2.p110-prove2-2026-11-04T200612Z"
+    },
+    {
+      "cache_reason": "hit",
+      "cached": true,
+      "contended": false,
+      "event_file": "trials/heldout-validate/none-k0.events.ndjson",
+      "event_file_bytes": 23891,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-04T18:11:45Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (957 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "1 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no terminal parse call in the event stream",
+          "name": "parse_called",
+          "passed": false
+        },
+        {
+          "detail": "1 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "no terminal inspect call in the event stream",
+          "name": "inspect_called",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker with a dsl input",
+          "name": "validated_before_return",
+          "passed": false
+        },
+        {
+          "detail": "3 of 5 finding(s) untriaged: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "name": "triage_complete",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009026120998896658,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions.",
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 7,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 59238,
+          "output": 5350,
+          "reasoning": 0
+        },
+        "tool_calls": 6,
+        "validate_calls": 1,
+        "validate_ok_calls": 1,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 53.994,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A minimal C4 model of a hospital appointment system.\" {\n\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n\n        appointmentSystem = softwareSystem \"Appointment System\" \"Allows patients to book and manage hospital appointments.\" {\n            bookingWebApp = container \"Booking Web App\" \"A web application that patients use to book appointments.\" \"ASP.NET Core MVC\"\n            schedulingService = container \"Scheduling Service\" \"Schedules appointments with clinicians and manages availability.\" \"Java\"\n\n            patient -> bookingWebApp \"Books appointments through\" \"HTTPS\"\n            bookingWebApp -> schedulingService \"Requests appointment slots\" \"gRPC\"\n        }\n    }\n\n    views {\n        systemContext appointmentSystem \"SystemContext\" \"Shows the Patient and the Appointment System.\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "none",
+        "k_index": 0
+      },
+      "run_id": "p110-prove2-2026-11-04T174854Z",
+      "skills_installed": [],
+      "started_at": "2026-11-04T18:10:48Z",
+      "timeout": false,
+      "wall_time_s": 56.73108821304049,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.none-k0.p110-prove2-2026-11-04T174854Z"
+    },
+    {
+      "cache_reason": "n/a",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-validate/skill-k2.events.ndjson",
+      "event_file_bytes": 68498,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-05T20:39:19Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1003 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "1 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "1 terminal parse call(s)",
+          "name": "parse_called",
+          "passed": true
+        },
+        {
+          "detail": "1 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "1 terminal inspect call(s)",
+          "name": "inspect_called",
+          "passed": true
+        },
+        {
+          "detail": "returned DSL is byte-identical to the validated OK text (the on-disk file)",
+          "name": "validated_before_return",
+          "passed": true
+        },
+        {
+          "detail": "4 of 8 finding(s) untriaged: ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "name": "triage_complete",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.010703108040615916,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.",
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions.",
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.": "untriaged",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.": "untriaged",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "The container named \"Booking Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Scheduling Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-validate-loop"
+        ],
+        "steps": 8,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 86629,
+          "output": 4576,
+          "reasoning": 0
+        },
+        "tool_calls": 8,
+        "validate_calls": 1,
+        "validate_ok_calls": 1,
+        "validated_before_return": true,
+        "validated_by_file": true,
+        "validated_by_final_text": false,
+        "wall_time_s": 41.963,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A small C4 model of a hospital appointment system\" {\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n        appointmentSystem = softwareSystem \"Appointment System\" \"Manages hospital appointments, from booking to scheduling.\" {\n            bookingWebApp = container \"Booking Web App\" \"A web application where patients book and view appointments.\" \"Web\"\n            schedulingService = container \"Scheduling Service\" \"Assigns appointments to clinicians and rooms.\" \"Service\"\n        }\n\n        patient -> bookingWebApp \"Books and views appointments through\" \"HTTPS/HTML\"\n        bookingWebApp -> schedulingService \"Submits booking requests to\" \"gRPC\"\n    }\n\n    views {\n        systemContext appointmentSystem \"AppointmentSystemContext\" \"System context view of the Appointment System.\" {\n            include *\n            autoLayout\n        }\n    }\n\n    configuration {\n        scope softwaresystem\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "skill",
+        "k_index": 2
+      },
+      "run_id": "p110-heldout-2026-11-05T203735Z",
+      "skills_installed": [
+        "structurizr-validate-loop"
+      ],
+      "started_at": "2026-11-05T20:38:34Z",
+      "timeout": false,
+      "wall_time_s": 44.59707368002273,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.skill-k2.p110-heldout-2026-11-05T203735Z"
+    },
+    {
+      "cache_reason": "n/a",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-validate/skill-k1.events.ndjson",
+      "event_file_bytes": 85767,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-05T20:40:27Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1171 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "1 terminal parse call(s)",
+          "name": "parse_called",
+          "passed": true
+        },
+        {
+          "detail": "2 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "2 terminal inspect call(s)",
+          "name": "inspect_called",
+          "passed": true
+        },
+        {
+          "detail": "returned DSL is byte-identical to the validated OK text (the on-disk file)",
+          "name": "validated_before_return",
+          "passed": true
+        },
+        {
+          "detail": "all 6 finding(s) labeled fix/expected/reported",
+          "name": "triage_complete",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.009269777103327215,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.",
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.": "reported",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.": "reported",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-validate-loop"
+        ],
+        "steps": 12,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 147090,
+          "output": 5051,
+          "reasoning": 0
+        },
+        "tool_calls": 12,
+        "validate_calls": 2,
+        "validate_ok_calls": 2,
+        "validated_before_return": true,
+        "validated_by_file": true,
+        "validated_by_final_text": false,
+        "wall_time_s": 62.079,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A small C4 model of a hospital appointment system\" {\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n        appointmentSystem = softwareSystem \"Appointment System\" \"Manages hospital appointments, from booking to scheduling.\" {\n            bookingWebApp = container \"Booking Web App\" \"A web application where patients book and view appointments.\" \"Web\"\n            schedulingService = container \"Scheduling Service\" \"Assigns appointments to clinicians and rooms.\" \"Service\"\n        }\n\n        patient -> bookingWebApp \"Books and views appointments through\" \"HTTPS/HTML\"\n        bookingWebApp -> schedulingService \"Submits booking requests to\" \"gRPC\"\n    }\n\n    views {\n        systemContext appointmentSystem \"AppointmentSystemContext\" \"System context view of the Appointment System.\" {\n            include *\n            autoLayout\n        }\n\n        container appointmentSystem \"AppointmentSystemContainers\" \"Container view of the Appointment System.\" {\n            include *\n            autoLayout\n        }\n    }\n\n    configuration {\n        scope softwaresystem\n    }\n}\n"
+      },
+      "passed": true,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "skill",
+        "k_index": 1
+      },
+      "run_id": "p110-heldout-2026-11-05T203735Z",
+      "skills_installed": [
+        "structurizr-validate-loop"
+      ],
+      "started_at": "2026-11-05T20:39:22Z",
+      "timeout": false,
+      "wall_time_s": 64.8075115820393,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.skill-k1.p110-heldout-2026-11-05T203735Z"
+    },
+    {
+      "cache_reason": "n/a",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-validate/skill-k0.events.ndjson",
+      "event_file_bytes": 87547,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-05T20:41:33Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1171 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "1 terminal parse call(s)",
+          "name": "parse_called",
+          "passed": true
+        },
+        {
+          "detail": "2 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "2 terminal inspect call(s)",
+          "name": "inspect_called",
+          "passed": true
+        },
+        {
+          "detail": "returned DSL is byte-identical to the validated OK text (the on-disk file)",
+          "name": "validated_before_return",
+          "passed": true
+        },
+        {
+          "detail": "all 6 finding(s) labeled fix/expected/reported",
+          "name": "triage_complete",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.011586257023736835,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.",
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.": "fix",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.": "fix",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-validate-loop"
+        ],
+        "steps": 12,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 151879,
+          "output": 6618,
+          "reasoning": 0
+        },
+        "tool_calls": 12,
+        "validate_calls": 2,
+        "validate_ok_calls": 2,
+        "validated_before_return": true,
+        "validated_by_file": true,
+        "validated_by_final_text": false,
+        "wall_time_s": 60.004,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A small C4 model of a hospital appointment system\" {\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n        appointmentSystem = softwareSystem \"Appointment System\" \"Manages hospital appointments, from booking to scheduling.\" {\n            bookingWebApp = container \"Booking Web App\" \"A web application where patients book and view appointments.\" \"Web\"\n            schedulingService = container \"Scheduling Service\" \"Assigns appointments to clinicians and rooms.\" \"Service\"\n        }\n\n        patient -> bookingWebApp \"Books and views appointments through\" \"HTTPS/HTML\"\n        bookingWebApp -> schedulingService \"Submits booking requests to\" \"gRPC\"\n    }\n\n    views {\n        systemContext appointmentSystem \"AppointmentSystemContext\" \"System context view of the Appointment System.\" {\n            include *\n            autoLayout\n        }\n\n        container appointmentSystem \"AppointmentSystemContainers\" \"Container view of the Appointment System.\" {\n            include *\n            autoLayout\n        }\n    }\n\n    configuration {\n        scope softwaresystem\n    }\n}\n"
+      },
+      "passed": true,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "skill",
+        "k_index": 0
+      },
+      "run_id": "p110-heldout-2026-11-05T203735Z",
+      "skills_installed": [
+        "structurizr-validate-loop"
+      ],
+      "started_at": "2026-11-05T20:40:30Z",
+      "timeout": false,
+      "wall_time_s": 62.80865016498137,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.skill-k0.p110-heldout-2026-11-05T203735Z"
+    },
+    {
+      "cache_reason": "n/a",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-validate/skill-k3.events.ndjson",
+      "event_file_bytes": 87547,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-05T20:42:39Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1171 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "1/ 1 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "2 container(s)",
+          "name": "two_containers",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 2 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "1 terminal parse call(s)",
+          "name": "parse_called",
+          "passed": true
+        },
+        {
+          "detail": "2 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "2 terminal inspect call(s)",
+          "name": "inspect_called",
+          "passed": true
+        },
+        {
+          "detail": "returned DSL is byte-identical to the validated OK text (the on-disk file)",
+          "name": "validated_before_return",
+          "passed": true
+        },
+        {
+          "detail": "all 6 finding(s) labeled fix/expected/reported",
+          "name": "triage_complete",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.010768456035293639,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.",
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.",
+          "The software system \"Appointment System\" has containers, but is missing documentation.",
+          "The software system \"Appointment System\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "ERROR: The container named \"Booking Web App\" is not included on any views - add it to a view.": "fix",
+          "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.": "fix",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "ERROR: The software system \"Appointment System\" has containers, but is missing documentation.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing decisions.": "expected",
+          "The software system \"Appointment System\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-validate-loop"
+        ],
+        "steps": 12,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 151879,
+          "output": 6618,
+          "reasoning": 0
+        },
+        "tool_calls": 12,
+        "validate_calls": 2,
+        "validate_ok_calls": 2,
+        "validated_before_return": true,
+        "validated_by_file": true,
+        "validated_by_final_text": false,
+        "wall_time_s": 59.83,
+        "workdir_dsl": "workspace \"Hospital Appointment System\" \"A small C4 model of a hospital appointment system\" {\n    model {\n        patient = person \"Patient\" \"A patient who books and manages hospital appointments.\"\n        appointmentSystem = softwareSystem \"Appointment System\" \"Manages hospital appointments, from booking to scheduling.\" {\n            bookingWebApp = container \"Booking Web App\" \"A web application where patients book and view appointments.\" \"Web\"\n            schedulingService = container \"Scheduling Service\" \"Assigns appointments to clinicians and rooms.\" \"Service\"\n        }\n\n        patient -> bookingWebApp \"Books and views appointments through\" \"HTTPS/HTML\"\n        bookingWebApp -> schedulingService \"Submits booking requests to\" \"gRPC\"\n    }\n\n    views {\n        systemContext appointmentSystem \"AppointmentSystemContext\" \"System context view of the Appointment System.\" {\n            include *\n            autoLayout\n        }\n\n        container appointmentSystem \"AppointmentSystemContainers\" \"Container view of the Appointment System.\" {\n            include *\n            autoLayout\n        }\n    }\n\n    configuration {\n        scope softwaresystem\n    }\n}\n"
+      },
+      "passed": true,
+      "plan": {
+        "case_id": "heldout-validate",
+        "condition": "skill",
+        "k_index": 3
+      },
+      "run_id": "p110-heldout-2026-11-05T203735Z",
+      "skills_installed": [
+        "structurizr-validate-loop"
+      ],
+      "started_at": "2026-11-05T20:41:36Z",
+      "timeout": false,
+      "wall_time_s": 62.792614448932,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/heldout-validate.skill-k3.p110-heldout-2026-11-05T203735Z"
+    }
+  ],
+  "version_tuple": {
+    "conditions_cacheable": [
+      "none",
+      "upstream"
+    ],
+    "jq": "1.6",
+    "model_id": "qwen3.8-27b-bf16-896k",
+    "network_mode": "internal-bridge",
+    "opencode_image": "ghcr.io/anomalyco/opencode:2.2.5",
+    "opencode_image_digest": "sha256:1690aad69864d2f6714772d1e040918feebc6df5286d2bd7e181fbb35d12d4a9",
+    "provider_id": "vllm-sys0",
+    "python": "3.13.13",
+    "sampling_parameters": {
+      "seed": 1337,
+      "temperature": 0.0,
+      "topP": 1.0
+    },
+    "speculative_config": {
+      "externally_verifiable": false,
+      "method": "mtp",
+      "num_speculative_tokens": 5
+    },
+    "structurizr_cli_image": "structurizr/structurizr:2026.10.26-noble",
+    "structurizr_cli_image_digest": "sha256:1081d615e7a539aee8b8360e36a58f42ff6412dd8f0e1b053134cb2c76ab2303",
+    "structurizr_mcp_image": "structurizr/mcp:2026.04.20",
+    "structurizr_mcp_image_digest": "sha256:fc4ef98b7da925d62b08c71a90eb995a527fae30e2c04b39e3041f253c135539",
+    "trial_timeout_s": 1200,
+    "upstream_sha": "e86d8a91d3ed793cdf6c035f01d19f1b18cc8b6b",
+    "vllm_endpoint": "http://127.0.0.1:8081/v1",
+    "vllm_version": "0.26.0"
+  },
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

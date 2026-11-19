@@ -41,11 +41,11 @@ to ``tests/models/md/test_validation_error_baseline.py`` (Phase 1's Task 1.0/1.8
 feat-81-83-validation Phase 2, the generic ``validate`` tool never raises for a content-validation
 failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead, so the ``validate``-tool
 tests below assert against ``result.errors[0].message`` rather than a raised exception. Since
-feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), the generic ``update``
+feat-170 Phase 120 (Bug 2, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), the generic ``update``
 tool never raises for a content-validation failure either -- it returns the same non-raising
 ``ValidateResult`` shape (the single ``errors[].message`` capped at 300 chars exactly as
 ``validate``'s is), so the ``update``-tool tests below assert against ``result.errors[0].message``
-as well. Since feat-204-create-error Phase 110 (case 5 of the ADR 519d1206 non-raising chain),
+as well. Since feat-204-create-error Phase 110 (case 5 of the DEC 519d1206 non-raising chain),
 ``create_tsk`` never raises for a content-validation failure either -- the same non-raising
 ``ValidateResult`` shape, capped exactly as ``validate``'s is -- so the ``create_tsk``-tool test
 below asserts against ``result.errors[0].message`` as well.
@@ -134,7 +134,7 @@ class TestIssue27BareDomainTokenRegression(TempTskDirTestCase):
             self.assertIn(substring, message)
 
     def test_create_tsk_surfaces_an_actionable_message(self) -> None:
-        """Since feat-204-create-error Phase 110 (case 5 of the ADR 519d1206 non-raising chain),
+        """Since feat-204-create-error Phase 110 (case 5 of the DEC 519d1206 non-raising chain),
         ``create_tsk`` no longer raises for this content-validation failure either -- it returns
         the non-raising ``ValidateResult`` whose message is capped exactly as ``validate``'s is,
         so assert against ``result.errors[0].message`` (the same shape as the ``validate`` test

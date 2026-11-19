@@ -78,7 +78,7 @@ maintenance liability today. That is explicitly out of scope (see Scope below).
 #### Depends On
 
 - feat-7-various-improvements Task 100.140 (the task this feature is split out of).
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` structure) — the existing ADR this feature's `AGENTS.md` clause extends without amending.
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` structure) — the existing ADR this feature's `AGENTS.md` clause extends without amending.
 
 #### Blocks
 
@@ -91,17 +91,17 @@ full investigation):
 
 | Location(s) | Fix |
 |---|---|
-| `server.py` (specmgr://adr/{id} resource docstring) | Cite `ADR 8cf940c5-3100-485c-a12d-14b59b631712` / `ADR 7531106b-074b-4bd8-a83a-e433d01676e2` (id/addressing scheme) instead, or drop if self-evident |
-| `server.py` (prompt-surface docstring) | Cite `ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f` instead |
+| `server.py` (specmgr://adr/{id} resource docstring) | Cite `DEC 8cf940c5-3100-485c-a12d-14b59b631712` / `DEC 7531106b-074b-4bd8-a83a-e433d01676e2` (id/addressing scheme) instead, or drop if self-evident |
+| `server.py` (prompt-surface docstring) | Cite `DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f` instead |
 | `uc/models/v1/use_case.py` (Options-gap comment) | Drop the file citation clause; sentence is already self-contained |
 | `models/adr/__init__.py` (module docstring: line-20 lead-in sentence citing `adr-tool-plan.md` by name, plus 7x `(plan §N)` parentheticals) | Drop the line-20 lead-in sentence ("See ``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`` §3-§6 for the design this package implements:") and all seven `(plan §N)` parentheticals; prose is already self-contained |
 | `models/adr/v1/__init__.py` (module docstring, §6 versioning) | Drop the "See adr-tool-plan.md §6..." lead-in; rest of the paragraph is already self-contained |
-| `adr/prompts/__init__.py`, `create_adr.py`, `update_adr.py`, `create_adr_test.py` (x2), `update_adr_test.py` (x2) — 7 spots across 5 files | Consolidate to **one** citation of `ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f` in `adr/prompts/__init__.py`'s package docstring; drop the other 6 |
-| `AGENTS.md` (`adr/` domain bullet) | Cite `ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f` instead |
-| `AGENTS.md` (standalone "§10 Next steps" paragraph) | Remove entirely — redundant with the existing "Still genuinely missing" bullet, which already cites `ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73` for the same fact (CI/pre-commit `validate_adr` wiring still missing) |
+| `adr/prompts/__init__.py`, `create_adr.py`, `update_adr.py`, `create_adr_test.py` (x2), `update_adr_test.py` (x2) — 7 spots across 5 files | Consolidate to **one** citation of `DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f` in `adr/prompts/__init__.py`'s package docstring; drop the other 6 |
+| `AGENTS.md` (`adr/` domain bullet) | Cite `DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f` instead |
+| `AGENTS.md` (standalone "§10 Next steps" paragraph) | Remove entirely — redundant with the existing "Still genuinely missing" bullet, which already cites `DEC 9c687bb1-8ee7-41c8-84ec-07606356bc73` for the same fact (CI/pre-commit `validate_adr` wiring still missing) |
 
-`ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f` ("Prompt surface: narrated guidance plus step-gated
-test variants") and `ADR 8cf940c5-3100-485c-a12d-14b59b631712` ("id/filename/addressing scheme")
+`DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f` ("Prompt surface: narrated guidance plus step-gated
+test variants") and `DEC 8cf940c5-3100-485c-a12d-14b59b631712` ("id/filename/addressing scheme")
 were both re-read in full during planning and confirmed to cover the cited content accurately.
 
 ### Related Decisions
@@ -124,7 +124,7 @@ were both re-read in full during planning and confirmed to cover the cited conte
 
 - [x] Task 100.130: Fix `models/adr/v1/__init__.py`'s module docstring (drop the §6 lead-in) — depends on: none — status: done
 
-- [x] Task 100.140: Consolidate the 7 `adr/prompts/*` citations into one, in `adr/prompts/__init__.py`'s package docstring, citing `ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f`; remove the other 6 (`create_adr.py`, `update_adr.py`, `create_adr_test.py` x2, `update_adr_test.py` x2) — depends on: none — status: done
+- [x] Task 100.140: Consolidate the 7 `adr/prompts/*` citations into one, in `adr/prompts/__init__.py`'s package docstring, citing `DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f`; remove the other 6 (`create_adr.py`, `update_adr.py`, `create_adr_test.py` x2, `update_adr_test.py` x2) — depends on: none — status: done
 
 - [x] Task 100.150: Fix `AGENTS.md`'s two citations (the `adr/` domain bullet, and remove the standalone "§10 Next steps" paragraph) — depends on: none — status: done
 
@@ -229,13 +229,13 @@ for all 14 original sites in a new Decisions Made entry (ACC-002).
 
 Implemented all of Phase 100 (Tasks 100.100-100.160): removed all 14 live
 citations of `adr-tool-plan.md` per the Design Notes disposition table —
-`server.py` x2 (resource docstring now cites ADR 7531106b, prompt-surface
-docstring cites ADR ddd038f0), `uc/models/v1/use_case.py` (dropped the §7
+`server.py` x2 (resource docstring now cites DEC 7531106b, prompt-surface
+docstring cites DEC ddd038f0), `uc/models/v1/use_case.py` (dropped the §7
 clause), `models/adr/__init__.py` (dropped the §3-§6 lead-in sentence and
 all seven `(plan §N)` parentheticals), `models/adr/v1/__init__.py` (dropped
 the §6 lead-in), the 7 `adr/prompts/*` citations consolidated into one
-ADR ddd038f0 citation in `adr/prompts/__init__.py`, and `AGENTS.md` x2
-(`adr/` bullet now cites ADR ddd038f0; the §10 "Next steps" paragraph
+DEC ddd038f0 citation in `adr/prompts/__init__.py`, and `AGENTS.md` x2
+(`adr/` bullet now cites DEC ddd038f0; the §10 "Next steps" paragraph
 reduced to its second sentence verbatim per the orchestrator override) plus
 the new REQ-004 convention bullet. Quality gate green: ruff format/check,
 vulture, full pytest (4088 passed), coverage badge unchanged (99%),
@@ -275,26 +275,26 @@ explicit "ADR substitution" or "drop" disposition:
 
 | # | Site | Final disposition (Phase 100, 2026-10-07) |
 |---|------|-------------------------------------------|
-| 1 | `server.py` — `specmgr://adr/{id}` resource docstring | ADR substitution: cites ADR 7531106b-074b-4bd8-a83a-e433d01676e2 (not 8cf940c5, not dropped) |
-| 2 | `server.py` — prompt-surface docstring | ADR substitution: cites ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f |
+| 1 | `server.py` — `specmgr://adr/{id}` resource docstring | ADR substitution: cites DEC 7531106b-074b-4bd8-a83a-e433d01676e2 (not 8cf940c5, not dropped) |
+| 2 | `server.py` — prompt-surface docstring | ADR substitution: cites DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f |
 | 3 | `uc/models/v1/use_case.py` — Options-gap comment | Drop: sentence already self-contained |
 | 4 | `models/adr/__init__.py` — module docstring (lead-in sentence + 7 `(plan §N)` parentheticals) | Drop: prose already self-contained (Task 100.120) |
 | 5 | `models/adr/v1/__init__.py` — module docstring (§6 versioning lead-in) | Drop: rest of the paragraph already self-contained |
-| 6 | `adr/prompts/__init__.py` — package docstring | ADR substitution: the single consolidated citation of ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f |
+| 6 | `adr/prompts/__init__.py` — package docstring | ADR substitution: the single consolidated citation of DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f |
 | 7 | `adr/prompts/create_adr.py` | Drop (consolidated into site 6) |
 | 8 | `adr/prompts/update_adr.py` | Drop (consolidated into site 6) |
 | 9 | `adr/prompts/create_adr_test.py` — 1st citation | Drop (consolidated into site 6) |
 | 10 | `adr/prompts/create_adr_test.py` — 2nd citation | Drop (consolidated into site 6) |
 | 11 | `adr/prompts/update_adr_test.py` — 1st citation | Drop (consolidated into site 6) |
 | 12 | `adr/prompts/update_adr_test.py` — 2nd citation | Drop (consolidated into site 6) |
-| 13 | `AGENTS.md` — `adr/` domain bullet | ADR substitution: cites ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f |
+| 13 | `AGENTS.md` — `adr/` domain bullet | ADR substitution: cites DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f |
 | 14 | `AGENTS.md` — standalone "§10 Next steps" paragraph | Drop sentence 1; keep sentence 2 verbatim (orchestrator/user override 2026-10-07) |
 
 #### 2026-10-07 11:30:41.528+02:00 - Phase 100 implementation decisions
 
 (a) Task 100.100, `server.py` `specmgr://adr/{id}` resource docstring: cited
-ADR 7531106b-074b-4bd8-a83a-e433d01676e2 ("Expose listing and by-id reads as
-MCP resources in addition to tools") rather than ADR 8cf940c5 or a drop —
+DEC 7531106b-074b-4bd8-a83a-e433d01676e2 ("Expose listing and by-id reads as
+MCP resources in addition to tools") rather than DEC 8cf940c5 or a drop —
 7531106b's Decision Outcome is literally the decision to expose
 `specmgr://adr/{id}` as an RFC 6570 template resource, so it is the most
 directly governing ADR for that line; the plan allowed either. (b) Task
@@ -314,8 +314,8 @@ sentence, not just the `(plan §N)` parentheticals — the original wording woul
 `adr-tool-plan.md` citation and failed ACC-001; the matching Design Notes row was corrected too.
 (G1/G2) Added Task 110.112 (verify ACC-003, frozen feat-9 files untouched) and Task 110.114
 (verify ACC-004, new `AGENTS.md` clause present) — Phase 110 previously had no explicit check for
-either acceptance criterion. (D1) Added `ADR 7531106b-074b-4bd8-a83a-e433d01676e2` and
-`ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73` to Related Decisions — both already cited in Design
+either acceptance criterion. (D1) Added `DEC 7531106b-074b-4bd8-a83a-e433d01676e2` and
+`DEC 9c687bb1-8ee7-41c8-84ec-07606356bc73` to Related Decisions — both already cited in Design
 Notes but missing from the catalog section. (D2/I2) Tightened Task 110.140's wording to explicitly
 require copying the Design Notes per-citation disposition table into a new Decisions Made entry,
 resolving the ambiguity over where ACC-002's "recorded disposition ... in this file's Decisions
@@ -328,11 +328,11 @@ While implementing this feature, a broader sweep (`grep -rn "plan §"`) found ~9
 
 #### 2026-10-06 00:00:00.000Z - Convention in AGENTS.md, not a new ADR
 
-Decided to codify the going-forward "no live citations of feature-folder sibling files" rule as a new clause in `AGENTS.md`'s existing "Development Artifacts (`.specmgr/`)" section, rather than writing a new ADR. Rationale: this is an authoring/process convention (no competing tradeoffs being weighed, just "stop doing X going forward"), and `AGENTS.md` already owns and summarizes this exact topic (it already restates ADR e369ee2e's `README.md`/`history.md` file-layout decision in the same section).
+Decided to codify the going-forward "no live citations of feature-folder sibling files" rule as a new clause in `AGENTS.md`'s existing "Development Artifacts (`.specmgr/`)" section, rather than writing a new ADR. Rationale: this is an authoring/process convention (no competing tradeoffs being weighed, just "stop doing X going forward"), and `AGENTS.md` already owns and summarizes this exact topic (it already restates DEC e369ee2e's `README.md`/`history.md` file-layout decision in the same section).
 
 #### 2026-10-06 00:00:00.000Z - adr-tool-plan.md itself left untouched
 
-Decided to leave `adr-tool-plan.md` and its feat-9 siblings (`create-adr.md`, `docs-generator-cleanup-plan.md`) completely untouched, including the dangling `refactor-domain.md` self-reference, once nothing in `src/`/`AGENTS.md` cites them anymore. ADR e369ee2e already tolerates these as one-time `doc/`-migration leftovers; once de-referenced they are harmless frozen historical records.
+Decided to leave `adr-tool-plan.md` and its feat-9 siblings (`create-adr.md`, `docs-generator-cleanup-plan.md`) completely untouched, including the dangling `refactor-domain.md` self-reference, once nothing in `src/`/`AGENTS.md` cites them anymore. DEC e369ee2e already tolerates these as one-time `doc/`-migration leftovers; once de-referenced they are harmless frozen historical records.
 
 #### 2026-10-06 00:00:00.000Z - Scope limited to adr-tool-plan.md only
 

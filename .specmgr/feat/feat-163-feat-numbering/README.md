@@ -76,7 +76,7 @@ The scheme (confirmed against issue #163):
 ### Related Decisions
 
 - feat-156-qa-numbering (GitHub issue #156, done): the QA question-numbering precedent this scheme mirrors -- shape enforced by a validator, step-10 and uniqueness left to the agent, gaps allowed, numbers permanent.
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e: origin of the `.specmgr/feat/<id>/README.md` convention this feature refines on its Task List numbering.
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e: origin of the `.specmgr/feat/<id>/README.md` convention this feature refines on its Task List numbering.
 
 ### Task List
 

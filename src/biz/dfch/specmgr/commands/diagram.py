@@ -331,8 +331,8 @@ def diagram_refs(  # pylint: disable=redefined-builtin  # type/id intentionally 
     type: Annotated[
         str,
         typer.Argument(
-            help="The source document's domain (one of adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, "
-            "feat, vcr, sysrs), or the literal 'all' for the registry-wide graph.",
+            help="The source document's domain (one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, "
+            "feat, vcr, sysrs, txt, set), or the literal 'all' for the registry-wide graph.",
         ),
     ],
     id: Annotated[

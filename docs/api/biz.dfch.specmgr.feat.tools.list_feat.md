@@ -2,7 +2,7 @@
 
 ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 
-Ships as a paged ``@mcp.tool()`` from day one (ADR
+Ships as a paged ``@mcp.tool()`` from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13). Mirrors ``dec.tools.list_dec``'s
 overall shape, with two feat-only differences: (1) it scans
 ``<base>/*/README.md`` via :func:`~biz.dfch.specmgr.feat.tools._paths.iter_feat_paths`,
@@ -46,7 +46,7 @@ feature's own README, Decisions Made, for the full rationale). This was the
 tool's shape through feat-107-doc-cache.
 
 **feat-187-list-feat-timeout (GitHub issue #187), Task 110.110: the request
-path never runs a full body parse.** ADR
+path never runs a full body parse.** DEC
 3982712a-a46b-4b2b-809f-9c6925a49b44 rewires this tool's own per-folder
 resolution away from the generic ``build_summaries``/``read_feat`` pair
 (both of which would full-parse on a cold cache, the root cause of the
@@ -67,7 +67,7 @@ queries. Each resolved folder's row follows the three-tier contract
 violation already caught at the clean stage) is a byte-identical failed
 row (the clean cache's own fresh-exception reconstruction, so this text is
 byte-identical to ``get_feat``'s ``ParseFailureResult.error`` for the same
-file, ADR 9080b37c); a dirty **success** is a row built from the
+file, DEC 9080b37c); a dirty **success** is a row built from the
 frontmatter+H1 payload -- correct ``id``/``title``/``status``/``ref``/
 ``path``, but *transiently* healthy if this file also carries a body-level
 defect the dirty stage never looks for (tier 3's documented limitation,
@@ -80,7 +80,7 @@ dirty-stage-specific ``error`` text that does **not** yet match
 ``get_feat``'s own body-aware message for the same defect, converging to
 byte-identical only once the clean stage has passed this file). This
 convergence is what time-qualifies the ``list_<d>``/``get_<d>`` error
-byte-identity property (ADR 9080b37c) for ``feat`` specifically -- every
+byte-identity property (DEC 9080b37c) for ``feat`` specifically -- every
 other domain's property is unchanged. The opt-out flag
 ``SPECMGR_FEAT_WARMUP_DISABLED`` (``general.tools._startup_warmup``) stops
 the background warmup from ever running at all, under which convergence
@@ -106,7 +106,7 @@ REQ-001/REQ-004): the shared
 ``general.tools._listing.filter_summaries_by_glob`` helper runs on the
 materialized row list, after this tool's own two-stage (dirty/clean
 ``DocCache``) resolution loop and before the ``total``/paging step, so it
-never re-scans the filesystem on its own (the cold-scan fix of ADR
+never re-scans the filesystem on its own (the cold-scan fix of DEC
 3982712a-a46b-4b2b-809f-9c6925a49b44 is preserved). A failed-to-parse row
 carries ``id=None`` and therefore never matches, so a glob-given result
 has no failed rows and ``error_count = 0`` by construction (REQ-003);
@@ -156,7 +156,7 @@ an identical body.
 
 Return one page of one-line feature summaries from the configured base directory.
 
-**The request path never fully parses a document's body (ADR
+**The request path never fully parses a document's body (DEC
 3982712a-a46b-4b2b-809f-9c6925a49b44, GitHub issue #187).** Each live
 folder's ``README.md`` is read exactly once and resolved via one of two
 cache stages, never a full ``parse_feat`` call on this request path

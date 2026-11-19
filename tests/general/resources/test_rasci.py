@@ -21,7 +21,7 @@ Mirrors `tests/rsk/resources/test_tara.py`'s non-drift-guard tests
 (real-content assertions, fresh-read-per-call, `FileNotFoundError` on a
 missing packaged file). Since feat-92-resources Phase 5, `rasci` also
 gains a dedicated `general.models.rasci.Rasci` model, parsed on every
-resource call purely to fail fast on structural drift (ADR
+resource call purely to fail fast on structural drift (DEC
 356d8781-e446-4c26-917a-eda85648ce9d) -- see
 `test_raises_on_structural_drift` below, mirroring
 `tests/general/resources/test_dtais.py`'s equivalent test.

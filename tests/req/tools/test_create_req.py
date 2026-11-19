@@ -51,7 +51,7 @@ _MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -137,7 +137,7 @@ class TestCreateReq(TempReqDirTestCase):
     def test_field_validation_failure_returns_validate_result_and_writes_nothing(self) -> None:
         """A field-level validation failure (bad `## Level` value) must return
         ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110)."""
-        text = _MINIMAL_BODY.replace("MUST", "NOT-A-VALID-LEVEL")
+        text = _MINIMAL_BODY.replace("SRS", "NOT-A-VALID-LEVEL")
 
         result = create_req(text)
 

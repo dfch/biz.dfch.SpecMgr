@@ -1,0 +1,111 @@
+{
+  "configuration" : { },
+  "description" : "A small online bookshop.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "people" : [ {
+      "description" : "Buys books online.",
+      "id" : "1",
+      "name" : "Customer",
+      "properties" : {
+        "structurizr.dsl.identifier" : "customer"
+      },
+      "relationships" : [ {
+        "description" : "Orders books through",
+        "destinationId" : "3",
+        "id" : "5",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
+      }, {
+        "description" : "Orders books through",
+        "destinationId" : "2",
+        "id" : "6",
+        "linkedRelationshipId" : "5",
+        "sourceId" : "1",
+        "technology" : "HTTPS"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "The customer-facing web shop.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "Web Store",
+        "properties" : {
+          "structurizr.dsl.identifier" : "web"
+        },
+        "relationships" : [ {
+          "description" : "Submits orders to",
+          "destinationId" : "4",
+          "id" : "7",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Takes and processes orders.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Order Processor",
+        "properties" : {
+          "structurizr.dsl.identifier" : "orders"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      } ],
+      "description" : "Sells books to customers.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Bookshop",
+      "properties" : {
+        "structurizr.dsl.identifier" : "bookshop"
+      },
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "Bookshop",
+  "properties" : {
+    "structurizr.inspection.error" : "5",
+    "structurizr.dsl" : "d29ya3NwYWNlICJCb29rc2hvcCIgIkEgc21hbGwgb25saW5lIGJvb2tzaG9wLiIgewogICAgbW9kZWwgewogICAgICAgIGN1c3RvbWVyID0gcGVyc29uICJDdXN0b21lciIgIkJ1eXMgYm9va3Mgb25saW5lLiIKICAgICAgICBib29rc2hvcCA9IHNvZnR3YXJlU3lzdGVtICJCb29rc2hvcCIgIlNlbGxzIGJvb2tzIHRvIGN1c3RvbWVycy4iIHsKICAgICAgICAgICAgd2ViID0gY29udGFpbmVyICJXZWIgU3RvcmUiICJUaGUgY3VzdG9tZXItZmFjaW5nIHdlYiBzaG9wLiIgIlB5dGhvbiIKICAgICAgICAgICAgb3JkZXJzID0gY29udGFpbmVyICJPcmRlciBQcm9jZXNzb3IiICJUYWtlcyBhbmQgcHJvY2Vzc2VzIG9yZGVycy4iICJKYXZhIgogICAgICAgIH0KICAgICAgICBjdXN0b21lciAtPiB3ZWIgIk9yZGVycyBib29rcyB0aHJvdWdoIiAiSFRUUFMiCiAgICAgICAgd2ViIC0+IG9yZGVycyAiU3VibWl0cyBvcmRlcnMgdG8iICJnUlBDIgogICAgfQogICAgdmlld3MgewogICAgICAgIHN5c3RlbUNvbnRleHQgYm9va3Nob3AgIlN5c3RlbUNvbnRleHQiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICB9Cn0=",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "SystemContext",
+      "name" : "System Context View: Bookshop",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "6"
+      } ],
+      "softwareSystemId" : "2"
+    } ]
+  }
+}

@@ -23,7 +23,7 @@ Direct, thin wrapper over ``plantuml.chain.validate_plantuml`` (Phase 110)
 configured source -- ``SPECMGR_PLANTUML_JAR`` → ``SPECMGR_PLANTUML_BIN`` →
 ``SPECMGR_PLANTUML_URL``, no fall-through; the all-unset state is the
 structure-only floor). The returned ``PlantumlValidationResult`` is the
-frozen §3.6 non-raising result model (the ADR 519d1206 chain precedent) --
+frozen §3.6 non-raising result model (the DEC 519d1206 chain precedent) --
 a dataclass the MCP SDK serializes directly; this wrapper adds no state of
 its own. Content-based: the caller passes the diagram text (the Phase 130
 CLI reads the file and passes its text).
@@ -38,7 +38,7 @@ from ...server import mcp
 
 # The PlantUML validation-source trio, registered by this uc-domain
 # consumer (feat-208, Phase 110): the import-free ``plantuml/`` package
-# itself (ADR 7a626b12) cannot register them, so its uc-domain consumer
+# itself (DEC 7a626b12) cannot register them, so its uc-domain consumer
 # that imports ``plantuml.chain`` does -- the names come from
 # ``chain.py``'s own ``ENV_VAR_*`` constants (never a second hardcoded
 # copy), and the trio's read sites in ``plantuml/chain.py`` keep their

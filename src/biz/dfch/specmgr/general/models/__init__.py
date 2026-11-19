@@ -28,7 +28,7 @@ Backs feat-13's ``<domain>_list`` -> ``list_<domain>`` pagination rollout
 
 Also backs feat-81-83-validation Phase 2's generic ``validate`` tool
 (REQ-004) -- originally greenfield for that tool alone; since feat-170
-(case 4 of the ADR 519d1206 non-raising chain) it also backs the generic
+(case 4 of the DEC 519d1206 non-raising chain) it also backs the generic
 ``update``/``edit`` tools' own content-validation-failure branches, and
 since feat-204-create-error (case 5 of the same chain) the 24
 ``create_<d>``/``parse_<d>`` tools' branches:
@@ -46,7 +46,7 @@ since feat-204-create-error (case 5 of the same chain) the 24
 
 Also backs feat-103-set-status-error's narrow extension of that same
 non-raising workaround to the generic ``set_status`` tool's own single
-failure mode (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014):
+failure mode (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014):
 
 - :class:`InvalidStatusResult` -- the non-raising, structured result the
   generic ``set_status`` tool (``general.tools.set_status``) returns for an
@@ -54,8 +54,21 @@ failure mode (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014):
   ``pydantic.ValidationError`` propagate. Distinct from
   :class:`ValidateResult` -- a different tool's own model.
 
+Also backs feat-108-fsm's (Phase 100) extension of that same non-raising
+workaround to the generic ``set_status`` tool's second, post-load failure
+mode (GitHub issue #108 -- case 6 of the DEC 519d1206 chain):
+
+- :class:`InvalidStatusTransitionResult` -- the non-raising, structured
+  result each whole-body ``_set_status_<d>`` adapter returns when the
+  requested transition (``from_status`` -> ``to_status``) is rejected by the
+  dispatched domain's own ``_STATUS_TRANSITIONS`` state machine, after the
+  document is loaded and before any write. A sibling of
+  :class:`InvalidStatusResult`, not a reuse or subclass: ``allowed_values``
+  are the targets allowed from the current state (sorted; empty for a
+  terminal current state), never the domain's full flat vocabulary.
+
 Also backs feat-134-related-artifact-similarity's (Phase 3) two generic
-similarity tools (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505):
+similarity tools (DEC 750842b2-aca4-4649-ba0c-855ec8e1f505):
 
 - :class:`SimilarityUnavailableResult` -- the non-raising, structured
   ``{available, reason, message}`` result the ``find_related``/
@@ -73,7 +86,7 @@ similarity tools (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505):
 
 Also backs feat-150-mcp-lifecycle-commands Phase 1a's narrow extension of
 that same non-raising workaround to the ``get_<d>`` tools' own parse-
-failure case (ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c):
+failure case (DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c):
 
 - :class:`ParseFailureResult` -- the non-raising, structured result every
   ``get_<d>`` tool returns when the requested id resolves to an on-disk
@@ -82,7 +95,7 @@ failure case (ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c):
   :class:`InvalidStatusResult` -- a different tool's own model.
 
 Also backs feat-92-resources's cross-cutting reference-resource
-model-backed drift-guard convention (ADR
+model-backed drift-guard convention (DEC
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005/REQ-006):
 
 - :func:`parse_dtais`/:class:`Dtais` -- parses the DTAIS verification-
@@ -98,6 +111,15 @@ model-backed drift-guard convention (ADR
   backing ``specmgr://ears``, purely to fail fast on structural drift (the
   parsed result is discarded by the resource itself).
 
+Also backs feat-173-req-iso29148-level-set's (Phase 130) cross-cutting
+ISO 29148 requirement-specifications resource (REQ-003, DEC 356d8781):
+
+- :func:`parse_iso29148`/:class:`Iso29148` -- parses the ISO/IEC/IEEE
+  29148:2018 requirement-specifications guidance document
+  (``general/data/general_iso29148.md``) backing ``specmgr://iso29148``,
+  purely to fail fast on structural drift (the parsed result is discarded
+  by the resource itself).
+
 Also backs feat-144-ref-artifact's generic ``list_references`` tool
 (REQ-002/REQ-003/REQ-004):
 
@@ -111,7 +133,7 @@ Also backs feat-144-ref-artifact's generic ``list_references`` tool
   style inline failure).
 
 Also backs feat-153-off-by-n Phase 2's revision of the generic ``update``
-tool's success return (ADR 19ff316b-cd11-41a7-a616-ffd84917da51, revising
+tool's success return (DEC 19ff316b-cd11-41a7-a616-ffd84917da51, revising
 feature feat-69-update-context's "frontmatter-only" precedent for ``update``
 alone):
 
@@ -151,6 +173,33 @@ Also backs feat-207-reference-graph (Phase 110, REQ-001/REQ-003):
   a plain EAGER import is safe here -- no PEP 562 laziness needed, unlike
   the ``update_result`` names.
 
+Also backs feat-197-i18n's (Phase 110) per-language section-heading mapping
+tables (DEC 38efdb66 items 3/4/5):
+
+- :func:`load_heading_table`/
+  :func:`resolve_heading_table` -- the lazy, once-per-process loader of a
+  language's flat ``<translated heading text> -> <canonical English heading
+  text>`` table from the packaged ``general/data/headings/<language>.json``
+  file (values must be pairwise distinct; a shape-valid language without a
+  table file is unusable and raises an actionable ``ValueError``), with
+  :func:`resolve_heading_table` as the omitted/EN-aware entry point the
+  parse boundaries use (EN needs no table -- it is the canonical form
+  itself); :func:`normalize_heading_lines` -- the fence-aware, line-based
+  heading-normalization pre-pass that rewrites every table-mapped heading
+  line to its canonical text before the unchanged ``models/md`` engine
+  runs; :func:`heading_table_path` -- the single seam every caller (and
+  test) goes through for the table file's location.
+
+Also backs feat-197-i18n's (Phase 140) two read-only translation tools:
+
+- :class:`LanguageListResult`/:class:`LanguageEntry` -- the ``list_languages`` tool's result (REQ-012, ACC-008): the
+  language codes one artifact exists in (``"en"`` first when the EN source exists) with one entry per language
+  (resolved path, ``parseable`` flag, parse ``error`` for a variant that exists but fails to parse).
+- :class:`TranslationDriftResult`/:class:`DriftFinding` -- the ``check_translation_drift`` tool's non-raising result
+  (REQ-014, ACC-009): structural findings (``missing``/``extra``/``reordered``/``unparseable``) and the staleness
+  verdict of one run; ``translation_drift`` also holds the pure, I/O-free core of the drift check
+  (:func:`heading_skeleton`, :func:`compare_skeletons`, :func:`check_staleness`).
+
 Import this package to use either model directly::
 
     from biz.dfch.specmgr.general.models import DocSummary, PagedResult
@@ -176,7 +225,28 @@ from .ears import (
     WhenToUseItem,
     parse_ears,
 )
+from .heading_table import (
+    heading_table_path,
+    load_heading_table,
+    normalize_heading_lines,
+    reset_heading_table_cache,
+    resolve_heading_table,
+)
 from .invalid_status_result import InvalidStatusResult
+from .invalid_status_transition_result import InvalidStatusTransitionResult
+from .iso29148 import (
+    Characteristics,
+    CharacteristicItem,
+    DocumentTypeMapping,
+    Iso29148,
+    RequirementObligation,
+    RequirementSpecifications,
+    SpecificationItem,
+    WhenToUseEach,
+    WhenToUseEachItem,
+    parse_iso29148,
+)
+from .language_list_result import LanguageEntry, LanguageListResult
 from .paged_result import PagedResult
 from .parse_failure_result import ParseFailureResult
 from .rasci import Rasci, RasciVsRaci, RoleItem, Roles, parse_rasci
@@ -195,19 +265,36 @@ from .similarity_unavailable import (
     SimilarityUnavailableResult,
 )
 from .summary import DocSummary
+from .translation_drift import (
+    DriftFinding,
+    SkeletonEntry,
+    Staleness,
+    TranslationDriftResult,
+    check_staleness,
+    compare_skeletons,
+    heading_skeleton,
+)
 from .validate_result import ValidateResult, ValidationErrorEntry
 
 __all__ = [
+    "CharacteristicItem",
+    "Characteristics",
     "CombiningPatterns",
     "CoverageItem",
     "CoverageRelationship",
     "DEFAULT_MAX_LABEL",
     "Dtais",
     "DocSummary",
+    "DocumentTypeMapping",
+    "DriftFinding",
     "Ears",
     "GraphEdge",
     "GraphNode",
     "InvalidStatusResult",
+    "InvalidStatusTransitionResult",
+    "Iso29148",
+    "LanguageEntry",
+    "LanguageListResult",
     "MethodItem",
     "PagedResult",
     "ParseFailureResult",
@@ -219,10 +306,16 @@ __all__ = [
     "RasciVsRaci",
     "ReferenceGraph",
     "ReferenceRow",
+    "RequirementObligation",
+    "RequirementSpecifications",
     "RoleItem",
     "Roles",
     "SimilarityHit",
     "SimilarityUnavailableResult",
+    "SkeletonEntry",
+    "SpecificationItem",
+    "Staleness",
+    "TranslationDriftResult",
     # PEP 562 lazy export: pylint cannot see the __getattr__-provided names (see update_result.py's module docstring).
     "UpdateFrontmatter",  # pylint: disable=undefined-all-variable
     "UpdateResult",  # pylint: disable=undefined-all-variable
@@ -231,11 +324,22 @@ __all__ = [
     "WhenToApply",
     "WhenToApplyItem",
     "WhenToUse",
+    "WhenToUseEach",
+    "WhenToUseEachItem",
     "WhenToUseItem",
+    "check_staleness",
+    "compare_skeletons",
+    "heading_skeleton",
+    "heading_table_path",
+    "load_heading_table",
+    "normalize_heading_lines",
     "parse_dtais",
     "parse_ears",
+    "parse_iso29148",
     "parse_rasci",
     "render_reference_graph",
+    "reset_heading_table_cache",
+    "resolve_heading_table",
 ]
 
 #: PEP 562: the names this package exports lazily from its ``update_result``

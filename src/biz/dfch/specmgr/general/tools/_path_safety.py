@@ -15,8 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Reusable, doc-type-agnostic path-safety assertions for document ids and
-resolved paths (feat-36-delete, Phase 1).
+"""Reusable, doc-type-agnostic path-safety assertions for document ids,
+language codes, and resolved paths (feat-36-delete, Phase 1).
 
 Prevents path injection through a generic, type-dispatched document
 tool's ``type``/``id`` inputs and confines a resolved path to the domain's
@@ -29,10 +29,23 @@ naming the offending value. (:func:`assert_within`'s read-only
 ``Path.resolve()`` calls are the module's single, sanctioned filesystem
 touch.)
 
+**Language codes (feat-197-i18n, REQ-008/ACC-013).** :func:`assert_language`
+is the shape guard for the caller-supplied ``language`` value every
+i18n-aware tool takes: an ISO 639-1-shaped lowercase two-letter code
+(:data:`LANGUAGE_PATTERN`, fullmatch ``^[a-z]{2}$``). The shape subsumes
+the separator/traversal checks :func:`assert_no_traversal` gives ``id`` --
+a two-lowercase-letter string can carry no path separator, no traversal
+sequence, no case ambiguity -- so no second, separator-specific check is
+needed. The guard is deliberately SHAPE-only (an open set: any
+shape-valid code passes); whether a code is *usable* (a packaged
+heading-mapping table exists for it) is enforced separately at
+parse/write time by the table loader (DEC 38efdb66 item 6), so the set of
+usable languages grows by adding one JSON file, never by a guard change.
+
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
 Design Notes sections 2-6) was the first caller. The five functions are
-now also called by every ``get_<d>`` tool (including ``get_adr``,
-and ``get_sysrs`` since feat-32-sysrs Phase 3)
+now also called by every ``get_<d>`` tool (``get_sysrs`` since
+feat-32-sysrs Phase 3, and ``get_txt`` since feat-229-txt Phase 130)
 and by the generic ``update`` and ``set_status`` tools
 (``.specmgr/feat/feat-38-39-41-43-44/README.md``, Phase 4, REQ-009): they
 take only plain ``str``/``Path`` inputs, return ``None`` (raise on
@@ -47,8 +60,17 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from ...models.md._cross_reference import FEAT_ID_PATTERN as _FEAT_ID_PATTERN
+
+# The canonical DEFAULT_LANGUAGE home moved model-side (feat-255 item 2); the alias
+# keeps every existing tools-layer consumer importing it from here untouched.
+from ..models.heading_table import DEFAULT_LANGUAGE
+
 __all__ = [
+    "DEFAULT_LANGUAGE",
+    "LANGUAGE_PATTERN",
     "assert_feat_id",
+    "assert_language",
     "assert_no_traversal",
     "assert_uuid",
     "assert_within",
@@ -59,14 +81,15 @@ __all__ = [
 #: which is what every ``create_<d>`` tool writes into the frontmatter ``id``).
 _UUID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
-#: The ``feat`` folder-name shape (ADR 8cf940c5): ``feat-NNN-slug``, lowercase alnum + hyphen.
-_FEAT_ID_PATTERN = re.compile(r"^feat-[0-9]+-[a-z0-9-]+$")
-
 #: The path-separator characters an id must never contain.
 _PATH_SEPARATORS = ("/", "\\")
 
 #: The relative-parent traversal sequence an id must never contain.
 _TRAVERSAL_SEQUENCE = ".."
+
+#: The ISO 639-1-shaped language-code shape (feat-197-i18n, DEC 38efdb66 item 6):
+#: exactly two lowercase ASCII letters. ``fullmatch``ed, not ``match``ed.
+LANGUAGE_PATTERN = re.compile(r"^[a-z]{2}$")
 
 
 def _uuid_types() -> frozenset[str]:
@@ -74,19 +97,16 @@ def _uuid_types() -> frozenset[str]:
 
     The UUID domains whose ``id`` is a server-generated v4 UUID: derived
     from the shared :data:`_domains.UUID_DOMAINS` source (feat-125-domain-
-    lists Phase 2, REQ-004) -- every whole-body domain other than ``feat``,
-    plus ``adr`` (feat-38-39-41-43-44 Phase 4, REQ-009; ``sysrs`` added
-    feat-32-sysrs Phase 3) -- ADR ids are canonical lowercase-hex UUIDs of
-    the exact same shape (see ``adr.tools._paths.find_adr_path``/any
-    ``docs/adr/*.md`` frontmatter ``id`` value). The ``frozenset`` keeps
-    O(1) membership. ``delete``'s own ``Literal`` type still excludes
-    ``"adr"`` (its behavior is unchanged, D-Phase-4) -- that addition is
-    purely for use by ``get_<d>``/``update``/``set_status``.
+    lists Phase 2, REQ-004) -- every whole-body domain other than ``feat``
+    (``sysrs`` added feat-32-sysrs Phase 3; ``txt`` added feat-229-txt
+    Phase 130) -- all canonical lowercase-hex UUIDs of the exact same shape
+    (see any ``docs/<type>/*.md`` frontmatter ``id`` value). The
+    ``frozenset`` keeps O(1) membership.
 
     The ``_domains`` import is deferred into this helper (called once per
     :func:`validate_id` call, not at module import) because ``_domains``
     pulls in every domain's own adapter imports (the feat-134 registry,
-    ADR 750842b2) and this module is imported from every ``get_<d>``
+    DEC 750842b2) and this module is imported from every ``get_<d>``
     tool -- a module-level import here would be an import cycle.
     """
     from ._domains import UUID_DOMAINS
@@ -152,7 +172,7 @@ def assert_uuid(id_: str) -> None:
 def assert_feat_id(id_: str) -> None:
     """Reject any id that is not a well-formed ``feat-NNN-slug`` folder name.
 
-    Enforced for the ``feat`` domain (folder-per-document, ADR 8cf940c5):
+    Enforced for the ``feat`` domain (folder-per-document, DEC 8cf940c5):
     ``feat-``, one or more digits, ``-``, then a non-empty run of lowercase
     alnum and hyphen.
 
@@ -174,6 +194,51 @@ def assert_feat_id(id_: str) -> None:
         raise ValueError(f"id {id_!r} is not a well-formed feat-NNN-slug folder name (e.g. 'feat-36-delete')")
 
 
+def assert_language(language: str) -> None:
+    """Reject any language value that is not an ISO 639-1-shaped lowercase two-letter code.
+
+    The shape guard for the caller-supplied ``language`` every i18n-aware
+    tool takes (feat-197-i18n, REQ-008/ACC-013, DEC 38efdb66 item 6): the
+    value must fullmatch :data:`LANGUAGE_PATTERN` (``^[a-z]{2}$``). Called
+    before any filesystem access, in the same pre-guard position as
+    ``id``'s own :func:`validate_id`, so a payload like ``"../../etc"``,
+    ``"de/x"``, ``"/abs"``, ``"DE"``, or ``""`` can never become part of a
+    resolved path. The shape subsumes the separator/traversal checks
+    :func:`assert_no_traversal` applies to ``id`` -- a two-lowercase-letter
+    string cannot carry a path separator, a traversal sequence, or any
+    other path-significant character -- so no second check runs.
+
+    The guard is SHAPE-only (an open set): any shape-valid code passes.
+    Whether a code is *usable* -- i.e. a packaged heading-mapping table
+    exists for it -- is enforced separately at parse/write time (the table
+    loader raises its own actionable error for a code without a table),
+    which keeps this guard static and dependency-free while the set of
+    usable languages grows by adding one JSON file, never by a guard
+    change.
+
+    Parameters
+    ----------
+    language:
+        The language value to check.
+
+    Raises
+    ------
+    ValueError
+        The value does not fullmatch :data:`LANGUAGE_PATTERN` (empty, not
+        two characters, uppercase, digits, a path separator, or any other
+        non-lowercase-letter character); the message names the offending
+        value and the expected shape.
+    """
+    assert isinstance(language, str), type(language)
+
+    if not LANGUAGE_PATTERN.fullmatch(language):
+        raise ValueError(
+            f"language {language!r} is not a valid ISO 639-1-shaped lowercase two-letter code "
+            f"(e.g. 'de'); a language must be exactly two lowercase ASCII letters and cannot "
+            f"carry a path separator, traversal sequence, or any other path-significant character"
+        )
+
+
 def validate_id(type_: str, id_: str) -> None:
     """Convenience dispatcher: :func:`assert_no_traversal` plus the type's format check.
 
@@ -181,13 +246,12 @@ def validate_id(type_: str, id_: str) -> None:
     ``type_ == "feat"`` -> :func:`assert_feat_id`; any other ``type_`` ->
     ``ValueError`` (unknown type). This is the single entry point the
     generic ``delete``, ``update``, ``set_status``, and every ``get_<d>``
-    tool (including ``get_adr``) call before any filesystem access.
+    tool call before any filesystem access.
 
     Parameters
     ----------
     type_:
-        The document type name: one of the whole-body domains, or
-        ``adr``.
+        The document type name: one of the whole-body domains.
     id_:
         The id to check.
 

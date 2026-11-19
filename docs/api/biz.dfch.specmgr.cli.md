@@ -12,7 +12,12 @@ Each command is implemented in its own module under ``commands/`` and
 registered on ``app`` below; see that module for the ``mcp`` command's
 transport/host/port options and environment variables. ``mcp``
 additionally requires the ``mcp`` extra
-(``pip install biz-dfch-specmgr[mcp]``).
+(``pip install biz-dfch-specmgr[mcp]``); so does ``lint`` (feat-218,
+Phase 100 — the in-tree spec artifact parseability gate): its module
+level stays ``mcp``-free (no registry/``tools``-package import, unlike
+``diagram``'s own module-level tools imports), but its command body
+loads the domain registry lazily and exits 1 with a message when the
+extra is missing.
 
 ## Functions
 

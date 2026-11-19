@@ -51,7 +51,7 @@ from .body import (
 )
 from .document import SopDocument
 from .frontmatter import SopFrontmatter
-from .parser import parse_sop
+from .parser import parse_sop, parse_sop_body
 from .summary import SopSummary
 
 __all__ = [
@@ -81,4 +81,5 @@ __all__ = [
     "UpdateEntry",
     "Updates",
     "parse_sop",
+    "parse_sop_body",
 ]

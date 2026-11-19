@@ -17,7 +17,7 @@
 
 """Tests for the ``list_prb`` ``@mcp.tool()`` wrapper (Task 3.9).
 
-Ships as a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13)
+Ships as a paged tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13)
 -- unlike ``tests/tsk/tools/test_list_tsk.py`` (migrated from a former
 ``specmgr://tsk/list`` resource), there is no former-resource history here to
 document.

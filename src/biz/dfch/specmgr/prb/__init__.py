@@ -17,7 +17,7 @@
 
 """Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
 
-This is a domain-first package, mirroring ``tsk``/``qa``'s layout (per ADR
+This is a domain-first package, mirroring ``tsk``/``qa``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts,
 and resources for managing ``prb`` documents.
 
@@ -27,9 +27,8 @@ resources against the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import prb  # noqa: F401 (side-effects only)
 
 ``tools`` (``parse_prb``, ``get_prb``, ``list_prb``, ``get_prb_example``,
-``get_prb_template``, ``create_prb``), ``resources``
-(``specmgr://prb/schema``,
-``specmgr://prb/example``, ``specmgr://prb/template``), and ``prompts``
+``get_prb_template``, ``get_prb_schema``, ``create_prb``), ``resources``
+(``specmgr://prb/example``, ``specmgr://prb/template``), and ``prompts``
 (``create_prb``, ``update_prb``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="prb"``), and status changes go through the
@@ -39,10 +38,15 @@ Disk-free, id-free dry-run content validation goes through the generic
 ``validate_prb`` tool was removed in favor of it (feat-81-83-validation).
 Like REQ/TSK/QA, PRB has no
 ``specmgr://prb/{id}`` resource -- id-based reads go through the ``get_prb``
-tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
+tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://prb/list`` resource -- ``list_prb`` ships as a paged
-``@mcp.tool()`` from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13),
+``@mcp.tool()`` from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13),
 unlike REQ/TSK/QA's own resource-then-converted history.
+
+The former ``specmgr://prb/schema`` resource was converted into the
+``get_prb_schema`` tool, so that the generated JSON Schema is discoverable
+from the always-in-context tool surface (feat-189 Phase 105, DEC
+112b6498-078b-4a59-88b8-8ffb7a5041b3).
 """
 
 from . import prompts, resources, tools  # noqa: F401

@@ -47,7 +47,9 @@ change does not touch the roles section.
 ## 5. Map the requested change to the right tool
 
 - A change to the body -- the `context`, `drivers`, `considered`,
-  `outcome` (lead paragraph, `### Consequences`, `### Confirmation`),
+  `outcome` (mandatory lead paragraph, optionally further
+  paragraphs/lists/code blocks before the `### Consequences` and
+  `### Confirmation` H3 sections),
   `roles_and_responsibilities` (Accountable/Responsible/Support/
   Consulted/Informed), `tags`, `source`, `related_artifacts`,
   `pros_and_cons` options, `more_information`, or `updates` entries --
@@ -106,10 +108,15 @@ change does not touch the roles section.
   `update` never accepts or changes `classification`. Fully free-text;
   a blank or whitespace-only value clears it back to `None`/absent.
 
-## 6. Check the schema, and validate before writing if useful
+## 6. Check the schema only for structural changes, and validate before writing if useful
 
-Fetch `specmgr://dec/schema` to confirm field names and constraints
-before drafting the replacement body. Optionally call
+Call the `get_dec_schema` tool (the generated JSON Schema) only for a
+whole-body rewrite or a structural change -- adding, removing, or
+renaming sections, or editing closed-form content -- to confirm field
+names and constraints. Skip the fetch for a local splice (a line-range
+replace), where the raw body is already in context: `update` still
+validates the spliced result as a whole document before writing
+anything, so the skip is safe. Optionally call
 `validate(type="dec", content=content, full=False)` beforehand to dry-run the new body
 without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
