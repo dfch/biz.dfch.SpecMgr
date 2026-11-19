@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: planning
 type: feat
-updated: '2026-11-18T15:42:54.619+01:00'
+updated: '2026-11-19T09:54:41.752+01:00'
 version: 1.0.0
 ---
 
@@ -74,6 +74,8 @@ Key invariants and rationale:
 - **Id-less documents**: hand-authored docs with `id: None` in the frontmatter (list-only today) stay list-visible iff placed inside a shard dir (any shard, e.g. `en/00/`), EN or variant — their stems keep the author-chosen name (no uuid prefix), so the uuid-prefix invariant of REQ-008/ACC-002 applies only to documents carrying a frontmatter `id` (the in-repo corpus contains no id-less documents).
 - **Cold per-id resolution** drops from O(N-domain) to O(N/256) parses via the shard-narrowed scan, per language (REQ-004).
 - **dec moves only**: the 48 in-repo dec files already carry the prefix-less name REQ-002 extends; their migration is a pure `git mv` into `en/<shard>/`, the other 28 files move + rename.
+- **Phase 130 split (context size)**: the test sweep was split into Phase 125 (general framework, i18n, config) and Phase 130 (domain dirs + migration + verification) after measuring the footprint — 21 test files define a per-module `_doc_path()` (117 reference it), the four general-framework files alone are ~5705 lines, and the thirteen sharded domain test dirs hold ~390 test files — far beyond the original "~30 affected test files" estimate, which one subagent context cannot carry. Task 130.100 is retired (permanent gap); its scope now lives in Tasks 125.100–125.120 and 130.105.
+- **Fallback split seams (reactive only)**: if Phase 100's implementer context overflows, split after Task 100.150 — a new Phase 105 carries the rework tasks (currently 100.160–100.180, becoming 105.100–105.120 with the old numbers as permanent gaps). If Phase 140 overflows, append a Phase 150 carrying the regeneration and final-gate tasks (currently 140.110–140.120, becoming 150.100–150.110). Apply only on actual overflow, with a new Updates entry recording the move.
 
 ### Related Decisions
 
@@ -105,9 +107,15 @@ Key invariants and rationale:
 - [ ] Task 120.110: Update the anchored artifact pattern in `.pre-commit-config.yaml`, `.github/workflows/ci.yml`, and `tests/commands/test_lint.py` (open-depth match under `docs/<dir>/` so misplaced depths are selected for the validator; non-domain dirs keep the skip behavior) and extend the drift test (REQ-006).
 - [ ] Task 120.120: Lint tests: valid EN shard, valid variant shard, the four violation shapes, the non-domain-dir skip at every depth pinned against the repo's real archive tree (real files, depth ≥ 3 — e.g. `docs/archive/adr/<uuid>-<slug>.md` and `docs/archive/sop/` — non-domain dir → skip, exit 0), `_derive_id` and repair pointer on sharded paths (ACC-005).
 
+#### Phase 125: Test sweep — general framework, i18n, and config suites
+
+- [ ] Task 125.100: Rework the `_doc_path()` case-driven methods and reseed the hand-seeded broken/variant files in the four general-framework test files (`tests/general/tools/test_update.py`, `test_edit.py`, `test_set_status.py`, `test_set_classification.py` — ~5705 lines combined) to the uniform `en/<shard>/` + `<lang>/<shard>/` layout (REQ-002, REQ-003).
+- [ ] Task 125.110: Reseed the feat-197-i18n suites to the uniform layout — the nine `test_i18n_*` files (under `tests/general/tools/` and `tests/dec/tools/`, incl. `test_i18n_all_domains` and `test_i18n_en_only_consumers`) plus `test_language_guard`, `test_list_languages`, and `test_check_translation_drift` (REQ-002, REQ-003).
+- [ ] Task 125.120: Update `tests/general/resources/test_config.py` (the per-domain `base_dir` assertion `assertEqual(…, DEFAULT_DOCS_ROOT / domain)` becomes `DEFAULT_DOCS_ROOT / domain / "en"` for the thirteen sharded domains — `config_info()` calls each domain's base-dir function with no language, and after Task 100.160 the omitted-language resolution targets `docs/<type>/en/`) and regenerate the `specmgr://config` golden fixture `tests/fixtures/config-golden/specmgr-config.pre-migration.json` per that fixture's own capture-README procedure (REQ-003).
+
 #### Phase 130: Test sweep and in-repo migration
 
-- [ ] Task 130.100: Update the flat-glob `_doc_path()` test helpers and hand-seeded broken/variant files across the ~30 affected test files — including the feat-197-i18n suites (`tests/general/tools/test_i18n_*`, `tests/dec/tools/test_i18n_*`, `test_language_guard`, `test_list_languages`, `test_check_translation_drift`, the EN-only-consumer pinning tests) and the `specmgr://config` surface (`tests/general/resources/test_config.py`: the per-domain `base_dir` assertion `assertEqual(…, DEFAULT_DOCS_ROOT / domain)` becomes `DEFAULT_DOCS_ROOT / domain / "en"` for the thirteen sharded domains — `config_info()` calls each domain's base-dir function with no language, and after Task 100.160 the omitted-language resolution targets `docs/<type>/en/`; plus the golden fixture `tests/fixtures/config-golden/specmgr-config.pre-migration.json`, regenerated per that fixture's own capture-README procedure) — to the uniform `en/<shard>/` + `<lang>/<shard>/` layout (REQ-002, REQ-003).
+- [ ] Task 130.105: Reseed the per-domain `_doc_path()` definitions and hand-seeded broken/variant files across the thirteen sharded domain test dirs (`tests/req`, `tests/uc`, `tests/tsk`, `tests/qa`, `tests/prb`, `tests/gol`, `tests/rsk`, `tests/dec`, `tests/sop`, `tests/vcr`, `tests/sysrs`, `tests/txt`, `tests/set`; `tests/feat` is excluded — unaffected by sharding) to the uniform `en/<shard>/` + `<lang>/<shard>/` layout (REQ-002, REQ-003).
 - [ ] Task 130.110: `git mv` the 76 in-repo docs into `docs/<type>/en/<shard>/` (48 dec move-only, the remaining 28 with the type prefix dropped; throwaway loop, not committed as tooling) (REQ-007).
 - [ ] Task 130.120: Verify `specmgr lint --all` and the full test suite are green on the migrated tree (ACC-002, ACC-006).
 
@@ -127,6 +135,15 @@ Key invariants and rationale:
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-19 08:36:40.927Z - Phase 130 test sweep split into Phase 125 + narrowed Phase 130
+
+After measuring the footprint of the Phase 130 test sweep — 21 test files define a per-module `_doc_path()` (117 reference it), the four general-framework files alone are ~5705 lines, and the thirteen sharded domain test dirs hold ~390 test files — the user-approved restructure splits the single-phase sweep, whose "~30 affected test files" estimate exceeds one subagent context.
+
+- Task 130.100 is retired (permanent gap); the G1-owned config surface (`tests/general/resources/test_config.py` + the `specmgr://config` golden fixture, from the 2026-11-18 14:31:36Z refinement) now lives in Task 125.120.
+- The new Phase 125 (Test sweep — general framework, i18n, and config suites) carries Tasks 125.100–125.120; the per-domain scope re-enters Phase 130 as in-between Task 130.105.
+- Tasks 130.110/130.120 keep their numbers so ACC-006/REQ-007 traceability is unchanged.
+- Design Notes record the measured footprint and the two reactive fallback split seams (a Phase 105 after Task 100.150; an appended Phase 150 for 140.110–140.120).
 
 #### 2026-11-18 14:31:36.772Z - Plan refined after feat-refiner pass (G1, G2, D1, D3, I1, I2)
 
