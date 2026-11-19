@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: planning
 type: feat
-updated: '2026-11-19T09:54:41.752+01:00'
+updated: '2026-11-19T22:47:09.807+01:00'
 version: 1.0.0
 ---
 
@@ -76,6 +76,7 @@ Key invariants and rationale:
 - **dec moves only**: the 48 in-repo dec files already carry the prefix-less name REQ-002 extends; their migration is a pure `git mv` into `en/<shard>/`, the other 28 files move + rename.
 - **Phase 130 split (context size)**: the test sweep was split into Phase 125 (general framework, i18n, config) and Phase 130 (domain dirs + migration + verification) after measuring the footprint — 21 test files define a per-module `_doc_path()` (117 reference it), the four general-framework files alone are ~5705 lines, and the thirteen sharded domain test dirs hold ~390 test files — far beyond the original "~30 affected test files" estimate, which one subagent context cannot carry. Task 130.100 is retired (permanent gap); its scope now lives in Tasks 125.100–125.120 and 130.105.
 - **Fallback split seams (reactive only)**: if Phase 100's implementer context overflows, split after Task 100.150 — a new Phase 105 carries the rework tasks (currently 100.160–100.180, becoming 105.100–105.120 with the old numbers as permanent gaps). If Phase 140 overflows, append a Phase 150 carrying the regeneration and final-gate tasks (currently 140.110–140.120, becoming 150.100–150.110). Apply only on actual overflow, with a new Updates entry recording the move.
+- **Per-phase commit gate (documented exception to green-CI-per-phase)**: the shard-only read/write flip (Tasks 100.110/100.160, 110.100, and the Phase 120 lint pattern) and the full test re-seed (Phase 125 + Task 130.105) are one coupled change under the hard cut-over (REQ-003), so the Phase 100, 110, 120, and 125 commits leave the full pytest suite red by design — the known-red set is the layout-dependent suites Phases 125 and 130.105 re-seed. The per-phase commit gate for those four phases is: `ruff format --check` + `ruff check` clean, `vulture` clean, `specmgr lint` green over the staged in-tree artifacts, the phase's own new tests green, and no new failures outside the known-red layout set — verified by diffing the phase commit's full-suite failing-test set against the previous phase commit's. Full CI (the complete pytest suite) is green only at the Phase 130 commit (Task 130.120) and the Phase 140 commit (Task 140.120). The intermediate red commits are expected on the feature branch and do not block advancing to the next phase.
 
 ### Related Decisions
 
@@ -135,6 +136,13 @@ Key invariants and rationale:
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-19 21:45:22.784Z - Documented exception to green-CI-per-phase (per-phase commit gate, Option A)
+
+Settled with the requester: the plan does not conform to green-CI-per-phase and is not restructured to force it. Under the hard cut-over (REQ-003), the shard-only read/write flip and the full test re-seed are one coupled change, so Phases 100, 110, 120, and 125 end with the full pytest suite red by design (Option A: keep the six context-safe phases and per-phase commits, and document the exception).
+
+- A new Design Notes bullet states the per-phase commit gate for those four phases: `ruff format --check` + `ruff check` clean, `vulture` clean, `specmgr lint` green over the staged in-tree artifacts, the phase's own new tests green, and no new failures outside the known-red layout set — verified by diffing the phase commit's full-suite failing-test set against the previous phase commit's.
+- Full CI (the complete pytest suite) is green only at the Phase 130 commit (Task 130.120) and the Phase 140 commit (Task 140.120); the intermediate red commits are expected on the feature branch and do not block advancing to the next phase.
 
 #### 2026-11-19 08:36:40.927Z - Phase 130 test sweep split into Phase 125 + narrowed Phase 130
 
