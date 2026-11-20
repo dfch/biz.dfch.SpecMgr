@@ -515,7 +515,8 @@ type or cross-cutting:
   (feat-81-83-validation Phase 4 retrofitted `FeatSummary`'s own `path` to
   match) rather than silently dropping it, feat-81-83-validation Phase 3);
   `feat/prompts/`
-  (`create_feat`/`update_feat`/`refine_feat`, narrated instruction flows;
+  (`create_feat`/`update_feat`/`refine_feat`/`implement_feat`/
+  `review_feat`, narrated instruction flows;
   `create_feat` first checks `list_feat` for a near-duplicate feature;
   `refine_feat` is the pre-implementation plan-readiness review --
   testable acceptance criteria, phase ordering and dependencies, scope
@@ -523,7 +524,15 @@ type or cross-cutting:
   `get_feat(id, raw=True)`/generic `update(type="feat")` line-range/
   `validate(type="feat", full=True)` path, host file tools only as the
   fallback (feat-167-mcp-lifecycle-commands-2 Phase 100, GitHub issue
-  #167)). The OpenCode host surface for it (same phase): the
+  #167); `implement_feat` is the orchestrator-discipline narration with
+  the optional-delegation pattern per DEC
+  4481b1fd-26e5-46bc-8f1b-236b638385b2 ("your host's task-delegation
+  tool, if one exists", never assumed present, the explicit
+  single-session fallback, and the capped review-fix loop), and
+  `review_feat` is the portable mirror of the `feat-reviewer` checklist
+  and report format including the conditional "Proposed Fix Phase"
+  section (feat-263-delegation-prompts Phase 110, GitHub issue #263)).
+  The OpenCode host surface for it (same phase): the
   `feat-planner` subagent (`.opencode/agent/feat-planner.md` -- the same
   review with real file access, its plan-README-only edit scope
   mechanically enforced by its `edit`/`write` permission rules
@@ -1580,6 +1589,7 @@ uv run --frozen pylint $(git ls-files '*.py')                          # lint (a
 uv run --frozen vulture src/ whitelist.py --min-confidence 60          # dead-code check (enforced)
 uv run --frozen pytest -n auto --cov=src --cov-report=                # tests (parallel, pytest-xdist)
 scripts/release.sh help                                            # staged release automation (SOP 98537416; README "Make a Release")
+# Post-merge feature bookkeeping on dev: SOP 1e6d965c (docs/sop/, draft) -- verify the squash, record it in the plan, close out or defer
 uv run --frozen specmgr docs                                           # regenerate docs/api/ + docs/GENERATED.md
 uv run --frozen specmgr harness-bundle                                 # regenerate general/data/general_harness_bundle.json from .opencode/{agent,command,skill}/
 uv run --frozen specmgr unused-code                                    # report unused code in src/ (same check as the vulture hook)

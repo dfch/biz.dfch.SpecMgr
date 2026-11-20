@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
-status: review
+status: done
 type: feat
-updated: '2026-11-13T12:25:08.945+01:00'
+updated: '2026-11-15T06:33:06.360+01:00'
 version: 1.0.0
 ---
 
@@ -22,19 +22,13 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 **Phase discipline (user requirement, carried over from feat-150, 2026-09-24)**: every phase ends with the full quality gate (ruff format/check, vulture, the full pytest suite, and every doc-drift check the phase touches) and exactly one Conventional Commit; the phase's docs sync travels inside that same commit.
 
+**Rescope (2026-11-15, D1 decision).** Of the four remaining items named above, this feature shipped (3) `refine_feat` + the `feat-planner` agent + `/plan-feature` (Phase 100) and (4) the distribution slice (Phases 125 and 130), and then closed to `done`. Items (1) and (2) -- the portable `implement_feat`/`review_feat` prompts and the automatic review-fix loop, plus the delegation-pattern DEC they depend on -- were never started and moved to the new feature feat-0-delegation-prompts (its Overview carries the REQ/ACC renumbering map). The requirements, acceptance criteria, scope bullets and Phases 110/120/140 describing them were removed from this plan; the Design Notes below still describe the carved-out pattern as history. Phase numbers are permanent, so 110, 120 and 140 stay unused here.
+
 ### Requirements
 
 - REQ-001: A new `feat/prompts/refine_feat.py` MCP prompt, signature `refine_feat(id)`, narrates a pre-implementation plan-readiness review (testable ACs, phase ordering/dependencies, scope clarity, unresolved decisions) that is fully MCP-native: read via `get_feat(id, raw=True)`, ask the user via the `question` tool, apply edits via the generic `update(type="feat", id, content, offset/limit)` tool (line-range preferred), and re-check via `validate(type="feat", content, full=True)` -- host file tools only as a fallback when those specmgr tools are unavailable.
 
 - REQ-002: A new `.opencode/agent/feat-planner.md` subagent implements REQ-001 with real file access, with its plan-README-only edit scope enforced mechanically rather than by prose: `edit`/`write` permission rules `{"*": deny, ".specmgr/feat/**/README.md": allow}` (OpenCode's `edit` permission patterns match file paths, last matching rule wins), `read`/`glob`/`grep`/`list`/`question`/`todowrite` allowed, `task` denied, `bash` denied -- plus `.opencode/command/plan-feature.md` (`/plan-feature <id>`, `agent: feat-planner`).
-
-- REQ-003: A new `feat/prompts/implement_feat.py` MCP prompt narrates orchestrator discipline (read plan, phase-by-phase `TodoWrite`, delegate each phase via the host's subagent-delegation tool when available, verify before advancing, never write code directly), names the new delegation-pattern ADR (Phase 110) by UUID, mentions the REQ-006 review-fix loop, and falls back to direct single-session implementation when no delegation tool exists.
-
-- REQ-004: A new `feat/prompts/review_feat.py` MCP prompt narrates `feat-reviewer.md`'s existing review checklist and report format portably, including the new conditional "Proposed Fix Phase" section (REQ-005).
-
-- REQ-005: `.opencode/agent/feat-reviewer.md`'s report format gains a new, conditional "Proposed Fix Phase" section: a ready-to-paste block for the plan's `### Task List` -- a `#### Phase NNN: Fix phase (review cycle k)` heading using the next unused phase number (never renumbering existing phases) plus `- [ ] Task NNN.MMM` items derived strictly from the report's own Errors/Gaps/Discrepancies (Improvements/Positives stay advisory), with any item that needs a user decision explicitly flagged `[NEEDS DECISION]` rather than guessed at.
-
-- REQ-006: `.opencode/agent/phase-orchestrator.md` (and `implement_feat`'s narration, REQ-003) gain a final review-fix loop: after the plan's final verification phase, run the reviewer; if it proposes a fix phase, resolve any `[NEEDS DECISION]` items with the user via `question`, then delegate the fix phase to one more `phase-implementer` cycle exactly like a normal phase -- with the delegation prompt instructing the implementer to first append the reviewer's ready-to-paste block to the plan's Task List, since the orchestrator itself cannot edit files (`edit`/`write` are denied to it); repeat until the reviewer reports no Errors, Gaps, or Discrepancies left, capped at 3 review-fix cycles (after which remaining findings are handed to the user instead of auto-fixed again).
 
 - REQ-007: The repo-root `.opencode/{agent,command,skill}/` files remain the canonical working copy (singular directory names, per the 2026-09-23 decision; `skill/` holds one subfolder per skill, the only nested layout). A flat `specmgr harness-bundle` CLI command (`[cli]`-only -- no `mcp` import) deterministically enumerates every `*.md` under exactly those three top-level directories (recursive, sorted by `path`, exact directory-name match -- nothing else under `.opencode/` is bundled: `node_modules/`, `package.json`/`package-lock.json`, and similarly-named directories such as `zZz-skill/` are structurally excluded) into a single package-data file `general/data/general_harness_bundle.json` of shape `{"instructions": <module constant>, "files": [{"path", "sha256", "content"}]}` -- `path` relative to `.opencode/`, `content` the file's verbatim text, `sha256` of that text; serialized via `json.dumps(indent=2, ensure_ascii=False)` + trailing newline, no timestamps, so two runs over an unchanged tree are byte-identical. `pyproject.toml` gains the `[tool.setuptools.package-data]` entry for that one file; a pre-commit local drift hook (regenerate + fail on diff, files `^\.opencode/(agent|command|skill)/.*\.md$`, mirroring the existing `specmgr-schema-*` hooks) plus a CI parity check in the 3.13 job keep the bundle from drifting; the resource (REQ-008) serves the file via `read_packaged_text("general", "harness_bundle", "json")` (the `_packaged_data` convention), so it works identically from an editable checkout and a real, non-editable install.
 
@@ -48,33 +42,21 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - [x] ACC-002: `/plan-feature <id>` successfully edits a fixture plan's README in place after a manual smoke test.
 
-- [ ] ACC-003: `implement_feat(id)` MCP prompt exists, is registered, and its instructions explicitly name the host's task-delegation tool as optional (never assumed present), the new delegation-pattern ADR (Phase 110) by UUID, and the review-fix loop.
-
-- [ ] ACC-004: `review_feat(id)` MCP prompt exists, is registered, and mirrors `feat-reviewer.md`'s checklist and report format including the conditional "Proposed Fix Phase" section.
-
-- [ ] ACC-005: `feat-reviewer.md`'s report format documents the "Proposed Fix Phase" section -- the ready-to-paste Task-List block shape (next unused phase number, `- [ ] Task NNN.MMM` items derived from Errors/Gaps/Discrepancies only) and the `[NEEDS DECISION]` flagging rule.
-
-- [ ] ACC-006: `phase-orchestrator.md`'s workflow documents the capped (3-cycle) review-fix loop, its exit criterion (reviewer reports no Errors, Gaps, or Discrepancies), and the append-the-fix-phase delegation step (the implementer appends, not the orchestrator).
-
 - [x] ACC-007: The bundle file `general/data/general_harness_bundle.json` is byte-identical to a fresh `specmgr harness-bundle` run (the drift hook is green), contains exactly the enumerated `.opencode/{agent,command,skill}/` markdown files (sorted by `path`, each with a correct `sha256` and verbatim `content`), excludes everything else under `.opencode/` (`node_modules/`, `package.json`/`package-lock.json`, top-level or similarly-named directories), and `specmgr://harness-bundle` returns it verbatim (the returned text `json.loads`-parses to the same file list).
 
 - [x] ACC-008: An agent that follows only the bundle's `instructions` field installs every file into a fresh temp harness config root byte-exact (each written file's sha256 matches the bundle's), skips sha256-identical pre-existing files, and asks before overwriting a differing one -- pinned by a committed end-to-end walkthrough fixture (the feat-185-uc-diagrams ACC-002 precedent) -- and the generator's enumeration (completeness, ordering, exclusions, determinism) is covered by unit tests.
 
 - [x] ACC-009: README.md has the new section immediately after "Add to OpenCode", documenting the agent-driven install (referencing that section for server setup), what gets installed, and the manual Claude Code path.
 
-- [x] ACC-010: `AGENTS.md` (the `feat/` bullet), `docs/GENERATED.md`/`docs/MCP.md` (via `specmgr docs`/`specmgr mcp-docs` regeneration), `CHANGELOG.md`, and `server.py`'s module docstring list the 3 new MCP prompts, the new flat `specmgr harness-bundle` CLI command, and the new `specmgr://harness-bundle` resource -- each synced inside its own phase's single commit.
-
-- [ ] ACC-011: A new ADR documents the "portable MCP prompt narrates optional host-native subagent delegation" pattern.
+- [x] ACC-010: `AGENTS.md` (the `feat/` bullet), `docs/GENERATED.md`/`docs/MCP.md` (via `specmgr docs`/`specmgr mcp-docs` regeneration), `CHANGELOG.md`, and `server.py`'s module docstring list the new MCP prompt (`refine_feat`; the other two planned prompts were carved out to feat-0-delegation-prompts), the new flat `specmgr harness-bundle` CLI command, and the new `specmgr://harness-bundle` resource -- each synced inside its own phase's single commit.
 
 ### Scope
 
 #### Included
 
-- 3 new MCP prompts (`refine_feat`, `implement_feat`, `review_feat`) and their packaged instruction data files.
+- 1 new MCP prompt (`refine_feat`) and its packaged instruction data file; the `implement_feat`/`review_feat` prompts were carved out to feat-0-delegation-prompts (2026-11-15).
 
 - 1 new OpenCode subagent (`feat-planner`) and 1 new OpenCode command (`/plan-feature`).
-
-- Targeted edits to 4 existing OpenCode files: `feat-reviewer.md` (the Proposed Fix Phase section) and `phase-orchestrator.md` (the review-fix loop) for the review-fix loop, `implement-feature.md` (doc update mentioning the automatic review-fix step, plus its "a a" typo fix), and `review-feature.md` (its body re-enumerates the report sections and would go stale without the new conditional section).
 
 - The `.opencode/` layout normalization: the user-made-on-disk `skills/` -> `skill/` merge (4 skills; `skill/` is now the single skill directory -- 6 at consolidation, 8 after the i18n rebase -- one subfolder each) committed, and the stale references it broke fixed -- 2 red test files in `tests/opencode/`, stale docstrings, `AGENTS.md`, `README.md` (Phase 125).
 
@@ -85,8 +67,6 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 - The README.md section (agent-driven install + Claude Code path) + its Table of Contents entry (REQ-009).
 
 - AGENTS.md/CHANGELOG/generated-docs/server.py-docstring updates, one per phase, inside that phase's own single commit.
-
-- One new ADR for the portable-prompt-narrates-delegation pattern.
 
 #### Explicitly Out Of Scope
 
@@ -130,8 +110,6 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - The `specmgr-schema-*` pre-commit hooks as the model for REQ-007's bundle drift hook (the same two-copy + regenerate + fail-on-diff pattern, collapsed to one file).
 
-- Phase 120 (`implement_feat`/`review_feat`) depends on Phase 110's new ADR (its UUID is an input to Phase 120's instruction files); Phase 100 (`refine_feat`) has no such dependency.
-
 - Phase 125 (`.opencode/` layout normalization) precedes Phase 130 (the bundle is generated over the normalized tree); neither depends on Phases 100-120, so the distribution slice (125 + 130) can be implemented before any of them -- Phase 125 is complete (2026-10-31, commit `10b032f` + closeout; see Progress), so Phase 130 can start immediately at Task 130.100.
 
 #### Blocks
@@ -140,11 +118,11 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 ### Design Notes
 
-**Phase discipline (user requirement, carried over from feat-150, 2026-09-24).** Every phase ends with the full quality gate -- `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, the full test suite `uv run --frozen pytest -n auto --cov=src --cov-report=`, plus every doc-drift check the phase touches (`specmgr docs`, `specmgr mcp-docs`, and `specmgr adr-toc` for Phase 110) -- and exactly one Conventional Commit for that phase; the phase's docs sync (server.py docstring, AGENTS.md bullet(s), CHANGELOG entry, regenerated docs) travels inside that same commit, never as a follow-up.
+**Phase discipline (user requirement, carried over from feat-150, 2026-09-24).** Every phase ends with the full quality gate -- `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, the full test suite `uv run --frozen pytest -n auto --cov=src --cov-report=`, plus every doc-drift check the phase touches (`specmgr docs` and `specmgr mcp-docs`) -- and exactly one Conventional Commit for that phase; the phase's docs sync (server.py docstring, AGENTS.md bullet(s), CHANGELOG entry, regenerated docs) travels inside that same commit, never as a follow-up.
 
 **`refine_feat` is MCP-native.** The plan README is a parseable document, so its whole read/apply/re-check path is specmgr tooling: `get_feat(id, raw=True)`, the generic `update(type="feat", id, content, offset/limit)` (line-range preferred, so unchanged regions stay byte-identical), and `validate(type="feat", content, full=True)`. Host file tools are only a fallback for hosts that cannot reach those tools.
 
-**Portable-prompt-narrates-delegation pattern.** An MCP prompt never executes tool calls itself -- it returns text to whatever LLM session invoked it, exactly like every existing prompt in this codebase (`create_req` says "use the `question` tool"; neither `question` nor `TodoWrite` is implemented by this MCP server). `implement_feat`/`review_feat` extend this same precedent one step further: they narrate delegating work to a subagent via "your host's task-delegation tool, if one exists." Inside OpenCode, that's a real instruction to use the `task` tool (genuine multi-agent orchestration, since OpenCode exposes both the `specmgr` MCP tools and its own native tools in the same session). On a host with no such tool, the same text degrades to "implement it yourself, one phase at a time" -- never a hard failure. This is the subject of the new ADR (ACC-011), needed before Phase 120 but not before Phase 100.
+**Portable-prompt-narrates-delegation pattern.** An MCP prompt never executes tool calls itself -- it returns text to whatever LLM session invoked it, exactly like every existing prompt in this codebase (`create_req` says "use the `question` tool"; neither `question` nor `TodoWrite` is implemented by this MCP server). `implement_feat`/`review_feat` extend this same precedent one step further: they narrate delegating work to a subagent via "your host's task-delegation tool, if one exists." Inside OpenCode, that's a real instruction to use the `task` tool (genuine multi-agent orchestration, since OpenCode exposes both the `specmgr` MCP tools and its own native tools in the same session). On a host with no such tool, the same text degrades to "implement it yourself, one phase at a time" -- never a hard failure. This is the subject of the portable-delegation DEC, carved out on 2026-11-15 into feat-0-delegation-prompts.
 
 **Prompt/agent/command text duplication is unavoidable.** OpenCode exposes MCP *tools* but not MCP *prompts* as slash commands (its MCP documentation covers tools only), so the OpenCode agent/command files cannot delegate to the packaged prompt text -- each carries its own copy of the same workflow. This duplication is accepted; keeping prompt \<-> agent \<-> command wording in sync is a standing review-checklist item (the `feat-reviewer` checklist's Documentation item -- instruction `.md` files accurate and free of stale references -- already flags wording drift between paired artifacts).
 
@@ -166,7 +144,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - feat-163-feat-numbering (GitHub issue #163): the FEAT Phase/Task numbering scheme this document is authored in from the start.
 
-- New ADR (Phase 110, before Phase 120): "Portable MCP prompts may narrate optional host-native subagent delegation, degrading gracefully when absent" -- architecture-level, affects any future `<verb>_feat`-style prompt, so it gets a full DEC (the ADR domain was retired by feat-46-remove-adr, PR #258) per this repo's own ADR-vs-feature-log convention, now read as DEC-vs-feature-log. Its UUID is an input to Phase 120's instruction files and is recorded here once created.
+- feat-0-delegation-prompts: the successor feature (carved out 2026-11-15, D1 rescope) that now carries the portable-delegation DEC, `implement_feat`/`review_feat` and the review-fix loop that were planned here as Phases 110/120/140.
 
 - DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
 
@@ -183,30 +161,6 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 - [x] Task 100.130: Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
 
 - [x] Task 100.140: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
-
-#### Phase 110: ADR for portable-delegation pattern
-
-- [ ] Task 110.100: Write the new DEC (see Related Decisions) in `docs/dec/` via the `dec` domain (`create_dec`/generic `set_status(type="dec")`) per the repo's DEC conventions -- the ADR carrier is retired (feat-46-remove-adr, PR #258: carrier is now a DEC; `dec` domain, no `adr-toc` regeneration), set its status to `accepted`, and record its UUID in this README's Related Decisions -- needed before Phase 120 (its UUID is an input to Phase 120's instruction files).
-
-- [ ] Task 110.110: Phase-end gate: full quality gate green (including the `specmgr adr-toc` drift check), then exactly one Conventional Commit for the phase.
-
-#### Phase 120: implement_feat + review_feat + auto fix-phase loop
-
-- [ ] Task 120.100: `feat/prompts/implement_feat.py` + `feat/data/feat_implement_instructions.md` + registration, narrating the optional-delegation pattern from Design Notes, naming the Phase 110 ADR by UUID, and mentioning the review-fix loop.
-
-- [ ] Task 120.110: `feat/prompts/review_feat.py` + `feat/data/feat_review_instructions.md` + registration, mirroring `feat-reviewer.md`'s checklist/report format including the conditional "Proposed Fix Phase" section.
-
-- [ ] Task 120.120: Extend `.opencode/agent/feat-reviewer.md`'s report format with the conditional, ready-to-paste "Proposed Fix Phase" block + the `[NEEDS DECISION]` flagging rule (REQ-005).
-
-- [ ] Task 120.130: Extend `.opencode/agent/phase-orchestrator.md`'s Workflow section with the capped review-fix loop (REQ-006: exit on no Errors/Gaps/Discrepancies, the implementer-appends-the-fix-phase delegation step); update `.opencode/command/implement-feature.md`'s prose to mention the automatic review-fix step and fix its "a a" typo; update `.opencode/command/review-feature.md`'s body so its report-section enumeration includes the new conditional section -- post-39a6e0b reality of its two targets: `.opencode/command/review-feature.md`'s current report enumeration is `Errors (E1, ...) / Gaps (G1, ...) / Discrepancies (D1, ...) / Improvements (I1, ...) / Positives (P1, ...)` (the conditional "Proposed Fix Phase" section is added to that enumeration), and the "a a" typo is at `.opencode/command/implement-feature.md` line 23 (`run the review-feature agent for a a post-implementation review` -> `for a post-implementation review`).
-
-- [ ] Task 120.140: Update `implement_feat`'s narration to mention the same review-fix loop, for portable-host parity.
-
-- [ ] Task 120.150: `tests/feat/prompts/test_implement_feat.py` + `tests/feat/prompts/test_review_feat.py` + manual smoke test.
-
-- [ ] Task 120.160: Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
-
-- [ ] Task 120.170: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
 #### Phase 125: .opencode/ layout normalization
 
@@ -231,12 +185,6 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 - [x] Task 130.160: Docs sync: `AGENTS.md` (the Developer Commands/CLI section: the new flat `specmgr harness-bundle` command; the `general/resources` bullet: the new resource; the pre-commit paragraph: the new hook), `server.py`'s module docstring (Resources list), `specmgr docs` + `specmgr mcp-docs` regeneration, `CHANGELOG.md` entry. No `specmgr adr-toc` (no ADR), no `specmgr schema` (no model), no `server.json` (env-var-only manifest).
 
 - [x] Task 130.170: Phase-end gate: the full quality gate green -- `uv run --frozen ruff format --check && uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, plus this phase's doc-drift checks (`specmgr docs` + `specmgr mcp-docs`, no diff) -- then exactly one Conventional Commit for the phase.
-
-#### Phase 140: Final Verification
-
-- [ ] Task 140.100: Walk every Acceptance Criterion above (ACC-001..ACC-011) with concrete evidence.
-
-- [ ] Task 140.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
 #### Phase 150: Fix phase (review cycle 1)
 
@@ -294,11 +242,31 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 ### Current Status
 
-**As of 2026-11-09**: Phase 130 (Distribution) is fully implemented. Tasks 130.100-130.140 and 130.160 (the flat `specmgr harness-bundle` CLI command, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the test suites, the README section + TOC entry, and the docs sync) are committed as `10a0184`. Task 130.150 (the end-to-end walkthrough fixture) is done: an agent run in a fresh, hermetic OpenCode 2.2.5 container (no repo mount, verified-empty OC state) installed strictly from the bundle's `instructions` field -- 22 installed (new) / 1 skipped (sha256-identical pre-existing) / 1 updated (approved overwrite of a pre-differing file) / 0 failed -- independently re-verified host-side at 24/24 byte-exact against the committed bundle, and pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 130 is now complete: every task 130.100-130.170 is done -- the implementation is committed as `10a0184`, the walkthrough is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`, and Task 130.170's phase-end gate was re-run green by the orchestrator, closing the phase out with its own single Conventional Commit. Per user direction, the feature has now moved to `review` for the completed distribution slice (Phase 125 + Phase 130). Phase 150 (the review-cycle-1 fix phase that resolved D1/D2/D3), Phase 160 (the review-cycle-2 fix phase that resolved D4), and Phase 170 (the review-cycle-3 fix phase: D2/D3/D4, I1-I4, G1-G4 -- the two LIVE dangling-reference rewrites, the section-name alignment, the bundle generator's single-tree enumeration, the install-protocol collision case, the I/O error contract, the fixture coverage boundary, and the plan bookkeeping, with the bundle regenerated exactly once) are now complete; D1 (the `/refine-feature` command collision) is resolved (2026-11-08, option b: the planner command is `/plan-feature`, the pre-existing `/refine-feature` surface untouched). Phase 100 (`refine_feat`) is now complete with its tasks (Tasks 100.100-100.140): the `refine_feat` MCP prompt + `feat/data/feat_refine_instructions.md` (the MCP-native `get_feat(id, raw=True)`/generic `update(type="feat")` line-range/`validate(type="feat", full=True)` path), the `feat-planner` subagent + `/plan-feature` command (the D1-settled name, purely additive), the test suite (the ACC-001 content assertions + the real-tools walkthrough over a temp `SPECMGR_FEAT_DIR`), and the docs sync -- the harness bundle grows 30 -> 32 files (the count-pin test updated per the SOP); the gate is green, and the phase is committed as `b2cd9ec5`. The ACC-002 live `/plan-feature` smoke test PASSED (2026-11-09): the orchestrator ran it in a fresh one-shot `opencode run --agent feat-planner` session (the non-interactive equivalent of `/plan-feature <id>` -- both prior sessions predate the agent file on disk, which OpenCode registers at session start) against the disposable fixture plan `feat-0-plan-feature-smoke`; the agent found the one seeded untestable ACC and fixed it in place with a single generic `update(type="feat", offset=15, limit=1)` line-range edit, re-checked with `validate(type="feat", full=True)` green, the edited fixture full-parses (`specmgr lint` exit 0), and the fixture was deleted after the run (never committed). Phase 180 (the review-cycle-4 fix phase) is complete: G1 (the unparseable-plan branch closed in the narrated `refine_feat` instructions' step 1 and the `feat-planner` workflow step 1, test-pinned, with the harness bundle regenerated over the one changed `agent/feat-planner.md` entry), D1 (ACC-001 and ACC-002 checked off on landed evidence), and D2 (this paragraph's date and commit-hash bookkeeping) -- I1 not addressed (the past commit's scope token would require a force-push, not requested) and I2 deferred (advisory wording precision). Phases 110-120 (the delegation-pattern ADR / `implement_feat` + `review_feat`) and Phase 140 (final verification over all ACCs) remain deferred pending user direction.
+**As of 2026-11-15 (closed to done by the D1 rescope)**: The shipped slice is complete and on `dev`. Phase 125 (the `skills/` -> `skill/` normalization, commit `10b032f`) and Phase 130 (the flat `specmgr harness-bundle` CLI command, the generated bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the README install section, committed as `10a0184` plus the walkthrough closeout `60bf2cf`) are done; Task 130.150's end-to-end walkthrough ran in a fresh, hermetic OpenCode 2.2.5 container (22 installed / 1 skipped / 1 updated / 0 failed, host-verified 24/24 byte-exact) and is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 100 (`refine_feat`, the `feat-planner` agent, `/plan-feature`; committed as `b2cd9ec5`, live smoke ACC-002 passed 2026-11-09) is on `dev` as PR #260 (merged 2026-11-13 14:04:10Z, squash commit `b5455bf7`), and the harness bundle now holds 32 files. The review-fix phases 150, 160, 170 and 180 resolved review cycles 1-4. ACC-001, ACC-002 and ACC-007..ACC-010 are checked with committed evidence. The never-started remainder (Phase 110 the portable-delegation DEC, Phase 120 `implement_feat` + `review_feat` + the review-fix loop, Phase 140 final verification, with REQ-003..REQ-006 and ACC-003..ACC-006/ACC-011) was carved out on 2026-11-15 into feat-0-delegation-prompts; nothing further is planned in this feature.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-15 05:40:00.000Z - D1 rescope executed: feature closed to done for the shipped slice; Phases 110/120/140 carved into feat-0-delegation-prompts
+
+Per the user's 2026-11-15 D1 decision (option b), the never-started remainder -- Phase 110 (the portable-delegation DEC), Phase 120 (`implement_feat` + `review_feat` + the review-fix loop) and Phase 140 (final verification), with REQ-003..REQ-006 and ACC-003..ACC-006/ACC-011 -- was moved out of this plan into the new feature feat-0-delegation-prompts (renumbered from 001 there; the mapping is in its Overview). Removed here: those requirements, acceptance criteria, Scope/Dependencies/Related-Decisions bullets and the three phases (phase numbers are permanent, so Phases 110/120/140 stay unused). Also edited: the Overview (a Rescope paragraph), ACC-010's "3 new MCP prompts" wording, and two Design Notes sentences that cited the retired ADR carrier and the removed ACC-011 (retargeted to the successor feature). Left untouched as history: the rest of the Design Notes, the point-in-time Updates/Decisions entries below, and every shipped phase. The status moves `review` -> `done` through `set_status` in the same bookkeeping commit (SOP 1e6d965c). The superseded PR #260 gate-attribution note of the previous entry no longer applies: the successor feature's branch is named exactly like its folder.
+
+#### 2026-11-13 21:48:49.282Z - Phase 100 merged to dev (PR #260, squash b5455bf7): bookkeeping per SOP 1e6d965c; Phases 110/120/140 remain deferred
+
+PR #260 was merged to `dev` on 2026-11-13 (14:04:10Z) as squash commit `b5455bf7` — its tree is byte-identical to the branch head `b47ac120` (verified `git diff b47ac120 b5455bf7 --stat`, empty) — landing Phase 100 (`refine_feat` prompt, `feat-planner` agent, `/plan-feature` command, its tests, the 32-file harness bundle) plus the re-synced ADR removal (PR #258), forwarder fix (PR #261) and feat-255 cleanup; the rerun CI was all green (build 3.11/3.12/3.13, plantuml-parser, analyzers, CodeQL). The handover entry below was ported verbatim from the ended session's branch commit `9274559b` (never pushed to `dev`); its "PR #260 open / not merged / 5 commits ahead of `origin/dev` (tip `fffb9cd0`)" state lines are superseded — the merge landed at 14:04:10Z, before that entry's 15:28:17Z timestamp. The standing dev->main PR #251 was closed 2026-11-13 14:41:21Z as off-process (main moves only via the release flow, SOP 98537416; its `pr-create` stage creates the release PR — do not reopen #251 or create another). Gate-attribution note (SOP 1e6d965c step 3): the branch is named bare `feat-167` against the folder `feat-167-mcp-lifecycle-commands-2`, so PR #260's delivery is not attributed to this feature by the release precheck's closeout gate — the feature is not gated for the v0.39.0 window while its status is `review`; Phase 110+ work should use the folder-matching branch name to re-enable the gate. Bookkeeping per SOP 1e6d965c: frontmatter `updated` bumped, `status` stays `review`, Phases 110/120/140 remain deferred pending user direction.
+
+#### 2026-11-13 15:28:17.510Z - Handover: session ended — Phase 100/180 shipped (PR #260 open, green), Phase 110 (the portable-delegation DEC) is next
+
+**Branch / repo state.** Worktree `/home/user/src/biz.dfch.SpecMgr.worktree/feat-167`, branch `feat-167`, clean tree, 5 commits ahead of `origin/dev` (tip `fffb9cd0`): `fcdcba75` (the D1 plan commit), `b2cd9ec5` (Phase 100: `refine_feat` prompt + `feat-planner` agent + `/plan-feature` command, harness bundle 30 → 32), `e04787b9` (Phase 180, review cycle 4: G1 parse-failure branch, D1 ACC-001/ACC-002 check-offs, D2 Current Status bookkeeping), `0f0d5e11` (merge of `origin/dev` = the ADR removal `80d883f2` (PR #258) + the structural forwarder fix `8cb27c73` (PR #261) + the feat-255 i18n cleanup), `b47ac120` (the `docs/GENERATED.md` Models-line fix after stale `__pycache__` shells). PR #260 (`feat-167` → `dev`) is open, mergeable, all 8 CI checks green, and NOT merged (the merge is the user's call). Do not touch feat-250's files (`evals/`, `tests/evals/`, its feature folder).
+
+**What this session shipped.** Phase 100 per the plan (REQ-001/002, ACC-001/002 — ACC-002 verified live on 2026-11-09 in a fresh `opencode run --agent feat-planner` one-shot session against a disposable fixture plan: the agent found the seeded untestable ACC and fixed it in place with a single `update(type="feat", offset=15, limit=1)` line-range edit, `validate(full=True)` green, fixture deleted afterwards). Then the post-implementation `feat-reviewer` review (no Errors; the G1/D1/D2 findings fixed as the separate Phase 180 per the user's direction; I1 not addressed — past commit, force-push not requested — and I2 deferred, recorded under Decisions Made). Then the ADR-removal dev-merge with the union conflict resolution (7 files), Task 110.100 + the Related Decisions bullet re-pointed to the DEC carrier (user-approved with the merge), and the `GENERATED.md` stale-pycache fix.
+
+**Next action — Phase 110 (the portable-delegation DEC).** First, refresh the phase's remaining stale ADR-carrier references against the post-ADR-removal tree (deliberately left for Phase 110 planning work by the 2026-11-13 merge entry): the Phase 110 heading ("ADR for portable-delegation pattern"), ACC-011's text ("A new ADR documents …"), the Scope/Included bullet ("One new ADR for the portable-prompt-narrates-delegation pattern"), and the Design Notes "Portable-prompt-narrates-delegation pattern" sentence ("This is the subject of the new ADR (ACC-011)") — the carrier is now a DEC (`docs/dec/`, `create_dec`/generic `set_status(type="dec")`); Task 110.100's own body is already re-pointed. Also refresh Task 110.110's gate wording: "including the `specmgr adr-toc` drift check" is dead (the `adr-toc` CLI went with the ADR domain); a DEC-only + plan phase needs the standard light gate (ruff format/check, vulture, full pytest, `specmgr lint` on the plan README — no `docs`/`mcp-docs`/`harness-bundle` regeneration unless `src/` or `.opencode/` changes; creating a DEC under `docs/dec/` changes neither). Then execute Task 110.100 (write the DEC — the pattern to document is the Design Notes "Portable-prompt-narrates-delegation pattern" paragraph; status `accepted`; record its UUID in this README's Related Decisions) and Task 110.110 (gate + exactly one Conventional Commit). The DEC's UUID is a hard input to Phase 120's instruction files (REQ-003).
+
+**Process facts for this repo.** (1) Merges into `main` happen exclusively via the release flow (SOP 98537416 / `scripts/release.sh`: maintainer-gated, fast-forward-only dev→main, version bump, `v*` tag → `publish.yml`) — the standing dev→main PR #251 was closed as off-process on 2026-11-13; do not reopen it or create another. (2) The forwarder test flake (`tests/evals/test_forwarder.py`) is structurally fixed on dev (`8cb27c73`) and in this branch — no rerun dance. (3) Phase discipline: one Conventional Commit per phase, full quality gate before it, docs sync inside it. (4) This feat README: every list item is ONE physical line; after any plan edit, `uv run --frozen specmgr lint .specmgr/feat/feat-167-mcp-lifecycle-commands-2/README.md` must exit 0. (5) Any `.opencode/{agent,command,skill}` change requires `uv run --frozen specmgr harness-bundle` in the same commit (SOP f772476e) + the count-pin test. (6) New test files require a manual `uv run --frozen specmgr docs` regeneration of `docs/GENERATED.md` in the same commit (the hook is src/-scoped). (7) New gotcha learned 2026-11-13: after a merge that deletes source packages, git-ignored `__pycache__`-only directory shells can remain and silently pollute `specmgr docs`' source-tree scan (the committed `GENERATED.md` then passed the local no-diff check but failed CI's clean-checkout regeneration) — after any such merge, before regenerating docs, remove pyc-only shells: `find src tests -type d -name __pycache__ | xargs -n1 dirname | sort -u`, and every remaining directory must satisfy `git ls-files <dir>` non-empty. (8) Do not re-litigate: D1 option b (`/plan-feature`, purely additive, the pre-existing `/refine-feature`/`feat-refiner`/skills surface untouched); the cycle-4 scope decision (I1 not addressed, I2 deferred).
+
+**Open items for the user.** Merge PR #260 (green, ready); the next release (SOP 98537416) carries everything on dev to main; Phases 120/140 remain deferred after 110.
 
 #### 2026-11-13 11:25:08.945Z - Merged origin/dev into feat-167: ADR removal (PR #258) + forwarder fix (PR #261); Task 110.100 carrier re-pointed ADR -> DEC
 
@@ -403,6 +371,10 @@ Drafted this feature by splitting the not-yet-started remainder (originally Phas
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-15 05:40:00.000Z - D1 rescope (user decision): close feat-167 to done for the shipped slice; carve Phases 110/120/140 into feat-0-delegation-prompts
+
+The user chose option (b) of the 2026-11-13 handover's D1: close this feature to `done` for the slice it shipped and carve the never-started remainder into a new feature, instead of continuing on a folder-matching branch (a) or keeping the status quo (c). Shipped and staying here: Phase 100 (`refine_feat`, `feat-planner`, `/plan-feature`, PR #260), Phases 125 and 130 (the `.opencode/` normalization and the harness-bundle distribution slice), and the review-fix Phases 150-180; ACC-001, ACC-002 and ACC-007..ACC-010 are checked with committed evidence. Carved out to feat-0-delegation-prompts: Phase 110 (the portable-delegation DEC), Phase 120 (`implement_feat` + `review_feat` + the review-fix loop) and Phase 140 (final verification), together with REQ-003..REQ-006 and ACC-003..ACC-006 and ACC-011, renumbered there from 001. Rationale: the release precheck's closeout gate attributes a merged PR to a feature folder by head-ref name, and the bare `feat-167` branch never matched this folder, so PR #260 was invisible to the gate; the new feature's branch is named exactly like its folder. The old `feat-167` branch and worktree held nothing unique after the 2026-11-13 handover port and are removed locally.
 
 #### 2026-11-09 10:24:13.721Z - Cycle-4 (Phase 180) scope decision: G1 fixed at the two narrated step-1 sites only (test-pinned); D1's ACC-001/ACC-002 boxes flipped now that their evidence has landed; D2's Current Status date + commit-hash bookkeeping; I1 NOT addressed; I2 deferred
 

@@ -153,7 +153,10 @@ Return your findings as one markdown message, in this exact section order.
 Omit a section entirely if it has nothing to report (do not write "None
 found" placeholders). Every item is a TSK-compatible checklist line --
 the identical scheme `feat-refiner` uses -- so it can be pasted directly
-into a TSK document or back into the plan with no reformatting.
+into a TSK document or back into the plan with no reformatting. When
+the report contains any Errors, Gaps, or Discrepancies, append the
+conditional "Proposed Fix Phase" section (its own rules follow the
+format below).
 
 ```
 ## Errors
@@ -175,3 +178,35 @@ into a TSK document or back into the plan with no reformatting.
 Every item must cite at least one concrete `path:line` reference. Do not
 propose the fix as a diff -- describe it in prose; the fix itself is a
 separate task for a phase-implementer, not you.
+
+### Proposed Fix Phase (conditional)
+
+Present this section only when your report above contains any Errors,
+Gaps, or Discrepancies -- Improvements and Positives stay advisory and
+never derive tasks. It is a ready-to-paste block for the plan's
+`### Task List`:
+
+- The heading is `#### Phase NNN: Fix phase (review cycle k)`, where
+  `NNN` is the NEXT UNUSED phase number -- the plan's highest existing
+  `Phase NNN` plus 10 (3-digit numbers, step 10, gap-friendly) -- and
+  `k` is this review cycle's number, starting at 1. Never renumber an
+  existing phase; the fix phase is appended after the plan's last
+  phase.
+- The block carries one `- [ ] Task NNN.MMM` item per finding, derived
+  STRICTLY from the report's own Errors, Gaps, and Discrepancies (task
+  numbers start at 100 within the fix phase, step 10), each restating
+  the finding with its `file:line` citation.
+- Any item that needs a user decision (a design choice the plan left
+  open) is explicitly flagged `[NEEDS DECISION]` in its text rather
+  than guessed at.
+
+Example (a plan whose highest existing phase is `Phase 110`, review
+cycle 1):
+
+```
+#### Phase 120: Fix phase (review cycle 1)
+
+- [ ] Task 120.100: Fix E1 -- <what is wrong and why> (<file>:<line>).
+- [ ] Task 120.110: Close G1 -- <requirement/edge case not covered> (<file>:<line> or area).
+- [ ] Task 120.120: [NEEDS DECISION] Resolve D1 -- <what disagrees with what>; ask the user which side wins before fixing.
+```
