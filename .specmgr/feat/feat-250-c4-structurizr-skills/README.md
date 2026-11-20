@@ -4,7 +4,7 @@ created: '2026-11-01T14:10:53.141+01:00'
 id: feat-250-c4-structurizr-skills
 status: progress
 type: feat
-updated: '2026-11-20T09:23:31.005+01:00'
+updated: '2026-11-20T16:12:04.213+01:00'
 version: 1.0.0
 ---
 
@@ -218,6 +218,20 @@ One held-out case is never used while tuning and runs once at the end. Its resul
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-20 15:07:31.000Z - origin/dev merged (d0fd1434) — feat-263/265 delegation prompts, feat-91 close-out, dep bumps; measurement surface undisturbed
+
+The merge (2026-11-20, `d0fd1434`) absorbed 11 origin/dev commits in five groups: feat-263/265 portable feature-lifecycle prompts II (`9c9d7349` — the `implement_feat`/`review_feat` prompts, the delegation DEC, the capped review-fix loop; `bdec1d62` — the feat-0→feat-263 folder rename), the feat-91 close-out plus the OTel dep bump #264 (`169fdd86`, `4b0105c7`, `3450b2b0`, `1bc37ab6`), the SOP release docs (`776a9bb6`, `45be07e4`), the feat-167 rescope records (`786f2403`, `8cd7ba28`), and the pylint bump #262 (`4c0ba96f`).
+
+ONE conflict: `docs/GENERATED.md` (the test-file count) — resolved by regeneration: 503 → 506 (our +1 pinning test, dev's +3).
+
+The harness bundle auto-merged byte-identical to a fresh regeneration: dev MODIFIED four pre-existing scoped `.opencode/` files (`agent/feat-reviewer.md`, `agent/phase-orchestrator.md`, `command/implement-feature.md`, `command/review-feature.md`) and ADDED zero, so the bundle stays at 55 entries (per_dir agent 7 / command 11 / skill 37) and `tests/commands/test_harness_bundle.py` needed no change.
+
+Measurement-surface invariants (re-verified): the grader hash `b4ae81afcc4ae8e5c0484e480a6dc18ea1c9bf0b75e458c5a3c5d90a4ee8f81b` is UNCHANGED — the Phase 150 held-out run's 10 expected `none`/`upstream` cache hits in `evals/c4-skills/cache/heldout-review.{none,upstream}.json` stay valid; the `c4-model-review` v2 variant hash `89e0bc4bb4867b8885a3e393eaf1c76d3811dd39bd17702a533788f0b7620fc0` is UNCHANGED; `evals/c4-skills/c4_skills/pins.py` is byte-unchanged (version tuple `f22635f6…103662` invariant); our README, `evals/` and `.opencode/skill/` are untouched by the merge.
+
+Suite after the merge: 6384 passed / 18 skipped / 0 failed (merge-session run). Pre-commit note: the hook suite is skipped on merge commits by pre-commit semantics — the full gates ran on the identical resolved state pre-commit (the working tree, before the merge commit was created).
+
+Tree state: this README is the only tracked file changed for this record; the Phase 160 pre-drafts (results write-up, ACC traceability, the AGENTS/CHANGELOG/NOTICE target text) and the Phase 150 held-out resume prompt are new untracked files in this feature folder — drafts, applied by the Phase 160 session, not now.
 
 #### 2026-11-20 08:20:14.000Z - Persistence pass: Phase 150 /tmp artifacts moved into the feature folder; 2026-11-20 host /tmp sweep losses recorded
 
