@@ -70,7 +70,7 @@ the 11-19 rerun; they are forensic history only.
 - Campaign command (identical to the 11-18 one, fresh random seed as
   designed — the seed only shuffles trial order; sampling is
   `temperature=0.0`):
-  `setsid nohup uv run --frozen python evals/c4-skills/run.py run --cases heldout-review --conditions none,upstream,skill --comparison upstream --k 5 --skills-dir .opencode/skill/c4-model-review --label p150-heldout > /tmp/opencode/feat250-p150/p150-heldout.log 2>&1 &`
+  `setsid nohup uv run --frozen python evals/c4-skills/run.py run --cases heldout-review --conditions none,upstream,skill --comparison upstream --k 5 --skills-dir .opencode/skill/c4-model-review --label p150-heldout > .specmgr/feat/feat-250-c4-structurizr-skills/work/p150-heldout-rerun.log 2>&1 &`
 - Run: `p150-heldout-2026-11-19T070020Z`, seed **71620**, k=5,
   timeout 1200 s. Plan order (computed from `runner.plan_trials`):
   none-k3, upstream-k2, upstream-k4, none-k0, none-k4 (5 cache hits),
@@ -139,7 +139,10 @@ policy — the shared vLLM never offered a second idle slot:
    a stale sidecar and the policy is one dir per attempt.
 3. Re-run the identical command above (a fresh seed is fine and
    designed; the 10 `none`/`upstream` trials are cache hits under the
-   same pins, the 5 `skill` trials are always fresh).
+   same pins, the 5 `skill` trials are always fresh); the window
+   watcher appends to
+   `.specmgr/feat/feat-250-c4-structurizr-skills/work/p150-window-rerun.log`
+   (per the going-forward rule — /tmp is throwaway only).
 4. Verify from the run dir: `run.json` + `report.json` present; variant
    hash `89e0bc4b…fc0` and grader hash `b4ae81af…` in `run.json`;
    `cache_reason: hit` on all 10 `none`/`upstream` trials (any fresh one

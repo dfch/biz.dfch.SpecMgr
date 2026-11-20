@@ -1,0 +1,32 @@
+{
+  "configuration" : { },
+  "description" : "Tests the element argument shape.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "customElements" : [ {
+      "description" : "MQTT",
+      "id" : "1",
+      "metadata" : "Streams position and status telemetry events.",
+      "name" : "Vehicle Telemetry Feed",
+      "properties" : {
+        "structurizr.dsl.identifier" : "feed"
+      },
+      "tags" : "Element,External"
+    } ]
+  },
+  "name" : "Shape Test",
+  "properties" : {
+    "structurizr.inspection.error" : "5",
+    "structurizr.dsl" : "d29ya3NwYWNlICJTaGFwZSBUZXN0IiAiVGVzdHMgdGhlIGVsZW1lbnQgYXJndW1lbnQgc2hhcGUuIiB7CiAgICBtb2RlbCB7CiAgICAgICAgZmVlZCA9IGVsZW1lbnQgIlZlaGljbGUgVGVsZW1ldHJ5IEZlZWQiICJTdHJlYW1zIHBvc2l0aW9uIGFuZCBzdGF0dXMgdGVsZW1ldHJ5IGV2ZW50cy4iICJNUVRUIiAiRXh0ZXJuYWwiCiAgICB9CiAgICB2aWV3cyB7CiAgICB9Cn0=",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    }
+  }
+}

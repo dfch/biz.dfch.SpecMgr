@@ -1,0 +1,94 @@
+{
+  "configuration" : { },
+  "description" : "Tests view descriptions.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "people" : [ {
+      "description" : "Uses the system.",
+      "id" : "1",
+      "name" : "User",
+      "properties" : {
+        "structurizr.dsl.identifier" : "person"
+      },
+      "relationships" : [ {
+        "description" : "Uses through",
+        "destinationId" : "3",
+        "id" : "4",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
+      }, {
+        "description" : "Uses through",
+        "destinationId" : "2",
+        "id" : "5",
+        "linkedRelationshipId" : "4",
+        "sourceId" : "1",
+        "technology" : "HTTPS"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "The app.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "App",
+        "properties" : {
+          "structurizr.dsl.identifier" : "c1"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      } ],
+      "description" : "A test system.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Test System",
+      "properties" : {
+        "structurizr.dsl.identifier" : "sys"
+      },
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "View Desc Test",
+  "properties" : {
+    "structurizr.inspection.error" : "4",
+    "structurizr.dsl" : "d29ya3NwYWNlICJWaWV3IERlc2MgVGVzdCIgIlRlc3RzIHZpZXcgZGVzY3JpcHRpb25zLiIgewogICAgbW9kZWwgewogICAgICAgIHBlcnNvbiA9IHBlcnNvbiAiVXNlciIgIlVzZXMgdGhlIHN5c3RlbS4iCiAgICAgICAgc3lzID0gc29mdHdhcmVTeXN0ZW0gIlRlc3QgU3lzdGVtIiAiQSB0ZXN0IHN5c3RlbS4iIHsKICAgICAgICAgICAgYzEgPSBjb250YWluZXIgIkFwcCIgIlRoZSBhcHAuIiAiUHl0aG9uIgogICAgICAgIH0KICAgICAgICBwZXJzb24gLT4gYzEgIlVzZXMgdGhyb3VnaCIgIkhUVFBTIgogICAgfQogICAgdmlld3MgewogICAgICAgIHN5c3RlbUNvbnRleHQgc3lzICJDdXN0b21lckNvbnRleHQiICJUaGUgY3VzdG9tZXIncyB2aWV3IG9mIHRoZSBzeXN0ZW0uIiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQogICAgfQp9",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "description" : "The customer's view of the system.",
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "CustomerContext",
+      "name" : "System Context View: Test System",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "5"
+      } ],
+      "softwareSystemId" : "2"
+    } ]
+  }
+}
