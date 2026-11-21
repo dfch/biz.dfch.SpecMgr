@@ -343,3 +343,65 @@ with the phase). Also list any abort-3 forensics dir if 3.7 fired.
 10. Tree state: final `git status --short`, the files the final commit
     takes, and the force-add paths.
 11. Any deviation from this prompt, with the reason.
+
+## sys1 adaptations (added at the sys0→sys1 wrap-up, 2026-11-21)
+
+Added at the sys0→sys1 wrap-up (2026-11-21): the held-out now runs on
+the dedicated sys1 test instance from a fresh clone of the pushed
+branch, not on sys0's shared-production window. Where this section
+conflicts with a line above, THIS SECTION WINS.
+
+1. **Sweep step is a no-op here (3.2).** The
+   `p150-heldout-2026-11-19T070020Z` partial never existed on sys1 — it
+   was sys0-local and untracked, and it did not travel with the repo;
+   its forensics are committed under `FEAT/work/
+   p150-heldout-abort2-2026-11-19T070020Z/`. The first launch is a
+   fresh one — expect no untracked partial under
+   `evals/c4-skills/results/` at step 3.1.
+2. **Cache expectations inverted (3.6, checklist item 3).** Expect
+   **0 cache hits / 15 fresh trials** (5 `none` + 5 `upstream` + 5
+   `skill`), not 10 hits + 5 fresh: the fresh clone's gitignored
+   `cache/` dir is empty, and the path-dependent grader hash plus the
+   (likely) moved version tuple key out any sys0 entry — none was
+   copied. A cache HIT on sys1 would mean a sys0 cache file was wrongly
+   copied — STOP and report in that case. The original checklist-3
+   check ("any fresh baseline trial = the cache key moved = STOP and
+   report") is superseded by this for sys1: fresh baseline trials are
+   the expected shape here.
+3. **Grader hash: recompute on sys1 and use THAT value.** Run the
+   locked one-liner (the step-3.3 invariant snippet) on sys1 and take
+   its grader hash as this run's expected value — it WILL differ from
+   sys0's `b4ae81af…f81b` by construction (absolute source paths fold
+   in); record the sys1 value in the final README entry. The VARIANT
+   hash `89e0bc4bb4867b8885a3e393eaf1c76d3811dd39bd17702a533788f0b7620fc0`
+   is content-based (sorted relpath+sha256 pairs) and path-independent
+   — it MUST still match on sys1; it is the only hash that must be
+   identical across machines. On sys1 the step-3.3 "expect exactly"
+   line therefore binds only the variant hash; the grader and vtuple
+   values it prints ARE sys1's baseline values.
+4. **Version tuple: record sys1's from `run.json`.** If it differs
+   from `f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662`
+   (expected — new GPU/vLLM build), note it in the README entry. The
+   baseline re-measurement it triggers is by design: the result cache's
+   key is the full tuple (case_id, condition, version_tuple_hash,
+   grader_hash, skill_variant_hash) and `ResultCache.get` returns a
+   miss unless the STORED key dict matches exactly (`evals/
+   c4-skills/c4_skills/cache.py`) — a moved version tuple invalidates
+   every entry even if one had been copied.
+5. **Window: dedicated instance — no production contention expected.**
+   The runner's busy checks (per-trial idle-wait, the `contended`
+   flag) and the ≥3/5-fresh-timeout stop line (3.7) still apply
+   unchanged. Start the 60 s watcher writing to `FEAT/work/
+   p150-window-rerun.log` per the going-forward rule (step 3.5's
+   recommended sub-step — keep it; it is the window evidence of
+   record).
+6. **Environment pre-conditions** (the preflight enforces them; the
+   install agent may still be finishing): vLLM serving
+   `qwen3.8-27b-bf16-896k` at `127.0.0.1:8081/v1` with the pinned MTP
+   5-speculative-tokens / `--max-num-seqs 2` config; the three Docker
+   images present at the pinned tags + digests (see
+   `phase-150-sys1-handoff.md`'s setup checklist); `uv sync
+   --all-extras --frozen` + `uv run --frozen pre-commit install` done
+   in the fresh clone. If preflight (3.4) reports the model or its
+   config not up yet, POLL it (the user expects the install to complete
+   within hours) rather than launching.

@@ -4,7 +4,7 @@ created: '2026-11-01T14:10:53.141+01:00'
 id: feat-250-c4-structurizr-skills
 status: progress
 type: feat
-updated: '2026-11-20T16:12:04.213+01:00'
+updated: '2026-11-21T16:22:07.763+01:00'
 version: 1.0.0
 ---
 
@@ -218,6 +218,18 @@ One held-out case is never used while tuning and runs once at the end. Its resul
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-21 15:09:16.000Z - sys0→sys1 wrap-up — remaining campaigns move to the dedicated sys1 instance; branch pushed for the fresh handoff
+
+**The sys0 window record (complete).** The shared-production vLLM (`127.0.0.1:8081`, `qwen3.8-27b-bf16-896k`) carried an external load for ~38 h (2026-11-17 ~20:24Z → 2026-11-20 ~20:44Z), which aborted both held-out launch attempts at the runner's locked 1-h busy-wait (cycle 1 `p150-heldout-2026-11-18T154347Z`: 5 cache hits + `skill-k2` PASS 9/9 at 678 s contended + `skill-k4` timeout; cycle 2 `p150-heldout-2026-11-19T070020Z`: 5 cache hits + `skill-k0` 8/9 at 598.6 s contended — the only failure `no_false_findings`). The two completed partial skill trials are forensic history only — they count for NO verdict (a `skill` trial is never cacheable; a verdict needs one complete campaign run); forensics of both partials are committed under `work/p150-heldout-abort1-…/` + `work/p150-heldout-abort2-…/`. The window DID clear — the background monitor (started 2026-11-20T12:50:51Z, 5-min samples) wrote `2026-11-20T20:48:56Z WINDOW-CLEARED (3 consecutive idle samples)` to `work/p150-window-wait.log` — but the resource belongs to production, so the campaigns do not take it; the monitor is stopped at this wrap-up, and the closed log (final NOTE line; gitignored `*.log`, force-added with this record per the established ruling) is the complete sys0 window record.
+
+**The sys1 decision.** The user provides an additional dedicated, currently-idle test instance **sys1** (Exoscale, 2× RTX Pro 6000 Blackwell); a different agent was installing it at this writing — readiness is verified by `run.py preflight` (poll until `ok=True` with no pin violation; the user expects the install to complete within hours).
+
+**What moves, and the fresh-baseline consequence.** The Phase 150 held-out (Task 150.140 — the phase's only outstanding work: the stop rule PASSED at iteration 1, bookkeeping committed in `ad555af4`) and Phase 160's cumulative run (Task 160.100) run on sys1. By design, all baselines re-measure FRESH there: the result-cache key is the full tuple (case, condition, version-tuple hash, grader hash, skill-variant hash) and `ResultCache.get` returns a miss unless the stored key dict matches exactly (`evals/c4-skills/c4_skills/cache.py`); the grader hash is path-dependent (sys0's `b4ae81af…` was computed over this worktree's absolute paths); the new GPU/vLLM build moves the version tuple (sys0's `f22635f6…`); and the gitignored `cache/` dir does not travel — no sys0 cache file was or will be copied (a cache HIT on sys1 means a sys0 file was wrongly copied: STOP). The sys1 held-out therefore measures 15 fresh trials (5 `none` + 5 `upstream` + 5 `skill`) and Phase 160 measures everything fresh under sys1's own hashes; the one cross-machine invariant is the skill variant hash `89e0bc4b…fc0` (content-based, path-independent).
+
+**Handoff documents (new, this feature folder).** `phase-150-sys1-handoff.md` (the sys1 boot document: where we are, the sys0 window record, the setup checklist, the immediate next actions, the locked-ruling pointers, the sys0 residue) and the "sys1 adaptations" section appended to `phase-150-heldout-resume-prompt.md` — that section amends the resume prompt for sys1 and WINS over any conflicting original line (the held-out runs per the prompt AS AMENDED).
+
+**Branch pushed; tree state.** The branch is pushed to origin at this wrap-up, so the sys1 agent pulls from origin — nothing local is needed that is not committed. NO task ticks, NO "Current Status" change (Task 150.140 stays open until the sys1 verdict). The untracked `evals/c4-skills/results/p150-heldout-2026-11-19T070020Z/` partial is sys0 residue (disposable — its forensics are committed) and does not travel; this entry + the two handoff documents are the wrap-up's change.
 
 #### 2026-11-20 15:07:31.000Z - origin/dev merged (d0fd1434) — feat-263/265 delegation prompts, feat-91 close-out, dep bumps; measurement surface undisturbed
 
