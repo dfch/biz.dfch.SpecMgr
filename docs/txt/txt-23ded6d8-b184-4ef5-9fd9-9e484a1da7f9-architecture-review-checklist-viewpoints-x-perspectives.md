@@ -4,7 +4,7 @@ created: '2026-11-05T06:53:20.701+01:00'
 id: 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9
 status: draft
 type: txt
-updated: '2026-11-18T15:12:56.352+01:00'
+updated: '2026-11-20T12:44:40.748+01:00'
 version: 1.0.0
 ---
 
@@ -35,9 +35,9 @@ This document is the template and catalogue. The criteria are general and indexe
 | ISO/IEC 33020 (successor of ISO/IEC 15504, SPICE) | Capability levels 0 to 5 for practice criteria and the capability profile | Missing. The standard is not in the docs repository. Level names provisional, to be confirmed |
 | ISACA COBIT | Possible replacement for the capability level names | Missing. The COBIT 2019 framework publication is not freely available. The public ISACA pages and Wikipedia do not list capability level names |
 | Assessment dimensions AD01 to AD12 | Tag on each criterion, plus an architecture-level pass | Draft list collected from several interviews. No single reference. Do not cite as ISO |
-| Assessment dimensions AD13 to AD15 | Necessity, economic viability, organisational fit | Added in this catalogue to close gaps in AD01 to AD12. AD14 and AD15 are carried by the DevelopmentResource perspective (section 5) |
+| Assessment dimensions AD13 to AD15 | Necessity, economic viability, organisational fit | Added in this catalogue to close gaps in AD01 to AD12. AD14 and AD15 are carried by the Resources perspective (RS, section 5) |
 | Viewpoint list VP01 to VP07 | The seven core viewpoints of R+W, in the order of the book | Names and order checked against R+W. The concern lists are the book's and are in the Architecture Model TXT, section 4.1. 42010 defines no viewpoint catalogue. The earlier list VP01 to VP13 (Draft 0.7 and before) was compiled from several practice sources and is mapped in section 4.1 |
-| Perspective list FS to DR | The nine ISO/IEC 25010:2023 characteristics plus Regulation, Location and DevelopmentResource from R+W | The three added perspectives are the ones that ISO/IEC 25010 cannot express. Other R+W perspectives are mapped in section 5 |
+| Perspective list FS to RS | The nine ISO/IEC 25010:2023 characteristics plus Regulation, Location and Resources from R+W | The three added perspectives are the ones that ISO/IEC 25010 cannot express. Other R+W perspectives are mapped in section 5 |
 | Martin, Clean Architecture, Pearson, 2018 (Martin) | The principle tags PR09 to PR12: the Dependency Rule (ch. 22), the component principles and their metrics (ch. 14), policy and level (ch. 19 and 20), boundaries and details (ch. 17, 18 and 30 to 32). Also treated there: PR01 (ch. 7), PR02 (ch. 14 and 16), PR03 (ch. 8), PR05 (ch. 15 and 16) | Checked against the markdown copy in the sibling docs repository (2026-11-18). The chapter numbers are those of the book. The line references are in the Architecture Model TXT, sections 3.3, 3.4 and 6.1. Martin states the principles as his own approach. They are not part of an ISO standard. His metrics are indicators and not thresholds. The tags PR09 to PR12 are a library and not adopted principles (section 9) |
 | POSA, Enterprise Integration Patterns, Release It! | Architecture-level patterns and stability patterns | Pattern source, to be confirmed |
 | Gamma et al., Design Patterns (GoF) | Class-level patterns, used only where they shape a seam | Pattern source, limited use |
@@ -55,7 +55,7 @@ A review cannot start meaningfully without these inputs. If one is missing, reco
 - Review type: concept, pre-implementation, pre-release, or periodic health check. It decides which cells apply.
 - Stakeholders and their concerns, as far as known.
 - Constraints and assumptions: technical, organisational, financial, regulatory.
-- Quality targets in measurable form, for example quality-attribute scenarios or a utility tree. Without a target, a perspective cannot be rated, so every home cell starts with a criterion that asks for the target (for Regulation and DevelopmentResource: the obligation or constraint).
+- Quality targets in measurable form, for example quality-attribute scenarios or a utility tree. Without a target, a perspective cannot be rated, so every home cell starts with a criterion that asks for the target (for Regulation and Resources: the obligation or constraint).
 - Safety relevance declared: yes or no, each with a one-line justification (see section 5).
 - Practice evidence for the capability profile (section 7.3), as far as available.
 - Review team, reviewers' independence and review date.
@@ -110,7 +110,7 @@ Other viewpoints and topics are placed as follows:
 | VP08 | Deployment | VP06 Deployment |
 | VP09 | Security | Perspective SE. The deep criteria are in XV x SE |
 | VP10 | Operational | VP07 Operational |
-| VP11 | Development/Construction | VP05 Development. Team ownership and skills are in perspective DR |
+| VP11 | Development/Construction | VP05 Development. Team ownership and skills are in perspective RS |
 | VP12 | Runtime/Process | VP04 Concurrency. Load behaviour is in perspective PE |
 | VP13 | Safety | Perspective SA. The deep criteria are in XV x SA |
 
@@ -139,13 +139,13 @@ There are twelve perspectives. The first nine are the ISO/IEC 25010:2023 quality
 | SA | Safety | ISO/IEC 25010 | None. R+W mention safety only under Regulation (health and safety law). This is an extension of R+W |
 | RG | Regulation | R+W | Regulation |
 | LO | Location | R+W | Location |
-| DR | DevelopmentResource | R+W | Development Resource |
+| RS | Resources | R+W | Development Resource, re-scoped to build and operate (catalogue extension) |
 
 Concerns in focus of the three added perspectives, from R+W:
 
 - RG Regulation: statutory and industry regulation, privacy and data protection, cross-border legal restrictions, data retention and accountability, compliance with organisational policy. RG carries the assessment dimension AD11 Compliance.
 - LO Location: time zones of operation, network link characteristics, resilience to link failure, wide-area interoperability, high-volume remote operations, intercountry concerns, use of the public Internet, physical variations between locations. It applies when elements or interacting systems are physically far from each other. A disaster recovery site counts.
-- DR DevelopmentResource: time, cost, required skill sets, available resources, budgets, external dependencies. It covers whether the system can be designed, built, deployed and operated within known constraints of people, budget, time and materials. DR carries the assessment dimensions AD14 Economic viability and AD15 Organisational fit.
+- RS Resources: time, cost, required skill sets, available resources, budgets, external dependencies. It covers whether the system can be designed, built, deployed and operated within known constraints of people, budget, time and materials. The R+W counterpart is the Development Resource perspective, development-view centric in the book; this catalogue re-scopes it to the full lifecycle, which is the catalogue extension recorded in the Architecture Model TXT. RS carries the assessment dimensions AD14 Economic viability and AD15 Organisational fit.
 
 Decisions on the other R+W perspectives:
 
@@ -153,11 +153,11 @@ Decisions on the other R+W perspectives:
 - Internationalization is not a separate perspective. Language and culture independence of the interaction is assessed under IC (sub-characteristic Inclusivity). Adaptation to other locales, currencies and units is assessed under FL (sub-characteristic Adaptability).
 - Scalability stays under Flexibility, as in ISO/IEC 25010. R+W group it with Performance. A review that follows R+W reads FL x Scalability together with PE.
 - Evolution is split into MA and FL, as in ISO/IEC 25010.
-- Each of RG, LO and DR has no ISO sub-characteristic. In a criterion record the R+W concern takes its place.
+- Each of RG, LO and RS has no ISO sub-characteristic. In a criterion record the R+W concern takes its place.
 
-Perspective codes follow this order: the nine ISO/IEC 25010:2023 characteristics in ISO order, then RG, LO, DR.
+Perspective codes follow this order: the nine ISO/IEC 25010:2023 characteristics in ISO order, then RG, LO, RS.
 
-Naming rule: the names of the viewpoints, of the row CrossView and of the perspectives added from R+W are single words without special characters (Concurrency, CrossView, DevelopmentResource), so that they can be used in IDs, tags and tool properties. The nine ISO names are kept as ISO writes them. "Development Resource" is the name in the book.
+Naming rule: the names of the viewpoints, of the row CrossView and of the perspectives added from R+W are single words without special characters (Concurrency, CrossView, Resources), so that they can be used in IDs, tags and tool properties. The nine ISO names are kept as ISO writes them. "Development Resource" is the name in the book.
 
 ### 5.2 Matrix
 
@@ -167,7 +167,7 @@ Cell values:
 - S: secondary assessment responsibility. The cell holds selected cross-check criteria that validate or complement the primary cells.
 - X: no default criteria assigned. This is not a statement that the perspective is inapplicable to the system. A reviewer can activate the cell through tailoring.
 
-| Viewpoint | FS | PE | CO | IC | RE | SE | MA | FL | SA | RG | LO | DR |
+| Viewpoint | FS | PE | CO | IC | RE | SE | MA | FL | SA | RG | LO | RS |
 |-----------|----|----|----|----|----|----|----|----|----|----|----|----|
 | VP01 Context | P | S | P | S | S | P | X | S | S | S | S | S |
 | VP02 Functional | P | S | P | P | S | S | P | P | S | S | X | S |
@@ -180,7 +180,7 @@ Cell values:
 
 Counts: 32 primary cells, 47 secondary cells and 17 cells without default criteria, 96 cells in total (eight rows and twelve columns). Every viewpoint and every perspective has at least one primary cell.
 
-Home cells are the primary cells of the row XV CrossView: XV x SE (Security), XV x SA (Safety), XV x RG (Regulation) and XV x DR (DevelopmentResource). Home cells hold the deep criteria for that topic. Other viewpoints hold short cross-checks, for example Security x Context or Reliability x CrossView.
+Home cells are the primary cells of the row XV CrossView: XV x SE (Security), XV x SA (Safety), XV x RG (Regulation) and XV x RS (Resources). Home cells hold the deep criteria for that topic. Other viewpoints hold short cross-checks, for example Security x Context or Reliability x CrossView.
 
 How the matrix was derived. The starting point was the matrix of Draft 0.7 (nine columns, thirteen rows), merged by the mapping of section 4.1. A mechanical merge, where the highest value wins, would have made VP02 Functional primary in seven of the nine ISO columns. It was not used. Each cell was decided again under the rule "one primary location for each concern". The derivation is our interpretation. The R+W per-view tables (R+W Tables 25-1, 26-1, 27-1, 28-1 and 29-1 to 29-6) hold prose and no ratings. Where R+W give such a table for a perspective, it was used as the guide: P where the viewpoint is the place where the concern is specified, S where it is a cross-check, X where R+W state little or no impact. FS, CO and SA have no R+W table. Their cells follow the earlier matrix. The cell by cell reasons are in the linked QA.
 
@@ -192,7 +192,7 @@ Rules for tailoring:
 - Interaction Capability applies wherever the assessed product has user-facing, operator-facing, administrative or maintenance interfaces. If no relevant human interaction exists within the review scope, mark the perspective inapplicable once, with one scope-level justification.
 - Location applies where elements or interacting systems are physically far from each other. If all of them are in one place, mark the perspective inapplicable once, with one scope-level justification. Check the disaster recovery site and the external systems first.
 - Regulation applies to any system that can be subject to law, regulation or organisational policy. If none applies within the review scope, mark the perspective inapplicable once, with one scope-level justification.
-- DevelopmentResource applies to every software project, because R+W state that all of them are constrained by time and cost. Its depth depends on the review type, for example a periodic health check puts more weight on operating capacity than on build constraints.
+- Resources applies to every software project, because R+W state that all of them are constrained by time and cost. It covers build and operating constraints. Its depth depends on the review type, for example a periodic health check puts more weight on operating capacity than on build constraints.
 - Safety gate: the Safety perspective is opt-in. The review scope must state "safety relevant" or "not safety relevant", each with a one-line justification.
   - If safety relevant: the SA column is included, with its home cell XV x SA. Primary and secondary cells are assessed as the matrix shows. Removing an individual primary cell needs a justification.
   - If not safety relevant: the SA column is excluded. The justification is recorded at review-scope level.
@@ -228,7 +228,7 @@ All other cells of the four perspectives agree with the ordering of the book (Hi
 Each criterion is one record with these fields, each on one physical line.
 
 - ID: viewpoint ID (VP01 to VP07, or XV for CrossView), perspective code and a three-digit number, for example VP06-RE-090. Numbers start at 090 and run in steps of 10 within each viewpoint and perspective pair. Numbers are permanent. They are never renumbered or reused. A retired criterion is marked deprecated. The viewpoint IDs themselves were renumbered once, in Draft 0.8 (section 4.1). From then on they are permanent as well.
-- Viewpoint and perspective: with the ISO/IEC 25010:2023 sub-characteristic where one applies. For RG, LO and DR the R+W concern takes its place.
+- Viewpoint and perspective: with the ISO/IEC 25010:2023 sub-characteristic where one applies. For RG, LO and RS the R+W concern takes its place.
 - Type: design or practice. A design criterion asks about a property of the architecture or its description. A practice criterion asks how the organisation works, for example how often a failover is tested.
 - Primary assessment dimension: one AD tag (AD01 to AD15).
 - Principle tags: zero or more PR tags from section 9.
@@ -271,7 +271,7 @@ Additional authoring rules:
 
 - Do not presuppose a solution. Ask "Which workload and growth targets are stated, and how does the design meet them?" instead of "Is the system horizontally scalable?".
 - Place each criterion under the perspective it measures. Scalability is under Flexibility (as in ISO/IEC 25010, although R+W group it with Performance). Load behaviour is under Performance Efficiency. Single points of failure are under Reliability.
-- The first criterion of every home cell asks for the measurable target of that perspective. For Regulation it asks which obligations apply. For DevelopmentResource it asks which constraints are stated.
+- The first criterion of every home cell asks for the measurable target of that perspective. For Regulation it asks which obligations apply. For Resources it asks which constraints are stated.
 - Keep criteria general. A question that names a product or technology is system-specific and belongs in the review, or in a later technology-specific extension.
 
 ### 6.3 Assessment dimensions
@@ -307,11 +307,11 @@ Known issues with the AD list, to resolve in later drafts:
 - AD01, AD03 and AD05 share names with the Functional Suitability sub-characteristics. Read them here as properties of the architecture, not of the product functions.
 - AD08 Modularity and AD10 Extensibility restate Maintainability (Modularity) and Flexibility.
 
-Relation of the dimensions to the perspectives: a perspective says which property or constraint is judged. A dimension says what kind of merit is judged. They are independent axes. Two dimensions have a natural home perspective: AD11 Compliance in Regulation (RG), and AD14 Economic viability and AD15 Organisational fit in DevelopmentResource (DR). A criterion in another perspective can carry these tags too.
+Relation of the dimensions to the perspectives: a perspective says which property or constraint is judged. A dimension says what kind of merit is judged. They are independent axes. Two dimensions have a natural home perspective: AD11 Compliance in Regulation (RG), and AD14 Economic viability and AD15 Organisational fit in Resources (RS). A criterion in another perspective can carry these tags too.
 
 ### 6.4 Architecture-level pass
 
-Run this short pass once per review, over the architecture description as a whole. A tag on a criterion cannot test these dimensions. For AD14 and AD15 the DevelopmentResource perspective holds the criteria on single views. This pass checks them once for the whole description.
+Run this short pass once per review, over the architecture description as a whole. A tag on a criterion cannot test these dimensions. For AD14 and AD15 the Resources perspective holds the criteria on single views. This pass checks them once for the whole description.
 
 | Dimension | Check |
 |-----------|-------|
@@ -392,7 +392,7 @@ The practice areas below are a proposal. The final list is to be agreed.
 | Security engineering practice | XV (SE) | | |
 | Operations and incident learning | VP07 | | |
 | Change, release and deployment | VP07 | | |
-| Skills and ownership | XV (DR) | | |
+| Skills and ownership | XV (RS) | | |
 
 ## 8. Findings and Evidence
 
@@ -693,6 +693,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-20 11:43:54.000Z - Draft 0.11
+
+Renamed the perspective DevelopmentResource (DR) to Resources (RS) and re-scoped it to the full lifecycle, build and operate; the R+W counterpart Development Resource is named in section 5.1 and in the sources. The matrix header, the perspective codes and all DR references change to RS. No criterion carried a DR code, so no criterion ID changed. Issue 267. See QA 25bd5b93-a228-4d6c-8b70-d143dfd39444, 0.0670.
 
 ### 2026-11-18 15:00:00.000Z - Draft 0.10
 

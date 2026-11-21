@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-18T15:13:12.203+01:00'
+updated: '2026-11-20T13:01:55.720+01:00'
 version: 1.0.0
 ---
 
@@ -399,6 +399,10 @@ Decisions:
 Answered on 2026-11-18 (issue 267). Not available as markdown, or not available at all: ISO/IEC/IEEE 42030, the ATAM report of the SEI, COBIT 2019, ISO/IEC 33020, TOGAF and the ISO/IEC 25010:2023 text (see 0.0210, 0.0220, 0.0260 and 0.0620). Also without a copy: Saltzer and Schroeder, Release It!, Enterprise Integration Patterns and the GoF Design Patterns book. PDF files exist, not yet converted to markdown, for the three POSA books (in `sources/praedeep/` of the docs repository). The checklist cites POSA only as a pattern source and as "to be confirmed". Converting them is not part of this feature.
 
 TODO: decide which of these sources to add and convert, in the order of the pattern and principle tags that cite them (PR07, PR08, PR13, PR14)
+
+> **0.0670**: Is the perspective DevelopmentResource renamed, and if so to what?
+
+Answered on 2026-11-20 (issue 267): yes. Renamed to Resources, code RS. One column, no split into development and operating resources. The scope is the full lifecycle (design, build, deploy, operate), which the description in checklist section 5.1, AD15 Organisational fit and the primary cell of the operational viewpoint in that column already expressed; the name caught up with the scope. The R+W counterpart is the Development Resource perspective (Tables 4-2, 24-1, 24-2; named in 0.0410), development-view centric in the book. The re-scoping is labelled a catalogue extension, following the Safety precedent of 0.0520. The book name stays in the sources and in the R+W counterpart column. No criterion carried a DR code, so no criterion ID changed. Checklist Draft 0.11, Architecture Model TXT Draft 0.3.
 
 > **0.0280**: Which criteria are knock-out criteria, per review type?
 

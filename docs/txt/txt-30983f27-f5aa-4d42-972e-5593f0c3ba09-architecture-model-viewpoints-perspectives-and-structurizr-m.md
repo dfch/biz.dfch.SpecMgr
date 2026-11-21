@@ -4,7 +4,7 @@ created: '2026-11-18T13:25:56.718+01:00'
 id: 30983f27-f5aa-4d42-972e-5593f0c3ba09
 status: draft
 type: txt
-updated: '2026-11-18T15:12:28.056+01:00'
+updated: '2026-11-20T12:56:15.654+01:00'
 version: 1.0.0
 ---
 
@@ -125,7 +125,7 @@ The earlier viewpoint definitions of the checklist listed topics that are not co
 | Logging | VP05 concern Instrumentation. VP07 consumes it in the Administration Model. Audit logging belongs to SE (Accountability) | L5732, L6645, L7171 | Book |
 | Incident handling | VP07 concern Support, with the Support Model (incident classes, escalation). Incident recovery analysis belongs to RE | L6413, L6675, L8474 | Book |
 | Change and release | Release mechanics: VP05 concern Codeline organization. Installation, upgrade and configuration: VP07. Reliability of change: MA and FL | L5738, L6337, L8926 | Book |
-| Team ownership | Perspective DR | L5944 only hints at it | Catalogue extension |
+| Team ownership | Perspective RS | L5944 only hints at it | Catalogue extension |
 | Trust boundaries | Perspective SE, applied to VP06 and VP01 | L7123, L7420 | Catalogue term. The book has no trust boundary concept |
 | Failure domains | Perspective RE. The nearest book items are Single Point of Failure, Cascading Failure and Disaster Recovery | L8651 to L8682 | Catalogue term |
 | Observability | VP07 concerns Operational monitoring and control, Alerting and Performance monitoring, enabled by VP05 Instrumentation | L6381 to L6412 | Book. The word does not occur in the book |
@@ -148,7 +148,7 @@ There are 12 perspectives. The first nine are the ISO/IEC 25010:2023 product qua
 | SA | Safety | ISO | None. Catalogue extension |
 | RG | Regulation | R+W | Regulation |
 | LO | Location | R+W | Location |
-| DR | DevelopmentResource | R+W | Development Resource |
+| RS | Resources | R+W | Development Resource, re-scoped to the full lifecycle (catalogue extension) |
 
 Why ISO as the base: the repository already uses the nine ISO characteristics for requirements, so a criterion matches the requirement that it checks.
 
@@ -176,12 +176,12 @@ The table maps the concerns of each R+W perspective, with the tactics and pitfal
 | Availability and Resilience | Disaster recovery | RE and LO | RE for the recovery, LO when the recovery site is far away |
 | Availability and Resilience | Pitfalls: single point of failure, cascading failure | RE | Used for VP06-RE-100 and VP06-RE-140 |
 | Evolution (ch. 28) | Magnitude, dimensions, likelihood and timescale of change | FL | Adaptability |
-| Evolution | Changes driven by external factors | FL and DR | Replaceability and lock-in. External dependencies in DR |
+| Evolution | Changes driven by external factors | FL and RS | Replaceability and lock-in. External dependencies in RS |
 | Evolution | Development complexity, preservation of knowledge | MA | Modularity, Analysability |
 | Evolution | Reliability of change | MA | Modifiability, Testability. The mechanics are in VP05 |
-| Evolution | When to pay for change, product management | DR | Economic viability (AD14) |
+| Evolution | When to pay for change, product management | RS | Economic viability (AD14) |
 | Accessibility (ch. 29) | Types of disability, functional availability, disability regulation | IC and RG | Inclusivity. The legal part: Regulation |
-| Development Resource | Time, cost, skills, resources, budgets, external dependencies | DR | Same concern |
+| Development Resource | Time, cost, skills, resources, budgets, external dependencies | RS | Book perspective, re-scoped to build and operate (catalogue extension) |
 | Internationalization | Character sets, language needs, cultural norms | IC | Inclusivity |
 | Internationalization | Currency conversion, locale, cultural neutrality | FL | Adaptability |
 | Location | All concerns | LO | Same concern |
@@ -274,7 +274,7 @@ The early chat sessions mapped Information to container and component views, and
 | SA | The declaration "safety relevant" with its justification | Model properties `review.safety.relevant`, `review.safety.justification` |
 | RG | A reference to the regulation register. Not modelled | Property reference. Key to be confirmed |
 | LO | Sites and regions of deployment nodes | `failure.domain.region`. A separate site key is to be confirmed |
-| DR | A reference to team ownership. Not modelled | Property reference. Key to be confirmed |
+| RS | A reference to team ownership. Not modelled | Property reference. Key to be confirmed |
 
 A review result can be attached to an element with the Structurizr perspective feature. Proposed use: perspective name = the code name (for example Reliability), value = the rating word, description = the finding summary. Properties `review.criterion` and `review.evidence` carry the criterion ID and the evidence level. Verified with the parse tool. A style on a perspective value works only in the Structurizr renderer, not in the PlantUML export.
 
@@ -295,7 +295,7 @@ Keys use only the characters a to z, 0 to 9 and the dot. Values are never empty.
 ### 8.4 To be confirmed
 
 - How a view records the viewpoint it conforms to. Options: the view key, a tag, a property on the view. Properties on views are not verified.
-- The keys `principle.dec`, a site key for LO, and the reference keys for RG and DR.
+- The keys `principle.dec`, a site key for LO, and the reference keys for RG and RS.
 - Documentation (`!docs`) and decisions (`!adrs`) with a local container, and `workspace extends` for a review overlay.
 - The mapping of the decoupling modes in section 8.5, and whether a model can carry the direction of the source dependency, for example in a relationship property. No key is proposed yet.
 - The same mapping on three contrasting architectures: a traditional enterprise application, a distributed cloud-native platform and a safety-relevant cyber-physical system.
@@ -325,6 +325,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-20 11:43:54.000Z - Draft 0.3
+
+Renamed the perspective DevelopmentResource (DR) to Resources (RS) and re-scoped it to the full lifecycle, build and operate. The R+W counterpart Development Resource is named in section 5 and section 5.1; the re-scoping is the catalogue extension. All DR codes in the deviation table, the mapping table and the Structurizr mapping change to RS. Issue 267. See QA 25bd5b93-a228-4d6c-8b70-d143dfd39444, 0.0670.
 
 ### 2026-11-18 15:00:00.000Z - Draft 0.2
 
