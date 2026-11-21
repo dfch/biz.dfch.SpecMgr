@@ -23,9 +23,11 @@ the base-directory/id-lookup plumbing is identical in shape, only the
 parsed document type and its id accessor differ. Mirrors
 ``vcr.tools._paths`` file-for-file.
 
-Documents live flat under the shared docs root as
-``{docs root}/set/set-{uuid}-{slug}.md`` (the plan's "Directory and id"
-design note): there is deliberately **no** ``SPECMGR_SET_DIR`` env var and
+Documents live sharded under the shared docs root as
+``{docs root}/set/{language}/{id[:2]}/{uuid}-{slug}.md`` (the uniform
+per-language layout, feat-245 Phase 100, refining the plan's "Directory
+and id" design note -- file names carry no ``set-`` prefix): there is
+deliberately **no** ``SPECMGR_SET_DIR`` env var and
 **no** ``_envregistry`` entry for this domain -- ``set`` delegates to the
 shared ``SPECMGR_DOCS_DIR``-rooted default exactly like ``vcr``/``sysrs``.
 
@@ -98,10 +100,12 @@ def set_base_dir(language: str | None = None) -> Path:
     (the shared ``SPECMGR_DOCS_DIR``-rooted default; this domain has no
     ``SPECMGR_SET_DIR`` of its own).
 
-    The optional ``language`` (feat-197-i18n Phase 125) selects the flat-vs-subdirectory
-    resolution: ``None``/omitted or ``"en"`` = the flat ``docs/set/`` directory exactly
-    as before; any other shape-validated code = its ``docs/set/{language}/``
-    subdirectory.
+    The optional ``language`` (feat-197-i18n Phase 125; reworked to the
+    uniform per-language layout by feat-245 Phase 100) selects the
+    language's own directory: every language -- ``None``/omitted or
+    ``"en"`` included -- resolves to ``docs/set/{language}/`` (the omitted
+    language targets the ``en/`` directory; the flat-EN location is
+    retired, DEC 38efdb66 item 1 refined).
 
     Parameters
     ----------
@@ -124,8 +128,10 @@ def ensure_set_base_dir(language: str | None = None) -> Path:
     Only ``create_set`` should call this -- every other tool/resource uses
     the read-only :func:`set_base_dir` instead.
 
-    The optional ``language`` parameter selects the same flat-vs-subdirectory resolution as
-    :func:`set_base_dir` (feat-197-i18n Phase 125) before the directory is created.
+    The optional ``language`` parameter selects the same per-language
+    ``docs/set/{language}/`` resolution as :func:`set_base_dir` (feat-245
+    Phase 100, refining feat-197-i18n Phase 125) before the directory is
+    created.
 
     Parameters
     ----------
@@ -147,10 +153,13 @@ def iter_set_paths(language: str | None = None) -> Iterator[Path]:
 
     Yields nothing (rather than raising) if the base directory does not exist.
 
-    The optional ``language`` (feat-197-i18n Phase 125) selects the scanned directory:
-    ``None``/omitted or ``"en"`` = the flat ``docs/set/`` directory (exactly today's
-    listing); any other shape-validated code = its ``docs/set/{language}/``
-    subdirectory (non-recursive; never descends further).
+    The optional ``language`` (feat-197-i18n Phase 125; reworked by
+    feat-245 Phase 100) selects the scanned language directory: every
+    language -- ``None``/omitted or ``"en"`` included -- yields that
+    language's own ``docs/set/{language}/`` sharded listing (every
+    ``*.md`` file exactly one shard subdirectory below it, sorted by
+    relative path; a flat file and any deeper nesting are excluded,
+    REQ-003).
 
     Parameters
     ----------
@@ -183,12 +192,10 @@ def _reconcile_set_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=
     longer covers the whole domain -- reconciling against ``scan_paths``
     alone would evict every other language's cached entries -- so this
     wrapper instead hands :func:`~._cache.reconcile_set_cache` the
-    domain-wide union (the flat EN files plus every file in every
-    shape-valid ``{language}`` subdirectory,
+    domain-wide union (the sharded listing of every language directory --
+    ``en/`` plus every shape-valid ``{language}/`` subdirectory,
     ``general.tools._doc_paths.iter_doc_paths_all_languages``).
     ``scan_paths`` is intentionally unused: the union is a superset of it.
-    With no language subdirectory present the union is the scanned listing
-    itself (the pre-i18n behavior, byte-identical).
     """
     reconcile_set_cache(list(iter_doc_paths_all_languages(set_base_dir())))
 
@@ -196,7 +203,7 @@ def _reconcile_set_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=
 def find_set_path(base_dir: Path, id_: str) -> Path:
     """Resolve an ``id`` to its on-disk file path under ``base_dir``.
 
-    Scans every ``*.md`` file under ``base_dir``, reading each through the
+    Scans the sharded ``*.md`` listing of ``base_dir``, reading each through the
     cache-backed :func:`~._cache.read_set` and comparing ``frontmatter.id``
     against ``id_`` -- a file whose on-disk content hash is unchanged since
     its last read is not re-parsed. A file that fails to parse
@@ -213,8 +220,9 @@ def find_set_path(base_dir: Path, id_: str) -> Path:
     Parameters
     ----------
     base_dir:
-        The directory to scan for ``*.md`` files (the flat EN directory,
-        or one ``{language}`` subdirectory).
+        The language's own directory to scan for its sharded ``*.md``
+        listing (e.g. ``docs/set/en`` for English, or one
+        ``docs/set/{language}/`` variant directory).
     id_:
         The id to look up.
 

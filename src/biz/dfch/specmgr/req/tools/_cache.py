@@ -66,7 +66,7 @@ from functools import partial
 from pathlib import Path
 
 from ...general.tools._doc_cache import DocCache
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ..models.v1 import ReqDocument, parse_req
 
 __all__ = ["invalidate_req_cache", "read_req", "reconcile_req_cache", "reset_req_cache"]
@@ -131,9 +131,9 @@ def read_req(path: Path) -> ReqDocument:
     # ``read_req``/``reconcile_req_cache`` at module level (the
     # ``_io.py -> _paths.py -> _io.py`` cycle the module docstring describes),
     # so a module-level import back into it would be a circular import.
-    from ._paths import req_base_dir  # pylint: disable=import-outside-toplevel
+    from ._paths import REQ_TYPE_NAME  # pylint: disable=import-outside-toplevel
 
-    language = language_for_doc_path(req_base_dir(), path)
+    language = language_for_doc_path(doc_domain_base_dir(REQ_TYPE_NAME), path)
     result = _cache.read(path, partial(_parse, language=language))
     return result
 

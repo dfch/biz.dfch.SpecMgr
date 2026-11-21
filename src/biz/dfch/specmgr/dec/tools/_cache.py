@@ -69,7 +69,7 @@ from functools import partial
 from pathlib import Path
 
 from ...general.tools._doc_cache import DocCache
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ..models.v1 import DecDocument, parse_dec
 
 __all__ = ["invalidate_dec_cache", "read_dec", "reconcile_dec_cache", "reset_dec_cache"]
@@ -137,9 +137,9 @@ def read_dec(path: Path) -> DecDocument:
     # so a module-level import back into it would be a circular import --
     # the same deferred-import discipline ``general.tools._path_safety``
     # applies to its own ``_domains`` import.
-    from ._paths import dec_base_dir  # pylint: disable=import-outside-toplevel
+    from ._paths import DEC_TYPE_NAME  # pylint: disable=import-outside-toplevel
 
-    language = language_for_doc_path(dec_base_dir(), path)
+    language = language_for_doc_path(doc_domain_base_dir(DEC_TYPE_NAME), path)
     result = _cache.read(path, partial(_parse, language=language))
     return result
 

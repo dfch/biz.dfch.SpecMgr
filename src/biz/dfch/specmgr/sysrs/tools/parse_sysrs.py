@@ -50,13 +50,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...general.models import ValidateResult, ValidationErrorEntry
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md._errors import wrap_tool_errors
 from ...models.md._markdown import snippet
 from ...server import mcp
 from ..models.v1 import SysrsDocument, parse_sysrs as _parse_sysrs
-from ._paths import sysrs_base_dir
+from ._paths import SYSRS_TYPE_NAME
 
 
 @mcp.tool(
@@ -146,7 +146,7 @@ def parse_sysrs(path: str) -> SysrsDocument | ValidateResult:
     """
     doc_path = Path(path)
     text = doc_path.read_text(encoding="utf-8")
-    language = language_for_doc_path(sysrs_base_dir(), doc_path)
+    language = language_for_doc_path(doc_domain_base_dir(SYSRS_TYPE_NAME), doc_path)
     try:
         with wrap_tool_errors(domain="sysrs", tool="parse_sysrs"):
             return _parse_sysrs(text, language=language)

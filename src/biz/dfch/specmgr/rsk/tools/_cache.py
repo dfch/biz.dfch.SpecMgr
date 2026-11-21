@@ -64,7 +64,7 @@ from functools import partial
 from pathlib import Path
 
 from ...general.tools._doc_cache import DocCache
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ..models.v1 import RskDocument, parse_rsk
 
 __all__ = ["invalidate_rsk_cache", "read_rsk", "reconcile_rsk_cache", "reset_rsk_cache"]
@@ -129,9 +129,9 @@ def read_rsk(path: Path) -> RskDocument:
     # ``read_rsk``/``reconcile_rsk_cache`` at module level (the
     # ``_io.py -> _paths.py -> _io.py`` cycle the module docstring describes),
     # so a module-level import back into it would be a circular import.
-    from ._paths import rsk_base_dir  # pylint: disable=import-outside-toplevel
+    from ._paths import RSK_TYPE_NAME  # pylint: disable=import-outside-toplevel
 
-    language = language_for_doc_path(rsk_base_dir(), path)
+    language = language_for_doc_path(doc_domain_base_dir(RSK_TYPE_NAME), path)
     result = _cache.read(path, partial(_parse, language=language))
     return result
 

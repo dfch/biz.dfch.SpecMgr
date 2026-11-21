@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
-status: planning
+status: progress
 type: feat
-updated: '2026-11-20T09:50:08.324+01:00'
+updated: '2026-11-20T20:05:04.777+01:00'
 version: 1.0.0
 ---
 
@@ -87,15 +87,15 @@ Key invariants and rationale:
 
 #### Phase 100: Core sharded layout in general/tools/_doc_paths.py
 
-- [ ] Task 100.100: Add `SHARD_DIGITS = 2`, `shard_token(id_)`, and `sharded_doc_path(base_dir, id_, slug)` (prefix-less name, creates the shard dir) (REQ-001, REQ-002, REQ-005).
-- [ ] Task 100.110: Make `iter_doc_paths` yield the sharded listing of its base dir (`<base>/*/*.md`, sorted by relative path; flat files and any deeper nesting excluded) — the per-language scan primitive, called with each language's own base dir (REQ-003).
-- [ ] Task 100.120: Shard-narrow `find_doc_path_by_id` within a language's base dir (EN = the `en/` dir) with the full sharded-listing fallback per language; reconcile semantics unchanged (REQ-004).
-- [ ] Task 100.130: Shard-narrow `find_parse_failure` with the full fallback (REQ-004).
-- [ ] Task 100.140: Update `_doc_paths` module and function docstrings for the sharded, prefix-less naming and the uniform per-language layout, and the per-domain `tools/_paths.py` wrapper module/function docstrings of all thirteen sharded domains (e.g. `req/tools/_paths.py`, where `req_base_dir`/`iter_req_paths` document "the flat `docs/req/` directory exactly as before / exactly today's listing") — the wrapper files need no code change, docstrings only, otherwise `docs/api/` (regenerated in 140.110) ships wrong layout documentation (REQ-002, REQ-003).
-- [ ] Task 100.150: Unit tests for the layout core: order identity, flat/too-deep not yielded, fast path, wrong-shard fallback (EN + variant), id-less doc in `en/00/` (ACC-002, ACC-003, ACC-004).
-- [ ] Task 100.160: Rework `doc_base_dir`/`ensure_doc_base_dir` to resolve every language — `en` included, no flat special case — to `docs/<type>/<lang>/`; `language=None` (omitted) resolves to the `en/` directory — every EN-only call site (the per-domain `iter_<d>_paths()`, `find_<d>_path()`, `config_info()`) passes `None`, and the "EN-only consumers never see a variant" invariant holds only if `None` maps to `en/` rather than raising or returning the domain root (REQ-003, REQ-005).
-- [ ] Task 100.170: Rework `language_for_doc_path` (language = the path's first subdirectory under the domain base, shape-valid two letters; any other position ⇒ canonical) and `iter_doc_paths_all_languages` (union of the sharded listings of `en/` + every shape-valid language dir); `iter_language_dirs` keeps its shape-valid discovery semantics (REQ-003).
-- [ ] Task 100.180: Unit tests for the re-rooted EN-only scan and the path-derived language: the EN-only consumers re-rooted at the `en/` dir see EN files only, never variant files (ACC-008), and `parse_<d>` derives the language from the path's first subdirectory under the domain base (shape-valid two letters; `en` ⇒ canonical), asserted for all thirteen `parse_<d>` tools (ACC-009).
+- [x] Task 100.100: Add `SHARD_DIGITS = 2`, `shard_token(id_)`, and `sharded_doc_path(base_dir, id_, slug)` (prefix-less name, creates the shard dir) (REQ-001, REQ-002, REQ-005).
+- [x] Task 100.110: Make `iter_doc_paths` yield the sharded listing of its base dir (`<base>/*/*.md`, sorted by relative path; flat files and any deeper nesting excluded) — the per-language scan primitive, called with each language's own base dir (REQ-003).
+- [x] Task 100.120: Shard-narrow `find_doc_path_by_id` within a language's base dir (EN = the `en/` dir) with the full sharded-listing fallback per language; reconcile semantics unchanged (REQ-004).
+- [x] Task 100.130: Shard-narrow `find_parse_failure` with the full fallback (REQ-004).
+- [x] Task 100.140: Update `_doc_paths` module and function docstrings for the sharded, prefix-less naming and the uniform per-language layout, and the per-domain `tools/_paths.py` wrapper module/function docstrings of all thirteen sharded domains (e.g. `req/tools/_paths.py`, where `req_base_dir`/`iter_req_paths` document "the flat `docs/req/` directory exactly as before / exactly today's listing") — the wrapper files need no code change, docstrings only, otherwise `docs/api/` (regenerated in 140.110) ships wrong layout documentation (REQ-002, REQ-003).
+- [x] Task 100.150: Unit tests for the layout core: order identity, flat/too-deep not yielded, fast path, wrong-shard fallback (EN + variant), id-less doc in `en/00/` (ACC-002, ACC-003, ACC-004).
+- [x] Task 100.160: Rework `doc_base_dir`/`ensure_doc_base_dir` to resolve every language — `en` included, no flat special case — to `docs/<type>/<lang>/`; `language=None` (omitted) resolves to the `en/` directory — every EN-only call site (the per-domain `iter_<d>_paths()`, `find_<d>_path()`, `config_info()`) passes `None`, and the "EN-only consumers never see a variant" invariant holds only if `None` maps to `en/` rather than raising or returning the domain root (REQ-003, REQ-005).
+- [x] Task 100.170: Rework `language_for_doc_path` (language = the path's first subdirectory under the domain base, shape-valid two letters; any other position ⇒ canonical) and `iter_doc_paths_all_languages` (union of the sharded listings of `en/` + every shape-valid language dir); `iter_language_dirs` keeps its shape-valid discovery semantics (REQ-003).
+- [x] Task 100.180: Unit tests for the re-rooted EN-only scan and the path-derived language: the EN-only consumers re-rooted at the `en/` dir see EN files only, never variant files (ACC-008), and `parse_<d>` derives the language from the path's first subdirectory under the domain base (shape-valid two letters; `en` ⇒ canonical), asserted for all thirteen `parse_<d>` tools (ACC-009).
 
 #### Phase 110: Write path
 
@@ -133,11 +133,27 @@ Key invariants and rationale:
 
 ### Current Status
 
-**As of 2026-11-20**: Plan refined by a second feat-refiner pass — all pass-2 findings applied (see the 2026-11-20 Updates entry); the pass-2 E1 DEC parse failure resolved as a stale live MCP server (the DEC is valid against the worktree code and was left as is, settled with the requester). Not started — awaiting implementation.
+**As of 2026-11-20**: Phase 100 (core sharded layout) implemented — the uniform `docs/<type>/<lang>/<id[:2]>/<uuid>-<slug>.md` layout is live in `general/tools/_doc_paths.py` (shard-only scans, shard-narrowed id resolution with per-language fallback, every-language-including-EN base-dir resolution with `None` → `en/`, first-subdirectory language derivation, all call sites re-rooted); the full pytest suite is red by design (known-red layout set) until Phases 125/130 re-seed; Phases 110–140 not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-20 19:05:04.000Z - Phase 100 complete
+
+Tasks 100.100–100.180 implemented — the uniform sharded layout core in `general/tools/_doc_paths.py`:
+
+- 100.100: added `SHARD_DIGITS = 2`, `shard_token(id_)`, and `sharded_doc_path(base_dir, id_, slug)` (prefix-less `<uuid>-<slug>.md` name, creates the shard directory);
+- 100.110: `iter_doc_paths` now yields a language directory's sharded listing (`<base>/*/*.md`, sorted by relative path; flat files and any deeper nesting excluded) — the per-language scan primitive;
+- 100.120/100.130: `find_doc_path_by_id` and `find_parse_failure` are shard-narrowed within a language's own directory (fast path = the shard derived from the id, O(N/256) cold parses) with the full sharded-listing fallback per language (a misplaced document still resolves); reconcile semantics unchanged (`reconcile_fn` still receives the full materialized listing, once);
+- 100.160: `doc_base_dir`/`ensure_doc_base_dir` resolve every language — `en` included, no flat special case — to `docs/<type>/<lang>/`; `language=None` (omitted) resolves to the `en/` directory, so every EN-only call site (the per-domain `iter_<d>_paths()`, `find_<d>_path()`, `config_info()`, the EN-only consumers) is re-rooted at `en/` and never sees a variant file. Added `doc_domain_base_dir(type_name)` (the `docs/<type>/` parent of every language directory) and re-rooted its 27 call sites: the thirteen `parse_<d>` tools and thirteen `tools/_cache.py` readers (path-derived language) plus `list_languages`' `iter_language_dirs` probe (which would otherwise have discovered shard dirs as "language" dirs);
+- 100.170: `language_for_doc_path` reworked (language = the path's first subdirectory under the domain base, a shape-valid two-letter name — `en` ⇒ canonical; any other position ⇒ canonical) and `iter_doc_paths_all_languages` reworked (union of the sharded listings of `en/` plus every shape-valid language directory); `iter_language_dirs` code unchanged (shape-valid discovery semantics kept);
+- 100.140: `_doc_paths` module + function docstrings and the thirteen `tools/_paths.py` wrapper module/function docstrings updated for the sharded, prefix-less, uniform per-language layout (wrapper files: docstrings only, no code change);
+- 100.150/100.180: new `tests/general/tools/test_sharded_doc_paths.py` (50 tests, 63 subtests) — order identity, flat/too-deep not yielded, fast path, wrong-shard fallback (EN + variant), id-less doc in `en/00/` (ACC-002/ACC-003/ACC-004); the EN-only consumers re-rooted at `en/` see EN files only, never variant files (ACC-008), and `parse_<d>` derives the language from the path's first subdirectory under the domain base (`en` ⇒ canonical), asserted for all thirteen `parse_<d>` tools via each domain's packaged example + the `de.json` translation (ACC-009).
+
+Gate evidence: `ruff format --check` clean (2383 files), `ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` exit 0, `specmgr lint --all` green (linted=102 failed=0 — the `docs/` tree is still flat at this phase; the new lint layout recognition arrives in Phase 120), the new test file 50 passed / 63 subtests passed. Full suite `uv run --frozen pytest -n auto -q`: **2638 failed, 5373 passed, 18 skipped, 8423 subtests passed** (baseline was 6117 passed / 18 skipped / 0 failed; the 50 new tests are green) — red by design per the per-phase commit gate.
+
+Known-red set: all 794 top-level failures (+1844 subtest-level failures) sit in 118 layout-dependent test files, every one attributable to the flat→sharded semantics change (hand-seeded flat files invisible to the shard-only scans; `create_<d>` now writes into `en/`, so flat globs find nothing; base dirs re-rooted at `en/`): `tests/general/tools/test__doc_paths.py` (flat-semantics assertions), the thirteen per-domain `tests/<d>/` suites (the `test_get_<d>`/`test_list_<d>`(+`_glob`)/`test__paths`/`test__io`/`test_create_<d>`/`test_integration`/cache-wiring/UC diagram/renderer files, the `txt`/`set` language suites), the general-framework files `test_update`/`test_edit`/`test_set_status`/`test_set_status_fsm_req`/`test_list_references`/`test_find_related`/`test_find_similar_text`/`test__similarity_search`/`test__similarity_corpus`/`test_get_reference_diagram`/`test_get_reference_diagram_all`/`test__reference_graph`, the i18n suites (`test_i18n_all_domains`/`test_i18n_en_only_consumers`/`test_i18n_closed_vocabulary`/`test_list_languages`/`test_check_translation_drift`, `tests/dec/tools/test_i18n_language`/`test_i18n_write`, `test_translate_artifact_flow`), `tests/general/resources/test_config.py` (per-domain `base_dir` is now `docs/<type>/en`), and the command suites `tests/commands/test_diagram.py`/`test_diagram_refs.py` (flat registry seeds) plus 3 sweep tests in `tests/commands/test_lint.py` (flat hand-seeded files; the lint gate code itself is unchanged and green — its layout rework is owned by Phase 120, Tasks 120.110/120.120). Re-seeded by Phases 120/125/130.105 per the plan.
 
 #### 2026-11-20 08:28:14.000Z - Plan refined after second feat-refiner pass (pass-2 findings G1–G3, D1–D4, I1–I3 applied; E1 resolved as stale live server — DEC left as is)
 

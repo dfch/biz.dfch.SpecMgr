@@ -61,7 +61,7 @@ from functools import partial
 from pathlib import Path
 
 from ...general.tools._doc_cache import DocCache
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ..models.v1 import TxtDocument, parse_txt
 
 __all__ = ["invalidate_txt_cache", "read_txt", "reconcile_txt_cache", "reset_txt_cache"]
@@ -126,9 +126,9 @@ def read_txt(path: Path) -> TxtDocument:
     # ``read_txt``/``reconcile_txt_cache`` at module level (the
     # ``_io.py -> _paths.py -> _io.py`` cycle the module docstring describes),
     # so a module-level import back into it would be a circular import.
-    from ._paths import txt_base_dir  # pylint: disable=import-outside-toplevel
+    from ._paths import TXT_TYPE_NAME  # pylint: disable=import-outside-toplevel
 
-    language = language_for_doc_path(txt_base_dir(), path)
+    language = language_for_doc_path(doc_domain_base_dir(TXT_TYPE_NAME), path)
     result = _cache.read(path, partial(_parse, language=language))
     return result
 

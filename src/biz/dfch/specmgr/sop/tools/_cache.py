@@ -64,7 +64,7 @@ from functools import partial
 from pathlib import Path
 
 from ...general.tools._doc_cache import DocCache
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ..models.v1 import SopDocument, parse_sop
 
 __all__ = ["invalidate_sop_cache", "read_sop", "reconcile_sop_cache", "reset_sop_cache"]
@@ -129,9 +129,9 @@ def read_sop(path: Path) -> SopDocument:
     # ``read_sop``/``reconcile_sop_cache`` at module level (the
     # ``_io.py -> _paths.py -> _io.py`` cycle the module docstring describes),
     # so a module-level import back into it would be a circular import.
-    from ._paths import sop_base_dir  # pylint: disable=import-outside-toplevel
+    from ._paths import SOP_TYPE_NAME  # pylint: disable=import-outside-toplevel
 
-    language = language_for_doc_path(sop_base_dir(), path)
+    language = language_for_doc_path(doc_domain_base_dir(SOP_TYPE_NAME), path)
     result = _cache.read(path, partial(_parse, language=language))
     return result
 

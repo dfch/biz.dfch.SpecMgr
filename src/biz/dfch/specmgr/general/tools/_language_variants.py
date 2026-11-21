@@ -49,7 +49,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from ..models.language_list_result import LanguageEntry, LanguageListResult
-from ._doc_paths import doc_base_dir, find_parse_failure, iter_language_dirs
+from ._doc_paths import doc_domain_base_dir, find_parse_failure, iter_language_dirs
 from ._language_guard import LANGUAGE_AWARE_DOMAINS
 from ._path_safety import DEFAULT_LANGUAGE, assert_within
 
@@ -214,7 +214,7 @@ def list_language_variants(type_: str, id_: str) -> LanguageListResult:
         locations.append(locate(type_, id_, DEFAULT_LANGUAGE))
     except LookupError as ex:
         missing_en = ex
-    for language, _directory in iter_language_dirs(doc_base_dir(type_)):
+    for language, _directory in iter_language_dirs(doc_domain_base_dir(type_)):
         try:
             locations.append(locate(type_, id_, language))
         except LookupError:
