@@ -106,17 +106,20 @@ class TestCreatePrb(TempPrbDirTestCase):
         self.assertEqual(fetched.body.text, "Simple Problem Statement")
 
     def test_writes_expected_filename(self) -> None:
-        """create_prb must write f'prb-{id}-{slug}.md' under the problem statement base dir."""
+        """create_prb must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/prb/en/,
+        leaving nothing directly under docs/prb/ or docs/prb/en/ (feat-245, ACC-001)."""
         result = create_prb(_MINIMAL_BODY)
 
-        expected_path = prb_base_dir() / f"prb-{result.id}-simple-problem-statement.md"
+        expected_path = prb_base_dir("en") / result.id[:2] / f"{result.id}-simple-problem-statement.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "prb").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "prb" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_prb(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_prb(_MINIMAL_BODY)
 
-        expected_path = prb_base_dir() / f"prb-{result.id}-simple-problem-statement.md"
+        expected_path = prb_base_dir("en") / result.id[:2] / f"{result.id}-simple-problem-statement.md"
         on_disk = parse_prb(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

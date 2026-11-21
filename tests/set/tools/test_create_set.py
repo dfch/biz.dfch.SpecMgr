@@ -98,17 +98,20 @@ class TestCreateSet(TempSetDirTestCase):
         self.assertEqual(fetched.body.text, "Ad-hoc review set")
 
     def test_writes_expected_filename(self) -> None:
-        """create_set must write f'set-{id}-{slug}.md' under the set base dir."""
+        """create_set must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/set/en/,
+        leaving nothing directly under docs/set/ or docs/set/en/ (feat-245, ACC-001)."""
         result = create_set(_MINIMAL_BODY)
 
-        expected_path = set_base_dir() / f"set-{result.id}-ad-hoc-review-set.md"
+        expected_path = set_base_dir("en") / result.id[:2] / f"{result.id}-ad-hoc-review-set.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "set").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "set" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_set(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_set(_MINIMAL_BODY)
 
-        expected_path = set_base_dir() / f"set-{result.id}-ad-hoc-review-set.md"
+        expected_path = set_base_dir("en") / result.id[:2] / f"{result.id}-ad-hoc-review-set.md"
         on_disk = parse_set(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

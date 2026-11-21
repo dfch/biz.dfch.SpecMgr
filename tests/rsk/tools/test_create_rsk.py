@@ -119,17 +119,20 @@ class TestCreateRsk(TempRskDirTestCase):
         self.assertEqual(fetched.body.text, "Sample Risk")
 
     def test_writes_expected_filename(self) -> None:
-        """create_rsk must write f'rsk-{id}-{slug}.md' under the risk base dir."""
+        """create_rsk must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/rsk/en/,
+        leaving nothing directly under docs/rsk/ or docs/rsk/en/ (feat-245, ACC-001)."""
         result = create_rsk(_MINIMAL_BODY)
 
-        expected_path = rsk_base_dir() / f"rsk-{result.id}-sample-risk.md"
+        expected_path = rsk_base_dir("en") / result.id[:2] / f"{result.id}-sample-risk.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "rsk").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "rsk" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_rsk(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_rsk(_MINIMAL_BODY)
 
-        expected_path = rsk_base_dir() / f"rsk-{result.id}-sample-risk.md"
+        expected_path = rsk_base_dir("en") / result.id[:2] / f"{result.id}-sample-risk.md"
         on_disk = parse_rsk(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

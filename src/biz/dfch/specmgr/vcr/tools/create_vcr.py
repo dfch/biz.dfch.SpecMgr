@@ -55,7 +55,7 @@ import uuid
 
 from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import slugify
+from ...general.tools._doc_paths import sharded_doc_path, slugify
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language, validate_id
 from ...general.tools._timestamps import now_timestamp
 from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
@@ -237,9 +237,7 @@ def create_vcr(  # pylint: disable=too-many-locals
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    filename = f"vcr-{new_id}-{slugify(body.text)}.md"
-    base_dir = ensure_vcr_base_dir()
-    path = base_dir / filename
+    path = sharded_doc_path(ensure_vcr_base_dir(), new_id, slugify(body.text))
     write_vcr_file(path, new_frontmatter, content)
     read_vcr(path)  # warm the cache with this write's own validated content (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
@@ -291,7 +289,8 @@ def _create_variant(id_: str, language: str, content: str) -> VcrFrontmatter:
                 f"A language variant requires its {DEFAULT_LANGUAGE!r} source "
                 f"-- create the {DEFAULT_LANGUAGE!r} document first, and pass its id."
             ) from ex
-        path = ensure_vcr_base_dir(language) / source_path.name
+        slug = source_path.name.removeprefix(f"{id_}-").removesuffix(".md")
+        path = sharded_doc_path(ensure_vcr_base_dir(language), id_, slug)
         if path.exists():
             raise FileExistsError(
                 f"the {language!r} variant of vcr {id_!r} already exists at {path}; "

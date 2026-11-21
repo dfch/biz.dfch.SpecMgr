@@ -89,6 +89,36 @@ _BAD_OPTION_BODY = (
 
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized decision sections.\n"
 
+#: The minimal DE body for the variant-create placement test: every fixed-text heading translated per the
+#: packaged de table (the only table-closed language, feat-197-i18n), the H1 free in German.
+_DE_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Dokumentlager w\u00e4hlen
+
+    ## Kontext und Problembeschreibung
+
+    Der aktuelle Store kann den Dashboard-Lesepfad nicht bedienen.
+
+    ## Entscheidungsergebnis
+
+    Wir haben das Dokumentlager gew\u00e4hlt.
+
+    ## Rollen und Verantwortlichkeiten
+
+    ### Endverantwortlich
+
+    Die f\u00fchrende Plattformarchitektin.
+
+    ### Durchf\u00fchrend
+
+    - Das Order-Service-Team.
+
+    ## Quelle
+
+    Die Incident-Review-Meeting zum Dashboard-Latenz-Vorfall.
+    """
+)
+
 
 class TempDecDirTestCase(unittest.TestCase):
     """Common fixture: a temp dir set as the docs root via SPECMGR_DOCS_DIR."""
@@ -119,17 +149,20 @@ class TestCreateDec(TempDecDirTestCase):
         self.assertEqual(fetched.body.text, "Choose a Document Store")
 
     def test_writes_expected_filename(self) -> None:
-        """create_dec must write f'dec-{id}-{slug}.md' under the decision base dir."""
+        """create_dec must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/dec/en/,
+        leaving nothing directly under docs/dec/ or docs/dec/en/ (feat-245, ACC-001)."""
         result = create_dec(_MINIMAL_BODY)
 
-        expected_path = dec_base_dir() / f"dec-{result.id}-choose-a-document-store.md"
+        expected_path = dec_base_dir("en") / result.id[:2] / f"{result.id}-choose-a-document-store.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "dec").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "dec" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_dec(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_dec(_MINIMAL_BODY)
 
-        expected_path = dec_base_dir() / f"dec-{result.id}-choose-a-document-store.md"
+        expected_path = dec_base_dir("en") / result.id[:2] / f"{result.id}-choose-a-document-store.md"
         on_disk = parse_dec(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)
@@ -171,6 +204,30 @@ class TestCreateDec(TempDecDirTestCase):
         self.assertIn("dec create_dec (body): ", message)
         self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(dec_base_dir().exists())
+
+
+class TestCreateDecVariantShardedPlacement(TempDecDirTestCase):
+    """create_dec's variant create (language='de', the table-closed language) writes the sharded variant path
+    (feat-245, ACC-008)."""
+
+    def test_variant_is_written_in_the_language_shard_under_the_en_basename(self) -> None:
+        """The de variant must live at docs/dec/de/<id[:2]>/<uuid>-<slug>.md -- the EN source's exact basename
+        in the language's own shard dir (DEC 38efdb66 item 2) -- leaving nothing directly under docs/dec/de/,
+        and the EN source prefix-less in its own shard under docs/dec/en/ (ACC-001, ACC-008)."""
+        created = create_dec(_MINIMAL_BODY)
+        assert isinstance(created, DecFrontmatter)
+        assert created.id is not None
+        variant = create_dec(_DE_MINIMAL_BODY, language="de", id=created.id)
+        assert isinstance(variant, DecFrontmatter)
+        self.assertEqual(variant.id, created.id)
+
+        expected_path = dec_base_dir("de") / created.id[:2] / f"{created.id}-choose-a-document-store.md"
+        self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "dec" / "de").glob("*.md")), [])
+        en_expected = dec_base_dir("en") / created.id[:2] / f"{created.id}-choose-a-document-store.md"
+        self.assertTrue(en_expected.exists())
+        self.assertEqual(list((self.docs_root / "dec").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "dec" / "en").glob("*.md")), [])
 
 
 if __name__ == "__main__":

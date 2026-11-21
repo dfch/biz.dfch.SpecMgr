@@ -101,17 +101,20 @@ class TestCreateTxt(TempTxtDirTestCase):
         self.assertEqual(fetched.body.text, "Ad-hoc review notes")
 
     def test_writes_expected_filename(self) -> None:
-        """create_txt must write f'txt-{id}-{slug}.md' under the free-form text base dir."""
+        """create_txt must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/txt/en/,
+        leaving nothing directly under docs/txt/ or docs/txt/en/ (feat-245, ACC-001)."""
         result = create_txt(_MINIMAL_BODY)
 
-        expected_path = txt_base_dir() / f"txt-{result.id}-ad-hoc-review-notes.md"
+        expected_path = txt_base_dir("en") / result.id[:2] / f"{result.id}-ad-hoc-review-notes.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "txt").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "txt" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_txt(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_txt(_MINIMAL_BODY)
 
-        expected_path = txt_base_dir() / f"txt-{result.id}-ad-hoc-review-notes.md"
+        expected_path = txt_base_dir("en") / result.id[:2] / f"{result.id}-ad-hoc-review-notes.md"
         on_disk = parse_txt(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

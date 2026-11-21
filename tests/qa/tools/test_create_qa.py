@@ -145,17 +145,20 @@ class TestCreateQa(TempQaDirTestCase):
         self.assertEqual(fetched.body.text, "Some QA Title")
 
     def test_writes_expected_filename(self) -> None:
-        """create_qa must write f'qa-{id}-{slug}.md' under the QA base dir."""
+        """create_qa must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/qa/en/,
+        leaving nothing directly under docs/qa/ or docs/qa/en/ (feat-245, ACC-001)."""
         result = create_qa(_MINIMAL_BODY)
 
-        expected_path = qa_base_dir() / f"qa-{result.id}-some-qa-title.md"
+        expected_path = qa_base_dir("en") / result.id[:2] / f"{result.id}-some-qa-title.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "qa").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "qa" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_qa(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_qa(_MINIMAL_BODY)
 
-        expected_path = qa_base_dir() / f"qa-{result.id}-some-qa-title.md"
+        expected_path = qa_base_dir("en") / result.id[:2] / f"{result.id}-some-qa-title.md"
         on_disk = parse_qa(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

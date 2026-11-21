@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: progress
 type: feat
-updated: '2026-11-20T20:05:04.777+01:00'
+updated: '2026-11-21T10:00:07.000+01:00'
 version: 1.0.0
 ---
 
@@ -99,8 +99,8 @@ Key invariants and rationale:
 
 #### Phase 110: Write path
 
-- [ ] Task 110.100: Wire all thirteen `create_<d>` tools through `sharded_doc_path` over the per-language `doc_base_dir` (every language including EN), removing the per-domain filename lines and the flat-EN base resolution (REQ-002, REQ-005).
-- [ ] Task 110.110: Per-domain create tests asserting `docs/<type>/en/<id[:2]>/<uuid>-<slug>.md` and no flat file (EN), plus one table-closed language's variant create asserting `docs/<type>/<lang>/<id[:2]>/<uuid>-<slug>.md` (ACC-001, ACC-002, ACC-008).
+- [x] Task 110.100: Wire all thirteen `create_<d>` tools through `sharded_doc_path` over the per-language `doc_base_dir` (every language including EN), removing the per-domain filename lines and the flat-EN base resolution (REQ-002, REQ-005).
+- [x] Task 110.110: Per-domain create tests asserting `docs/<type>/en/<id[:2]>/<uuid>-<slug>.md` and no flat file (EN), plus one table-closed language's variant create asserting `docs/<type>/<lang>/<id[:2]>/<uuid>-<slug>.md` (ACC-001, ACC-002, ACC-008).
 
 #### Phase 120: Lint gate
 
@@ -133,11 +133,20 @@ Key invariants and rationale:
 
 ### Current Status
 
-**As of 2026-11-20**: Phase 100 (core sharded layout) implemented — the uniform `docs/<type>/<lang>/<id[:2]>/<uuid>-<slug>.md` layout is live in `general/tools/_doc_paths.py` (shard-only scans, shard-narrowed id resolution with per-language fallback, every-language-including-EN base-dir resolution with `None` → `en/`, first-subdirectory language derivation, all call sites re-rooted); the full pytest suite is red by design (known-red layout set) until Phases 125/130 re-seed; Phases 110–140 not started.
+**As of 2026-11-21**: Phase 110 (write path) implemented — all thirteen `create_<d>` tools now write through the single shared `sharded_doc_path` over the per-language `doc_base_dir` (every language including EN; no per-domain filename line, no flat-EN base resolution), and the thirteen `test_create_<d>.py` files are re-seeded to the EN sharded-placement assertion (file at `docs/<d>/en/<id[:2]>/<uuid>-<slug>.md`, nothing directly under `docs/<d>/` or `docs/<d>/en/`), plus the dec pilot's variant-create sharded-placement test (`docs/dec/de/<id[:2]>/<uuid>-<slug>.md`); the full pytest suite is still red by design until Phases 125/130 re-seed (known-red layout set shrank 118 → 101 top-level failing files — the 13 create files plus 4 files whose only top-level failures rode the create-write path); Phases 120–140 not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-21 09:00:07.000Z - Phase 110 complete
+
+Tasks 110.100–110.110 implemented — the sharded write path for all thirteen UUID domains:
+
+- 110.100: every `create_<d>` tool (thirteen domains, every language including EN) now builds its target through the single shared `sharded_doc_path(base_dir, id_, slug)` over the per-language `ensure_<d>_base_dir()` (REQ-005): EN create places the document at `docs/<d>/en/<id[:2]>/<uuid>-<slug>.md` (prefix-less, REQ-002), and the variant create (`language`/`id` path) places the translation at `docs/<d>/<lang>/<id[:2]>/<uuid>-<slug>.md`, deriving the slug from the EN source's own basename so the "EN slug is the single filename authority" rule (DEC 38efdb66 item 2) survives the shard move. The per-domain `filename = f"<d>-…"` lines and the flat-EN base resolution are gone; nothing else changed — id assignment/generation, slug derivation, status defaults, the EN-source-exists guards, the `FileExistsError` overwrite guards, the non-raising `ValidateResult` channels, cache warming, and lock handling are all byte-for-byte as before.
+- 110.110: all thirteen `tests/<d>/tools/test_create_<d>.py` files re-seeded — `test_writes_expected_filename` asserts the file at `docs/<d>/en/<id[:2]>/<uuid>-<slug>.md` and nothing directly under `docs/<d>/` or `docs/<d>/en/` (ACC-001), and `test_written_file_round_trips_via_parse_<d>` reads the sharded path; `tests/dec/tools/test_create_dec.py` additionally gains `TestCreateDecVariantShardedPlacement` — the table-closed `de` variant create (EN source created first) asserting `docs/dec/de/<id[:2]>/<uuid>-<slug>.md` under the EN source's exact basename and nothing directly under `docs/dec/de/` (ACC-008). The full per-domain variant-create coverage stays in the `test_i18n_all_domains` suite that Phase 125 re-seeds — that file is untouched here.
+
+Gate evidence: `ruff format --check` clean (2383 files), `ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` exit 0, `specmgr lint --all` green (linted=102 failed=0 — the `docs/` tree is still flat at this phase; the lint gate is unchanged, its layout rework is Phase 120), the thirteen create test files 82 passed. Full suite `uv run --frozen pytest -n auto -q`: **2386 failed, 5598 passed, 18 skipped, 8481 subtests passed** (Phase 100: 2638/5373/18/8423) — red by design per the per-phase commit gate. Failing-file delta vs the Phase 100 set: zero new files, strict subset at both granularities — 118 → 101 top-level failing files (126 → 111 counting subtest-only lines). The 13 `test_create_<d>.py` files are gone from the failing set, and four further known-red files went fully green because their only top-level failures rode the create-write path (`tests/general/tools/test_i18n_all_domains.py`, `tests/general/tools/test_set_status.py`, `tests/gol/tools/test_integration.py`, `tests/prb/tools/test_integration.py` — the plan's "expected: 105 files" delta-of-13 was a floor, the actual shrink is 17). Inside known-red files, six subtest-level entries newly fail — all layout-dependent seeds owned by the Phase 125/130.105 re-seeds: the four domain `test_integration` `test_set_status_rejects_*` methods hard-coding the flat `<d>-<id>-<slug>.md` path, `test_doc_cache_write_wiring`'s create-warm subtest (non-recursive `*.md` glob of the language dir), and `req/test_doc_cache_wiring`'s concurrent-cold-read test (same glob). Note: `tests/general/tools/test_doc_cache_write_wiring.py` was already red at the Phase 100 commit at subtest level (its `TestAcc003DeleteInvalidates…` subtests), so it is inside the known-red set despite not carrying a top-level failure there.
 
 #### 2026-11-20 19:05:04.000Z - Phase 100 complete
 
@@ -216,6 +225,10 @@ Feature plan created for issue #245 after plan review: sharded layout (two-hex-d
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-21 09:00:07.000Z - Variant create derives its slug from the EN source's basename, passed through `sharded_doc_path`
+
+Settled during Phase 110 (Task 110.100): REQ-005 mandates that every `create_<d>` tool — the variant path included — writes through the single shared `sharded_doc_path(base_dir, id_, slug)`, while DEC 38efdb66 item 2 makes the EN source's basename the single filename authority for a variant. The two converge because every id-resolvable EN file is named `<id>-<slug>.md` (create generates it, the Phase 130 migration produces it), so the variant's slug is derived from the EN source's basename via `removeprefix(f"{id_}-")` / `removesuffix(".md")` and the variant is placed at `docs/<d>/<lang>/<id[:2]>/<uuid>-<slug>.md` — the EN source's exact basename in the language's own shard dir. A hypothetical EN source whose basename does not carry the `<id>-` prefix (no such document exists in or can be produced by the in-repo corpus) would be given the `<id>-`-prefixed form rather than its verbatim name — accepted, since REQ-005's single-helper mandate wins over the verbatim-copy rule for names outside the `<uuid>-<slug>.md` convention.
 
 #### 2026-11-18 07:06:21.000Z - All thirteen UUID domains in scope; one uniform sharded layout for every language including en
 

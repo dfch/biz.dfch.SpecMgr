@@ -103,17 +103,20 @@ class TestCreateTsk(TempTskDirTestCase):
         self.assertEqual(fetched.body.text, "Simple Task List")
 
     def test_writes_expected_filename(self) -> None:
-        """create_tsk must write f'tsk-{id}-{slug}.md' under the task list base dir."""
+        """create_tsk must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/tsk/en/,
+        leaving nothing directly under docs/tsk/ or docs/tsk/en/ (feat-245, ACC-001)."""
         result = create_tsk(_MINIMAL_BODY)
 
-        expected_path = tsk_base_dir() / f"tsk-{result.id}-simple-task-list.md"
+        expected_path = tsk_base_dir("en") / result.id[:2] / f"{result.id}-simple-task-list.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "tsk").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "tsk" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_tsk(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_tsk(_MINIMAL_BODY)
 
-        expected_path = tsk_base_dir() / f"tsk-{result.id}-simple-task-list.md"
+        expected_path = tsk_base_dir("en") / result.id[:2] / f"{result.id}-simple-task-list.md"
         on_disk = parse_tsk(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

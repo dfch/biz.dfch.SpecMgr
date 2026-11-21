@@ -105,17 +105,20 @@ class TestCreateSop(TempSopDirTestCase):
         self.assertEqual(fetched.body.text, "New Employee IT Account Provisioning")
 
     def test_writes_expected_filename(self) -> None:
-        """create_sop must write f'sop-{id}-{slug}.md' under the SOP base dir."""
+        """create_sop must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/sop/en/,
+        leaving nothing directly under docs/sop/ or docs/sop/en/ (feat-245, ACC-001)."""
         result = create_sop(_MINIMAL_BODY)
 
-        expected_path = sop_base_dir() / f"sop-{result.id}-new-employee-it-account-provisioning.md"
+        expected_path = sop_base_dir("en") / result.id[:2] / f"{result.id}-new-employee-it-account-provisioning.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "sop").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "sop" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_sop(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_sop(_MINIMAL_BODY)
 
-        expected_path = sop_base_dir() / f"sop-{result.id}-new-employee-it-account-provisioning.md"
+        expected_path = sop_base_dir("en") / result.id[:2] / f"{result.id}-new-employee-it-account-provisioning.md"
         on_disk = parse_sop(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)
