@@ -51,6 +51,7 @@ from pathlib import Path
 from ...general.tools._doc_paths import (
     DocNotFoundError,
     doc_base_dir,
+    doc_domain_base_dir,
     ensure_doc_base_dir,
     find_doc_path_by_id,
     iter_doc_paths,
@@ -185,7 +186,7 @@ def _reconcile_dec_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=
     and recomputing it from the directory listing keeps this one helper
     correct regardless of which language's directory was scanned.
     """
-    reconcile_dec_cache(list(iter_doc_paths_all_languages(dec_base_dir())))
+    reconcile_dec_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(DEC_TYPE_NAME))))
 
 
 def find_dec_path(base_dir: Path, id_: str) -> Path:

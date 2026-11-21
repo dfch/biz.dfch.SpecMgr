@@ -48,6 +48,7 @@ from pathlib import Path
 from ...general.tools._doc_paths import (
     DocNotFoundError,
     doc_base_dir,
+    doc_domain_base_dir,
     ensure_doc_base_dir,
     find_doc_path_by_id,
     iter_doc_paths,
@@ -183,7 +184,7 @@ def _reconcile_uc_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=u
     ``general.tools._doc_paths.iter_doc_paths_all_languages``).
     ``scan_paths`` is intentionally unused: the union is a superset of it.
     """
-    reconcile_uc_cache(list(iter_doc_paths_all_languages(uc_base_dir())))
+    reconcile_uc_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(UC_TYPE_NAME))))
 
 
 def find_uc_path(base_dir: Path, id_: str) -> Path:

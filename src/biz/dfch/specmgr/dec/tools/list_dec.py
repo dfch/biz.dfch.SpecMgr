@@ -71,7 +71,7 @@ from pathlib import Path
 
 from ...general.models import PagedResult
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import iter_doc_paths_all_languages
+from ...general.tools._doc_paths import doc_domain_base_dir, iter_doc_paths_all_languages
 from ...general.tools._listing import build_summaries, default_failed_summary, filter_summaries_by_glob
 from ...general.tools._paging import normalize_paging, paginate
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language
@@ -79,7 +79,7 @@ from ...server import mcp
 from ..models.v1 import DecDocument, DecSummary
 from ._cache import reconcile_dec_cache
 from ._io import read_dec
-from ._paths import dec_base_dir, iter_dec_paths
+from ._paths import DEC_TYPE_NAME, iter_dec_paths
 
 
 def _to_summary(doc: DecDocument, path: Path) -> DecSummary:
@@ -209,7 +209,7 @@ def list_dec(
     # just the scanned directory -- or listing one language would evict the
     # other languages' cached entries. With no subdirectory present the union
     # is the scanned listing itself (the pre-i18n behavior, byte-identical).
-    reconcile_dec_cache(list(iter_doc_paths_all_languages(dec_base_dir())))
+    reconcile_dec_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(DEC_TYPE_NAME))))
     summaries, error_count = build_summaries(paths, read_dec, _to_summary, _to_failed_summary)
 
     # feat-200-list, Task 110.100 (REQ-002/REQ-003): the id-glob filter runs between the row build

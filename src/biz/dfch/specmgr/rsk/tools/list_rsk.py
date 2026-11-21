@@ -81,7 +81,7 @@ from pathlib import Path
 
 from ...general.models import PagedResult
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import iter_doc_paths_all_languages
+from ...general.tools._doc_paths import doc_domain_base_dir, iter_doc_paths_all_languages
 from ...general.tools._listing import build_summaries, filter_summaries_by_glob
 from ...general.tools._paging import normalize_paging, paginate
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language
@@ -89,7 +89,7 @@ from ...server import mcp
 from ..models.v1 import RskDocument, RskSummary
 from ._cache import reconcile_rsk_cache
 from ._io import read_rsk
-from ._paths import iter_rsk_paths, rsk_base_dir
+from ._paths import RSK_TYPE_NAME, iter_rsk_paths
 from ._sentinel import build_failed_rsk_summary
 
 
@@ -212,7 +212,7 @@ def list_rsk(
     # subdirectory's files), never just the scanned directory -- or listing one language would
     # evict the other languages' cached entries. With no subdirectory present the union is the
     # scanned listing itself (the pre-i18n behavior, byte-identical).
-    reconcile_rsk_cache(list(iter_doc_paths_all_languages(rsk_base_dir())))
+    reconcile_rsk_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(RSK_TYPE_NAME))))
     summaries, error_count = build_summaries(paths, read_rsk, _to_summary, build_failed_rsk_summary)
 
     # feat-200-list, Task 110.100 (REQ-002/REQ-003): the id-glob filter runs between the row build

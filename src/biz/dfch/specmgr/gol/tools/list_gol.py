@@ -68,7 +68,7 @@ from pathlib import Path
 
 from ...general.models import PagedResult
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import iter_doc_paths_all_languages
+from ...general.tools._doc_paths import doc_domain_base_dir, iter_doc_paths_all_languages
 from ...general.tools._listing import build_summaries, default_failed_summary, filter_summaries_by_glob
 from ...general.tools._paging import normalize_paging, paginate
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language
@@ -76,7 +76,7 @@ from ...server import mcp
 from ..models.v1 import GolDocument, GolSummary
 from ._cache import reconcile_gol_cache
 from ._io import read_gol
-from ._paths import gol_base_dir, iter_gol_paths
+from ._paths import GOL_TYPE_NAME, iter_gol_paths
 
 
 def _to_summary(doc: GolDocument, path: Path) -> GolSummary:
@@ -203,7 +203,7 @@ def list_gol(
     # subdirectory's files), never just the scanned directory -- or listing one language would
     # evict the other languages' cached entries. With no subdirectory present the union is the
     # scanned listing itself (the pre-i18n behavior, byte-identical).
-    reconcile_gol_cache(list(iter_doc_paths_all_languages(gol_base_dir())))
+    reconcile_gol_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(GOL_TYPE_NAME))))
     summaries, error_count = build_summaries(paths, read_gol, _to_summary, _to_failed_summary)
 
     # feat-200-list, Task 110.100 (REQ-002/REQ-003): the id-glob filter runs between the row build

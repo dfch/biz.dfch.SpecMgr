@@ -68,7 +68,7 @@ from pathlib import Path
 
 from ...general.models import PagedResult
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import iter_doc_paths_all_languages
+from ...general.tools._doc_paths import doc_domain_base_dir, iter_doc_paths_all_languages
 from ...general.tools._listing import build_summaries, default_failed_summary, filter_summaries_by_glob
 from ...general.tools._paging import normalize_paging, paginate
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language
@@ -76,7 +76,7 @@ from ...server import mcp
 from ..models.v1 import SetDocument, SetSummary
 from ._cache import reconcile_set_cache
 from ._io import read_set
-from ._paths import iter_set_paths, set_base_dir
+from ._paths import SET_TYPE_NAME, iter_set_paths
 
 
 def _to_summary(doc: SetDocument, path: Path) -> SetSummary:
@@ -203,7 +203,7 @@ def list_set(
     # subdirectory's files), never just the scanned directory -- or listing one language would
     # evict the other languages' cached entries. With no subdirectory present the union is the
     # scanned listing itself (the pre-i18n behavior, byte-identical).
-    reconcile_set_cache(list(iter_doc_paths_all_languages(set_base_dir())))
+    reconcile_set_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(SET_TYPE_NAME))))
     summaries, error_count = build_summaries(paths, read_set, _to_summary, _to_failed_summary)
 
     # The id-glob filter runs between the row build above and the total/paging

@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: progress
 type: feat
-updated: '2026-11-21T10:00:07.000+01:00'
+updated: '2026-11-21T11:52:12.000+01:00'
 version: 1.0.0
 ---
 
@@ -133,11 +133,21 @@ Key invariants and rationale:
 
 ### Current Status
 
-**As of 2026-11-21**: Phase 110 (write path) implemented — all thirteen `create_<d>` tools now write through the single shared `sharded_doc_path` over the per-language `doc_base_dir` (every language including EN; no per-domain filename line, no flat-EN base resolution), and the thirteen `test_create_<d>.py` files are re-seeded to the EN sharded-placement assertion (file at `docs/<d>/en/<id[:2]>/<uuid>-<slug>.md`, nothing directly under `docs/<d>/` or `docs/<d>/en/`), plus the dec pilot's variant-create sharded-placement test (`docs/dec/de/<id[:2]>/<uuid>-<slug>.md`); the full pytest suite is still red by design until Phases 125/130 re-seed (known-red layout set shrank 118 → 101 top-level failing files — the 13 create files plus 4 files whose only top-level failures rode the create-write path); Phases 120–140 not started.
+**As of 2026-11-21**: Phase 110 (write path) implemented — all thirteen `create_<d>` tools now write through the single shared `sharded_doc_path` over the per-language `doc_base_dir` (every language including EN; no per-domain filename line, no flat-EN base resolution), and the thirteen `test_create_<d>.py` files are re-seeded to the EN sharded-placement assertion (file at `docs/<d>/en/<id[:2]>/<uuid>-<slug>.md`, nothing directly under `docs/<d>/` or `docs/<d>/en/`), plus the dec pilot's variant-create sharded-placement test (`docs/dec/de/<id[:2]>/<uuid>-<slug>.md`); the Phase 100 correction has also landed (the twenty-six cache-reconcile call sites re-rooted from the `en/` base to `doc_domain_base_dir`, with regression pins in `tests/general/tools/test_sharded_doc_paths.py` — see the correction entry below); the full pytest suite is still red by design until Phases 125/130 re-seed (known-red layout set at 101 top-level failing files, unchanged by the correction); Phases 120–140 not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-21 10:52:12.000Z - Phase 100 correction: reconcile unions re-rooted to doc_domain_base_dir
+
+Phase 110's implementation finding, confirmed by the orchestrator and fixed as a separate change on top of the Phase 110 commit (71dbd7d9):
+
+- The defect: twenty-six cache-reconcile call sites (thirteen `_reconcile_<d>_scan` wrappers in `tools/_paths.py` + thirteen identical calls in `tools/list_<d>.py`) passed `<d>_base_dir()` — which since Task 100.160 resolves to `docs/<d>/en/`, not the domain base `docs/<d>/` — into `iter_doc_paths_all_languages(...)`, whose contract is the DOMAIN base. The "domain-wide union" was computed over one language's directory: the sharded listing of `docs/<d>/en/en/` (empty) plus language-dir discovery over the shard dirs under `en/` (shape-valid two-letter names like `aa/`/`bb/`, each yielding an empty one-level-deeper listing) — a garbage/empty union, so the `DocCache` reconcile evicted (nearly) every cached entry on every id lookup and every `list_<d>` scan, defeating the feat-107 cache (one extra parse per read; correctness unaffected, the filesystem remains the sole source of truth).
+- The fix: all twenty-six sites re-rooted to `iter_doc_paths_all_languages(doc_domain_base_dir(<D>_TYPE_NAME))` — each domain's own `<D>_TYPE_NAME` constant, the same reference `parse_<d>`/`_cache` already use; in the thirteen `list_<d>.py` files the reconcile line was `<d>_base_dir`'s only use, so its import dropped. Nothing else changed (`_doc_paths.py`, the create tools, and every other test untouched).
+- Regression tests: two new tests in `tests/general/tools/test_sharded_doc_paths.py` (`TestReconcileUnionReRootedAtDomainBase`, domain `req`): the mandatory functional eviction test — seed sharded EN docs in two different shards (`en/aa/`, `en/bb/`) plus one `de/` variant, warm all three through the domain's own `read_req`, run a real `find_req_path` id lookup (which triggers the reconcile exactly as every id lookup does), and require the other EN entry AND the de variant entry to survive — and a pure unit pin (the union the reconcile wrapper passes equals `list(iter_doc_paths_all_languages(doc_domain_base_dir("req")))`). The file now stands at 52 passed / 63 subtests (was 50 / 63).
+- Red/green proof: with the 26 src changes stashed (`git stash push -- src/`), both new tests fail (2 failed in 1.67s — the eviction test shows both surviving entries gone, the unit pin shows the empty pre-fix union); `git stash pop`, re-run: 2 passed in 1.56s.
+- Gate: `ruff format --check` clean (2383 files), `ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` exit 0, `specmgr lint --all` green (linted=102 failed=0 — the `docs/` tree is still flat; the lint gate is Phase 120's), the test file 52 passed. Full suite `uv run --frozen pytest -n auto -q`: **2384 failed, 5602 passed, 18 skipped, 8481 subtests passed** (Phase 110: 2386/5598/18/8481). Failing-file set identical to the Phase 110 commit — 101 files, zero new, zero resolved at file level (strict subset check against the Phase 110 failing-file list: empty both ways). Entry-level delta: zero new failing entries; the +4 passed is the two new tests plus two previously-failing `req/test_doc_cache_wiring.py` cache-behavior tests (`TestAcc002…produce_exactly_one_parse`, `TestAcc006…parse_exactly_once_total`) that the eviction defect had broken and the fix repairs.
 
 #### 2026-11-21 09:00:07.000Z - Phase 110 complete
 

@@ -51,6 +51,7 @@ from pathlib import Path
 from ...general.tools._doc_paths import (
     DocNotFoundError,
     doc_base_dir,
+    doc_domain_base_dir,
     ensure_doc_base_dir,
     find_doc_path_by_id,
     iter_doc_paths,
@@ -186,7 +187,7 @@ def _reconcile_qa_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=u
     ``general.tools._doc_paths.iter_doc_paths_all_languages``).
     ``scan_paths`` is intentionally unused: the union is a superset of it.
     """
-    reconcile_qa_cache(list(iter_doc_paths_all_languages(qa_base_dir())))
+    reconcile_qa_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(QA_TYPE_NAME))))
 
 
 def find_qa_path(base_dir: Path, id_: str) -> Path:

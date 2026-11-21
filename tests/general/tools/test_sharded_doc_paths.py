@@ -31,7 +31,13 @@ the feat-197-i18n suite): the EN-only consumers re-rooted at the ``en/``
 directory see EN files only, never variant files (ACC-008), and every
 ``parse_<d>`` tool derives the language from the path's first subdirectory
 under the domain base (``en`` => canonical, ``de`` => the ``de`` table;
-ACC-009).
+ACC-009). Also pins the Phase 100 correction of the twenty-six cache-reconcile
+call sites (thirteen ``tools/_paths.py`` reconcile wrappers + thirteen
+``tools/list_<d>.py``): the domain-wide live listing they hand to the
+``DocCache`` reconcile must be the all-languages union over the DOMAIN base
+(``docs/req``), not over one language's directory (``docs/req/en``) -- the
+latter yields a garbage/empty union that evicts every other cached entry on
+every id lookup and every list scan (the feat-107 DocCache defeated).
 """
 
 from __future__ import annotations
@@ -542,6 +548,82 @@ class TestIterDocPathsAllLanguagesSharded(unittest.TestCase):
             names = [str(p.relative_to(base)) for p in iter_doc_paths_all_languages(base)]
 
             self.assertEqual(names, ["en/ab/x.md"])
+
+
+class TestReconcileUnionReRootedAtDomainBase(unittest.TestCase):
+    """Phase 100 correction (functional regression, req): an id lookup's cache reconcile must be handed the
+    all-languages union over the DOMAIN base, so a warm entry for another shard or another language is
+    never evicted by the lookup itself."""
+
+    #: Two fixed ids whose first two characters name two DIFFERENT shards (both are also shape-valid
+    #: two-letter names, so the pre-fix union's language-dir discovery treats them as "languages").
+    _ID_A = "aa112233-4455-6677-8899-aabbccddeeff"
+    _ID_B = "bb112233-4455-6677-8899-aabbccddeeff"
+
+    def setUp(self) -> None:
+        self.spec = next(spec for spec in SPECS if spec.d == "req")
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self._patch = mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(self.root)})
+        self._patch.start()
+        self.addCleanup(self._patch.stop)
+        self.addCleanup(self._tmp.cleanup)
+        self.spec.reset_cache()
+        self.addCleanup(self.spec.reset_cache)
+
+    def _example_with_id(self, doc_id: str) -> str:
+        """The packaged req example with its frontmatter ``id`` rewritten to ``doc_id``."""
+        text = self.spec.example_text()
+        match = re.search(r"^id: \S+$", text, re.MULTILINE)
+        assert match is not None  # every packaged example carries a frontmatter id
+        return text.replace(match.group(0), f"id: {doc_id}", 1)
+
+    def _seed(self, language: str, doc_id: str, text: str) -> Path:
+        path = self.root / "req" / language / doc_id[:2] / f"{doc_id}-doc.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def _seed_all(self) -> tuple[Path, Path, Path]:
+        en_a = self._seed("en", self._ID_A, self._example_with_id(self._ID_A))
+        en_b = self._seed("en", self._ID_B, self._example_with_id(self._ID_B))
+        de_a = self._seed("de", self._ID_A, translate_to_de(self._example_with_id(self._ID_A)))
+        return en_a, en_b, de_a
+
+    def test_id_lookup_reconcile_keeps_the_other_shard_and_the_variant_cached(self):
+        """Warm three entries (two EN shards + one de variant), run a real id lookup, and require the other
+        two entries to survive the lookup's own reconcile (pre-fix: the union was computed over the ``en/``
+        dir and both were evicted)."""
+        en_a, en_b, de_a = self._seed_all()
+        entries = self.spec.module("tools._cache")._cache._entries
+        self.spec.read(en_a)
+        self.spec.read(en_b)
+        self.spec.read(de_a)
+        self.assertEqual(set(entries), {en_a.resolve(), en_b.resolve(), de_a.resolve()})
+
+        find_req_path = self.spec.module("tools._paths").find_req_path
+        resolved = find_req_path(
+            self.spec.base_dir(), self._ID_A
+        )  # triggers _reconcile_req_scan, as every id lookup does
+
+        self.assertEqual(resolved, en_a)
+        self.assertIn(en_b.resolve(), entries)  # the other EN shard survives
+        self.assertIn(de_a.resolve(), entries)  # the de variant survives
+
+    def test_the_reconcile_union_is_the_domain_wide_all_languages_listing(self):
+        """The union the reconcile wrapper passes is exactly the all-languages sharded listing of the
+        DOMAIN base (pure unit pin over the ``tools._paths`` wiring)."""
+        en_a, en_b, de_a = self._seed_all()
+        paths_module = self.spec.module("tools._paths")
+
+        with mock.patch.object(paths_module, "reconcile_req_cache") as spy:
+            paths_module.find_req_path(self.spec.base_dir(), self._ID_A)
+
+        self.assertEqual(spy.call_count, 1)
+        (union_arg,) = spy.call_args.args
+        expected = list(iter_doc_paths_all_languages(doc_domain_base_dir("req")))
+        self.assertEqual(sorted(map(str, union_arg)), sorted(map(str, expected)))
+        self.assertEqual(sorted(map(str, expected)), sorted(map(str, (de_a, en_a, en_b))))
 
 
 class TestEnOnlyConsumersReRootedAtEnDir(unittest.TestCase):
