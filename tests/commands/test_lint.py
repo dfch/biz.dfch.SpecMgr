@@ -60,6 +60,21 @@ static and drift pins that keep the command import-safe and derived:
   read/peek use cannot affect the command) and REQ-011 (no sweep
   invocation of the command in the hook, the CI workflow, or the
   test suite).
+* feat-245 Phase 120 (Tasks 120.100-120.120) -- the sharded layout
+  gate (REQ-006/ACC-005): the valid sharded shape lints clean (EN and
+  a table-closed variant), the four misplaced depths are layout
+  violations (exit 2, the correct path named -- concrete for a uuid-
+  carrying file name, shape-level otherwise -- the summary's own
+  ``layout`` counter, never parsed, the ``--type`` override does not
+  rescue, the violation outranks a parse failure), the no-table
+  language dir is placement-valid (the existing no-table content
+  error, exit 1), the non-domain-dir skip at every depth (pinned
+  against the repo's real ``docs/archive/`` tree), and the
+  ``_derive_id``/repair-pointer pins on sharded paths; the anchored
+  artifact pattern constant is the open-depth form (every misplaced
+  depth and the non-domain dirs selected, the identity pins against
+  the pre-commit hook and the CI step unchanged); the three
+  flat-seeded sweep tests are re-seeded to the sharded layout.
 """
 
 from __future__ import annotations
@@ -83,9 +98,16 @@ from typer.testing import CliRunner
 from biz.dfch.specmgr.cli import app
 from biz.dfch.specmgr.feat.tools._cache import read_feat_dirty
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
+from biz.dfch.specmgr.general.models.heading_table import load_heading_table
 from biz.dfch.specmgr.general.tools._doc_cache import DocCache
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
-from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS, FEAT, WHOLE_BODY_DOMAINS, whole_body_domain
+from biz.dfch.specmgr.general.tools._domains import (
+    ALL_DOMAINS,
+    FEAT,
+    UUID_DOMAINS,
+    WHOLE_BODY_DOMAINS,
+    whole_body_domain,
+)
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 
 runner = CliRunner()
@@ -98,10 +120,15 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 _LINT_PY = _REPO_ROOT / "src" / "biz" / "dfch" / "specmgr" / "commands" / "lint.py"
 
 #: The canonical anchored in-tree artifact file pattern the pre-commit hook
-#: (Phase 120) and the CI pull-request step (Phase 130) both use verbatim
-#: (the plan's Design Notes / REQ-009: one shared pattern, the lint command's
-#: own derived type list deciding which matched files are artifacts).
-_HOOK_FILE_PATTERN = r"^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$"
+#:(feat-218) and the CI pull-request step (feat-218) both use verbatim (one
+#: shared pattern, the lint command's own derived type list deciding which
+#: matched files are artifacts). feat-245 Phase 120 (REQ-006): the docs part
+#: is an OPEN-DEPTH match under ``docs/<dir>/`` (any ``.md`` one or more
+#: levels below) so the sharded valid shape AND every misplaced depth are
+#: selected for the lint command's placement validator, and non-domain dirs
+#: (``docs/archive/adr/x.md`` at depth >= 3, ``docs/api/x/y.md``) are
+#: selected and then skipped by the command (exit 0, counted).
+_HOOK_FILE_PATTERN = r"^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/.+\.md)$"
 
 #: The command name and the two sweep flags, each built from parts so this
 #: file's own source never carries a contiguous command-name-plus-flag line
@@ -188,6 +215,27 @@ def _broken_req_text() -> str:
     broken = text.replace("## Characteristics", "## Bogus", 1)
     assert broken != text
     return broken
+
+
+def _de_variant_text(doc_type: str) -> str:
+    """The table-closed ``de`` variant of the packaged healthy document: every fixed-text
+    heading translated into German via the packaged ``de.json`` table's reverse direction
+    (fence-aware -- the same helper shape ``tests/general/tools/test_i18n_all_domains.py``
+    uses). Data-carrying headings hold no table entry and stay byte-identical; prose and
+    frontmatter are never touched (REQ-010)."""
+    reverse = {canonical: translated for translated, canonical in load_heading_table("de").items()}
+    pattern = re.compile(r"^(#{1,6}) (.*)$")
+    out: list[str] = []
+    in_fence = False
+    for line in _healthy_whole_body_text(doc_type).split("\n"):
+        if re.match(r"^(```|~~~)", line):
+            in_fence = not in_fence
+        match = pattern.match(line)
+        if match and not in_fence and match.group(2) in reverse:
+            out.append(f"{match.group(1)} {reverse[match.group(2)]}")
+        else:
+            out.append(line)
+    return "\n".join(out)
 
 
 def _hook_files_pattern(text: str) -> str | None:
@@ -502,8 +550,11 @@ class TestLintReadFailures(_LintTestBase):
         self.assertIn("summary: linted=1 failed=1 skipped=0", result.stdout)
 
     def test_sweep_enumerated_unreadable_file_is_a_lint_failure(self):
+        """feat-245 Phase 120: re-seeded to the sharded layout (the sweep's own
+        ``iter_doc_paths`` yields ``<base>/*/*.md`` of the registered ``en/``
+        base dir, so a flat ``docsroot/req/`` seed is invisible to it)."""
         docs_root = self.tmp / "docsroot"
-        file_path = docs_root / "req" / "unreadable.md"
+        file_path = docs_root / "req" / "en" / "00" / "unreadable.md"
         file_path.parent.mkdir(parents=True)
         file_path.write_text(_broken_req_text(), encoding="utf-8")
         os.chmod(file_path, 0)
@@ -520,9 +571,11 @@ class TestLintReadFailures(_LintTestBase):
     def test_sweep_enumerated_invalid_utf8_file_is_a_lint_failure(self):
         """Phase 160 (I3): the same decode failure in SWEEP mode prints the same
         ``not valid utf-8`` text path mode does (before the split, sweep printed
-        ``unreadable: ...`` for a ``UnicodeDecodeError`` -- asymmetric)."""
+        ``unreadable: ...`` for a ``UnicodeDecodeError`` -- asymmetric).
+        feat-245 Phase 120: re-seeded to the sharded layout (see the sibling
+        unreadable test)."""
         docs_root = self.tmp / "docsroot"
-        file_path = docs_root / "req" / "bad-encoding.md"
+        file_path = docs_root / "req" / "en" / "00" / "bad-encoding.md"
         file_path.parent.mkdir(parents=True)
         file_path.write_bytes(b"\xff\xfe this is not valid utf-8 \x00\x01")
 
@@ -577,11 +630,14 @@ class TestLintEnvVars(_LintTestBase):
                 self.assertIn("summary: linted=0 failed=0 skipped=0", result.stdout)
 
     def test_dir_overrides_env_var(self):
+        """feat-245 Phase 120: the ``--dir`` override seeds the sharded shape (one
+        shard dir level below the swept base -- ``iter_doc_paths``' own
+        ``<base>/*/*.md`` listing)."""
         example_text = read_packaged_text("req", "example")
         doc_id = whole_body_domain("req").parse_text(example_text).frontmatter.id
         sweep_dir = self.tmp / "sweep"
-        sweep_dir.mkdir()
-        (sweep_dir / f"{doc_id}.md").write_text(example_text, encoding="utf-8")
+        (sweep_dir / doc_id[:2]).mkdir(parents=True)
+        (sweep_dir / doc_id[:2] / f"{doc_id}.md").write_text(example_text, encoding="utf-8")
 
         with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(self.tmp / "empty-docs")}):
             result = self._invoke("--type", "req", "--dir", str(sweep_dir))
@@ -610,6 +666,226 @@ class TestLintEnvVars(_LintTestBase):
 
         self.assertEqual(result.exit_code, 0, result.output)
         self.assertIn("summary: linted=0 failed=0 skipped=1", result.stdout)
+
+
+class TestLintShardedPlacement(_LintTestBase):
+    """feat-245 Phase 120 (Task 120.100/120.120) / REQ-006 / ACC-005: the sharded layout
+    recognition and the placement validator. The one valid file shape
+    ``docs/<type>/<lang>/<2-hex>/<file>.md`` lints clean (a valid EN shard and a valid
+    table-closed variant shard); every misplaced depth is a layout violation -- its own
+    result class, never a usage error and never a content-parse failure: exit 2, the
+    defect and the correct path named (concrete when the file name carries a canonical
+    uuid, shape-level otherwise), the file's own repair pointer, the summary's own
+    ``layout`` counter, never parsed; a no-table language dir stays placement-valid and
+    takes the existing no-table content error (exit 1); the ``--type`` override never
+    rescues a misplaced file; and a layout violation outranks a parse failure in the
+    same run."""
+
+    DOC_TYPE = "req"
+
+    def _doc_id(self) -> str:
+        return whole_body_domain(self.DOC_TYPE).parse_text(read_packaged_text(self.DOC_TYPE, "example")).frontmatter.id
+
+    def _assert_violation(self, rel_path: str, kind: str, correct_path: str) -> None:
+        path = self._write(rel_path, _healthy_whole_body_text(self.DOC_TYPE))
+
+        result = self._invoke(str(path))
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn(f"layout violation: {kind}; correct path: {correct_path}", result.stdout)
+        self.assertIn("summary: linted=0 failed=0 skipped=0 layout=1", result.stdout)
+
+    def test_valid_en_shard_lints_clean(self):
+        doc_id = self._doc_id()
+        path = self._write(
+            f"docs/{self.DOC_TYPE}/en/{doc_id[:2]}/{doc_id}-sharded.md", _healthy_whole_body_text(self.DOC_TYPE)
+        )
+
+        result = self._invoke(str(path))
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
+
+    def test_valid_variant_shard_lints_clean(self):
+        """The table-closed ``de`` variant in its own sharded placement parses through the
+        de heading table (the path-derived language) and lints clean."""
+        doc_id = self._doc_id()
+        path = self._write(f"docs/{self.DOC_TYPE}/de/{doc_id[:2]}/{doc_id}-sharded.md", _de_variant_text(self.DOC_TYPE))
+
+        result = self._invoke(str(path))
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
+
+    def test_missing_language_dir_is_a_layout_violation(self):
+        self._assert_violation(
+            f"docs/{self.DOC_TYPE}/foo.md",
+            "missing language directory",
+            f"docs/{self.DOC_TYPE}/en/<2-hex-shard>/foo.md",
+        )
+
+    def test_missing_language_dir_with_uuid_names_the_concrete_correct_path(self):
+        """ACC-005 + the correct-path contract: a file name carrying a canonical uuid gets the
+        CONCRETE correct path (shard = the uuid's first two hex digits), and the violation's
+        own repair pointer derives that uuid (the ``_derive_id`` pin for sharded placements)."""
+        doc_id = self._doc_id()
+        file_name = f"{doc_id}-sharded.md"
+        path = self._write(f"docs/{self.DOC_TYPE}/{file_name}", _healthy_whole_body_text(self.DOC_TYPE))
+
+        result = self._invoke(str(path))
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn(
+            f"layout violation: missing language directory; correct path: docs/{self.DOC_TYPE}/en/{doc_id[:2]}/{file_name}",
+            result.stdout,
+        )
+        self.assertIn(f"repair via: /repair {self.DOC_TYPE} {doc_id}", result.stdout)
+        self.assertIn("summary: linted=0 failed=0 skipped=0 layout=1", result.stdout)
+
+    def test_invalid_language_dir_is_a_layout_violation(self):
+        """One dir segment that is not a shape-valid two-letter language dir (``Notes``): the
+        missing-(valid)-language-dir violation, correct path falling back to ``en``."""
+        self._assert_violation(
+            f"docs/{self.DOC_TYPE}/Notes/foo.md",
+            "missing (valid) language directory",
+            f"docs/{self.DOC_TYPE}/en/<2-hex-shard>/foo.md",
+        )
+
+    def test_missing_shard_dir_is_a_layout_violation(self):
+        """A file directly in a shape-valid language dir: the missing-shard-dir violation."""
+        self._assert_violation(
+            f"docs/{self.DOC_TYPE}/en/foo.md",
+            "missing shard directory",
+            f"docs/{self.DOC_TYPE}/en/<2-hex-shard>/foo.md",
+        )
+
+    def test_missing_shard_dir_in_a_variant_language_keeps_that_language(self):
+        """The correct path keeps the misplaced file's own shape-valid language dir (``de``),
+        not the ``en`` fallback."""
+        self._assert_violation(
+            f"docs/{self.DOC_TYPE}/de/foo.md",
+            "missing shard directory",
+            f"docs/{self.DOC_TYPE}/de/<2-hex-shard>/foo.md",
+        )
+
+    def test_non_hex_shard_is_a_layout_violation(self):
+        """ACC-005: the non-hex shard (``zz``) -- a shape-valid LANGUAGE that sits at the
+        SHARD level: the placement, not the language, is defective."""
+        self._assert_violation(
+            f"docs/{self.DOC_TYPE}/en/zz/x.md", "non-hex shard", f"docs/{self.DOC_TYPE}/en/<2-hex-shard>/x.md"
+        )
+
+    def test_deeper_than_one_shard_level_is_a_layout_violation(self):
+        self._assert_violation(
+            f"docs/{self.DOC_TYPE}/en/10/20/x.md",
+            "deeper than one shard level",
+            f"docs/{self.DOC_TYPE}/en/<2-hex-shard>/x.md",
+        )
+
+    def test_no_table_language_dir_is_placement_valid_and_takes_the_no_table_content_error(self):
+        """REQ-006: a shape-valid language dir WITHOUT a packaged heading table (``zz``) is
+        placement-valid -- the file is PARSED (language-aware) and fails with the table
+        loader's existing no-table content error (exit 1, ``failed=1``), never a layout
+        violation (``layout=0``)."""
+        path = self._write(f"docs/{self.DOC_TYPE}/zz/aa/foo.md", _healthy_whole_body_text(self.DOC_TYPE))
+
+        result = self._invoke(str(path))
+
+        self.assertEqual(result.exit_code, 1, result.output)
+        self.assertIn("no heading-mapping table for language 'zz'", result.stdout)
+        self.assertNotIn("layout violation", result.stdout)
+        self.assertIn("summary: linted=1 failed=1 skipped=0 layout=0", result.stdout)
+        self.assertIn(f"\n  repair via: /repair {self.DOC_TYPE}\n", result.stdout)
+
+    def test_type_override_does_not_rescue_a_misplaced_file(self):
+        """A misplaced ``docs/<type>/`` file is a layout violation even when ``--type`` names
+        the parse explicitly: the placement defect stands (the gate's job is to catch the
+        invisible document, REQ-006)."""
+        path = self._write(f"docs/{self.DOC_TYPE}/foo.md", _healthy_whole_body_text(self.DOC_TYPE))
+
+        result = self._invoke(str(path), "--type", self.DOC_TYPE)
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn("layout violation: missing language directory", result.stdout)
+        self.assertIn("summary: linted=0 failed=0 skipped=0 layout=1", result.stdout)
+
+    def test_layout_violation_outranks_a_parse_failure_in_the_same_run(self):
+        """Both findings are reported (REQ-001 ethos: every failure, not just the first),
+        and the run exits 2 (the layout violation outranks the parse failure)."""
+        doc_id = self._doc_id()
+        misplaced = self._write(f"docs/{self.DOC_TYPE}/foo.md", _healthy_whole_body_text(self.DOC_TYPE))
+        broken = self._write(f"docs/{self.DOC_TYPE}/en/{doc_id[:2]}/{doc_id}-sharded.md", _broken_req_text())
+
+        result = self._invoke(str(misplaced), str(broken))
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn(str(misplaced), result.stdout)
+        self.assertIn(str(broken), result.stdout)
+        self.assertIn("layout violation: missing language directory", result.stdout)
+        self.assertIn("Requirement > Characteristics", result.stdout)
+        self.assertIn("summary: linted=1 failed=1 skipped=0 layout=1", result.stdout)
+
+    def test_repair_pointer_derives_the_uuid_on_a_valid_sharded_path(self):
+        """ACC-005 + the ``_derive_id`` pin: on the valid sharded shape the repair pointer
+        derives the canonical uuid from the file name (printed lowercased) -- unchanged by
+        the shard dirs in between."""
+        doc_id = self._doc_id()
+        path = self._write(f"docs/{self.DOC_TYPE}/en/{doc_id[:2]}/{doc_id.upper()}-sharded.md", _broken_req_text())
+
+        result = self._invoke(str(path))
+
+        self.assertEqual(result.exit_code, 1, result.output)
+        self.assertIn(f"repair via: /repair {self.DOC_TYPE} {doc_id}", result.stdout)
+        self.assertNotIn(f"repair via: /repair {self.DOC_TYPE} {doc_id.upper()}", result.stdout)
+        self.assertIn("summary: linted=1 failed=1 skipped=0 layout=0", result.stdout)
+
+    def test_repair_pointer_falls_back_when_the_sharded_name_carries_no_uuid(self):
+        path = self._write(f"docs/{self.DOC_TYPE}/en/aa/foo.md", _broken_req_text())
+
+        result = self._invoke(str(path))
+
+        self.assertEqual(result.exit_code, 1, result.output)
+        self.assertIn(f"\n  repair via: /repair {self.DOC_TYPE}\n", result.stdout)
+        self.assertIn("summary: linted=1 failed=1 skipped=0 layout=0", result.stdout)
+
+
+class TestLintNonDomainDirSkip(unittest.TestCase):
+    """feat-245 Phase 120 (Task 120.120) / REQ-006 / ACC-005: a file anchored under
+    ``docs/<dir>/`` where ``<dir>`` is NOT a registered domain keeps the skip behavior at
+    every depth -- exit 0, counted in ``skipped``, never parsed, never a layout violation.
+    Pinned against the repo's real ``docs/archive/`` tree (real files, depth >= 3:
+    ``docs/archive/adr/<uuid>-<slug>.md`` and ``docs/archive/sop/``) plus synthetic depths
+    under a temporary docs root (the in-tree corpus is never mutated)."""
+
+    def test_repo_archive_tree_files_skip_clean_at_their_real_depths(self):
+        archive = _REPO_ROOT / "docs" / "archive"
+        self.assertTrue(archive.is_dir(), "the repo's docs/archive tree must exist for this pin")
+        files = sorted(path for path in archive.rglob("*.md") if path.is_file())
+        self.assertGreater(len(files), 0, "the repo's docs/archive tree must carry real .md files")
+        for path in files:
+            with self.subTest(path=str(path.relative_to(_REPO_ROOT))):
+                self.assertGreaterEqual(len(path.relative_to(_REPO_ROOT / "docs").parts), 3, "the pin needs depth >= 3")
+                result = runner.invoke(app, ["lint", str(path)])
+                self.assertEqual(result.exit_code, 0, result.output)
+                self.assertIn("summary: linted=0 failed=0 skipped=1 layout=0", result.stdout)
+
+    def test_synthetic_non_domain_dirs_skip_clean_at_every_depth(self):
+        tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        for rel in (
+            "docs/archive/x.md",
+            "docs/archive/adr/x.md",
+            "docs/archive/a/b/x.md",
+            "docs/api/x/y.md",
+        ):
+            with self.subTest(path=rel):
+                path = tmp / rel
+                path.parent.mkdir(parents=True)
+                path.write_text("anything", encoding="utf-8")
+
+                result = runner.invoke(app, ["lint", str(path)])
+
+                self.assertEqual(result.exit_code, 0, result.output)
+                self.assertIn("summary: linted=0 failed=0 skipped=1 layout=0", result.stdout)
 
 
 class TestLintTypeAcceptanceRuntime(_LintTestBase):
@@ -755,26 +1031,59 @@ class TestLintMissingMcpExtra(unittest.TestCase):
 
 
 class TestLintHookPattern(unittest.TestCase):
-    """Task 110.130 / ACC-008: the canonical anchored in-tree artifact file pattern (the one the
-    pre-commit hook and the CI step share verbatim), pinned against this module's own constant
-    :data:`_HOOK_FILE_PATTERN`. The constant matches one representative path per ``ALL_DOMAINS``
-    type (the registry is iterated, never a hand-listed set) and no non-artifact location. The
-    identity assertions run conditionally on the hook (Phase 120) / CI step (Phase 130) being
-    present: until then there is nothing to compare (green from Phase 110), and once a file
-    carries a specmgr-lint hook/step, its pattern MUST equal the constant (the assertion never
-    weakens to a no-op)."""
+    """Task 110.130 / ACC-008 + feat-245 Phase 120 (Task 120.110) / REQ-006: the canonical
+    anchored in-tree artifact file pattern (the one the pre-commit hook and the CI step share
+    verbatim), pinned against this module's own constant :data:`_HOOK_FILE_PATTERN`. The
+    constant matches one representative path per ``ALL_DOMAINS`` type (the sharded valid shape
+    for the UUID domains, the folder shape for feat -- the registry is iterated, never a
+    hand-listed set), every misplaced depth of every UUID domain (the open-depth docs part that
+    selects them for the lint command's placement validator), the non-domain dirs at every
+    depth (selected, then skipped by the command), and no non-artifact location. The identity
+    assertions run conditionally on the hook / CI step being present: until then there is
+    nothing to compare (green from Phase 110), and once a file carries a specmgr-lint
+    hook/step, its pattern MUST equal the constant (the assertion never weakens to a no-op)."""
 
     def test_pattern_matches_one_representative_path_per_type(self):
         for doc_type in ALL_DOMAINS:
             with self.subTest(domain=doc_type):
-                path = ".specmgr/feat/feat-1-x/README.md" if doc_type == FEAT else f"docs/{doc_type}/x.md"
+                path = ".specmgr/feat/feat-1-x/README.md" if doc_type == FEAT else f"docs/{doc_type}/en/00/x.md"
+                self.assertIsNotNone(re.fullmatch(_HOOK_FILE_PATTERN, path), path)
+
+    def test_pattern_matches_every_misplaced_depth_for_every_uuid_domain(self):
+        """feat-245 Phase 120 / REQ-006: the open-depth docs part selects every misplaced depth
+        of a registered UUID domain -- the flat file (missing language dir), the file directly
+        in the language dir (missing shard dir), the non-hex shard, and the deeper-than-one-
+        shard-level file -- so the lint command's placement validator can fail them (exit 2)."""
+        for doc_type in UUID_DOMAINS:
+            with self.subTest(domain=doc_type):
+                for path in (
+                    f"docs/{doc_type}/x.md",
+                    f"docs/{doc_type}/en/x.md",
+                    f"docs/{doc_type}/en/zz/x.md",
+                    f"docs/{doc_type}/en/10/20/x.md",
+                ):
+                    self.assertIsNotNone(re.fullmatch(_HOOK_FILE_PATTERN, path), path)
+
+    def test_pattern_matches_non_domain_dirs_at_every_depth(self):
+        """feat-245 Phase 120 / REQ-006: non-domain dirs under ``docs/`` (``docs/archive/`` at
+        depth >= 3, ``docs/api/``, ``docs/appendix/``) are selected by the pattern and then
+        SKIPPED by the lint command (exit 0, counted) -- the pattern has no per-type list, the
+        command's own derived type list decides which matched files are artifacts."""
+        for path in (
+            "docs/archive/adr/x.md",
+            "docs/archive/a/b/x.md",
+            "docs/api/x/y.md",
+            "docs/appendix/x.md",
+        ):
+            with self.subTest(path=path):
                 self.assertIsNotNone(re.fullmatch(_HOOK_FILE_PATTERN, path), path)
 
     def test_pattern_does_not_match_non_artifact_locations(self):
         for path in (
-            "docs/api/x/y.md",
             ".specmgr/conventions/x.md",
             ".specmgr/feat/feat-1-x/evidence/some/docs/tsk/x.md",
+            "other/docs/req/en/00/x.md",
+            "src/biz/x.md",
         ):
             with self.subTest(path=path):
                 self.assertIsNone(re.fullmatch(_HOOK_FILE_PATTERN, path), path)
