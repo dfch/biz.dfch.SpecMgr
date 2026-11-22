@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-22T21:30:00.000+01:00'
+updated: '2026-11-22T22:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -174,6 +174,8 @@ Limit: a style on a perspective value, for example `Perspective:Reliability[valu
 
 To be confirmed: a review as an overlay on the architecture baseline with `workspace extends` and `!element`. This needs file access and cannot be tested with the MCP server. The local Structurizr container mounts a workspace directory and can test it.
 
+Update 2026-11-22 (Task 120.110): verified with the probe in `.specmgr/feat/feat-267-arch-rvw/probe/`. An overlay workspace with `workspace extends` and `!element` adds perspectives and properties to an element of the base workspace. A style on a perspective value is still renderer-only.
+
 > **0.0390**: Which viewpoints and checklist concepts have no C4 equivalent?
 
 No native C4 construct exists for VP02 Functional, VP04 Information/Data, VP09 Security, VP11 Development/Construction and VP13 Safety. VP10 Operational is covered in part only (health checks, infrastructure nodes).
@@ -263,7 +265,7 @@ Decisions taken in TXT Draft 0.7: `trust.boundary` on elements and deployment no
 
 Not verified: the full deployment export in the PlantUML validator (only a trimmed subset), image rendering, properties on views, components and deployment groups, the Structurizr MCP server, other Structurizr versions.
 
-TODO: decide where the probe and the query script live (feature folder) and whether the query script becomes the c4-model-checker check.
+Answered on 2026-11-22 (issue 267, Task 120.110). The probe is rebuilt and committed in `.specmgr/feat/feat-267-arch-rvw/probe/`: workspace, negative cases, overlay, local `docs/` and `adrs/`, the standard-library query script `query.py` and a README with the reproduce commands. All results above are confirmed with Structurizr 2026.10.26. New results: view properties are kept (the viewpoint record of Architecture Model 8.4); `!adrs` must sit inside the software system to satisfy the decision inspection; a file named like a specmgr DEC is ignored by the madr importer; the telemetry view needs `include *` with `exclude "relationship.tag!=Telemetry"`; a positional number after the technology of a deployment node becomes a tag, not the instance count; the specmgr structure check warns "unclosed 'rectangle' fragment" on the Structurizr PlantUML export while the PlantUML server renders it, a false positive of `plantuml/structure.py`. Whether `query.py` becomes the c4-model-checker check belongs to issue 250; it is ready as a starting point.
 
 > **0.0510**: Which pilot runs are used for the model generation agent?
 

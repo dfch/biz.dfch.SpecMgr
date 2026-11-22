@@ -4,7 +4,7 @@ created: '2026-11-18T13:25:56.718+01:00'
 id: 30983f27-f5aa-4d42-972e-5593f0c3ba09
 status: draft
 type: txt
-updated: '2026-11-22T20:30:00.000+01:00'
+updated: '2026-11-22T22:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -296,14 +296,14 @@ Verified with Structurizr 2026.10.26 (QA 25bd5b93, 0.0500):
 | `safety.function` | Elements and relationships | To be confirmed. The ID of the safety function that the element is part of. One key per element; an element in two safety functions is recorded in the hazard analysis, not in the model. The property check lists all elements per safety function |
 | `failure.domain.placement` | Deployment nodes and container instances | To be confirmed. `fixed` or `scheduler`. With `scheduler`, the host is chosen at run time, `failure.domain.host` is not set, and the placement rules (anti-affinity, spread) are the evidence |
 
-Keys use only the characters a to z, 0 to 9 and the dot. Values are never empty. A key is set once on an element: a repeated key is overwritten by the last value, without a warning (QA 25bd5b93, 0.0680). A property cannot hold a list. Properties appear only in the JSON export. The PlantUML and Mermaid exports drop them, so a query script over the JSON export is the authoritative reader.
+The probe in `.specmgr/feat/feat-267-arch-rvw/probe/` (workspace, negative cases, overlay and the query script `query.py`) re-checks these conventions with one command list. Keys use only the characters a to z, 0 to 9 and the dot. Values are never empty. A key is set once on an element: a repeated key is overwritten by the last value, without a warning (QA 25bd5b93, 0.0680). A property cannot hold a list. Properties appear only in the JSON export. The PlantUML and Mermaid exports drop them, so a query script over the JSON export is the authoritative reader.
 
 ### 8.4 To be confirmed
 
-- How a view records the viewpoint it conforms to. A C4 view is a presentation and not a 42010 view. One C4 view can serve several viewpoints, for example the deployment view serves VP06 and VP07 (diagram B). Options: the view key, a tag, a property on the view. Properties on views are not verified.
+- How a view records the viewpoint it conforms to. A C4 view is a presentation and not a 42010 view. One C4 view can serve several viewpoints, for example the deployment view serves VP06 and VP07 (diagram B). Verified with the probe (Task 120.110): a view takes a `properties` block and keeps it in the JSON export. Convention: the view property `viewpoint` holds the viewpoint IDs, comma-separated when a view serves several (for example `VP06,VP07`). The key name is proposed.
 - The keys `principle.dec`, a site key for LO, the reference keys for RG and RS, and the keys `trust.level`, `safety.function` and `failure.domain.placement` of section 8.3. The tag for telemetry relationships (section 8.1).
 - One deployment environment for each shipped deployment descriptor and each variant in scope (checklist, section 3).
-- Documentation (`!docs`) and decisions (`!adrs`) with a local container, and `workspace extends` for a review overlay.
+- Verified with the probe (Task 120.110), no longer open: `!docs` with a local folder; `!adrs` with the madr importer, which must sit inside the software system to satisfy the decision inspection; `workspace extends` with `!element` for a review overlay.
 - The mapping of the decoupling modes in section 8.5, and whether a model can carry the direction of the source dependency, for example in a relationship property. No key is proposed yet.
 - The same mapping on three contrasting architectures: a traditional enterprise application, a distributed cloud-native platform and a safety-relevant cyber-physical system.
 
@@ -333,6 +333,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-22 21:30:00.000Z - Draft 0.7
+
+Structurizr probe re-run from a committed location (`.specmgr/feat/feat-267-arch-rvw/probe/`, Task 120.110). Section 8.3 names the probe. Section 8.4: view properties verified, with the convention `viewpoint` = comma-separated viewpoint IDs; `!docs`, `!adrs` (madr, inside the software system) and `workspace extends` verified and removed from the open list. Issue 267. See QA 25bd5b93-a228-4d6c-8b70-d143dfd39444, 0.0500.
 
 ### 2026-11-22 19:30:00.000Z - Draft 0.6
 

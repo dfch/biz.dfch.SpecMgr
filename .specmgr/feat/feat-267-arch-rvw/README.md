@@ -4,7 +4,7 @@ created: '2026-11-18T13:21:29.973+01:00'
 id: feat-267-arch-rvw
 status: planning
 type: feat
-updated: '2026-11-22T21:30:00.000+01:00'
+updated: '2026-11-22T22:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -91,13 +91,13 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 
 - [x] Task 120.100: Validate the design against three contrasting architectures. Four runs in `validation/`: specmgr (extra class), AERIS-10, Apache OFBiz, OpenTelemetry Demo. Synthesis in `validation/synthesis.md`. QA 0.0340 and 0.0350 answered.
 - [x] Task 120.105: Decide the 15 proposed changes of `validation/synthesis.md` section 3 (user), then apply them to the checklist TXT, the Architecture Model TXT and the matrix.
-- [ ] Task 120.110: Re-run the Structurizr probe from a committed location.
+- [x] Task 120.110: Re-run the Structurizr probe from a committed location. Rebuilt in `probe/` (the original in `/tmp` was lost), run with the local Structurizr 2026.10.26 container, QA 0.0500 answered.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120: Task 120.100 is done. Four validation runs (specmgr, AERIS-10, Apache OFBiz, OpenTelemetry Demo) show that the matrix structure holds. The user accepted all 15 proposed changes of the synthesis, and they are applied (Task 120.105: checklist Draft 0.13, Architecture Model Draft 0.6, QA 0.0690). Since then: the metamodel diagrams show the review scope and the new keys (rendered with the local PlantUML server), tenant isolation and extension interfaces have criteria (QA 0.0700), and the maturity scale is COBIT 2019 (QA 0.0220). Open: Task 120.110 (Structurizr probe from a committed location). Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
+**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120: Task 120.100 is done. Four validation runs (specmgr, AERIS-10, Apache OFBiz, OpenTelemetry Demo) show that the matrix structure holds. The user accepted all 15 proposed changes of the synthesis, and they are applied (Task 120.105: checklist Draft 0.13, Architecture Model Draft 0.6, QA 0.0690). Since then: the metamodel diagrams show the review scope and the new keys (rendered with the local PlantUML server), tenant isolation and extension interfaces have criteria (QA 0.0700), and the maturity scale is COBIT 2019 (QA 0.0220). Task 120.110 is done: the Structurizr probe is rebuilt and committed in `probe/`. Remaining open: the QA items that wait for sources or decisions. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
 
 ### Blockers
 
@@ -106,6 +106,10 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22 21:30:00.000Z - Structurizr probe re-run
+
+The probe of QA 0.0500 lived in `/tmp` and was lost. Rebuilt in `probe/` (workspace, four negative cases, overlay, MADR decisions and a DEC-shaped file, `query.py`, README) and run with `structurizr/structurizr:2026.10.26-noble` offline: validate OK, inspect 0 errors, all QA 0.0500 results confirmed. New: view properties work (viewpoint record), `workspace extends` overlay works, `!adrs` must sit in the software system, a positional instance count becomes a tag, and the specmgr structure check has a false positive on Structurizr PlantUML exports. Architecture Model Draft 0.7.
 
 #### 2026-11-22 20:30:00.000Z - Tenancy, extensions, COBIT, diagrams
 
