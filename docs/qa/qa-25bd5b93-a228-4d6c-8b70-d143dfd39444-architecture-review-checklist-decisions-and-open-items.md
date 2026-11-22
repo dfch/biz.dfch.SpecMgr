@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-22T15:27:37.000+01:00'
+updated: '2026-11-22T16:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -166,7 +166,7 @@ To be confirmed: the same mapping on the three architectures of 0.0340. Pattern 
 
 > **0.0380**: Can a review result be shown on a Structurizr model?
 
-Yes, with a limit. A perspective (name, description, value) can be attached to any element and relationship. Proposed use: the perspective name is the checklist perspective (since TXT Draft 0.8 the word is the same on both sides, for example Reliability), the value is the rating word, the description is the finding summary. Properties carry the criterion ID and the evidence strength, for example `review.criterion` `VP06-RE-100` and `review.evidence` `Documented`. Verified with the parse tool: both are kept in the model. A model-level property can hold the safety relevance declaration and its justification.
+Yes, with a limit. A perspective (name, description, value) can be attached to any element and relationship. Proposed use: the perspective name is the checklist perspective (since TXT Draft 0.8 the word is the same on both sides, for example Reliability), the value is the rating word, the description is the finding summary. Properties carry the criterion ID and the evidence strength, for example `review.criterion` `VP06-RE-100` and `review.evidence` `Documented`. Verified with the parse tool: both are kept in the model. Superseded on 2026-11-22 by 0.0680: this holds only one result per element and perspective. A model-level property can hold the safety relevance declaration and its justification.
 
 Limit: a style on a perspective value, for example `Perspective:Reliability[value==Unsatisfactory]`, works in the Structurizr renderer only. In the PlantUML export of the probe workspace the style was not applied. A coloured rating view in an exported diagram needs another way, for example tag based styles. To be confirmed: whether tag based styles survive the export.
 
@@ -405,6 +405,10 @@ TODO: decide which of these sources to add and convert, in the order of the patt
 > **0.0670**: Is the perspective DevelopmentResource renamed, and if so to what?
 
 Answered on 2026-11-20 (issue 267): yes. Renamed to Resources, code RS. One column, no split into development and operating resources. The scope is the full lifecycle (design, build, deploy, operate), which the description in checklist section 5.1, AD15 Organisational fit and the primary cell of the operational viewpoint in that column already expressed; the name caught up with the scope. The R+W counterpart is the Development Resource perspective (Tables 4-2, 24-1, 24-2; named in 0.0410), development-view centric in the book. The re-scoping is labelled a catalogue extension, following the Safety precedent of 0.0520. The book name stays in the sources and in the R+W counterpart column. No criterion carried a DR code, so no criterion ID changed. Checklist Draft 0.11, Architecture Model TXT Draft 0.3.
+
+> **0.0680**: Can one element carry the results of several criteria of the same perspective?
+
+Answered on 2026-11-22 (issue 267), verified with the Structurizr MCP parse tool. No, not with the design of 0.0380. A deployment node with three perspectives named Reliability (VP06-RE-100, -110, -120) fails with the parse error "A perspective named "Reliability" already exists". Properties are no alternative: two `review.criterion` keys on one element parse without an error, and the JSON export keeps only the last value. Perspective names are free text, so a criterion ID such as `VP06-RE-120` is a valid name. Decision for the design proposal: one perspective for each criterion, name = criterion ID, value = rating word, description = evidence level and finding summary. The properties `review.criterion` and `review.evidence` are dropped. Cost: a style selector names one perspective, so a coloured view per perspective code needs one style for each criterion ID, and only in the Structurizr renderer. Architecture Model TXT Draft 0.5, sections 8.2 and 8.3.
 
 > **0.0280**: Which criteria are knock-out criteria, per review type?
 

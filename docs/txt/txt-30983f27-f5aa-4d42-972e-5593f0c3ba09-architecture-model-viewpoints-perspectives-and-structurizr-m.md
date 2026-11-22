@@ -4,7 +4,7 @@ created: '2026-11-18T13:25:56.718+01:00'
 id: 30983f27-f5aa-4d42-972e-5593f0c3ba09
 status: draft
 type: txt
-updated: '2026-11-22T15:27:37.000+01:00'
+updated: '2026-11-22T16:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -59,14 +59,16 @@ Both files parse and render with PlantUML (checked with a local jar during autho
 | Pattern, style | A reusable solution form. R+W treat architectural style and architectural pattern as synonyms | R+W ch. 11 |
 | Decision, rationale | A choice with significance for the architecture, and the reason for it | 42010, R+W ch. 8 and 13 |
 | Scenario | A description of a use of the system or of a quality situation. It is a technique and not a viewpoint | R+W ch. 10 |
-| Criterion, MatrixCell, Finding | Catalogue concepts of the review checklist. They attach to Viewpoint and Perspective | Catalogue extension |
+| Criterion, MatrixCell, Finding | Catalogue concepts of the review checklist. A cell is the crossing of a matrix row and a perspective | Catalogue extension |
+| MatrixRow, CrossView | A matrix row is a viewpoint or the row XV CrossView. CrossView is not a viewpoint. It holds the criteria on the architecture description as a whole: security target, hazard analysis, regulation register, resource constraints | Catalogue extension |
 
 ### 3.2 Relations that matter
 
 - A view conforms to exactly one viewpoint. A viewpoint frames several concerns.
 - Perspectives are orthogonal to viewpoints. A perspective is applied to some or all views (R+W ch. 4). The applicability matrix of the checklist is the record of this application.
 - A principle guides concerns and is followed by decisions. The chain concern, principle, decision is the traceability line of R+W ch. 8.
-- A pattern implements one or more principles. A tactic belongs to a perspective.
+- A decision follows principles and applies patterns and tactics. A tactic belongs to a perspective.
+- A matrix row is a viewpoint or CrossView. CrossView spans the architecture description, not a view. In 42010 the description itself holds the stakeholders, concerns, decisions and rationale outside any view. The criteria of XV are about these items.
 - Scenarios exercise perspectives. They state quality targets.
 
 ### 3.3 Terms used in two senses
@@ -276,7 +278,7 @@ The early chat sessions mapped Information to container and component views, and
 | LO | Sites and regions of deployment nodes | `failure.domain.region`. A separate site key is to be confirmed |
 | RS | A reference to team ownership. Not modelled | Property reference. Key to be confirmed |
 
-A review result can be attached to an element with the Structurizr perspective feature. Proposed use: perspective name = the code name (for example Reliability), value = the rating word, description = the finding summary. Properties `review.criterion` and `review.evidence` carry the criterion ID and the evidence level. Verified with the parse tool. A style on a perspective value works only in the Structurizr renderer, not in the PlantUML export.
+A review result can be attached to an element with the Structurizr perspective feature. Proposed use: one perspective for each criterion. Perspective name = the criterion ID (for example VP06-RE-100), value = the rating word, description = the evidence level and the finding summary (for example "Documented. Host A has no replica."). The perspective code is part of the criterion ID. Verified with the parse tool (QA 25bd5b93, 0.0680): a perspective name must be unique on an element, and a second perspective with the same name is a parse error. So a name per perspective code (for example Reliability) holds only one result per element, but one deployment node is subject to several criteria. Properties are no alternative: a repeated key is overwritten without a warning. A style on a perspective value works only in the Structurizr renderer, not in the PlantUML export. A style selector names one perspective, so a style per criterion ID is needed, or the review report holds the coloured view.
 
 ### 8.3 Property conventions
 
@@ -290,11 +292,11 @@ Verified with Structurizr 2026.10.26 (QA 25bd5b93, 0.0500):
 | `review.safety.relevant`, `review.safety.justification` | Model | |
 | `origin`, `provenance` | Elements and relationships | `origin` is Extracted, Inferred or Proposed |
 
-Keys use only the characters a to z, 0 to 9 and the dot. Values are never empty. Properties appear only in the JSON export. The PlantUML and Mermaid exports drop them, so a query script over the JSON export is the authoritative reader.
+Keys use only the characters a to z, 0 to 9 and the dot. Values are never empty. A key is set once on an element: a repeated key is overwritten by the last value, without a warning (QA 25bd5b93, 0.0680). A property cannot hold a list. Properties appear only in the JSON export. The PlantUML and Mermaid exports drop them, so a query script over the JSON export is the authoritative reader.
 
 ### 8.4 To be confirmed
 
-- How a view records the viewpoint it conforms to. Options: the view key, a tag, a property on the view. Properties on views are not verified.
+- How a view records the viewpoint it conforms to. A C4 view is a presentation and not a 42010 view. One C4 view can serve several viewpoints, for example the deployment view serves VP06 and VP07 (diagram B). Options: the view key, a tag, a property on the view. Properties on views are not verified.
 - The keys `principle.dec`, a site key for LO, and the reference keys for RG and RS.
 - Documentation (`!docs`) and decisions (`!adrs`) with a local container, and `workspace extends` for a review overlay.
 - The mapping of the decoupling modes in section 8.5, and whether a model can carry the direction of the source dependency, for example in a relationship property. No key is proposed yet.
@@ -325,6 +327,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-22 15:30:00.000Z - Draft 0.5
+
+Metamodel corrections after the review. Section 3.1: MatrixRow and CrossView. Section 3.2: a decision applies patterns and tactics (the relation "a pattern implements a principle" is removed, it is not in R+W), and CrossView spans the architecture description. Section 8.2: one Structurizr perspective for each criterion, named by the criterion ID, because a perspective name is unique on an element (verified). The properties `review.criterion` and `review.evidence` are removed. Section 8.3: a repeated property key is overwritten silently (verified). Section 8.4: a C4 view is a presentation of 42010 views. Diagrams A and B changed to match. Issue 267.
 
 ### 2026-11-22 14:27:37.000Z - Draft 0.4
 

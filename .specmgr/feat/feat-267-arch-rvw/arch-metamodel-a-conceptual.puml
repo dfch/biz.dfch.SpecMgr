@@ -18,6 +18,8 @@ class "Pattern" as PAT <<RW>>
 class "Perspective" as PSP <<RW, CAT>>
 class "Tactic" as TAC <<RW>>
 class "Scenario" as SCN <<RW>>
+abstract class "MatrixRow" as ROW <<CAT>>
+class "CrossView" as XV <<CAT>>
 class "Criterion" as CRI <<CAT>>
 class "MatrixCell" as CELL <<CAT>>
 class "Finding" as FND <<CAT>>
@@ -40,14 +42,18 @@ CR "0..*" -- "2..*" VW : relates
 DC "1" --> "0..*" RT : has
 DC "0..*" -- "0..*" CN : resolves
 DC "0..*" -- "0..*" PRC : follows
+DC "0..*" -- "0..*" PAT : applies
+DC "0..*" -- "0..*" TAC : applies
 PRC "0..*" -- "0..*" CN : guides
-PAT "0..*" -- "0..*" PRC : implements
 PSP "0..*" -- "0..*" VW : applied to
 PSP "1" o-- "0..*" TAC : offers
 PSP "1" o-- "1..*" CN : addresses
 SCN "0..*" -- "1" PSP : exercises
 
-CELL "1" --> "1" VPT : row
+ROW <|-- VPT
+ROW <|-- XV
+XV "0..1" --> "1" AD : spans
+CELL "1" --> "1" ROW : row
 CELL "1" --> "1" PSP : column
 CRI "0..*" --> "1" CELL : home
 FND "0..*" --> "1" CRI : about
@@ -59,6 +65,7 @@ note right of PRC
 end note
 
 note right of PAT
+  adopted by a decision
   realised by one DEC each
   tags: arch.pattern
   style = pattern (R+W ch. 11)
@@ -69,6 +76,14 @@ note bottom of PSP
   ISO: sub-characteristics
   R+W: concerns
   12 perspectives in this catalogue
+end note
+
+note bottom of XV
+  not a viewpoint, row XV of the matrix
+  holds criteria on the description
+  as a whole (security target, hazard
+  analysis, regulation register,
+  resource constraints)
 end note
 
 @enduml

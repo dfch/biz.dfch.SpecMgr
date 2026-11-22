@@ -2,8 +2,10 @@
 title Architecture Model - Metamodel B (realisation in Structurizr)
 
 ' to be confirmed = not yet verified with the probe
+' A: = concept of metamodel A (arch-metamodel-a-conceptual.puml)
 class "Workspace" as WS
 class "Model" as MOD
+abstract class "Element" as EL
 class "Person" as PER
 class "SoftwareSystem" as SYS
 class "Container" as CON
@@ -18,6 +20,7 @@ class "Property" as PROP
 class "Tag" as TAG
 class "Group" as GRP
 class "Docs" as DOC
+class "A: View" as AVW <<42010>>
 
 WS "1" *-- "1" MOD
 WS "1" *-- "0..*" VIEW
@@ -33,41 +36,59 @@ DN "1" *-- "0..*" IN
 DN "1" *-- "0..*" CI
 CI "0..*" --> "1" CON : instance of
 
-VIEW "1" --> "1..*" SYS : shows
-VIEW "1" --> "0..*" CMP : shows
+EL <|-- PER
+EL <|-- SYS
+EL <|-- CON
+EL <|-- CMP
+EL <|-- DN
+EL <|-- IN
+EL <|-- CI
+REL "0..*" --> "1" EL : source
+REL "0..*" --> "1" EL : destination
+
+VIEW "1" --> "1..*" EL : shows
+VIEW "0..*" --> "1..*" AVW : presents part of
 
 PER "0..*" -- "0..1" GRP
 SYS "0..*" -- "0..1" GRP
 CON "0..*" -- "0..1" GRP
 
-PSP "0..*" --> "1" SYS : on element
+PSP "0..*" --> "1" EL : on element
 PSP "0..*" --> "1" REL : on relationship
 PROP "0..*" --> "1" MOD : on model
-PROP "0..*" --> "1" SYS : on element
+PROP "0..*" --> "1" EL : on element
 PROP "0..*" --> "1" REL : explicit only
-PROP "0..*" --> "1" DN
-TAG "0..*" --> "1" SYS : on element
+TAG "0..*" --> "1" EL : on element
 TAG "0..*" --> "1" REL
 
 note right of PSP
-  name = catalogue perspective (e.g. Reliability)
+  one perspective per review criterion
+  name = criterion ID (e.g. VP06-RE-100)
   value = rating word
-  description = finding summary
+  description = evidence level + finding summary
+  name unique per element (duplicate = parse error)
   style on value works in renderer only
 end note
 
 note right of PROP
   keys [a-z0-9.], values never empty
+  duplicate key: last value wins, silently
   origin, provenance
   trust.boundary (not on group)
   failure.domain.host|zone|region
-  review.criterion, review.evidence
   properties only in JSON export
 end note
 
 note bottom of GRP
   a group holds no properties
   group name is display only
+end note
+
+note bottom of AVW
+  a C4 view is a presentation,
+  not a 42010 view; one C4 view can
+  serve several viewpoints
+  record of the viewpoint: to be confirmed
 end note
 
 @enduml
