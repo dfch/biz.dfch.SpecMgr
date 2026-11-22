@@ -4,7 +4,7 @@ created: '2026-11-22T15:43:46.858+01:00'
 id: feat-248-249-stale-docs
 status: progress
 type: feat
-updated: '2026-11-22T16:37:31.493+01:00'
+updated: '2026-11-22T16:46:35.000+01:00'
 version: 1.0.0
 ---
 
@@ -32,12 +32,12 @@ Issue #249: `src/biz/dfch/specmgr/req/models/` and `src/biz/dfch/specmgr/gol/mod
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `prb/data/prb_update_instructions.md` no longer contains `get_prb(id, raw=True)` in its recovery block, and does not instruct `update(id, type="prb", content)` as the repair write; it names the host file-read/file-write tools, the parse-failure `path`, and the confirming `get_prb(id)` call; a grep of the added agent-facing lines for the change-history words `previously`, `now`, `instead of`, `formerly`, `used to be` returns no match (REQ-001, REQ-002).
-- [ ] ACC-002: The updated `test_update_prb.py` recovery test passes and fails against the old wording; its negative assertions are scoped to the recovery-block slice; `test_mentions_deriving_or_eliciting_lead_sentence_blanks` and `test_mentions_inserting_sentence_under_h1_then_proceeding` pass unchanged (REQ-003).
-- [ ] ACC-003: `uv run --frozen specmgr docs` produces, for each of `req` and `gol`, the `docs/api/` pages `biz.dfch.specmgr.<d>.models`, `biz.dfch.specmgr.<d>.models.v1`, and `biz.dfch.specmgr.<d>.models.v1.{_util,body,document,frontmatter,parser,summary}` (the exact set is confirmed against the `v1/` module listing at implementation time), committed; a second run shows no diff (REQ-004, REQ-005).
-- [ ] ACC-004: The namespace-package guard test passes on the branch and fails if either new `__init__.py` is removed -- demonstrated once by temporarily deleting `req/models/__init__.py` and observing the red run, recorded in the Progress update (REQ-006).
-- [ ] ACC-005: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, the full `pytest -n auto` suite, and the doc/schema/mcp-docs drift checks (process criterion; REQ-007 covers the CHANGELOG housekeeping).
-- [ ] ACC-006: Import smoke check: `import biz.dfch.specmgr.req.models` and `import biz.dfch.specmgr.gol.models` succeed, and `importlib.util.find_spec(...)` reports each as a regular package (`origin` is its `__init__.py`, not a namespace portion) (REQ-004).
+- [x] ACC-001: `prb/data/prb_update_instructions.md` no longer contains `get_prb(id, raw=True)` in its recovery block, and does not instruct `update(id, type="prb", content)` as the repair write; it names the host file-read/file-write tools, the parse-failure `path`, and the confirming `get_prb(id)` call; a grep of the added agent-facing lines for the change-history words `previously`, `now`, `instead of`, `formerly`, `used to be` returns no match (REQ-001, REQ-002).
+- [x] ACC-002: The updated `test_update_prb.py` recovery test passes and fails against the old wording; its negative assertions are scoped to the recovery-block slice; `test_mentions_deriving_or_eliciting_lead_sentence_blanks` and `test_mentions_inserting_sentence_under_h1_then_proceeding` pass unchanged (REQ-003).
+- [x] ACC-003: `uv run --frozen specmgr docs` produces, for each of `req` and `gol`, the `docs/api/` pages `biz.dfch.specmgr.<d>.models`, `biz.dfch.specmgr.<d>.models.v1`, and `biz.dfch.specmgr.<d>.models.v1.{_util,body,document,frontmatter,parser,summary}` (the exact set is confirmed against the `v1/` module listing at implementation time), committed; a second run shows no diff (REQ-004, REQ-005).
+- [x] ACC-004: The namespace-package guard test passes on the branch and fails if either new `__init__.py` is removed -- demonstrated once by temporarily deleting `req/models/__init__.py` and observing the red run, recorded in the Progress update (REQ-006).
+- [x] ACC-005: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, the full `pytest -n auto` suite, and the doc/schema/mcp-docs drift checks (process criterion; REQ-007 covers the CHANGELOG housekeeping).
+- [x] ACC-006: Import smoke check: `import biz.dfch.specmgr.req.models` and `import biz.dfch.specmgr.gol.models` succeed, and `importlib.util.find_spec(...)` reports each as a regular package (`origin` is its `__init__.py`, not a namespace portion) (REQ-004).
 
 ### Scope
 
@@ -95,18 +95,22 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 
 #### Phase 120: Close-out
 
-- [ ] Task 120.100: Add `CHANGELOG.md` `[Unreleased]` entries for #248 and #249 (REQ-007).
-- [ ] Task 120.110: Tick acceptance criteria, update Progress, open the PR against `dev` referencing both issues.
+- [x] Task 120.100: Add `CHANGELOG.md` `[Unreleased]` entries for #248 and #249 (REQ-007).
+- [x] Task 120.110: Tick acceptance criteria, update Progress, open the PR against `dev` referencing both issues. (Criteria ticked and Progress updated; the PR is opened by the orchestrator after status `review` is set.)
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 (PRB recovery directive, issue #248) committed as `22a84b33`. Phase 110 (req/gol models regular packages, issue #249) implemented, gate green, uncommitted. Next: Phase 120 (close-out).
+**As of 2026-11-22**: Phase 100 (issue #248) committed as `22a84b33`, Phase 110 (issue #249) committed as `232512e1`. Phase 120 (close-out) implemented, uncommitted: `CHANGELOG.md` `[Unreleased]` entries, `AGENTS.md` `prb/` bullet corrected, all acceptance criteria ticked. Next: status `review` and the PR against `dev` (orchestrator).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T15:46:35.000Z - Phase 120 implemented
+
+Added two `### Fixed` entries under `CHANGELOG.md` `[Unreleased]`, one for #248 and one for #249 (REQ-007). Corrected the stale `get_prb(id, raw=True)` recovery claim in `AGENTS.md`'s `prb/` bullet to the host-file-tool mechanism; a grep of `AGENTS.md` and `README.md` finds no other `get_prb(id, raw=True)` recovery claim. Acceptance criteria evidence, verified in this phase: ACC-001 -- the recovery block (`**Old-shape recovery.**` to `## 2. If no change was specified`) holds 0 matches for `get_prb(id, raw=True)` and for `update(id, type="prb", content)`, and it names `host's own file-read tool`, `host's own file-write tool`, the `path` of the parse-failure result, and a real `get_prb(id)` call; a grep of the lines that the branch adds to the file (`git diff 9c9d7349`) for `previously|now|instead of|formerly|used to be` (whole words) gives no match. ACC-002 -- the full suite includes `tests/prb/prompts/test_update_prb.py` green; the red run against the old wording is recorded in the Phase 100 entry. ACC-003 -- the 16 `docs/api/` pages `biz.dfch.specmgr.{req,gol}.models*` exist (committed in `232512e1`), and `specmgr docs` gives no diff. ACC-004 -- the red demonstration is recorded in the Phase 110 entry; the guard test is green. ACC-005 -- ruff format/check, vulture, and the `specmgr docs`/`mcp-docs`/`harness-bundle` drift checks pass; the full `pytest -n auto` run gives `2 failed, 6117 passed, 18 skipped`, and the only failures are the 2 known Docker/Structurizr export tests in `tests/evals/test_cli_gates.py` (export rc 1), which also fail on clean HEAD and are accepted as an environmental issue -- the suite is not fully green. ACC-006 -- both packages import, and `importlib.util.find_spec(...).origin` is `req/models/__init__.py` and `gol/models/__init__.py` (regular packages, `submodule_search_locations` set).
 
 #### 2026-11-22T15:37:31.493Z - Phase 110 implemented
 
@@ -127,6 +131,10 @@ Feature plan created from GitHub issues #248 and #249. Both findings verified ag
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T15:46:35.000Z - Correct the `AGENTS.md` `prb/` bullet too
+
+Scope extension of the Phase 120 close-out, same issue #248: `AGENTS.md`'s `prb/` bullet paraphrased the false recovery mechanism ("re-read via `get_prb(id, raw=True)`"). It now describes the host-file-tool mechanism of `prb/data/prb_update_instructions.md` (host file-read at the parse-failure `path`, derive/confirm, insert under the H1 with the frontmatter byte-unchanged, host file-write, confirming `get_prb(id)`, then proceed). The edit is minimal; `AGENTS.md` and `README.md` hold no other such claim.
 
 #### 2026-11-22T15:03:05.107Z - Correct the `update_prb` module docstring too
 

@@ -257,9 +257,12 @@ type or cross-cutting:
   in-place, **BREAKING** `prb/models/v1` schema evolution (not a new
   `prb/models/v2`): a pre-existing PRB document without the lead
   paragraph fails `parse_prb`/`get_prb` until it is added, and
-  `update_prb`'s prompt instructions guide that recovery (re-read via
-  `get_prb(id, raw=True)`, derive/confirm the sentence, insert it under
-  the H1, then proceed) (feat-132-prb-update). Schema at
+  `update_prb`'s prompt instructions guide that recovery (read the raw
+  file with the host's file-read tool at the parse-failure result's
+  `path`, derive/confirm the sentence, insert it under the H1 leaving the
+  frontmatter byte-unchanged, write it back with the host's file-write
+  tool, confirm with `get_prb(id)`, then proceed) (feat-132-prb-update,
+  feat-248-249-stale-docs). Schema at
   `prb/models/v1/`, inside the domain package, not top-level
   `models/`.
 - **`gol/`** (Goal) — same tools/resources/prompts shape as
