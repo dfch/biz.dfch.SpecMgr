@@ -4,7 +4,7 @@ created: '2026-11-05T06:53:20.701+01:00'
 id: 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9
 status: draft
 type: txt
-updated: '2026-11-22T20:30:00.000+01:00'
+updated: '2026-11-22T21:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -32,8 +32,7 @@ This document is the template and catalogue. The criteria are general and indexe
 | ISO/IEC 25010:2023 | Nine quality characteristics and their sub-characteristics. They are the first nine perspectives | Characteristic and sub-characteristic names checked against specmgr://iso25010. The original standard is not in the docs repository |
 | ISO/IEC/IEEE 29148:2018 | Characteristics of a well-formed requirement and of a requirement set, applied to checklist criteria | The nine characteristics of an individual requirement (clause 5.2.5) and the five characteristics of a set (clause 5.2.6) checked against the text (2026-11-18). It is a requirements standard and is applied here by analogy |
 | ISO/IEC/IEEE 42030 | Architecture evaluation framework, possible alignment | Missing. The standard is not in the docs repository. It is only cited in the texts of 12207 and 15288 |
-| ISO/IEC 33020 (successor of ISO/IEC 15504, SPICE) | Capability levels 0 to 5 for practice criteria and the capability profile | Missing. The standard is not in the docs repository. Level names provisional, to be confirmed |
-| ISACA COBIT | Possible replacement for the capability level names | Missing. The COBIT 2019 framework publication is not freely available. The public ISACA pages and Wikipedia do not list capability level names |
+| ISACA COBIT 2019 (COBIT 2019 Framework: Introduction and Methodology, section 6.4) | Process capability levels 0 to 5 for practice criteria, focus area maturity levels 0 to 5 for the capability profile, and the achievement rating Fully, Largely, Partially, Not (section 7.2) | Checked against the markdown copy in the sibling docs repository (2026-11-22), Figures 6.2 and 6.3. COBIT states that its scheme largely aligns to and extends CMMI Development V2.0. The CMMI model text itself is not in the docs repository. ISO/IEC 33020 is no longer used |
 | Assessment dimensions AD01 to AD12 | Tag on each criterion, plus an architecture-level pass | Draft list collected from several interviews. No single reference. Do not cite as ISO |
 | Assessment dimensions AD13 to AD15 | Necessity, economic viability, organisational fit | Added in this catalogue to close gaps in AD01 to AD12. AD14 and AD15 are carried by the Resources perspective (RS, section 5) |
 | Viewpoint list VP01 to VP07 | The seven core viewpoints of R+W, in the order of the book | Names and order checked against R+W. The concern lists are the book's and are in the Architecture Model TXT, section 4.1. 42010 defines no viewpoint catalogue. The earlier list VP01 to VP13 (Draft 0.7 and before) was compiled from several practice sources and is mapped in section 4.1 |
@@ -56,6 +55,8 @@ A review cannot start meaningfully without these inputs. If one is missing, reco
 - System class: local tool, enterprise application, distributed platform, cyber-physical system, or another class with a stated name. The class sets the default tailoring of section 3.1.
 - Subject: product or installation. For a product, VP06 and VP07 assess the reference deployment and the deployment capabilities, and target criteria ask for the targets the product supports, not the targets of one operation.
 - Intended operating profile: production, production-lite, demonstration or prototype. It does not change a rating. It is the context for the final evaluation (section 7.1).
+- Multi-tenant: yes or no. Yes means that one installation serves several tenants whose data, users or capacity must stay separate. If yes, the tenancy criteria of section 10 apply (VP02-SE-090, VP03-SE-090, VP06-PE-090, VP06-RE-170).
+- Extension interface: yes or no. Yes means that third-party code (plugins, extensions) runs inside the system's processes. If yes, the extension criteria of section 10 apply (VP02-SE-100, VP02-CO-090, VP05-MA-090).
 - Review type: concept, pre-implementation, pre-release, or periodic health check. It decides which cells apply.
 - Stakeholders and their concerns, as far as known.
 - Constraints and assumptions: technical, organisational, financial, regulatory.
@@ -387,20 +388,32 @@ Rules:
 
 The rating says whether a practice meets the criterion today. Maturity says how repeatably the organisation performs it. They are different axes, and both are recorded for practice criteria. Design criteria carry no maturity level.
 
-The level names start with ISO/IEC 33020 and are provisional. The ISACA COBIT level names may replace them once confirmed.
+The scale is the CMMI-based scheme of ISACA COBIT 2019 (COBIT 2019 Framework: Introduction and Methodology, section 6.4). A practice criterion records a process capability level. COBIT gives these levels no names, so they are written as numbers. The meaning is paraphrased from COBIT Figure 6.2.
 
-| Level | Name | Meaning |
-|-------|------|---------|
-| 0 | Incomplete | The practice is not performed, or does not achieve its purpose |
-| 1 | Performed | The practice achieves its purpose, informally |
-| 2 | Managed | The practice is planned and monitored, and its work products are controlled |
-| 3 | Established | The practice follows a defined standard process, tailored to the case |
-| 4 | Predictable | The practice operates within measured limits |
-| 5 | Innovating | The practice is improved continuously against quantitative objectives |
+| Capability level | Meaning |
+|------------------|---------|
+| 0 | No basic capability. The approach is incomplete and may or may not meet the intent of the practice |
+| 1 | The practice more or less achieves its purpose with an incomplete set of activities, initial or intuitive, not very organised |
+| 2 | The practice achieves its purpose with a basic but complete set of activities, which can be called performed |
+| 3 | The practice achieves its purpose in a more organised way, with organisational assets. It is well defined |
+| 4 | As 3, and its performance is measured, quantitatively |
+| 5 | As 4, and continuous improvement is pursued |
+
+How far a level is reached is rated with the COBIT achievement scale: Fully (more than 85 percent), Largely (50 to 85 percent), Partially (15 to 50 percent), Not (less than 15 percent). It is a judgement and is recorded with the level, for example "2, Largely". A level counts as reached when it is Fully or Largely achieved.
 
 ### 7.3 Capability profile
 
-Each review records one capability profile. It is required. It rates the organisation's practice areas on the 0 to 5 scale of section 7.2, with the evidence behind each level. Do not average the levels. Report the profile as a list. The profile is the main evidence for AD15 Organisational fit.
+Each review records one capability profile. It is required. It rates the organisation's practice areas with the focus area maturity levels of COBIT 2019 (COBIT 2019 Framework: Introduction and Methodology, section 6.4, Figure 6.3). A practice area is a focus area in the COBIT sense. It reaches a maturity level when all its practice criteria reach that capability level (section 7.2). Each level is recorded with the evidence behind it.
+
+| Maturity level | Name | Meaning (paraphrased from COBIT) |
+|----------------|------|----------------------------------|
+| 0 | Incomplete | Work may or may not be done towards the purpose of the practice area |
+| 1 | Initial | Work is done, but the full goal and intent are not yet achieved |
+| 2 | Managed | Planning and performance measurement take place, not yet in a standardised way |
+| 3 | Defined | Organisation-wide standards guide the work |
+| 4 | Quantitative | The organisation is data driven, with quantitative performance improvement |
+| 5 | Optimizing | The organisation is focused on continuous improvement |
+ Do not average the levels. Report the profile as a list. The profile is the main evidence for AD15 Organisational fit.
 
 The practice areas below are a proposal. The final list is to be agreed.
 
@@ -491,7 +504,7 @@ Pattern sources by viewpoint, for use as reference points and not as requirement
 
 Anti-pattern checks, used as prompts in the relevant cells: big ball of mud, distributed monolith, shared-database integration, god component, vendor lock-in, golden hammer, pattern overuse.
 
-## 10. Criteria: Deployment x Reliability (worked example), CrossView x Safety, CrossView x Regulation
+## 10. Criteria: Deployment x Reliability (worked example), CrossView x Safety, CrossView x Regulation, Multi-Tenancy, Extension Interfaces
 
 Cell type: primary. Sub-characteristics in focus: Availability, Fault Tolerance, Recoverability. This example replaces the single-point-of-failure question that was originally filed under Performance Efficiency. Criterion numbers start at 090 and run in steps of 10.
 
@@ -593,7 +606,7 @@ Practice criterion:
 - Evidence field: Sufficient. In a periodic health check the minimum level is Measured, and the same evidence would be Insufficient. The rating would then be Unassessable.
 - Outcome: Partially. A test was done once. The expected frequency is not met.
 - Rating: Partially.
-- Maturity: 1 Performed. The practice achieves its purpose, informally.
+- Maturity: capability level 1, Fully. The practice more or less achieves its purpose, informally (section 7.2).
 - Finding F-05: weakness, minor. Failover tests have no schedule and no owner.
 
 ### XV-SA-090 Hazard identification
@@ -685,6 +698,76 @@ Practice criterion:
 - Depends on: XV-RG-090.
 - Question: In which countries is the system used or sold, and how does the architecture handle the legal differences between them (for example radio licences, data residency, export control)?
 - Expected evidence: regulation register per country, deployment and configuration options.
+
+### VP03-SE-090 Separation of tenant data
+
+- Type: design.
+- Sub-characteristic: Confidentiality, Integrity.
+- Primary AD: AD03 Correctness.
+- Principle tags: PR03, PR08.
+- Applicability: only if the scope is multi-tenant (section 3).
+- Question: How is the data of each tenant kept separate (separate store, schema or key, row-level rule), and which data, keys or caches do tenants share?
+- Expected evidence: data model, tenant configuration, key management design.
+
+### VP02-SE-090 Tenant resolution
+
+- Type: design.
+- Sub-characteristic: Authenticity, Integrity.
+- Primary AD: AD12 Risk management.
+- Principle tags: PR07, PR13.
+- Applicability: only if the scope is multi-tenant (section 3).
+- Question: How does the system decide which tenant a request belongs to, and how is it prevented that a user selects or switches to a tenant that is not theirs (for example by a host name or a request parameter)?
+- Expected evidence: request handling design, authentication and authorisation design, security tests.
+
+### VP06-PE-090 Capacity shared between tenants
+
+- Type: design.
+- Sub-characteristic: Capacity, Resource Utilization.
+- Primary AD: AD12 Risk management.
+- Principle tags: PR14.
+- Applicability: only if the scope is multi-tenant (section 3).
+- Question: Which runtime resources do tenants share, and how is the load of one tenant kept from reducing the performance of the others?
+- Expected evidence: deployment diagram, quotas and limits configuration, load test results per tenant.
+
+### VP06-RE-170 Fault isolation between tenants
+
+- Type: design.
+- Sub-characteristic: Fault Tolerance.
+- Primary AD: AD12 Risk management.
+- Principle tags: PR14.
+- Applicability: only if the scope is multi-tenant (section 3).
+- Question: Which failures of one tenant (data corruption, exhausted resources, failed migration) can affect the availability of other tenants, and how are they contained?
+- Expected evidence: failure mode analysis, deployment diagram, tenant migration design.
+
+### VP02-SE-100 Privilege of extension code
+
+- Type: design.
+- Sub-characteristic: Integrity, Confidentiality.
+- Primary AD: AD12 Risk management.
+- Principle tags: PR06, PR08.
+- Applicability: only if the scope has an extension interface (section 3).
+- Question: Which privileges does third-party extension code have inside the process, how is it isolated or reviewed, and how is its origin verified before it is loaded?
+- Expected evidence: extension interface design, security policy for extensions, supply chain controls.
+
+### VP02-CO-090 Versioning of the extension interface
+
+- Type: design.
+- Sub-characteristic: Interoperability.
+- Primary AD: AD10 Extensibility.
+- Principle tags: PR04.
+- Applicability: only if the scope has an extension interface (section 3).
+- Question: Where is the extension interface defined, how is it versioned, and how are extensions told about a breaking change?
+- Expected evidence: interface definition, versioning policy, compatibility tests of extensions.
+
+### VP05-MA-090 Independent build and release of extensions
+
+- Type: design.
+- Sub-characteristic: Modularity, Modifiability.
+- Primary AD: AD08 Modularity.
+- Principle tags: PR02.
+- Applicability: only if the scope has an extension interface (section 3).
+- Question: How are extensions built, tested and released independently of the system, and which parts of the system must change when an extension changes?
+- Expected evidence: build configuration, repository layout, release process of extensions.
 
 ## 11. Model Generation Agent (C4 and Structurizr)
 
@@ -819,6 +902,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-22 20:30:00.000Z - Draft 0.14
+
+Maturity scale from ISACA COBIT 2019 (CMMI-based, checked against the markdown copy): section 7.2 uses the unnamed process capability levels 0 to 5 with the achievement scale Fully, Largely, Partially, Not; section 7.3 rates practice areas with the named focus area maturity levels Incomplete, Initial, Managed, Defined, Quantitative, Optimizing. ISO/IEC 33020 is no longer used (sources in section 2, example rating record in section 10). New preconditions multi-tenant and extension interface (section 3). New criteria in section 10: VP03-SE-090, VP02-SE-090, VP06-PE-090 and VP06-RE-170 for multi-tenancy; VP02-SE-100, VP02-CO-090 and VP05-MA-090 for extension interfaces. Issue 267. See QA 25bd5b93-a228-4d6c-8b70-d143dfd39444, 0.0220 and 0.0700.
 
 ### 2026-11-22 19:30:00.000Z - Draft 0.13
 

@@ -4,7 +4,7 @@ created: '2026-11-18T13:21:29.973+01:00'
 id: feat-267-arch-rvw
 status: planning
 type: feat
-updated: '2026-11-22T20:30:00.000+01:00'
+updated: '2026-11-22T21:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -97,15 +97,19 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120: Task 120.100 is done. Four validation runs (specmgr, AERIS-10, Apache OFBiz, OpenTelemetry Demo) show that the matrix structure holds. The user accepted all 15 proposed changes of the synthesis, and they are applied (Task 120.105: checklist Draft 0.13, Architecture Model Draft 0.6, QA 0.0690). Open: Task 120.110 (Structurizr probe from a committed location), the metamodel diagrams do not yet show the new preconditions and keys, and tenant isolation and extension interfaces are not decided. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
+**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120: Task 120.100 is done. Four validation runs (specmgr, AERIS-10, Apache OFBiz, OpenTelemetry Demo) show that the matrix structure holds. The user accepted all 15 proposed changes of the synthesis, and they are applied (Task 120.105: checklist Draft 0.13, Architecture Model Draft 0.6, QA 0.0690). Since then: the metamodel diagrams show the review scope and the new keys (rendered with the local PlantUML server), tenant isolation and extension interfaces have criteria (QA 0.0700), and the maturity scale is COBIT 2019 (QA 0.0220). Open: Task 120.110 (Structurizr probe from a committed location). Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
 
 ### Blockers
 
-- Missing sources: ISO/IEC/IEEE 42030, ATAM report, COBIT 2019 framework, ISO/IEC 33020, TOGAF, ISO/IEC 25010:2023 original text. Cited by the principle and pattern tags, with no markdown copy: Saltzer and Schroeder, Release It!, Enterprise Integration Patterns, GoF, POSA (PDF files exist, QA 0.0660).
+- Missing sources: ISO/IEC/IEEE 42030, ATAM report, TOGAF, ISO/IEC 25010:2023 original text. Cited by the principle and pattern tags, with no markdown copy: Saltzer and Schroeder, Release It!, Enterprise Integration Patterns, GoF, POSA (PDF files exist, QA 0.0660).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22 20:30:00.000Z - Tenancy, extensions, COBIT, diagrams
+
+User decisions: tenant isolation and extension interfaces get a precondition flag each and criteria in existing cells (QA 0.0700); the maturity scale is ISACA COBIT 2019, ISO/IEC 33020 is dropped (QA 0.0220). Checklist Draft 0.14. Metamodel diagram A shows the ReviewScope with system class, subject, operating profile and the two flags; diagram B the proposed keys and the telemetry tag. Both validated and rendered with the local PlantUML server (`SPECMGR_PLANTUML_URL`, `checked_by=url valid=true`); the PNGs are regenerated.
 
 #### 2026-11-22 19:30:00.000Z - Validation changes applied
 

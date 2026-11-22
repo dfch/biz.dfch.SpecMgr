@@ -76,7 +76,16 @@ note right of PROP
   origin, provenance
   trust.boundary (not on group)
   failure.domain.host|zone|region
+  to be confirmed: trust.level (privilege tier
+  in one process), safety.function,
+  failure.domain.placement fixed|scheduler
   properties only in JSON export
+end note
+
+note bottom of TAG
+  tag for telemetry relationships
+  (name to be confirmed), excluded
+  from functional views
 end note
 
 note bottom of GRP

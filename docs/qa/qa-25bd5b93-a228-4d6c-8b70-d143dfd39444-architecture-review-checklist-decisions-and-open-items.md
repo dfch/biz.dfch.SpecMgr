@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-22T20:30:00.000+01:00'
+updated: '2026-11-22T21:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -96,7 +96,7 @@ TODO: answer pending, needs the sources
 
 Blocked on 2026-11-18 by missing sources. The public ISACA COBIT page and the Wikipedia article do not list capability level names. They are in the COBIT 2019 Framework: Introduction and Methodology and the COBIT 2019 Design Guide, which are not freely available. ISO/IEC 33020:2019 is only cited in the texts of 12207 and 15288. Please add COBIT 2019 and ISO/IEC 33020 to the docs repository.
 
-TODO: answer pending, needs the sources
+Answered on 2026-11-22 (issue 267). The COBIT 2019 texts are in the sibling docs repository (`md/cobit-2019-*.md`). Decision of the user: ISO/IEC 33020 is not used; the catalogue uses the CMMI-based scheme of ISACA COBIT 2019 (Framework: Introduction and Methodology, section 6.4). Process capability levels 0 to 5 (Figure 6.2) have no names, only descriptions; they rate practice criteria. Focus area maturity levels 0 to 5 (Figure 6.3) are named Incomplete, Initial, Managed, Defined, Quantitative, Optimizing; they rate the practice areas of the capability profile. Achievement of a level: Fully (more than 85 percent), Largely (50 to 85), Partially (15 to 50), Not (less than 15). COBIT says its scheme largely aligns to and extends CMMI Development V2.0; the CMMI model text is not in the docs repository. Checklist Draft 0.14, sections 7.2 and 7.3.
 
 > **0.0230**: Which practice areas make up the capability profile?
 
@@ -400,6 +400,8 @@ Decisions:
 
 > **0.0660**: Which sources named in the checklist, section 2, have no markdown copy yet?
 
+Update 2026-11-22: COBIT 2019 is available in the docs repository (`md/cobit-2019-*.md`), and ISO/IEC 33020 is no longer needed (0.0220).
+
 Answered on 2026-11-18 (issue 267). Not available as markdown, or not available at all: ISO/IEC/IEEE 42030, the ATAM report of the SEI, COBIT 2019, ISO/IEC 33020, TOGAF and the ISO/IEC 25010:2023 text (see 0.0210, 0.0220, 0.0260 and 0.0620). Also without a copy: Saltzer and Schroeder, Release It!, Enterprise Integration Patterns and the GoF Design Patterns book. PDF files exist, not yet converted to markdown, for the three POSA books (in `sources/praedeep/` of the docs repository). The checklist cites POSA only as a pattern source and as "to be confirmed". Converting them is not part of this feature.
 
 TODO: decide which of these sources to add and convert, in the order of the pattern and principle tags that cite them (PR07, PR08, PR13, PR14)
@@ -415,6 +417,10 @@ Answered on 2026-11-22 (issue 267), verified with the Structurizr MCP parse tool
 > **0.0690**: Which changes follow from the validation against four systems?
 
 Decided on 2026-11-22 (issue 267): all 15 proposed changes of the synthesis (`.specmgr/feat/feat-267-arch-rvw/validation/synthesis.md`, section 3), accepted by the user. Matrix: VP02 x SE, VP03 x MA, VP02 x SA and VP06 x SA from S to P; VP03 x FL stays S; VP02 x MA stays P with the runtime against source split. Counts now 36 P, 43 S, 17 X. Checklist rules: preconditions system class, subject and intended operating profile with default tailoring by class (new section 3.1); Safety gate with hazard types, protected party, development tools and the RE against SA rule; complete-search rule and dependent criteria (7.1); external evidence, object of the evidence and conflicting evidence (8.2); VP06-RE-100 split with the new VP06-RE-160, RE-110 applicability, RE-120 safe state; new home-cell criteria XV-SA-090 to -140 and XV-RG-090 to -110; decisions checked over the decision store, not the Structurizr inspection (11.8). Architecture Model: VP03 evidence source, VP04 coverage, VP07 telemetry tag (8.1), rating against evidence perspectives (8.2), proposed keys `trust.level`, `safety.function`, `failure.domain.placement` (8.3), the mode runtime-loaded module (8.5). Not decided: tenant isolation and extension interfaces as catalogue concerns (synthesis R16). Checklist Draft 0.13, Architecture Model Draft 0.6.
+
+> **0.0700**: How does the catalogue cover tenant isolation and extension interfaces (synthesis R16)?
+
+Decided on 2026-11-22 (issue 267) by the user. Tenant isolation: a new precondition "multi-tenant: yes or no"; if yes, criteria in existing cells, no new perspective: VP03-SE-090 (separation of tenant data), VP02-SE-090 (tenant resolution), VP06-PE-090 (capacity shared between tenants), VP06-RE-170 (fault isolation between tenants). Extension interfaces: the rule in checklist section 4 (VP02, with SE deciding) stays, a new precondition "extension interface: yes or no", and criteria VP02-SE-100 (privilege of extension code), VP02-CO-090 (versioning of the extension interface), VP05-MA-090 (independent build and release). The section 4 rule had been added in Draft 0.13 before this decision. The metamodel diagram A shows the review scope with both flags. Checklist Draft 0.14.
 
 > **0.0280**: Which criteria are knock-out criteria, per review type?
 

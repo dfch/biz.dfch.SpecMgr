@@ -23,6 +23,13 @@ class "CrossView" as XV <<CAT>>
 class "Criterion" as CRI <<CAT>>
 class "MatrixCell" as CELL <<CAT>>
 class "Finding" as FND <<CAT>>
+class "ReviewScope" as SCP <<CAT>> {
+  systemClass
+  subject : product | installation
+  operatingProfile
+  multiTenant : yes | no
+  safetyRelevant : yes | no
+}
 
 AD "1" *-- "1..*" VW : contains
 AD "1" o-- "1..*" SH : identifies
@@ -57,6 +64,8 @@ CELL "1" --> "1" ROW : row
 CELL "1" --> "1" PSP : column
 CRI "0..*" --> "1" CELL : home
 FND "0..*" --> "1" CRI : about
+SCP "0..*" --> "1" AD : baseline
+SCP "1" --> "0..*" CELL : tailors
 
 note right of PRC
   scope: general | view-specific
@@ -76,6 +85,12 @@ note bottom of PSP
   ISO: sub-characteristics
   R+W: concerns
   12 perspectives in this catalogue
+end note
+
+note right of SCP
+  preconditions of a review
+  (checklist sections 3 and 3.1)
+  default tailoring by system class
 end note
 
 note bottom of XV
