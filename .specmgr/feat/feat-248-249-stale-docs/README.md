@@ -4,7 +4,7 @@ created: '2026-11-22T15:43:46.858+01:00'
 id: feat-248-249-stale-docs
 status: progress
 type: feat
-updated: '2026-11-22T16:03:05.121+01:00'
+updated: '2026-11-22T16:37:31.493+01:00'
 version: 1.0.0
 ---
 
@@ -88,10 +88,10 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 
 #### Phase 110: req/gol models regular packages (issue #249)
 
-- [ ] Task 110.100: Add the docstring-only `src/biz/dfch/specmgr/req/models/__init__.py` and `src/biz/dfch/specmgr/gol/models/__init__.py` (REQ-004).
-- [ ] Task 110.110: Add the namespace-package guard test (every-ancestor check over git-tracked `src/biz/dfch/specmgr/` `.py` files) and demonstrate it red with `req/models/__init__.py` temporarily removed (REQ-006, ACC-004).
-- [ ] Task 110.120: Regenerate `specmgr docs`, commit the new `docs/api/` pages and `docs/GENERATED.md` changes -- expected diff: the new `req`/`gol` model pages and module entries, plus the **Test files** count rising from 502 by the new guard test file (REQ-005, ACC-003).
-- [ ] Task 110.130: Run the phase-end quality gate, including vulture and the ACC-006 import smoke check; confirm `whitelist.py` and `AGENTS.md` need no change (AGENTS.md's "Its schema lives at `req/models/v1/`" stays true) (ACC-006, ACC-005).
+- [x] Task 110.100: Add the docstring-only `src/biz/dfch/specmgr/req/models/__init__.py` and `src/biz/dfch/specmgr/gol/models/__init__.py` (REQ-004).
+- [x] Task 110.110: Add the namespace-package guard test (every-ancestor check over git-tracked `src/biz/dfch/specmgr/` `.py` files) and demonstrate it red with `req/models/__init__.py` temporarily removed (REQ-006, ACC-004).
+- [x] Task 110.120: Regenerate `specmgr docs`, commit the new `docs/api/` pages and `docs/GENERATED.md` changes -- expected diff: the new `req`/`gol` model pages and module entries, plus the **Test files** count rising from 502 by the new guard test file (REQ-005, ACC-003).
+- [x] Task 110.130: Run the phase-end quality gate, including vulture and the ACC-006 import smoke check; confirm `whitelist.py` and `AGENTS.md` need no change (AGENTS.md's "Its schema lives at `req/models/v1/`" stays true) (ACC-006, ACC-005).
 
 #### Phase 120: Close-out
 
@@ -102,11 +102,15 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 (PRB recovery directive, issue #248) implemented, gate green, uncommitted. Next: Phase 110 (req/gol models regular packages, issue #249).
+**As of 2026-11-22**: Phase 100 (PRB recovery directive, issue #248) committed as `22a84b33`. Phase 110 (req/gol models regular packages, issue #249) implemented, gate green, uncommitted. Next: Phase 120 (close-out).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T15:37:31.493Z - Phase 110 implemented
+
+Added the docstring-only `src/biz/dfch/specmgr/req/models/__init__.py` and `src/biz/dfch/specmgr/gol/models/__init__.py` (license header plus package docstring, no import, no `__all__`); the `req/models` docstring names the versioned-sub-package layout that `tsk/models/__init__.py` cites, and the `gol/models` docstring mirrors it. Added `tests/test_no_namespace_packages.py`: it enumerates `git ls-files -z -- 'src/biz/dfch/specmgr/*.py'` (571 files) and checks every ancestor directory from each file's parent up to and including `src/biz/dfch/specmgr/` for a tracked `__init__.py` that is present on disk; a second test pins the every-ancestor rule on a synthetic `d/models/v1/` layout. Red demonstration: with `req/models/__init__.py` moved out of the tree, `uv run --frozen pytest -q tests/test_no_namespace_packages.py` gave `1 failed, 1 passed` with `AssertionError: Lists differ: [] != ['src/biz/dfch/specmgr/req/models']`; with the file restored, `2 passed`. `specmgr docs` emits 16 new `docs/api/` pages, which matches the `v1/` module listing (`_util`, `body`, `document`, `frontmatter`, `parser`, `summary`) for both domains: `biz.dfch.specmgr.<d>.models`, `biz.dfch.specmgr.<d>.models.v1`, and `biz.dfch.specmgr.<d>.models.v1.{_util,body,document,frontmatter,parser,summary}` for `req` and `gol`. The `docs/api/README.md` index gets the 16 entries, and `docs/GENERATED.md` gets the two new module lines and the **Test files** count 502 -> 503. A second `specmgr docs` run gives no diff. Import smoke check (ACC-006): both packages import, and `find_spec(...).origin` is each package's `__init__.py`. `whitelist.py` and `AGENTS.md` need no change. Gate: ruff format/check, vulture (rc 0), and the full `pytest -n auto` (`2 failed, 6117 passed, 18 skipped`; the 2 failures are the known Docker/Structurizr `tests/evals/test_cli_gates.py` export tests, which also fail on clean HEAD). `specmgr mcp-docs`/`harness-bundle` give no diff.
 
 #### 2026-11-22T15:03:05.107Z - Phase 100 implemented
 

@@ -160,6 +160,14 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools.update`](biz.dfch.specmgr.general.tools.update.md) — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 - [`biz.dfch.specmgr.general.tools.validate`](biz.dfch.specmgr.general.tools.validate.md) — ``@mcp.tool()`` wrapper: validate (feat-81-83-validation, Phase 2).
 - [`biz.dfch.specmgr.gol`](biz.dfch.specmgr.gol.md) — Goal (GOL) domain -- high-level business goal specifications.
+- [`biz.dfch.specmgr.gol.models`](biz.dfch.specmgr.gol.models.md) — Goal (GOL) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.gol.models.v1`](biz.dfch.specmgr.gol.models.v1.md) — Goal (GOL) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.gol.models.v1._util`](biz.dfch.specmgr.gol.models.v1._util.md) — Shared, private constants for the ``gol.models.v1`` subpackage.
+- [`biz.dfch.specmgr.gol.models.v1.body`](biz.dfch.specmgr.gol.models.v1.body.md) — Goal (GOL) models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.gol.models.v1.document`](biz.dfch.specmgr.gol.models.v1.document.md) — Pydantic model for a full goal document (frontmatter + body).
+- [`biz.dfch.specmgr.gol.models.v1.frontmatter`](biz.dfch.specmgr.gol.models.v1.frontmatter.md) — Goal (GOL) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.gol.models.v1.parser`](biz.dfch.specmgr.gol.models.v1.parser.md) — Parse raw goal (GOL) ``.md`` text into a :class:`GolDocument` (Phase 2, Task 2.2).
+- [`biz.dfch.specmgr.gol.models.v1.summary`](biz.dfch.specmgr.gol.models.v1.summary.md) — Pydantic model for one line of GOL listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.gol.prompts`](biz.dfch.specmgr.gol.prompts.md) — MCP prompt wrappers for Goals (Tasks 3.14-3.15).
 - [`biz.dfch.specmgr.gol.prompts.create_gol`](biz.dfch.specmgr.gol.prompts.create_gol.md) — ``@mcp.prompt()``: create_gol (Task 3.14).
 - [`biz.dfch.specmgr.gol.prompts.update_gol`](biz.dfch.specmgr.gol.prompts.update_gol.md) — ``@mcp.prompt()``: update_gol (Task 3.15).
@@ -281,6 +289,14 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.tools.list_qa`](biz.dfch.specmgr.qa.tools.list_qa.md) — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - [`biz.dfch.specmgr.qa.tools.parse_qa`](biz.dfch.specmgr.qa.tools.parse_qa.md) — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.
+- [`biz.dfch.specmgr.req.models`](biz.dfch.specmgr.req.models.md) — Requirement (REQ) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.req.models.v1`](biz.dfch.specmgr.req.models.v1.md) — Requirement (REQ) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.req.models.v1._util`](biz.dfch.specmgr.req.models.v1._util.md) — Shared, private constants for the ``req.models.v1`` subpackage.
+- [`biz.dfch.specmgr.req.models.v1.body`](biz.dfch.specmgr.req.models.v1.body.md) — Requirement (REQ) models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.req.models.v1.document`](biz.dfch.specmgr.req.models.v1.document.md) — Pydantic model for a full requirement document (frontmatter + body).
+- [`biz.dfch.specmgr.req.models.v1.frontmatter`](biz.dfch.specmgr.req.models.v1.frontmatter.md) — Requirement frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.req.models.v1.parser`](biz.dfch.specmgr.req.models.v1.parser.md) — Parse raw requirement ``.md`` text into a :class:`ReqDocument` (Task 1.x).
+- [`biz.dfch.specmgr.req.models.v1.summary`](biz.dfch.specmgr.req.models.v1.summary.md) — Pydantic model for one line of REQ listing output (Task 3.18).
 - [`biz.dfch.specmgr.req.prompts`](biz.dfch.specmgr.req.prompts.md) — MCP prompt wrappers for Requirements (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.create_req`](biz.dfch.specmgr.req.prompts.create_req.md) — ``@mcp.prompt()``: create_req (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.update_req`](biz.dfch.specmgr.req.prompts.update_req.md) — ``@mcp.prompt()``: update_req (Task 3.19).
