@@ -32,6 +32,7 @@ version differs from the pin, or a pinned image is missing locally.
 
 from __future__ import annotations
 
+import functools
 import json
 import os
 import re
@@ -318,19 +319,70 @@ def local_host_addr() -> str:
         return "127.0.0.1"
 
 
+#: The `docker info` SecurityOptions entry a rootless daemon reports.
+_ROOTLESS_SECURITY_OPTION = "name=rootless"
+
+
+@functools.lru_cache(maxsize=1)
+def docker_is_rootless() -> bool:
+    """Return True iff the Docker daemon runs in rootless mode.
+
+    Probes `docker info --format '{{json .SecurityOptions}}'` once per
+    process (cached: the daemon mode cannot change under a running
+    harness) and looks for the `name=rootless` security option.
+
+    Returns:
+        True for a rootless daemon; False for a rootful daemon and
+        whenever the probe fails (docker CLI missing, daemon unreachable,
+        non-zero exit, timeout, unparseable output), so a failed probe
+        keeps the rootful default.
+    """
+    try:
+        proc = subprocess.run(  # noqa: S603 -- fixed docker CLI invocation
+            ["docker", "info", "--format", "{{json .SecurityOptions}}"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    if proc.returncode != 0:
+        return False
+    try:
+        options = json.loads(proc.stdout or "null")
+    except json.JSONDecodeError:
+        return False
+    if not isinstance(options, list):
+        return False
+    result = any(isinstance(option, str) and _ROOTLESS_SECURITY_OPTION in option.split(",") for option in options)
+    return result
+
+
 def host_user_flags() -> list[str]:
     """Return the docker `--user uid:gid` flags for host-owned file output.
 
-    The trial and CLI containers run as the invoking host user so every
-    file they write into the mounted work dirs (the event stream is
-    host-written; the CLI `export` writes `out/`) stays host-owned and the
-    gitignored work roots never accumulate root-owned files.
+    The trial and CLI containers must write host-owned files into the
+    mounted work dirs (the event stream is host-written; the CLI `export`
+    writes `out/`) so the gitignored work roots never accumulate files the
+    host user cannot remove.
+
+    On a rootful daemon that requires running the container as the
+    invoking host user (`--user uid:gid`). On a ROOTLESS daemon it is the
+    opposite: container uid 0 already maps to the host user, while any
+    other container uid (e.g. 1000) maps to a subordinate uid that cannot
+    read the host user's 0700 work dirs -- the mount becomes unreadable.
+    So no `--user` is passed there and the container's default (root)
+    user writes host-owned files.
 
     Returns:
-        `["--user", "uid:gid"]` on POSIX, `[]` when the user identity is
-        unavailable (the containers then run as their default user).
+        `[]` under rootless Docker (see `docker_is_rootless`) and when the
+        user identity is unavailable (non-POSIX; the containers then run
+        as their default user); `["--user", "uid:gid"]` otherwise,
+        including when the rootless probe fails.
     """
     if not hasattr(os, "getuid"):
+        return []
+    if docker_is_rootless():
         return []
     result = ["--user", f"{os.getuid()}:{os.getgid()}"]
     return result
