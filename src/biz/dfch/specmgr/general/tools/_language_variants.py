@@ -179,12 +179,15 @@ def locate(type_: str, id_: str, language: str) -> Location:
 def list_language_variants(type_: str, id_: str) -> LanguageListResult:
     """List every language the document ``id_`` of ``type_`` exists in (REQ-012, ACC-008).
 
-    Probes the flat EN directory and then every shape-valid ``{language}`` subdirectory of the domain's base
-    directory (:func:`~biz.dfch.specmgr.general.tools._doc_paths.iter_language_dirs`), each through :func:`locate`.
-    ``"en"`` leads the result when the EN source exists and is never invented when it does not; the other languages
-    follow sorted by code. A variant that exists but fails to parse is listed with ``parseable=False``. Only ``.md``
-    documents participate (the domains' own scans are ``*.md`` globs), so a non-``.md`` sibling asset or a
-    shape-invalid directory name is never reported.
+    Probes the EN directory explicitly and then every OTHER shape-valid ``{language}`` subdirectory of the domain's
+    base directory (:func:`~biz.dfch.specmgr.general.tools._doc_paths.iter_language_dirs` -- in feat-245's uniform
+    sharded layout the loop also yields the ``en/`` directory itself, which is skipped because the explicit probe
+    above already covered it, the same ``DEFAULT_LANGUAGE`` skip :func:`~biz.dfch.specmgr.general.tools._doc_paths.
+    iter_doc_paths_all_languages` carries), each through :func:`locate`. ``"en"`` leads the result when the EN
+    source exists and is never invented when it does not; the other languages follow sorted by code. A variant
+    that exists but fails to parse is listed with ``parseable=False``. Only ``.md`` documents participate (the
+    domains' own scans are ``*.md`` globs), so a non-``.md`` sibling asset or a shape-invalid directory name is
+    never reported.
 
     Parameters
     ----------
@@ -215,6 +218,8 @@ def list_language_variants(type_: str, id_: str) -> LanguageListResult:
     except LookupError as ex:
         missing_en = ex
     for language, _directory in iter_language_dirs(doc_domain_base_dir(type_)):
+        if language == DEFAULT_LANGUAGE:
+            continue  # the explicit probe above already covered EN (feat-245: `en/` is a language dir now)
         try:
             locations.append(locate(type_, id_, language))
         except LookupError:

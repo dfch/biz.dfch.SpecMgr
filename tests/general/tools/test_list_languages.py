@@ -100,6 +100,27 @@ class TestListLanguagesAcc008(_TempDocsMixin):
         self.assertEqual(result.languages, ["en", "bg", "de", "fr"])
         self.assertEqual([e.parseable for e in result.entries], [True, False, True, False])
 
+    def test_en_de_and_fr_list_each_language_exactly_once(self):
+        """Regression (feat-245 Phase 100 correction 2): in the uniform sharded layout
+        ``iter_language_dirs`` also yields the ``en/`` directory, so without the ``DEFAULT_LANGUAGE`` skip in
+        ``list_language_variants``' loop, EN appeared twice in the result (``["en", "de", "en"]``). An artifact
+        existing in EN + ``de`` + ``fr`` lists exactly ``["en", "de", "fr"]`` -- one entry per language, ``en``
+        first, no duplicate -- with the correct path in each language's own directory."""
+        spec = SPECS_BY_NAME["dec"]
+        doc_id, en_file, de_file = self.seed(spec)
+        fr_file = spec.base_dir("fr") / de_file.parent.name / de_file.name
+        fr_file.parent.mkdir(parents=True)
+        shutil.copy(de_file, fr_file)
+
+        result = list_languages("dec", doc_id)
+
+        self.assertEqual(result.languages, ["en", "de", "fr"])
+        self.assertEqual(len(result.entries), 3)
+        self.assertEqual([e.language for e in result.entries], ["en", "de", "fr"])
+        self.assertEqual(Path(result.entries[0].path), en_file.resolve())
+        self.assertEqual(Path(result.entries[1].path), de_file.resolve())
+        self.assertEqual(Path(result.entries[2].path), fr_file.resolve())
+
     def test_every_language_aware_domain_lists_en_and_de(self):
         for spec in SPECS:
             with self.subTest(domain=spec.d):

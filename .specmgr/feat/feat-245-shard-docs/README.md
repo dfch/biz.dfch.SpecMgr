@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: progress
 type: feat
-updated: '2026-11-22T02:58:00.000+01:00'
+updated: '2026-11-22T07:03:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -133,11 +133,21 @@ Key invariants and rationale:
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 125 (test sweep — general framework, i18n, and config suites) implemented — every general/commands/dec-i18n test suite re-seeded to the uniform sharded layout (31 test files + the new post-sharding config golden `tests/fixtures/config-golden/specmgr-config.post-sharding.json` + the fixture README; NO src/ changes in this phase). 30 of the 32 non-domain known-red files are now fully green; the two remaining (`tests/general/tools/test_list_languages.py`, `tests/general/tools/test_i18n_three_languages.py` — 74 failing entries, every one a duplicate-`"en"` list assertion) are blocked by a one-line src defect outside this phase's scope: `list_language_variants` (`general/tools/_language_variants.py`) probes EN explicitly AND then iterates `iter_language_dirs`, which in the uniform layout also yields `en/`, so `list_languages` reports e.g. `["en", "de", "en"]` against the tool's own no-duplicate contract — the same double-count class faeca55c fixed in the reconcile unions (`iter_doc_paths_all_languages` skips `DEFAULT_LANGUAGE` for exactly this reason); skipping `DEFAULT_LANGUAGE` in that loop clears it. The known-red set is now exactly the 78 domain-dir test files owned by Phase 130.105 (byte-identical to the baseline's domain set; zero new failing files or entries) plus those two blocker files; Phases 130–140 not started; the suite is still red by design until the blocker one-liner and the 130.105 re-seed + 130.110 migration.
+**As of 2026-11-22**: Phase 125 (test sweep — general framework, i18n, and config suites) implemented — every general/commands/dec-i18n test suite re-seeded to the uniform sharded layout (31 test files + the new post-sharding config golden `tests/fixtures/config-golden/specmgr-config.post-sharding.json` + the fixture README; NO src/ changes in this phase). all 32 non-domain known-red files are now fully green — the two that Phase 125 left blocked (`tests/general/tools/test_list_languages.py`, `tests/general/tools/test_i18n_three_languages.py`, 74 duplicate-`"en"` assertions) were cleared by the Phase 100 correction 2 (2026-11-22 06:03Z entry: `list_language_variants` now skips `DEFAULT_LANGUAGE` in its `iter_language_dirs` loop, the same defect class faeca55c fixed in the reconcile unions). The known-red set is now EXACTLY the 78 domain-dir test files owned by Phase 130.105 (byte-identical to the baseline's domain set; zero new failing files or entries); Phases 130–140 not started; the suite is still red by design until the 130.105 re-seed + 130.110 migration.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22 06:03:00.000Z - Phase 100 correction 2: list_language_variants skips DEFAULT_LANGUAGE (EN double-count)
+
+The Phase 125 report's confirmed blocker, fixed as a separate correction (same defect class as faeca55c's reconcile-union correction):
+
+- The defect: Phase 100 re-rooted `list_language_variants`' `iter_language_dirs` probe from `doc_base_dir(type_)` to `doc_domain_base_dir(type_)` (required — the old position scanned the `en/` dir's shard dirs as pseudo-language dirs) but added no `DEFAULT_LANGUAGE` skip, so in the uniform sharded layout the loop also yields the `en/` dir and EN was probed twice — once by the explicit `locate(type_, id_, DEFAULT_LANGUAGE)` and once by the loop. `list_languages` therefore reported e.g. `["en", "de", "en"]` / `["en", "de", "en", "fr"]` against its own no-duplicate, "one entry per language" contract — 74 failing assertions (14 unique test entries) across `tests/general/tools/test_list_languages.py` and `test_i18n_three_languages.py`, the only non-domain reds left by Phase 125.
+- The fix (one src file, `src/biz/dfch/specmgr/general/tools/_language_variants.py`): the loop now carries `if language == DEFAULT_LANGUAGE: continue` (the explicit probe already handles EN, including the never-invent-`en` case via `missing_en`) — mirroring `iter_doc_paths_all_languages`' own skip — and the function's docstring discovery clause was aligned to document the skip (text only, no other code change).
+- Regression test (`tests/general/tools/test_list_languages.py`, `TestListLanguagesAcc008` — the class whose tests failed on the duplicate): `test_en_de_and_fr_list_each_language_exactly_once` seeds EN + `de` + a hand-placed `fr` variant and asserts `languages == ["en", "de", "fr"]`, one entry per language (3 entries), and the correct path in each language's own directory.
+- Red/green proof: with the src change stashed the new test FAILS with `['en', 'de', 'en', 'fr'] != ['en', 'de', 'fr']` (the duplicate visible); with it applied it passes (both former blocker files now 35 passed / 147 subtests).
+- Gate: `ruff format --check` clean (2383 files), `ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` exit 0, `specmgr lint --all` → `summary: linted=102 failed=0 skipped=0 layout=0` exit 0. Re-seeded suites `pytest tests/general tests/commands tests/dec/tools/test_i18n_language.py tests/dec/tools/test_i18n_write.py -q` → **1655 passed, 0 failed**, 2 skipped, 3 deselected, 6430 subtests (Phase 125's blocked gate 5 now fully met). Full suite `uv run --frozen pytest -n auto -q` (captured at `/tmp/opencode/phase125fix-pytest.txt`): **328 failed, 5896 passed, 18 skipped, 11238 subtests passed** (Phase 125: 402/5886/18/11173) — the failing-file set is EXACTLY the 78 domain-dir files (comm proof vs the expected set, both directions empty; every failing file matches `^tests/(req|uc|tsk|qa|prb|gol|rsk|dec|sop|vcr|sysrs|txt|set)/` and none is a `tests/dec/tools/test_i18n_*`; entry-level 325 → 311 unique failing entries, zero new, 14 cleared). Phases 130–140 not started; the suite is still red by design until the 130.105 re-seed + 130.110 migration.
 
 #### 2026-11-22 01:58:00.000Z - Phase 125 complete (test re-seed); gate blocked by one src defect (duplicate-en in list_languages)
 
