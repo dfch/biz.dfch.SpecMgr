@@ -50,13 +50,35 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         self.assertLess(result.index("get_prb(id)"), result.index('update(id, type="prb", content)'))
 
     def test_mentions_old_shape_recovery_via_raw_reread(self):
-        """The prompt must instruct recognizing the missing-lead-paragraph parse
-        error from get_prb(id) and recovering via get_prb(id, raw=True) (REQ-008)."""
+        """The prompt must carry the present-tense recovery directive: a
+        get_prb(id) parse failure naming the missing lead sentence leads to
+        repairing the file with the host's own file-read/file-write tools (no
+        specmgr read returns the body of a document that fails to parse, and
+        the generic update/edit tools cannot repair one), leaving the
+        frontmatter byte-unchanged, and a confirming get_prb(id) call before
+        proceeding with the requested change. The negative assertions run on
+        the recovery-block slice only: the rest of the prompt legitimately
+        keeps `update(id, type="prb", content)` and
+        `get_prb(id, raw=True, numbered=True)`."""
         result = update_prb("abc-123")
-        self.assertIn("Old-shape recovery", result)
-        self.assertIn("missing the mandatory lead sentence", result)
-        self.assertIn("get_prb(id, raw=True)", result)
-        self.assertLess(result.index("get_prb(id)"), result.index("Old-shape recovery"))
+        start = result.index("**Old-shape recovery.**")
+        end = result.index("## 2. If no change was specified")
+        self.assertLess(result.index("get_prb(id)"), start)
+        self.assertLess(start, end)
+        block = result[start:end]
+        self.assertIn("If `get_prb(id)` returns a parse failure", block)
+        self.assertIn("missing the mandatory lead sentence", block)
+        self.assertIn("No specmgr read returns the body of a document that fails to parse", block)
+        self.assertIn("read the raw file with the host's own file-read tool at", block)
+        self.assertIn("the `path` the parse-failure result carries", block)
+        self.assertIn("Leave the frontmatter block byte-for-byte unchanged", block)
+        self.assertIn("`updated` included: a repair is", block)
+        self.assertIn("file-write tool -- the generic `update`/`edit` tools re-parse the", block)
+        self.assertIn("cannot repair one", block)
+        self.assertIn("Confirm the repair with a real `get_prb(id)` call -- it must parse", block)
+        self.assertIn("which bumps `updated`", block)
+        self.assertNotIn("get_prb(id, raw=True)", block)
+        self.assertNotIn('update(id, type="prb", content)', block)
 
     def test_mentions_deriving_or_eliciting_lead_sentence_blanks(self):
         """The recovery flow must instruct deriving/confirming (or eliciting)

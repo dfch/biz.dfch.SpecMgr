@@ -9,8 +9,7 @@ the generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="prb"``; ``get_prb``'s ``raw=True`` parameter serves the
 line-range flow's line numbers -- with ``numbered=True`` additionally
 printing each line's 1-based body-line number, ready to feed into
-``update``'s ``offset`` -- and also serves the old-shape recovery flow
-below). There is no ``specmgr://prb/{id}`` resource to point at -- id-based
+``update``'s ``offset``). There is no ``specmgr://prb/{id}`` resource to point at -- id-based
 reads always go through the ``get_prb`` tool only.
 
 There are no fine-grained frontmatter/section mutation tools for
@@ -24,17 +23,21 @@ this domain: PRB's lifecycle surface is deliberately small
 the mandatory ``problem_statement`` lead paragraph was added will fail to
 parse via ``get_prb(id)`` -- the paragraph is a mandatory field now, so a
 document missing it raises an ``AssertionError``. This prompt instructs the
-LLM to recognize that specific failure, re-read the raw body via
-``get_prb(id, raw=True)`` (which never parses, so it always succeeds),
+LLM to recognize that specific parse failure, read the raw file with the
+host's own file-read tool at the ``path`` the parse-failure result carries
+(no specmgr read returns the body of a document that fails to parse),
 elicit/confirm or derive the lead sentence's 4 blanks from the document's
 own What/Who/Why answers (mirroring ``create_prb``'s own derive-then-confirm
-flow), insert the composed sentence directly under the H1, and only then
+flow), insert the composed sentence directly under the H1 with the
+frontmatter left byte-unchanged, write the file back with the host's own
+file-write tool (the generic ``update``/``edit`` tools cannot repair a
+document that fails to parse), confirm with ``get_prb(id)``, and only then
 proceed with whatever change was originally requested.
 
 This prompt only ever *narrates* a 9-step revision flow (reading current
 state via `get_prb` -- with a nested recovery sub-flow for an old-shape
-document that fails to parse, re-reading it via `get_prb(id, raw=True)`
-instead -- showing which of the 7 questions are already answered,
+document that fails to parse, repairing it with the host's own file
+tools -- showing which of the 7 questions are already answered,
 eliciting revisions via the `question` tool, re-synthesizing `Summary` and
 `Gap`, optionally revising `Impact`/`Future State`/`References`/
 `More Information`, then calling the generic `update` tool with

@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-22T15:43:46.858+01:00'
 id: feat-248-249-stale-docs
-status: planning
+status: progress
 type: feat
-updated: '2026-11-22T15:53:22.866+01:00'
+updated: '2026-11-22T16:03:05.121+01:00'
 version: 1.0.0
 ---
 
@@ -81,10 +81,10 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 
 #### Phase 100: PRB recovery directive (issue #248)
 
-- [ ] Task 100.100: Rewrite the "Old-shape recovery" block in `src/biz/dfch/specmgr/prb/data/prb_update_instructions.md` to the host-file-tool mechanism (REQ-001, REQ-002).
-- [ ] Task 100.110: Update `tests/prb/prompts/test_update_prb.py::test_mentions_old_shape_recovery_via_raw_reread` to assert the corrected wording and reject the old mechanism on the recovery-block slice only; confirm `test_mentions_deriving_or_eliciting_lead_sentence_blanks` and `test_mentions_inserting_sentence_under_h1_then_proceeding` still pass unchanged (REQ-003).
-- [ ] Task 100.120: Confirm `docs/MCP.md`, `src/biz/dfch/specmgr/general/data/general_harness_bundle.json`, and `.opencode/` embed no copy of the PRB recovery block (expected: 0 matches for `Old-shape recovery` / `prb_update_instructions`, as verified at refinement) (REQ-001).
-- [ ] Task 100.130: Run the phase-end quality gate.
+- [x] Task 100.100: Rewrite the "Old-shape recovery" block in `src/biz/dfch/specmgr/prb/data/prb_update_instructions.md` to the host-file-tool mechanism (REQ-001, REQ-002).
+- [x] Task 100.110: Update `tests/prb/prompts/test_update_prb.py::test_mentions_old_shape_recovery_via_raw_reread` to assert the corrected wording and reject the old mechanism on the recovery-block slice only; confirm `test_mentions_deriving_or_eliciting_lead_sentence_blanks` and `test_mentions_inserting_sentence_under_h1_then_proceeding` still pass unchanged (REQ-003).
+- [x] Task 100.120: Confirm `docs/MCP.md`, `src/biz/dfch/specmgr/general/data/general_harness_bundle.json`, and `.opencode/` embed no copy of the PRB recovery block (expected: 0 matches for `Old-shape recovery` / `prb_update_instructions`, as verified at refinement) (REQ-001).
+- [x] Task 100.130: Run the phase-end quality gate.
 
 #### Phase 110: req/gol models regular packages (issue #249)
 
@@ -102,11 +102,15 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 
 ### Current Status
 
-**As of 2026-11-22**: Planned. Worktree `../biz.dfch.SpecMgr.tree/feat-248-249-stale-docs` on branch `feat-248-249-stale-docs` created from `dev` at `9c9d7349`. No implementation yet.
+**As of 2026-11-22**: Phase 100 (PRB recovery directive, issue #248) implemented, gate green, uncommitted. Next: Phase 110 (req/gol models regular packages, issue #249).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T15:03:05.107Z - Phase 100 implemented
+
+Rewrote the PRB "Old-shape recovery" block in `prb/data/prb_update_instructions.md` to the host-file-tool mechanism (host file-read at the parse-failure `path`; derive/confirm unchanged; insert under the H1 in the raw file text with the frontmatter, `updated` included, byte-unchanged; host file-write; confirming `get_prb(id)`; the follow-up change through `update`, which bumps `updated`). The `update_prb` module docstring carried the same false `get_prb(id, raw=True)` mechanism and is corrected too, which regenerates `docs/api/biz.dfch.specmgr.prb.prompts.update_prb.md`. `test_mentions_old_shape_recovery_via_raw_reread` asserts the corrected wording and runs its negative assertions on the recovery-block slice only; it fails against the old wording (`1 failed, 16 passed`, an `AssertionError` on the missing `If get_prb(id) returns a parse failure` phrase) and passes on the rewrite (`17 passed`), with `test_mentions_deriving_or_eliciting_lead_sentence_blanks` and `test_mentions_inserting_sentence_under_h1_then_proceeding` unchanged and green. `docs/MCP.md`, the harness bundle, and `.opencode/` hold 0 matches for `Old-shape recovery`/`prb_update_instructions`. Change-history grep over the added lines: no match. Gate: ruff format/check, vulture, full `pytest -n auto`, `specmgr docs`/`mcp-docs`/`harness-bundle` with only the expected `docs/api` page diff.
 
 #### 2026-11-22T14:53:22.862Z - Refined
 
@@ -119,6 +123,10 @@ Feature plan created from GitHub issues #248 and #249. Both findings verified ag
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T15:03:05.107Z - Correct the `update_prb` module docstring too
+
+The `prb/prompts/update_prb.py` module docstring paraphrased the same false recovery mechanism (`get_prb(id, raw=True)` "never parses, so it always succeeds") and is rendered into `docs/api/`, so it is corrected in Phase 100 alongside the instructions file to keep REQ-001's claim true across the generated docs. The same stale paraphrase in `AGENTS.md` (the `prb/` bullet) is left for the orchestrator to decide.
 
 #### 2026-11-22T14:53:22.862Z - Docstring-only `models/__init__.py`
 
