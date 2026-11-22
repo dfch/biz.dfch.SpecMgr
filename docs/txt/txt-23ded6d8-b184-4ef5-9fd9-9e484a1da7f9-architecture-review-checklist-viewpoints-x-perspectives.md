@@ -4,7 +4,7 @@ created: '2026-11-05T06:53:20.701+01:00'
 id: 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9
 status: draft
 type: txt
-updated: '2026-11-22T15:27:37.000+01:00'
+updated: '2026-11-22T20:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -42,6 +42,7 @@ This document is the template and catalogue. The criteria are general and indexe
 | POSA, Enterprise Integration Patterns, Release It! | Architecture-level patterns and stability patterns | Pattern source, to be confirmed |
 | Gamma et al., Design Patterns (GoF) | Class-level patterns, used only where they shape a seam | Pattern source, limited use |
 | Saltzer and Schroeder | Protection design principles | Principle source, to be confirmed |
+| IEC 61508, ISO 26262-8, ISO 12100 | Hazard types and tool qualification in the Safety gate (section 5.2) | Missing, to be confirmed |
 
 Note on the 42010 usage: 42010 expects viewpoints to be derived from stakeholder concerns. The viewpoint set in section 4 is therefore a starter set that each review must confirm or adjust. R+W say the same: not all viewpoints apply to every system, and a review can add others.
 
@@ -51,7 +52,10 @@ Note on perspectives: 42010 has no perspective concept. It handles cross-cutting
 
 A review cannot start meaningfully without these inputs. If one is missing, record it as a finding against AD01 Completeness and AD07 Verifiability.
 
-- Scope and architecture baseline: name, version and date of what is reviewed.
+- Scope and architecture baseline: name, version and date of what is reviewed. For a product with variants, the baseline also names the variant in scope (hardware or build configuration). A review of a product line names the variants in scope and models one deployment environment for each. If the system ships more than one deployment descriptor (for example Docker Compose and Helm), the scope names the one that is reviewed, or each one is a separate deployment environment.
+- System class: local tool, enterprise application, distributed platform, cyber-physical system, or another class with a stated name. The class sets the default tailoring of section 3.1.
+- Subject: product or installation. For a product, VP06 and VP07 assess the reference deployment and the deployment capabilities, and target criteria ask for the targets the product supports, not the targets of one operation.
+- Intended operating profile: production, production-lite, demonstration or prototype. It does not change a rating. It is the context for the final evaluation (section 7.1).
 - Review type: concept, pre-implementation, pre-release, or periodic health check. It decides which cells apply.
 - Stakeholders and their concerns, as far as known.
 - Constraints and assumptions: technical, organisational, financial, regulatory.
@@ -59,6 +63,17 @@ A review cannot start meaningfully without these inputs. If one is missing, reco
 - Safety relevance declared: yes or no, each with a one-line justification (see section 5).
 - Practice evidence for the capability profile (section 7.3), as far as available.
 - Review team, reviewers' independence and review date.
+
+### 3.1 Default tailoring by system class
+
+The defaults below come from the Phase 120 validation (issue 267). A review can change a default with a one-line justification in the review record. The defaults never remove the target criterion of a home cell.
+
+| System class | Default tailoring |
+|--------------|-------------------|
+| Local tool | VP06 x RE and VP07 x RE: only the target, state recovery and external dependency criteria (VP06-RE-090, -130, -140). VP06-RE-110 is Inapplicable when the scope has exactly one failure domain by design. LO: inapplicable once, unless the scope includes remote services. Where the runtime calls are the source calls, VP05 holds the MA criteria and VP02 x MA cross-checks only (section 4) |
+| Enterprise application | VP03 x MA in full (shared data model). RG applies (personal and financial data). VP06 and VP07 follow the subject: for a product, the reference deployment |
+| Distributed platform | Every RE cell applies. VP06 x FL in full (scalability by instances). VP04 x RE in full (delivery guarantees, compensation). Every shipped deployment descriptor is a separate deployment environment |
+| Cyber-physical system | Safety gate decided explicitly, usually "safety relevant". The deployment view is mandatory. VP04 x SA is assessed in full. IC includes operator signals on the hardware. LO includes field sites |
 
 ## 4. Viewpoints
 
@@ -79,11 +94,11 @@ The concerns of each viewpoint are the concerns of the book. They are quoted in 
 | VP07 | Operational | System administrators, production engineers, support, service owners | Installation model, migration model, configuration management model, administration model, support model, runbooks, monitoring design |
 | XV | CrossView | Security officers, safety engineers, compliance, sponsors, architects | Security target, threat model, hazard analysis, safety concept, regulation register, resource and constraint overview |
 
-Interfaces: both VP01 Context and VP02 Functional list interfaces among the book concerns. A criterion has one primary viewpoint. The catalogue rule is: a criterion about the external entity side (identity, responsibilities and nature of the interface to an entity outside the system boundary) belongs to VP01. A criterion about the connectors and the handling of interfaces between elements inside the system belongs to VP02. Both viewpoints keep "Interfaces" as a named concern group, so that interface criteria stay easy to find. How the deployment behaves when an external system is unavailable is assessed under VP06 x RE (see VP06-RE-140).
+Interfaces: both VP01 Context and VP02 Functional list interfaces among the book concerns. A criterion has one primary viewpoint. The catalogue rule is: a criterion about the external entity side (identity, responsibilities and nature of the interface to an entity outside the system boundary) belongs to VP01. A criterion about the connectors and the handling of interfaces between elements inside the system belongs to VP02. Both viewpoints keep "Interfaces" as a named concern group, so that interface criteria stay easy to find. How the deployment behaves when an external system is unavailable is assessed under VP06 x RE (see VP06-RE-140). The handling of input from outside the system boundary (authentication, authorisation, validation of input, protection against injection and forgery) is VP02 x SE, a primary cell. An extension interface for third-party code that runs inside the process is VP02, with SE as the deciding perspective.
 
 Boundaries between the remaining viewpoints:
 
-- Functional and Development: Functional describes runtime elements. Development describes source modules. The dependency rule and the other source-level dependency principles (PR09 to PR12) are assessed in Development. This is our interpretation. Martin states the principles for source code and for deployable units, and gives no viewpoint. The assignment of PR12 follows the same reasoning, because Martin treats the separation of policy from detail as a direction of source dependencies (ch. 19 and 22). A C4 model alone is no evidence for PR09 and PR10 (Architecture Model TXT, section 3.4).
+- Functional and Development: Functional describes runtime elements. Development describes source modules. VP02 x MA assesses the coupling of runtime elements: calls, events, dispatch by name, shared data. VP05 x MA assesses source dependencies. Where the runtime calls are the source calls (one process, direct function calls), VP05 holds the MA criteria and VP02 x MA only cross-checks. Where runtime coupling is not visible in the source (dispatch by name, events, shared data), both cells hold criteria. The dependency rule and the other source-level dependency principles (PR09 to PR12) are assessed in Development. This is our interpretation. Martin states the principles for source code and for deployable units, and gives no viewpoint. The assignment of PR12 follows the same reasoning, because Martin treats the separation of policy from detail as a direction of source dependencies (ch. 19 and 22). A C4 model alone is no evidence for PR09 and PR10 (Architecture Model TXT, section 3.4).
 - Deployment and Operational: Deployment describes the environment. Operational describes how the system is run in it.
 - Concurrency and performance: Concurrency holds the process and thread structure. Load behaviour is assessed under the Performance Efficiency perspective.
 
@@ -170,19 +185,19 @@ Cell values:
 | Viewpoint | FS | PE | CO | IC | RE | SE | MA | FL | SA | RG | LO | RS |
 |-----------|----|----|----|----|----|----|----|----|----|----|----|----|
 | VP01 Context | P | S | P | S | S | P | X | S | S | S | S | S |
-| VP02 Functional | P | S | P | P | S | S | P | P | S | S | X | S |
-| VP03 Information | S | S | P | S | P | P | S | S | S | P | S | S |
+| VP02 Functional | P | S | P | P | S | P | P | P | P | S | X | S |
+| VP03 Information | S | S | P | S | P | P | P | S | S | P | S | S |
 | VP04 Concurrency | S | P | S | X | P | S | S | S | S | X | S | S |
 | VP05 Development | X | S | S | S | S | S | P | P | S | X | S | P |
-| VP06 Deployment | X | P | P | X | P | P | S | P | S | X | P | S |
+| VP06 Deployment | X | P | P | X | P | P | S | P | P | X | P | S |
 | VP07 Operational | X | P | S | S | P | S | P | P | S | S | S | P |
 | XV CrossView | X | X | X | X | S | P | X | X | P | P | X | P |
 
-Counts: 32 primary cells, 47 secondary cells and 17 cells without default criteria, 96 cells in total (eight rows and twelve columns). Every viewpoint and every perspective has at least one primary cell.
+Counts: 36 primary cells, 43 secondary cells and 17 cells without default criteria, 96 cells in total (eight rows and twelve columns). Every viewpoint and every perspective has at least one primary cell.
 
 Home cells are the primary cells of the row XV CrossView: XV x SE (Security), XV x SA (Safety), XV x RG (Regulation) and XV x RS (Resources). Home cells hold the deep criteria for that topic. Other viewpoints hold short cross-checks, for example Security x Context or Reliability x CrossView.
 
-How the matrix was derived. The starting point was the matrix of Draft 0.7 (nine columns, thirteen rows), merged by the mapping of section 4.1. A mechanical merge, where the highest value wins, would have made VP02 Functional primary in seven of the nine ISO columns. It was not used. Each cell was decided again under the rule "one primary location for each concern". The derivation is our interpretation. The R+W per-view tables (R+W Tables 25-1, 26-1, 27-1, 28-1 and 29-1 to 29-6) hold prose and no ratings. Where R+W give such a table for a perspective, it was used as the guide: P where the viewpoint is the place where the concern is specified, S where it is a cross-check, X where R+W state little or no impact. FS, CO and SA have no R+W table. Their cells follow the earlier matrix. The cell by cell reasons are in the linked QA.
+How the matrix was derived. The starting point was the matrix of Draft 0.7 (nine columns, thirteen rows), merged by the mapping of section 4.1. A mechanical merge, where the highest value wins, would have made VP02 Functional primary in seven of the nine ISO columns. It was not used. Each cell was decided again under the rule "one primary location for each concern". The derivation is our interpretation. The R+W per-view tables (R+W Tables 25-1, 26-1, 27-1, 28-1 and 29-1 to 29-6) hold prose and no ratings. Where R+W give such a table for a perspective, it was used as the guide: P where the viewpoint is the place where the concern is specified, S where it is a cross-check, X where R+W state little or no impact. FS, CO and SA have no R+W table. Their cells follow the earlier matrix. The cell by cell reasons are in the linked QA. After the validation against four systems (Phase 120, issue 267), four cells changed from S to P: VP02 x SE (the main input-handling controls landed in an S cell in three of four systems), VP03 x MA (the shared data model is the strongest coupling of an enterprise application), and VP02 x SA and VP06 x SA (the safety design of a cyber-physical system). VP03 x FL stays S: scalability by data volume or by instances depends on the system class (section 3.1).
 
 Rules for tailoring:
 
@@ -190,13 +205,17 @@ Rules for tailoring:
 - Removing a secondary cell needs no justification, unless the review methodology requires that cross-check.
 - Activating a X cell needs no justification. Record the reason if it adds assessment scope.
 - Interaction Capability applies wherever the assessed product has user-facing, operator-facing, administrative or maintenance interfaces. If no relevant human interaction exists within the review scope, mark the perspective inapplicable once, with one scope-level justification.
-- Location applies where elements or interacting systems are physically far from each other. If all of them are in one place, mark the perspective inapplicable once, with one scope-level justification. Check the disaster recovery site and the external systems first.
+- Location applies where elements or interacting systems are physically far from each other. If all of them are in one place, mark the perspective inapplicable once, with one scope-level justification. Check the disaster recovery site and the external systems first. Legal differences between countries are RG. LO keeps the physical and network differences.
 - Regulation applies to any system that can be subject to law, regulation or organisational policy. If none applies within the review scope, mark the perspective inapplicable once, with one scope-level justification.
 - Resources applies to every software project, because R+W state that all of them are constrained by time and cost. It covers build and operating constraints. Its depth depends on the review type, for example a periodic health check puts more weight on operating capacity than on build constraints.
 - Safety gate: the Safety perspective is opt-in. The review scope must state "safety relevant" or "not safety relevant", each with a one-line justification.
   - If safety relevant: the SA column is included, with its home cell XV x SA. Primary and secondary cells are assessed as the matrix shows. Removing an individual primary cell needs a justification.
   - If not safety relevant: the SA column is excluded. The justification is recorded at review-scope level.
   - Safety relevance is not decided only by direct control of physical equipment. Software that influences decisions or actions with possible safety consequences can be safety relevant.
+  - A system that emits or controls energy that can harm people is safety relevant: radio frequency, electrical, thermal or mechanical energy.
+  - The justification names the protected party: people, equipment or the environment. Protection of equipment alone does not satisfy the SA column.
+  - A development tool can be safety relevant through its output, when that output is used in a safety-relevant system (tool qualification, for example IEC 61508-3 and ISO 26262-8, to be confirmed).
+  - If SA is included, a conflict between RE and SA (keep running against stop safely) is recorded as a trade-off point (section 8.1). SA wins, unless a recorded decision says otherwise.
   - A later change of the decision needs a new documented decision.
 - The word inapplicable in this section describes a cell or perspective for a review scope. The applicability value Inapplicable (section 7.1) applies to a single criterion.
 - Cell counts and markings are a first judgement. They stay provisional until the validation against three architectures is done.
@@ -214,7 +233,7 @@ The P, S and X values are our interpretation. R+W give no rating for every cell.
 | PE | VP07 Operational | Low | P | The book concern Performance monitoring is in VP07 |
 | RE | VP01, VP02, VP05 | Low | S | Cross-checks from the R+W text (external availability, offline operation, start and stop for failover) |
 | RE | VP03 Information | Low | P | Backup, recovery and consistency. Judgement call |
-| MA and FL (Evolution) | VP03 Information | High | S and S | Gap candidate. The book rates Evolution High for the Information view. Decide if one of the two cells becomes P |
+| MA and FL (Evolution) | VP03 Information | High | P and S | Decided after the validation (Phase 120): MA became P (shared data model). FL stays S, because scalability depends on the system class |
 | FL (Evolution, Scalability) | VP06 Deployment | Low | P | Scalability and installability sit in FL. The book groups scalability with Performance |
 | MA and FL (Evolution) | VP07 Operational | Low | P and P | Installation, upgrade and migration are Operational concerns in the book |
 | MA | VP01 Context | Medium | X | FL is S for the same view. Check if MA needs an S |
@@ -261,7 +280,7 @@ Catalogue-level checks, from the 29148 characteristics of a requirement set, app
 
 | Characteristic | Check for the catalogue |
 |----------------|-------------------------|
-| Complete | Every primary cell has criteria, and every home cell starts with a target criterion |
+| Complete | Every primary cell has criteria, and every home cell starts with a target criterion (for SA: the hazard analysis) |
 | Consistent | No two criteria conflict or restate each other. Each criterion has one primary viewpoint and one primary AD |
 | Feasible | The criteria selected for one review type can be worked within the available time |
 | Comprehensible | IDs, tags and rating words are defined once, in this document |
@@ -356,6 +375,8 @@ The rating is one of five words:
 Rules:
 
 - Apply the fields in this order: Applicability first, then Evidence, then Outcome.
+- A criterion that asks where something is stated (a target, an obligation, a constraint) is answered by a search of the baseline. A complete search that finds nothing is Evidence Sufficient and Outcome Unsatisfactory, not Evidence Missing. The record names the places searched. Evidence Missing remains for a search that could not be completed.
+- A criterion that uses the result of another criterion names it. Its Outcome is judged on the part that does not depend on the missing input, and its finding refers to the finding of the other criterion.
 - Record evidence before the rating (section 8.2).
 - A finding is mandatory for the ratings Partially, Unsatisfactory and Unassessable. An Unassessable finding is recorded against AD01 or AD07 and states whether the evidence is insufficient or missing. The severity of a finding does not define the rating.
 - Do not average ratings. Ratings are ordinal. Report the count per rating.
@@ -420,7 +441,9 @@ The practice areas below are a proposal. The final list is to be agreed.
   - Demonstrated evidence has the producer Human or Tool.
   - Measured evidence has the producer Pipeline, or the producer Tool when the check repeats.
   - An LLM agent can reach Demonstrated or Measured only through the producer Tool, with a check that is recorded so that it can be run again, for example a model parse, a dependency graph and cycle check, or a query for nodes with one instance. Such a check supports structure claims only, not quality targets. For evidence from the producer Human or Pipeline, such as a load test, a failover test or a penetration test, the agent only reads the report and checks its provenance.
-- Provenance: artefact name, version and date, relative to the review baseline. For the producer Tool, also the command or query and its result.
+- Provenance: artefact name, version and date, relative to the review baseline. For the producer Tool, also the command or query and its result. Evidence from outside the reviewed repository carries its own repository and commit or date, and is checked against the code baseline before use.
+- Object of the evidence: the artefact that was tested, measured or read. Evidence about a copy, a model or a simulation of an element is at most Documented for the element itself. A simulation result keeps its level for the simulation.
+- Conflicting evidence: when two artefacts at the baseline contradict each other, the executable artefact (code, configuration) is the evidence, the other one is Insufficient, and the contradiction is a mandatory finding (type weakness, link AD07). In a safety-relevant scope its severity is at least major.
 - Minimum evidence policy. The minimum level that makes Evidence Sufficient depends on the review type (section 3) and on the criterion type (section 6.1). The values are provisional, to be confirmed against real reviews.
 
 | Review type | Design criterion | Practice criterion |
@@ -468,7 +491,7 @@ Pattern sources by viewpoint, for use as reference points and not as requirement
 
 Anti-pattern checks, used as prompts in the relevant cells: big ball of mud, distributed monolith, shared-database integration, god component, vendor lock-in, golden hammer, pattern overuse.
 
-## 10. Worked Example: Deployment x Reliability (VP06 x RE)
+## 10. Criteria: Deployment x Reliability (worked example), CrossView x Safety, CrossView x Regulation
 
 Cell type: primary. Sub-characteristics in focus: Availability, Fault Tolerance, Recoverability. This example replaces the single-point-of-failure question that was originally filed under Performance Efficiency. Criterion numbers start at 090 and run in steps of 10.
 
@@ -487,8 +510,9 @@ Cell type: primary. Sub-characteristics in focus: Availability, Fault Tolerance,
 - Sub-characteristic: Availability.
 - Primary AD: AD12 Risk management.
 - Principle tags: PR14.
-- Question: Show for each deployment node and shared service what happens to the stated availability target if it fails, and which ones have no redundant counterpart.
+- Question: Show which deployment nodes and shared services have no redundant counterpart.
 - Expected evidence: deployment diagram, failure mode analysis, dependency list.
+- Note: this criterion can be rated without a target. The effect on the target is VP06-RE-160.
 
 ### VP06-RE-110 Failure domains
 
@@ -498,14 +522,15 @@ Cell type: primary. Sub-characteristics in focus: Availability, Fault Tolerance,
 - Principle tags: PR14.
 - Question: How are redundant instances placed across independent failure domains such as host, zone and region, and which failure domains are shared?
 - Expected evidence: deployment diagram, infrastructure configuration, placement rules.
+- Applicability: Inapplicable only when the scope has exactly one failure domain by design. Missing redundancy on a system that can run on several nodes is Unsatisfactory, not Inapplicable.
 
-### VP06-RE-120 Failure detection and failover
+### VP06-RE-120 Failure detection and failover or safe state
 
 - Type: design.
 - Sub-characteristic: Fault Tolerance.
 - Primary AD: AD07 Verifiability.
 - Principle tags: PR14, PR16.
-- Question: How is a failed node detected, how long does failover take, and where is the failover behaviour defined?
+- Question: How is a failed node detected, how long does the failover or the transition to the defined safe state take, and where is that behaviour defined?
 - Expected evidence: health check configuration, failover design, monitoring design.
 
 ### VP06-RE-130 Recovery of state and data
@@ -533,7 +558,17 @@ Cell type: primary. Sub-characteristics in focus: Availability, Fault Tolerance,
 - Primary AD: AD07 Verifiability.
 - Principle tags: none.
 - Question: Which failure and recovery scenarios have been tested in a production-like environment, how often, and with what result?
-- Expected evidence: failover test report, disaster recovery exercise report, chaos test results.
+- Expected evidence: failover test report, disaster recovery exercise report, chaos test results. A fault injection capability is not a test result.
+
+### VP06-RE-160 Effect of single points of failure on the target
+
+- Type: design.
+- Sub-characteristic: Availability.
+- Primary AD: AD12 Risk management.
+- Principle tags: PR14.
+- Depends on: VP06-RE-090 (target), VP06-RE-100 (single points of failure).
+- Question: For each node and shared service found in VP06-RE-100, what happens to the stated availability target if it fails?
+- Expected evidence: failure mode analysis, availability calculation, the target of VP06-RE-090.
 
 ### Example rating records
 
@@ -560,6 +595,96 @@ Practice criterion:
 - Rating: Partially.
 - Maturity: 1 Performed. The practice achieves its purpose, informally.
 - Finding F-05: weakness, minor. Failover tests have no schedule and no owner.
+
+### XV-SA-090 Hazard identification
+
+- Type: design.
+- Sub-characteristic: Risk Identification.
+- Primary AD: AD12 Risk management.
+- Principle tags: none.
+- Question: Where is the hazard analysis, which hazards does it list, and which party does each hazard affect (people, equipment, environment)?
+- Expected evidence: hazard analysis, hazard log.
+- Note: the first criterion of the home cell. Without it no other SA criterion can be rated.
+
+### XV-SA-100 Safety targets and integrity
+
+- Type: design.
+- Sub-characteristic: Operational Constraint.
+- Primary AD: AD07 Verifiability.
+- Principle tags: none.
+- Depends on: XV-SA-090.
+- Question: Which safety target or integrity level is stated for each hazard, and against which standard?
+- Expected evidence: safety requirements, safety integrity assessment.
+
+### XV-SA-110 Safety functions and safe states
+
+- Type: design.
+- Sub-characteristic: Fail Safe, Hazard Warning.
+- Primary AD: AD03 Correctness.
+- Principle tags: PR07.
+- Depends on: XV-SA-090.
+- Question: Which safety function reduces each hazard, what is its defined safe state, and how is the operator warned?
+- Expected evidence: list of safety functions, safety concept.
+
+### XV-SA-120 Allocation of safety functions
+
+- Type: design.
+- Sub-characteristic: Safe Integration.
+- Primary AD: AD06 Traceability.
+- Principle tags: none.
+- Depends on: XV-SA-110.
+- Question: Show for each safety function the hardware and software elements that implement it, end to end.
+- Expected evidence: allocation table, architecture model with the `safety.function` property (Architecture Model TXT, section 8.3).
+
+### XV-SA-130 Independence from the mission function
+
+- Type: design.
+- Sub-characteristic: Safe Integration.
+- Primary AD: AD08 Modularity.
+- Principle tags: PR06.
+- Depends on: XV-SA-120.
+- Question: How is each safety function kept independent of the mission function that it protects against, and which elements do both share?
+- Expected evidence: allocation table, common cause analysis.
+
+### XV-SA-140 Verification of safety functions
+
+- Type: practice.
+- Sub-characteristic: Fail Safe.
+- Primary AD: AD07 Verifiability.
+- Principle tags: none.
+- Depends on: XV-SA-110.
+- Question: How is each safety function verified on the real element, how often, and with what result?
+- Expected evidence: safety function test reports, test code that calls the real element (section 8.2, object of the evidence).
+
+### XV-RG-090 Applicable obligations
+
+- Type: design.
+- R+W concern: Regulation.
+- Primary AD: AD11 Compliance.
+- Principle tags: PR18.
+- Question: Where is the register of the laws, regulations and policies that apply, and which obligations must the subject meet itself and which must it enable for its operator?
+- Expected evidence: regulation register, legal assessment, conformity statements.
+- Note: the first criterion of the home cell.
+
+### XV-RG-100 Allocation of obligations
+
+- Type: design.
+- R+W concern: Regulation.
+- Primary AD: AD06 Traceability.
+- Principle tags: none.
+- Depends on: XV-RG-090.
+- Question: Show for each obligation the requirement, the architectural element and the evidence that meets it.
+- Expected evidence: compliance matrix, requirements, architecture model.
+
+### XV-RG-110 Differences between countries
+
+- Type: design.
+- R+W concern: Regulation.
+- Primary AD: AD11 Compliance.
+- Principle tags: none.
+- Depends on: XV-RG-090.
+- Question: In which countries is the system used or sold, and how does the architecture handle the legal differences between them (for example radio licences, data residency, export control)?
+- Expected evidence: regulation register per country, deployment and configuration options.
 
 ## 11. Model Generation Agent (C4 and Structurizr)
 
@@ -640,7 +765,7 @@ The mapping of viewpoints and perspectives to C4 views and Structurizr construct
 
 What the agent must keep in mind from it:
 
-- C4 has no native construct for VP03 Information. The row XV CrossView is not modelled. VP05 Development and VP07 Operational are covered in part only.
+- C4 has no native construct for VP03 Information. The row XV CrossView is not modelled. VP05 Development and VP07 Operational are covered in part only. VP04 Concurrency is covered only between processes, not inside a process.
 - Quality targets, ratings, maturity levels and the capability profile are not modelled. The agent can reference such evidence through properties. It does not create it.
 - Properties appear only in the JSON export. A query script over the JSON export is the authoritative reader.
 - Structurizr does not check property values. The check script of section 11.8 reports values that occur once and conflicts between a parent and a child.
@@ -662,7 +787,7 @@ Rules for the phases:
 
 - Phase 1: the agent asks the user for the review type, the baseline (name, version, date), the safety relevance with a one-line justification, the stakeholders, and whether one or many workspaces are wanted.
 - Phase 2: with source code, extract per container and merge the results. With specmgr artifacts, follow the references of the given IDs and read each artifact once.
-- Phase 3: split workspaces by system and team boundary, not by viewpoint. Create one workspace per software system with one owning team. Create a landscape workspace only if there is more than one system. A review overlay is a separate workspace and needs `workspace extends`, which is not yet tested.
+- Phase 3: split workspaces by system and team boundary, not by viewpoint. Create one workspace per software system with one owning team. Create a landscape workspace only if there is more than one system. A review overlay is a separate workspace and needs `workspace extends`, which is not yet tested. Create one deployment environment for each shipped deployment descriptor and for each variant in scope (section 3).
 - Phase 5: the checker never edits the workspace. It only reports.
 
 ### 11.8 Checks and Evidence
@@ -674,13 +799,14 @@ The checks of phase 5 support the architecture-level pass of section 6.4. They h
 | Workspace parses without errors | Evidence for all views is Documented, from a valid model |
 | Disconnected element | AD01, AD02 |
 | Element in no view | AD13 |
-| Software system with containers but no decisions | AD06 |
+| Decisions of the system, checked over the decision store with list_dec and list_references, not with the Structurizr inspection. The inspection "missing decisions" is set off, because Structurizr reads decisions only from files named `NNNN-*.md` and cannot tell a system with decisions in another format from a system without decisions | AD06 |
 | Software system or container without documentation | AD09 |
 | Container without technology, relationship without description | AD07 |
-| Property check over the JSON export: shared failure domains, boundary crossings, unset values, values that occur once, parent and child conflicts, group name against `trust.boundary` | VP06 failure domains, XV x SE trust boundaries, AD02 |
+| Property check over the JSON export: shared failure domains, boundary crossings, unset values, values that occur once, parent and child conflicts, group name against `trust.boundary`, elements per `safety.function` (gaps in the chain) | VP06 failure domains, XV x SE trust boundaries, XV-SA-120, AD02 |
 | Sample of facts compared with the source | Correctness of the extraction, not of the architecture |
 
-- The default severity of the inspections is error. Set the severity per inspection before the run.
+- The default severity of the inspections is error. Set the severity per inspection before the run. Set the decision inspection off (see the table).
+- A Proposed element has at least one Proposed relationship, so that the inspection does not report it as disconnected.
 - A view from a valid model is Documented. A recorded inspection is Demonstrated. An inspection that a pipeline runs repeatedly is Measured.
 - A deployment node with an instance count of one and no replica is visible in the model. This supports VP06-RE-100 and VP06-RE-120.
 
@@ -693,6 +819,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-22 19:30:00.000Z - Draft 0.13
+
+Applied the 15 proposed changes of the Phase 120 validation (four systems: specmgr, AERIS-10, Apache OFBiz, OpenTelemetry Demo; synthesis in the feature folder, QA 25bd5b93-a228-4d6c-8b70-d143dfd39444, 0.0690). Matrix: VP02 x SE, VP03 x MA, VP02 x SA and VP06 x SA from S to P (now 36 P, 43 S, 17 X); section 5.3 updated. Section 3: variant and deployment descriptor in the baseline, new preconditions system class, subject and intended operating profile, new section 3.1 default tailoring by system class. Section 4: the MA split between VP02 and VP05, input handling and extension interfaces in VP02 x SE. Section 5.2: Safety gate with hazard types, protected party, development tools and the RE against SA rule; LO against RG rule. Section 7.1: complete-search rule and dependent criteria. Section 8.2: external evidence, object of the evidence, conflicting evidence. Section 10: VP06-RE-100 split (new VP06-RE-160), RE-110 applicability, RE-120 safe state, RE-150 note; new criteria XV-SA-090 to -140 and XV-RG-090 to -110. Section 11: decision check over the decision store, safety function check, one environment per descriptor and variant. Issue 267.
 
 ### 2026-11-22 14:27:37.000Z - Draft 0.12
 

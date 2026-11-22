@@ -40,7 +40,7 @@ Support counts how many runs back a result. "Contradicted" means that a run show
 
 ## 3. Proposed changes, for decision
 
-Grouped by target. The numbers in brackets are the results of section 2.
+Status 2026-11-22: all 15 accepted by the user and applied (checklist Draft 0.13, Architecture Model Draft 0.6, QA 0.0690). Grouped by target. The numbers in brackets are the results of section 2.
 
 Matrix (checklist 5.2, QA 0.0550 and 0.0640):
 

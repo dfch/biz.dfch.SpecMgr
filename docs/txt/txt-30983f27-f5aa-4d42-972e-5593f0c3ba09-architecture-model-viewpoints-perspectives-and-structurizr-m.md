@@ -4,7 +4,7 @@ created: '2026-11-18T13:25:56.718+01:00'
 id: 30983f27-f5aa-4d42-972e-5593f0c3ba09
 status: draft
 type: txt
-updated: '2026-11-22T16:30:00.000+01:00'
+updated: '2026-11-22T20:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -238,6 +238,7 @@ Follow-up outside this document: a tag filter in list_dec would remove the need 
 | Applicability matrix P, S, X | The per-view tables of R+W (Tables 25-1 to 29-6) are prose. The only rating grid is Table 4-1, for four perspectives. See the checklist, section 5.3 | Our interpretation |
 | Viewpoint IDs VP01 to VP07 | The book has no IDs | Catalogue extension |
 | Component means the C4 sense, a Martin component is a deployable unit | Martin and Brown use the word in two senses (section 3.3) | Catalogue rule |
+| System class, subject and operating profile as preconditions, with default tailoring by class | The validation against four systems showed that tailoring depends on the class (checklist, section 3.1) | Catalogue extension |
 | Martin's decoupling modes mapped to C4 containers and components | Martin has no C4 mapping. Brown (ch. 34) links his components to C4 but does not map the decoupling modes (section 8.5) | Our interpretation |
 
 ## 8. Mapping to C4 and Structurizr
@@ -252,11 +253,11 @@ Coverage values: full (the viewpoint concerns can be read from the model), parti
 |-----------|-----------------------------------|----------|--------------|
 | VP01 Context | System context and system landscape views. Persons and software systems, external ones tagged. Relationship description and technology as the external interface catalogue | partial to full | Impact of the system on its environment, other external interdependencies, overall coherence. Put them in documentation |
 | VP02 Functional | Container and component views. Element description and relationship technology as responsibilities and interfaces | partial | Functional capabilities (what the system does for users), functional design philosophy |
-| VP03 Information | No native construct. Relationship descriptions can name the data. Ownership and flow need another model (a data model, linked from documentation) | none | All concerns |
-| VP04 Concurrency | Dynamic view for message flows. Container instances for process structure | partial | Threads, synchronization, reentrancy, state management |
+| VP03 Information | No native construct. Relationship descriptions can name the data. Ownership and flow need another model. The evidence source is the data model of the system (entity definitions, DDL, ORM mapping, document schemas), checked with a recorded script, linked from documentation | none | All concerns |
+| VP04 Concurrency | Dynamic view for flows between processes: order, parallel consumers, the failure point. Container instances for process structure | partial between processes, none inside a process | Threads, clock domains, interrupts, pools, synchronization, reentrancy, state management, order of initialisation. Between processes: delivery guarantees, consumer semantics, compensation |
 | VP05 Development | Component view and technology as module structure. Documentation sections | partial | Common processing, standardization of design and testing, instrumentation, codeline organization. The dependency metrics I, A and D of Martin (section 6.1) and the direction of source dependencies (section 3.4) |
 | VP06 Deployment | Deployment view: nested deployment nodes, infrastructure nodes, container instances with instance count and health checks. Properties for failure domains and trust boundaries | full for structure | Hardware specification, network capacity, third-party software requirements beyond technology |
-| VP07 Operational | Deployment view: health checks, infrastructure nodes. Documentation sections | partial | Installation, migration, configuration management, support, backup and restore |
+| VP07 Operational | Deployment view: health checks, infrastructure nodes. Documentation sections. Monitoring design: monitoring containers plus a relationship tag for telemetry flows (tag name to be confirmed), excluded from VP02 views so that telemetry does not swamp them | partial | Installation, migration, configuration management, support, backup and restore. Health check details and alert rules stay text |
 | XV CrossView | Not modelled. Properties can reference the evidence | none | Security target, threat model, hazard analysis, regulation register, resource constraints |
 
 The early chat sessions mapped Information to container and component views, and Development to the C4 code level. This catalogue does not do that. C4 has no Information construct, and the model generation agent does not model code level.
@@ -278,7 +279,7 @@ The early chat sessions mapped Information to container and component views, and
 | LO | Sites and regions of deployment nodes | `failure.domain.region`. A separate site key is to be confirmed |
 | RS | A reference to team ownership. Not modelled | Property reference. Key to be confirmed |
 
-A review result can be attached to an element with the Structurizr perspective feature. Proposed use: one perspective for each criterion. Perspective name = the criterion ID (for example VP06-RE-100), value = the rating word, description = the evidence level and the finding summary (for example "Documented. Host A has no replica."). The perspective code is part of the criterion ID. Verified with the parse tool (QA 25bd5b93, 0.0680): a perspective name must be unique on an element, and a second perspective with the same name is a parse error. So a name per perspective code (for example Reliability) holds only one result per element, but one deployment node is subject to several criteria. Properties are no alternative: a repeated key is overwritten without a warning. A style on a perspective value works only in the Structurizr renderer, not in the PlantUML export. A style selector names one perspective, so a style per criterion ID is needed, or the review report holds the coloured view.
+A review result can be attached to an element with the Structurizr perspective feature. Proposed use: one perspective for each criterion. Perspective name = the criterion ID (for example VP06-RE-100), value = the rating word, description = the evidence level and the finding summary (for example "Documented. Host A has no replica."). The perspective code is part of the criterion ID. Verified with the parse tool (QA 25bd5b93, 0.0680): a perspective name must be unique on an element, and a second perspective with the same name is a parse error. So a name per perspective code (for example Reliability) holds only one result per element, but one deployment node is subject to several criteria. Properties are no alternative: a repeated key is overwritten without a warning. A style on a perspective value works only in the Structurizr renderer, not in the PlantUML export. A style selector names one perspective, so a style per criterion ID is needed, or the review report holds the coloured view. Rating and evidence: the rating of a criterion sits on the top deployment node of the environment, or on the software system for a criterion outside VP06. A perspective with the same name on a lower node or element is evidence for that rating, not a second rating.
 
 ### 8.3 Property conventions
 
@@ -291,20 +292,24 @@ Verified with Structurizr 2026.10.26 (QA 25bd5b93, 0.0500):
 | `trust.boundary.crossing` | Explicit relationships | Cross-check only |
 | `review.safety.relevant`, `review.safety.justification` | Model | |
 | `origin`, `provenance` | Elements and relationships | `origin` is Extracted, Inferred or Proposed |
+| `trust.level` | Containers and components | To be confirmed. A privilege tier inside one process (for example administrator, back-office user, API client, plugin). `trust.boundary` stays on deployment nodes and elements at process level |
+| `safety.function` | Elements and relationships | To be confirmed. The ID of the safety function that the element is part of. One key per element; an element in two safety functions is recorded in the hazard analysis, not in the model. The property check lists all elements per safety function |
+| `failure.domain.placement` | Deployment nodes and container instances | To be confirmed. `fixed` or `scheduler`. With `scheduler`, the host is chosen at run time, `failure.domain.host` is not set, and the placement rules (anti-affinity, spread) are the evidence |
 
 Keys use only the characters a to z, 0 to 9 and the dot. Values are never empty. A key is set once on an element: a repeated key is overwritten by the last value, without a warning (QA 25bd5b93, 0.0680). A property cannot hold a list. Properties appear only in the JSON export. The PlantUML and Mermaid exports drop them, so a query script over the JSON export is the authoritative reader.
 
 ### 8.4 To be confirmed
 
 - How a view records the viewpoint it conforms to. A C4 view is a presentation and not a 42010 view. One C4 view can serve several viewpoints, for example the deployment view serves VP06 and VP07 (diagram B). Options: the view key, a tag, a property on the view. Properties on views are not verified.
-- The keys `principle.dec`, a site key for LO, and the reference keys for RG and RS.
+- The keys `principle.dec`, a site key for LO, the reference keys for RG and RS, and the keys `trust.level`, `safety.function` and `failure.domain.placement` of section 8.3. The tag for telemetry relationships (section 8.1).
+- One deployment environment for each shipped deployment descriptor and each variant in scope (checklist, section 3).
 - Documentation (`!docs`) and decisions (`!adrs`) with a local container, and `workspace extends` for a review overlay.
 - The mapping of the decoupling modes in section 8.5, and whether a model can carry the direction of the source dependency, for example in a relationship property. No key is proposed yet.
 - The same mapping on three contrasting architectures: a traditional enterprise application, a distributed cloud-native platform and a safety-relevant cyber-physical system.
 
 ### 8.5 Decoupling modes (our interpretation)
 
-Martin names three modes in which components are decoupled: source level, deployment level and service level (ch. 16, Martin L2434). Ch. 18 adds the local process as a fourth physical boundary form (Martin L2658 to L2730). The choice of mode is an option that a good architecture keeps open (Martin L2434 to L2466). The mapping below is our interpretation and is to be confirmed in Phase 120. Martin gives no C4 mapping.
+Martin names three modes in which components are decoupled: source level, deployment level and service level (ch. 16, Martin L2434). Ch. 18 adds the local process as a fourth physical boundary form (Martin L2658 to L2730). The validation found a fifth form that Martin does not name, the runtime-loaded module (Apache OFBiz). The choice of mode is an option that a good architecture keeps open (Martin L2434 to L2466). The mapping below is our interpretation and is to be confirmed in Phase 120. Martin gives no C4 mapping.
 
 | Mode | What it is | C4 and Structurizr | Coverage |
 |------|-----------|--------------------|----------|
@@ -312,6 +317,7 @@ Martin names three modes in which components are decoupled: source level, deploy
 | Deployment level | Independently deployable units such as jar files, DLLs or gems. They may share one process | No native construct. The component technology field or a property can name the unit. A key is to be confirmed | none |
 | Local process | Separate address space on the same processor. Communication by sockets or queues | C4 containers on the same deployment node | partial |
 | Service | A process that assumes a network between it and its partners | C4 containers on different deployment nodes | partial |
+| Runtime-loaded module (catalogue extension) | A module with a descriptor that the runtime loads (entities, services, web applications), while the code of all modules is built into one artefact. Neither source level nor deployment level | C4 component, with the descriptor named in a property | partial |
 
 Consequences for criteria:
 
@@ -327,6 +333,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-22 19:30:00.000Z - Draft 0.6
+
+Applied the Architecture Model part of the Phase 120 validation (QA 25bd5b93-a228-4d6c-8b70-d143dfd39444, 0.0690). Section 7: deviation row for the system class preconditions. Section 8.1: VP03 names the data model as the evidence source; VP04 coverage is partial between processes and none inside a process; VP07 telemetry relationships carry a tag and stay out of VP02 views. Section 8.2: the rating sits on the top node or the software system, lower perspectives are evidence. Section 8.3: proposed keys `trust.level`, `safety.function` and `failure.domain.placement`. Section 8.4: the new keys and one environment per descriptor and variant. Section 8.5: the mode runtime-loaded module. Issue 267.
 
 ### 2026-11-22 15:30:00.000Z - Draft 0.5
 

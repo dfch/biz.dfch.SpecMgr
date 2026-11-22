@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-22T19:30:00.000+01:00'
+updated: '2026-11-22T20:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -130,7 +130,7 @@ Superseded on 2026-11-10 (TXT Draft 0.8): the matrix was rebuilt for seven viewp
 
 Answered on 2026-11-22 (issue 267): yes, the structure holds. Four runs: specmgr (an extra class, single-user local tool), AERIS-10 (safety-relevant cyber-physical system), Apache OFBiz (traditional enterprise application) and the OpenTelemetry Demo (distributed cloud-native platform). Every concern of the four systems found a viewpoint and a perspective. The weak points are a few cell values, missing preconditions (system class, subject, operating profile), missing criteria in the home cells XV x SA and XV x RG, and rules for ratings and evidence. The records and models are in `.specmgr/feat/feat-267-arch-rvw/validation/`, the cross-run summary with 16 results and 15 proposed changes in `validation/synthesis.md`. None of the changes is applied yet.
 
-TODO: decide the 15 proposed changes of the synthesis, section 3
+All 15 proposed changes were accepted by the user on 2026-11-22 and applied, see 0.0690.
 
 > **0.0350**: For each of the three architectures: does every important quality concern have a primary location, do the secondary cells give useful cross-checks without duplicating primary criteria, and which concerns fit no viewpoint?
 
@@ -332,7 +332,7 @@ Superseded in part on 2026-11-20 by 0.0670: DevelopmentResource (DR) is renamed 
 
 Follow-up of 0.0530 (TXT Draft 0.8). Cells to check: VP06 x CO, VP07 x FL, VP01 x SE and VP06 x SE (all P), and VP02 x RE, VP05 x RE and XV x RE (all S). The share of P cells rose from 26 percent to 33 percent. Rule: demote a cell to S if it produces duplicate criteria. The check is done together with the validation of 0.0340 and 0.0350, which is still open for the new matrix. The TOGAF question stays in 0.0260.
 
-TODO: answer pending
+Answered on 2026-11-22 (issue 267), after the four validation runs of 0.0340. None of the four runs reported a duplicate or a misplaced concern in these seven cells, so they stay as they are. Run 4 (C-11) supports VP01 x SE as P: the main security gap of the OpenTelemetry Demo sat there. The cells that did change are other cells, see 0.0690.
 
 > **0.0560**: Should the question text of 0.0360 be rewritten with the new viewpoint IDs?
 
@@ -378,7 +378,7 @@ Decided on 2026-11-18 (issue 267). Two PlantUML class diagrams in `.specmgr/feat
 
 Open, found on 2026-11-18 (issue 267). The checklist section 5.3 compares the matrix with the only rating grid of the book (four perspectives). Cells that differ and need a decision: Information x MA and FL (the book rates Evolution High for Information, the matrix has S and S), Context x MA (the book rates Medium, the matrix has X), and the judgement calls with P where the book says Low or Medium (Operational x PE, Information x RE, Context x SE, Information x SE). The rule of 0.0550 applies: demote a P cell if it produces duplicate criteria.
 
-TODO: decide the cells together with the validation of 0.0340 and 0.0350
+Decided on 2026-11-22 (issue 267), after the validation of 0.0340. VP03 x MA becomes P: the shared data model is the strongest coupling of an enterprise application (runs 1 and 3). VP03 x FL stays S: scalability by data volume (run 1) or by instances (runs 3 and 4) depends on the system class. The other differences from Table 4-1 stay: no run contradicted them. Checklist Draft 0.13, section 5.3.
 
 > **0.0650**: Does Clean Architecture (Martin) support the principle tags PR09 to PR12, and what does it add to the architecture model?
 
@@ -411,6 +411,10 @@ Answered on 2026-11-20 (issue 267): yes. Renamed to Resources, code RS. One colu
 > **0.0680**: Can one element carry the results of several criteria of the same perspective?
 
 Answered on 2026-11-22 (issue 267), verified with the Structurizr MCP parse tool. No, not with the design of 0.0380. A deployment node with three perspectives named Reliability (VP06-RE-100, -110, -120) fails with the parse error "A perspective named "Reliability" already exists". Properties are no alternative: two `review.criterion` keys on one element parse without an error, and the JSON export keeps only the last value. Perspective names are free text, so a criterion ID such as `VP06-RE-120` is a valid name. Decision for the design proposal: one perspective for each criterion, name = criterion ID, value = rating word, description = evidence level and finding summary. The properties `review.criterion` and `review.evidence` are dropped. Cost: a style selector names one perspective, so a coloured view per perspective code needs one style for each criterion ID, and only in the Structurizr renderer. Architecture Model TXT Draft 0.5, sections 8.2 and 8.3.
+
+> **0.0690**: Which changes follow from the validation against four systems?
+
+Decided on 2026-11-22 (issue 267): all 15 proposed changes of the synthesis (`.specmgr/feat/feat-267-arch-rvw/validation/synthesis.md`, section 3), accepted by the user. Matrix: VP02 x SE, VP03 x MA, VP02 x SA and VP06 x SA from S to P; VP03 x FL stays S; VP02 x MA stays P with the runtime against source split. Counts now 36 P, 43 S, 17 X. Checklist rules: preconditions system class, subject and intended operating profile with default tailoring by class (new section 3.1); Safety gate with hazard types, protected party, development tools and the RE against SA rule; complete-search rule and dependent criteria (7.1); external evidence, object of the evidence and conflicting evidence (8.2); VP06-RE-100 split with the new VP06-RE-160, RE-110 applicability, RE-120 safe state; new home-cell criteria XV-SA-090 to -140 and XV-RG-090 to -110; decisions checked over the decision store, not the Structurizr inspection (11.8). Architecture Model: VP03 evidence source, VP04 coverage, VP07 telemetry tag (8.1), rating against evidence perspectives (8.2), proposed keys `trust.level`, `safety.function`, `failure.domain.placement` (8.3), the mode runtime-loaded module (8.5). Not decided: tenant isolation and extension interfaces as catalogue concerns (synthesis R16). Checklist Draft 0.13, Architecture Model Draft 0.6.
 
 > **0.0280**: Which criteria are knock-out criteria, per review type?
 

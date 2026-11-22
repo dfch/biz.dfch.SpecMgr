@@ -4,7 +4,7 @@ created: '2026-11-18T13:21:29.973+01:00'
 id: feat-267-arch-rvw
 status: planning
 type: feat
-updated: '2026-11-22T19:30:00.000+01:00'
+updated: '2026-11-22T20:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -90,14 +90,14 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 #### Phase 120: Validation (not started, needs the user)
 
 - [x] Task 120.100: Validate the design against three contrasting architectures. Four runs in `validation/`: specmgr (extra class), AERIS-10, Apache OFBiz, OpenTelemetry Demo. Synthesis in `validation/synthesis.md`. QA 0.0340 and 0.0350 answered.
-- [ ] Task 120.105: Decide the 15 proposed changes of `validation/synthesis.md` section 3 (user), then apply them to the checklist TXT, the Architecture Model TXT and the matrix.
+- [x] Task 120.105: Decide the 15 proposed changes of `validation/synthesis.md` section 3 (user), then apply them to the checklist TXT, the Architecture Model TXT and the matrix.
 - [ ] Task 120.110: Re-run the Structurizr probe from a committed location.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120: Task 120.100 is done. Four validation runs (specmgr, AERIS-10, Apache OFBiz, OpenTelemetry Demo) show that the matrix structure holds. The synthesis proposes 15 changes, which wait for the user's decision (Task 120.105). Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
+**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120: Task 120.100 is done. Four validation runs (specmgr, AERIS-10, Apache OFBiz, OpenTelemetry Demo) show that the matrix structure holds. The user accepted all 15 proposed changes of the synthesis, and they are applied (Task 120.105: checklist Draft 0.13, Architecture Model Draft 0.6, QA 0.0690). Open: Task 120.110 (Structurizr probe from a committed location), the metamodel diagrams do not yet show the new preconditions and keys, and tenant isolation and extension interfaces are not decided. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
 
 ### Blockers
 
@@ -106,6 +106,10 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22 19:30:00.000Z - Validation changes applied
+
+The user accepted all 15 proposed changes of `validation/synthesis.md`. Checklist Draft 0.13: four matrix cells from S to P (36 P, 43 S, 17 X), preconditions system class, subject and operating profile with default tailoring (3.1), Safety gate, rating and evidence rules, VP06-RE-160, home-cell criteria XV-SA-090 to -140 and XV-RG-090 to -110, decision check over the decision store. Architecture Model Draft 0.6: section 8 updates and three proposed property keys. QA 0.0550, 0.0640 and 0.0690 answered. The rendered metamodel PNGs are committed.
 
 #### 2026-11-22 18:30:00.000Z - Validation runs 2 to 4 and synthesis
 
