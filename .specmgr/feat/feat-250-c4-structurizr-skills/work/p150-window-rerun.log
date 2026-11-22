@@ -1,0 +1,149 @@
+2026-11-22T06:41:52Z 
+2026-11-22T06:42:52Z 
+2026-11-22T06:43:52Z 
+2026-11-22T06:44:52Z 
+2026-11-22T06:45:52Z 
+2026-11-22T06:46:52Z 
+2026-11-22T06:47:52Z 
+2026-11-22T06:48:52Z 
+2026-11-22T06:49:52Z 
+2026-11-22T06:50:52Z 
+2026-11-22T06:51:52Z 
+2026-11-22T06:52:52Z 
+2026-11-22T06:53:52Z 
+2026-11-22T06:54:52Z 
+2026-11-22T06:55:52Z 
+2026-11-22T06:56:52Z 
+2026-11-22T06:57:52Z 
+2026-11-22T06:58:52Z 
+2026-11-22T06:59:52Z 
+2026-11-22T07:00:52Z 
+2026-11-22T07:01:52Z 
+2026-11-22T07:02:52Z 
+2026-11-22T07:03:52Z 
+2026-11-22T07:04:52Z 
+2026-11-22T07:05:52Z 
+2026-11-22T07:06:52Z 
+2026-11-22T07:07:52Z 
+2026-11-22T07:08:52Z 
+2026-11-22T07:09:52Z 
+2026-11-22T07:10:52Z 
+2026-11-22T07:11:52Z 
+2026-11-22T07:12:52Z 
+2026-11-22T07:13:53Z 
+2026-11-22T07:14:53Z 
+2026-11-22T07:15:53Z 
+2026-11-22T07:16:53Z 
+2026-11-22T07:17:53Z 
+2026-11-22T07:18:53Z 
+2026-11-22T07:19:53Z 
+2026-11-22T07:20:53Z 
+2026-11-22T07:21:53Z 
+2026-11-22T07:22:53Z 
+2026-11-22T07:23:53Z 
+2026-11-22T07:24:53Z 
+2026-11-22T07:25:53Z 
+2026-11-22T07:26:53Z 
+2026-11-22T07:27:53Z 
+2026-11-22T07:28:53Z 
+2026-11-22T07:31:47Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:32:47Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:33:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:34:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:35:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:36:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:37:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:38:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:39:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:40:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:41:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:42:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:43:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:44:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:45:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:46:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:47:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:48:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:49:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:50:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:51:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:52:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:53:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:54:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:55:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:56:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:57:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:58:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T07:59:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:00:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:01:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:02:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:03:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:04:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:05:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:06:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:07:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:08:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:09:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:10:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:11:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:12:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:13:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:14:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:15:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:16:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:17:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:18:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:19:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:20:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:21:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:22:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:23:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:24:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:25:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:26:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:27:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:28:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:29:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:30:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:31:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:32:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:33:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:34:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:35:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:36:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:37:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:38:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:39:48Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:40:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:41:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:42:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:43:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:44:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:45:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:46:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:47:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:48:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:49:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:50:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:51:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:52:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:53:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:54:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:55:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:56:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:57:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:58:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T08:59:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:00:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:01:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:02:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:03:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:04:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:05:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:06:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:07:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:08:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:09:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:10:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 
+2026-11-22T09:11:49Z vllm:num_requests_running{engine="0",model_name="qwen3.8-27b-bf16-896k"} 1.0 vllm:num_requests_waiting{engine="0",model_name="qwen3.8-27b-bf16-896k"} 0.0 

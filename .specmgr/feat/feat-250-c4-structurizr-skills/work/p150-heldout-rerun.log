@@ -1,0 +1,6 @@
+run p150-heldout-2026-11-22T064104Z: cases=['heldout-review'] conditions=['none', 'upstream', 'skill'] k=5 seed=329664
+done: /home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/results/p150-heldout-2026-11-22T064104Z
+  none: 0/5 passed (0%)
+  upstream: 0/5 passed (0%)
+  skill: 2/5 passed (40%)
+  cost: median 241.5 s/trial -> full run 6.0 h (budget 30.0 h)

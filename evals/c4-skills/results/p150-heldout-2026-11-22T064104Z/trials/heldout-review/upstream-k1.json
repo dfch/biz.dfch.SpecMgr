@@ -1,0 +1,120 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/heldout-review/upstream-k1.events.ndjson",
+  "event_file_bytes": 155144,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-22T07:42:39Z",
+  "gates": [
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "workspace.dsl is byte-identical to the seeded file",
+      "name": "file_untouched",
+      "passed": true
+    },
+    {
+      "detail": "finding line locates the vague label: **`portal -> rate` \u2014 vague label \"uses\".** It's the only relationship without an intent-bearing label. \"uses\" doesn't sa",
+      "name": "vague_label_found",
+      "passed": true
+    },
+    {
+      "detail": "no finding line locates the library modeled as a container",
+      "name": "library_container_found",
+      "passed": false
+    },
+    {
+      "detail": "finding line locates the untagged element: **`payments` (Payment Gateway) and `loyaltyFeed` (Loyalty Points Feed) \u2014 typed as generic `element`.** Both are external",
+      "name": "external_tag_found",
+      "passed": true
+    },
+    {
+      "detail": "finding line locates the keyless view: **Container view has an auto-generated key `Container-001`** (`inspect` error). Auto keys aren't stable over time; give ",
+      "name": "keyless_view_found",
+      "passed": true
+    },
+    {
+      "detail": "no finding line locates the over-bound view",
+      "name": "crowded_view_found",
+      "passed": false
+    },
+    {
+      "detail": "finding line locates the orphan: **`legacy` (Legacy Booking System) \u2014 orphaned.** No relationships and present on no view (confirmed by `inspect`). Its d",
+      "name": "orphan_found",
+      "passed": true
+    },
+    {
+      "detail": "finding line names the clean element 'Loyalty Points Feed': **`payments` (Payment Gateway) and `loyaltyFeed` (Loyalty Points Feed) \u2014 typed as generic `element`.** Both are external",
+      "name": "no_false_findings",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.004915602000437502,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 1,
+    "inspect_findings": [
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The software system \"Stay Planner\" has containers, but is missing documentation.",
+      "The software system \"Stay Planner\" has containers, but is missing decisions.",
+      "The software system \"Legacy Booking System\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "The software system named \"Legacy Booking System\" is not included on any views - add it to a view.",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time."
+    ],
+    "inspect_triage": {
+      "The software system \"Legacy Booking System\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "The software system \"Stay Planner\" has containers, but is missing decisions.": "expected",
+      "The software system \"Stay Planner\" has containers, but is missing documentation.": "expected",
+      "The software system named \"Legacy Booking System\" is not included on any views - add it to a view.": "untriaged",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+    },
+    "parse_calls": 5,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "c4-review"
+    ],
+    "steps": 8,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 133362,
+      "output": 20713,
+      "reasoning": 0
+    },
+    "tool_calls": 8,
+    "validate_calls": 1,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 247.243,
+    "workdir_dsl": "workspace \"Stay Planner\" \"Plans and manages hotel stays for a regional hotel group.\" {\n    model {\n        guest = person \"Guest\" \"Books and manages hotel stays.\"\n        planner = softwareSystem \"Stay Planner\" \"Manages reservations, rooms, rates, and stays.\" {\n            portal = container \"Reservation Portal\" \"Lets guests book and manage stays.\" \"Python\"\n            mobile = container \"Mobile App Backend\" \"Serves the hotel group's mobile app.\" \"Kotlin\"\n            stays = container \"Stay Service\" \"Registers and tracks stays.\" \"Java\"\n            rooms = container \"Room Assignment\" \"Assigns rooms to confirmed stays.\" \"Java\"\n            rate = container \"Rate Service\" \"Calculates stay rates.\" \"Go\"\n            housekeeping = container \"Housekeeping Service\" \"Plans cleaning tasks for the rooms.\" \"C#\"\n            concierge = container \"Concierge Service\" \"Handles guest requests and local recommendations.\" \"Python\"\n            notifications = container \"Notification Hub\" \"Sends booking and stay messages.\" \"Python\"\n            deposits = container \"Deposit Service\" \"Manages booking deposits and refunds.\" \"Java\"\n            feedback = container \"Feedback Service\" \"Collects and scores guest feedback.\" \"Python\"\n            reporting = container \"Reporting Service\" \"Produces occupancy and revenue reports.\" \"Java\"\n            availability = container \"Availability Search\" \"Finds rooms by date and type.\" \"Go\"\n            scheduler = container \"Batch Scheduler\" \"Runs the nightly batch jobs.\" \"Java\"\n            staydb = container \"Stay Database\" \"Stores stay, room, occupancy, and task records.\" \"PostgreSQL\" \"Database\"\n            guestdb = container \"Guest Database\" \"Stores guest and deposit records.\" \"PostgreSQL\" \"Database\"\n            mediadb = container \"Media Database\" \"Stores contracts, invoices, and guest media.\" \"PostgreSQL\" \"Database\"\n            queue = container \"Event Queue\" \"Carries stay events between the application parts.\" \"Kafka\"\n            tariff = container \"Tariff Rules Library\" \"Computes rates from room type, season, and stay length.\" \"Python\"\n        }\n        payments = element \"Payment Gateway\" \"Charges guest cards for stays and deposits.\"\n        loyaltyFeed = element \"Loyalty Points Feed\" \"Streams loyalty points balances for guests.\" \"REST/JSON\" \"External\"\n        legacy = softwareSystem \"Legacy Booking System\" \"The retired booking system being phased out.\"\n        guest -> portal \"Books rooms through\" \"HTTPS\"\n        guest -> mobile \"Books rooms via\" \"HTTPS\"\n        portal -> stays \"Registers stays in\" \"gRPC\"\n        portal -> rate \"uses\" \"HTTP\"\n        mobile -> rooms \"Requests room assignment via\" \"gRPC\"\n        stays -> scheduler \"Registers nightly tasks in\" \"gRPC\"\n        rate -> tariff \"Looks up tariffs in\" \"in-process\"\n        deposits -> payments \"Charges cards through\" \"REST/JSON\"\n        housekeeping -> staydb \"Stores task records in\" \"SQL\"\n        availability -> staydb \"Reads room data from\" \"SQL\"\n        deposits -> guestdb \"Stores deposit records in\" \"SQL\"\n        feedback -> mediadb \"Stores guest feedback media in\" \"SQL\"\n        reporting -> staydb \"Reads occupancy records from\" \"SQL\"\n        stays -> queue \"Publishes stay events to\" \"Kafka\"\n        queue -> notifications \"Delivers stay events to\" \"Kafka\"\n        concierge -> loyaltyFeed \"Reads loyalty balances from\" \"REST/JSON\"\n    }\n    views {\n        systemContext planner \"GuestContext\" \"Shows the guest's journey around the system.\" {\n            include *\n            autoLayout\n        }\n        container planner {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "heldout-review",
+    "condition": "upstream",
+    "k_index": 1
+  },
+  "run_id": "p150-heldout-2026-11-22T064104Z",
+  "skills_installed": [
+    "c4-deployment",
+    "c4-model",
+    "c4-review",
+    "structurizr-dsl"
+  ],
+  "started_at": "2026-11-22T07:38:29Z",
+  "timeout": false,
+  "wall_time_s": 249.53519103800045,
+  "workdir": "/home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-review.upstream-k1.p150-heldout-2026-11-22T064104Z"
+}
