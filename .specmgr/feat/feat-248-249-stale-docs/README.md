@@ -4,7 +4,7 @@ created: '2026-11-22T15:43:46.858+01:00'
 id: feat-248-249-stale-docs
 status: review
 type: feat
-updated: '2026-11-22T17:33:44.559+01:00'
+updated: '2026-11-22T17:41:26.325+01:00'
 version: 1.0.0
 ---
 
@@ -36,7 +36,7 @@ Issue #249: `src/biz/dfch/specmgr/req/models/` and `src/biz/dfch/specmgr/gol/mod
 - [x] ACC-002: The updated `test_update_prb.py` recovery test passes and fails against the old wording; its negative assertions are scoped to the recovery-block slice; `test_mentions_deriving_or_eliciting_lead_sentence_blanks` and `test_mentions_inserting_sentence_under_h1_then_proceeding` pass unchanged (REQ-003).
 - [x] ACC-003: `uv run --frozen specmgr docs` produces, for each of `req` and `gol`, the `docs/api/` pages `biz.dfch.specmgr.<d>.models`, `biz.dfch.specmgr.<d>.models.v1`, and `biz.dfch.specmgr.<d>.models.v1.{_util,body,document,frontmatter,parser,summary}` (the exact set is confirmed against the `v1/` module listing at implementation time), committed; a second run shows no diff (REQ-004, REQ-005).
 - [x] ACC-004: The namespace-package guard test passes on the branch and fails if either new `__init__.py` is removed -- demonstrated once by temporarily deleting `req/models/__init__.py` and observing the red run, recorded in the Progress update (REQ-006).
-- [x] ACC-005: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, the full `pytest -n auto` suite, and the doc/schema/mcp-docs drift checks (process criterion; REQ-007 covers the CHANGELOG housekeeping).
+- [x] ACC-005: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, the full `pytest -n auto` suite, and the doc/schema/mcp-docs drift checks (process criterion; REQ-007 covers the CHANGELOG housekeeping). (maintainer-accepted exception: the full suite runs 6117 passed / 2 failed locally -- the 2 failures are the Docker/Structurizr export tests in tests/evals/test_cli_gates.py, which fail identically on the base commit 9c9d7349; GitHub CI is green)
 - [x] ACC-006: Import smoke check: `import biz.dfch.specmgr.req.models` and `import biz.dfch.specmgr.gol.models` succeed, and `importlib.util.find_spec(...)` reports each as a regular package (`origin` is its `__init__.py`, not a namespace portion) (REQ-004).
 
 ### Scope
@@ -98,7 +98,7 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 - [x] Task 120.100: Add `CHANGELOG.md` `[Unreleased]` entries for #248 and #249 (REQ-007).
 - [x] Task 120.110: Tick acceptance criteria, update Progress, open the PR against `dev` referencing both issues. (Criteria ticked and Progress updated; the PR is opened by the orchestrator after status `review` is set.)
 
-#### Phase 130: Review fixes
+#### Phase 130: Fix phase (review cycle 1: G1/D1/D2/S1/S2/I1-I3)
 
 - [x] Task 130.100: G1 -- the `prb_update_instructions.md` preamble names the "Old-shape recovery" block as the one exception to "every change goes through the specmgr MCP tools" (host file tools, frontmatter byte-unchanged); `req/data/req_update_instructions.md` is out of scope (follow-up issue #273).
 - [x] Task 130.110: D1/D2 -- reword the `update_prb` MCP prompt `description` ("via a raw re-read") and the module docstring (`AssertionError`, "now") to the host file-read/file-write repair and the non-raising `ParseFailureResult` (DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c); grep the repo for other PRB "raw re-read" recovery phrasing; regenerate `docs/MCP.md` and `docs/api/`.
@@ -116,6 +116,10 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T16:41:26.320Z - Plan hygiene
+
+Renamed the Phase 130 heading to `#### Phase 130: Fix phase (review cycle 1: G1/D1/D2/S1/S2/I1-I3)` (the feat-263 fix-phase convention with feat-204-style finding IDs). Annotated the ticked ACC-005 line in place with the maintainer-accepted exception for the 2 environmental Docker/Structurizr export test failures. Recorded two decisions: skipping the suite-running pre-commit hooks for this feature's commits, and fixing review Improvements I1-I3 instead of treating them as advisory.
 
 #### 2026-11-22T16:17:33.155Z - Phase 130 implemented
 
@@ -144,6 +148,14 @@ Feature plan created from GitHub issues #248 and #249. Both findings verified ag
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T16:41:26.320Z - Skip the suite-running pre-commit hooks for this feature's commits
+
+The user decided (2026-11-22) that this feature's commits run with `SKIP=pytest,specmgr-coverage-badge`, because the pre-commit `pytest` and `specmgr-coverage-badge` hooks re-run the full suite, which fails locally only on the 2 environmental Docker/Structurizr export tests in `tests/evals/test_cli_gates.py` (also failing on a clean checkout of the base commit `9c9d7349`). Every other hook ran on every commit, the orchestrator ran the full suite itself at each phase, and GitHub CI on PR #271 is the authoritative gate.
+
+#### 2026-11-22T16:41:26.320Z - Review Improvements I1-I3 fixed, not advisory
+
+The feat-263 convention derives fix tasks from Errors/Gaps/Discrepancies only and treats Improvements as advisory. For review cycle 1 the user asked to fix all findings, so Phase 130 covers I1-I3 too.
 
 #### 2026-11-22T16:17:33.155Z - `req` preamble contradiction deferred to a follow-up issue
 
