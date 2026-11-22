@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: planning
 type: feat
-updated: '2026-11-22T15:54:01.225+01:00'
+updated: '2026-11-22T16:08:43.863+01:00'
 version: 1.0.0
 ---
 
@@ -103,11 +103,11 @@ Verification environment: run every check with the worktree code (`uv run --froz
 
 #### Phase 100: Pin the Defect
 
-- [ ] Task 100.100: Add failing synthetic engine tests in `tests/models/md` for the "text left over" line (ACC-001), the "found no match" line (ACC-002), and child `_line` (ACC-003, engine part).
-- [ ] Task 100.105: Add failing synthetic tests for the own-block hand-off of sections, list items with notes, and (if reachable) paragraphs (ACC-008), and for the REQ-003 empty-remainder rule.
-- [ ] Task 100.110: Add the failing `dec` `## Decision Outcome` repro test with the expected line computed from the normalized body (ACC-004).
-- [ ] Task 100.115: Add the failing example-file oracle test over every packaged `*_example.md` of the `models/md`-based domains (ACC-009).
-- [ ] Task 100.120: Pin the corrected line of one `rsk` `self._line`-based message (tara or assessment) of a real rsk body (ACC-003, rsk part).
+- [x] Task 100.100: Add failing synthetic engine tests in `tests/models/md` for the "text left over" line (ACC-001), the "found no match" line (ACC-002), and child `_line` (ACC-003, engine part).
+- [x] Task 100.105: Add failing synthetic tests for the own-block hand-off of sections, list items with notes, and (if reachable) paragraphs (ACC-008), and for the REQ-003 empty-remainder rule.
+- [x] Task 100.110: Add the failing `dec` `## Decision Outcome` repro test with the expected line computed from the normalized body (ACC-004).
+- [x] Task 100.115: Add the failing example-file oracle test over every packaged `*_example.md` of the `models/md`-based domains (ACC-009).
+- [x] Task 100.120: Pin the corrected line of one `rsk` `self._line`-based message (tara or assessment) of a real rsk body (ACC-003, rsk part).
 
 #### Phase 110: Fix the Offset
 
@@ -127,11 +127,30 @@ Verification environment: run every check with the worktree code (`uv run --froz
 
 ### Current Status
 
-**As of 2026-11-22**: Planned from GitHub issue #253 and refined. No implementation has started.
+**As of 2026-11-22**: Phase 100 (Pin the Defect) is done: 11 new tests pin the corrected line numbers and are marked strict `xfail`, because they fail on the pre-fix engine. No `src/` file has changed. Next: Phase 110 (Fix the Offset), which also removes the `xfail` markers.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T15:08:43.858Z - Phase 100 pinned the defect
+
+Added the Phase 100 tests (Tasks 100.100 to 100.120). No `src/` file changed. Every test that fails on the pre-fix engine has the marker `@pytest.mark.xfail(strict=True, reason="feat-253: fixed in Phase 110")`, so the suite stays green and each test is shown to fail. Every expected line comes from the mdformat-normalized text given to the outermost `from_text` call. No expected line is hard-coded.
+
+- `tests/models/md/test_line_offset.py` (ACC-001, ACC-002, ACC-003 engine part, REQ-003, ACC-008), 8 tests, all `xfail`:
+  - `test_text_left_over_reports_the_line_of_the_unconsumed_block`: pre-fix line 4, true line 7.
+  - `test_found_no_match_reports_the_line_where_the_remainder_starts`: pre-fix line 4, true line 7.
+  - `test_found_no_match_with_an_empty_remainder_reports_the_line_after_the_last_line`: pre-fix line 4, true line 6 (5-line text plus one).
+  - `test_child_line_after_two_scalar_fields_is_its_normalized_body_line`: pre-fix `(2, 3, 4)`, true `(3, 5, 7)`.
+  - `test_section_child_after_the_heading_is_on_its_normalized_body_line`: pre-fix line 2, true line 3.
+  - `test_nested_section_children_are_on_their_normalized_body_lines` (the Overview's `## X` / `### Y` shape): pre-fix `(2, 3, 4)`, true `(3, 5, 7)`.
+  - `test_list_item_note_after_a_blank_line_is_on_its_normalized_body_line`: pre-fix line 2, true line 3.
+  - `test_paragraph_child_after_the_paragraph_is_on_its_normalized_body_line`: pre-fix line 2, true line 3.
+- Reachability: a synthetic model can reach `MarkdownParagraph` with nested fields. `_LeadWithQuote(MarkdownParagraph)` has a `quote: MarkdownBlockQuote` field and is parsed directly, so ACC-008's paragraph case is pinned and does not need a reason note.
+- `tests/models/md/test_example_line_oracle.py` (ACC-009), 2 tests: `test_every_parsed_child_line_is_the_first_line_of_its_text` is `xfail`. Before the fix, it finds that the `_line` of all 597 parsed children of the 14 packaged `{domain}_example.md` files is wrong. `test_every_example_has_parsed_children` passes before the fix. It is not marked, because it only makes sure that the oracle is not empty. The domains come from `WHOLE_BODY_DOMAINS`, and each document is parsed through `whole_body_domain(...).parse_text`. The comparison ignores surrounding whitespace, because nested children are rendered dedented. It also ignores the number of an ordered-list marker, because mdformat renumbers an item that is rendered alone (`01.` in the `uc` body becomes `1.`).
+- `tests/dec/models/v1/test_outcome_line_reference.py` (ACC-004), 1 test, `xfail`: `parse_dec` reports line 35 before the fix. The true line is 38, the first `> ` line of `format_text` of the frontmatter-stripped content.
+- `tests/rsk/models/v1/test_tara_line_reference.py` (ACC-003 rsk part), 1 test, `xfail`. The test uses the packaged `rsk_tara.md` and removes the backticks from the strategy word of one quadrant bullet. `QuadrantItem.strategy`'s `self._line` message reports line 20 before the fix. The true line is 24. The test uses tara and not assessment, because the `@alias` regex of the `Probability`/`Impact` heading rejects a bad heading at parse time. So the `self._line` messages in `assessment.py` cannot be reached through the engine.
+- Fix check (scratch only, reverted, `git status` clean for `src/`): with a simulated delta-based fix at all four hand-off sites, all 12 new tests pass. With only the scalar fix, the `dec` test still fails and reports line 36, as ACC-004 states.
 
 #### 2026-11-22T14:54:01.220Z - Plan refined
 
@@ -152,6 +171,14 @@ Applied the refinement review. The main change widens the scope: the deficit has
 #### 2026-11-22T14:33:13.895Z - Created
 
 Created the feature plan from GitHub issue #253. The scope is the fix of the scalar-field offset in the shared `models/md` engine plus all consumers of the corrected offset (engine messages and child `_line`, e.g. `rsk`). The regression oracle is synthetic engine tests plus the issue's `dec` `## Decision Outcome` repro.
+
+### Decisions Made
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T15:08:43.858Z - Pin pre-fix failures with strict pytest xfail markers
+
+The pre-commit hook runs the full test suite, so a red test cannot be committed. Each Phase 100 test that fails before the fix therefore has the marker `@pytest.mark.xfail(strict=True, reason="feat-253: fixed in Phase 110")`. The tests stay `unittest.TestCase` methods. The marker is the one pytest-specific part. The repo already uses a pytest marker in `tests/general/tools/test_similarity_real_backend.py`, and CI and pre-commit run the suite through pytest. `strict=True` turns an unexpected pass into a failure. `--runxfail` shows the real failure and the reported line. Phase 110 removes every marker when the fix lands.
 
 ### More Information
 
