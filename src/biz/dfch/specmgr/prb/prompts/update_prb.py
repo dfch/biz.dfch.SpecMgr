@@ -36,17 +36,19 @@ this domain: PRB's lifecycle surface is deliberately small
 ``set_status`` tool with ``type="prb"``) -- mirroring
 ``tsk.prompts.update_task``/``qa.prompts.update_qa``.
 
-**Old-shape recovery (feat-132-prb-update, REQ-008).** A PRB drafted before
-the mandatory ``problem_statement`` lead paragraph was added will fail to
-parse via ``get_prb(id)`` -- the paragraph is a mandatory field now, so a
-document missing it raises an ``AssertionError``. This prompt instructs the
-LLM to recognize that specific parse failure, read the raw file with the
-host's own file-read tool at the ``path`` the parse-failure result carries
-(no specmgr read returns the body of a document that fails to parse),
-elicit/confirm or derive the lead sentence's 4 blanks from the document's
-own What/Who/Why answers (mirroring ``create_prb``'s own derive-then-confirm
-flow), insert the composed sentence directly under the H1 with the
-frontmatter left byte-unchanged, write the file back with the host's own
+**Old-shape recovery (feat-132-prb-update, REQ-008).** The
+``problem_statement`` lead paragraph is a mandatory field, so a PRB drafted
+before it became mandatory fails to parse: ``get_prb(id)`` returns the
+non-raising ``ParseFailureResult`` for it (DEC
+9080b37c-82b3-4f63-81f1-79641d0bf14c). This prompt instructs the LLM to
+recognize that specific parse failure, read the raw file with the host's own
+file-read tool at the ``path`` the parse-failure result carries (no specmgr
+read returns the body of a document that fails to parse), elicit/confirm or
+derive the lead sentence's 4 blanks from the document's own What/Who/Why
+answers (mirroring ``create_prb``'s own derive-then-confirm flow), insert the
+composed sentence directly under the H1 with the frontmatter left
+byte-unchanged, dry-run the full raw text with the generic ``validate`` tool
+(``full=True``) until it is valid, write the file back with the host's own
 file-write tool (the generic ``update``/``edit`` tools cannot repair a
 document that fails to parse), confirm with ``get_prb(id)``, and only then
 proceed with whatever change was originally requested.
@@ -86,8 +88,8 @@ from ...server import mcp
     title="Update a problem statement",
     description=(
         "Guides the LLM through revising an existing problem statement by id: reading "
-        "current state (recovering an old-shape document missing the mandatory lead sentence "
-        "via a raw re-read if needed), showing which of the 7 5W2H questions are answered, "
+        "current state (if needed, repairing an old-shape document missing the mandatory lead "
+        "sentence with the host's own file-read/file-write tools), showing which of the 7 5W2H questions are answered, "
         "eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right "
         "tool, and validating. The structure reference is the `get_prb_schema` tool (the generated "
         "JSON Schema); the `get_prb_template`/`get_prb_example` tools return the authoring template "

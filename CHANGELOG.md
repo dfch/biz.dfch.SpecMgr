@@ -284,14 +284,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mechanism: the raw file is read with the host's own file-read tool at
   the `path` the `get_prb(id)` parse-failure result carries, the
   confirmed lead sentence is inserted under the H1 with the frontmatter
-  (`updated` included) left byte-unchanged, the file is written back with
-  the host's own file-write tool, and a confirming `get_prb(id)` call
+  (`updated` included) left byte-unchanged, the full raw text is dry-run
+  with `validate(type="prb", full=True)` until valid, the file is written
+  back with the host's own file-write tool, and a confirming `get_prb(id)` call
   must parse before the requested change proceeds. The former directive
   pointed at `get_prb(id, raw=True)` and the generic `update` tool, both
   of which return the non-raising `ParseFailureResult` for exactly the
-  documents the directive exists for. The `update_prb` module docstring
-  (and its `docs/api/` page) and `AGENTS.md`'s `prb/` bullet are corrected
-  likewise, and `tests/prb/prompts/test_update_prb.py` pins the corrected
+  documents the directive exists for. The instructions' preamble names the
+  recovery block as the one exception to "every change goes through the
+  specmgr MCP tools". The `update_prb` module docstring (and its
+  `docs/api/` page), the prompt's MCP `description` (and `docs/MCP.md`),
+  and `AGENTS.md`'s `prb/` bullet are corrected likewise, and `tests/prb/prompts/test_update_prb.py` pins the corrected
   wording on the recovery-block slice (feat-248-249-stale-docs, GitHub
   issue #248).
 - `req/models/` and `gol/models/` are regular packages (docstring-only

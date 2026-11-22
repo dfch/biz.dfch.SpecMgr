@@ -49,16 +49,18 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         self.assertIn("get_prb(id)", result)
         self.assertLess(result.index("get_prb(id)"), result.index('update(id, type="prb", content)'))
 
-    def test_mentions_old_shape_recovery_via_raw_reread(self):
+    def test_mentions_old_shape_recovery_via_host_file_repair(self):
         """The prompt must carry the present-tense recovery directive: a
         get_prb(id) parse failure naming the missing lead sentence leads to
         repairing the file with the host's own file-read/file-write tools (no
         specmgr read returns the body of a document that fails to parse, and
         the generic update/edit tools cannot repair one), leaving the
-        frontmatter byte-unchanged, and a confirming get_prb(id) call before
-        proceeding with the requested change. The negative assertions run on
-        the recovery-block slice only: the rest of the prompt legitimately
-        keeps `update(id, type="prb", content)` and
+        frontmatter byte-unchanged, a full-text validate(full=True) dry-run
+        before the write-back, and a confirming get_prb(id) call before
+        proceeding with the requested change, in that order (file-read <
+        insert < validate < file-write < confirming get_prb(id)). The negative
+        assertions run on the recovery-block slice only: the rest of the
+        prompt legitimately keeps `update(id, type="prb", content)` and
         `get_prb(id, raw=True, numbered=True)`."""
         result = update_prb("abc-123")
         start = result.index("**Old-shape recovery.**")
@@ -77,6 +79,17 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         self.assertIn("cannot repair one", block)
         self.assertIn("Confirm the repair with a real `get_prb(id)` call -- it must parse", block)
         self.assertIn("which bumps `updated`", block)
+        validate_call = 'validate(type="prb", content=<the full raw file text>, full=True)'
+        self.assertIn(validate_call, block)
+        file_read = block.index("read the raw file with the host's own file-read tool at")
+        insert = block.index("Insert the confirmed sentence as its own paragraph directly under the")
+        validate = block.index(validate_call)
+        file_write = block.index("file-write tool -- the generic `update`/`edit` tools re-parse the")
+        confirm = block.index("Confirm the repair with a real `get_prb(id)` call -- it must parse")
+        self.assertLess(file_read, insert)
+        self.assertLess(insert, validate)
+        self.assertLess(validate, file_write)
+        self.assertLess(file_write, confirm)
         self.assertNotIn("get_prb(id, raw=True)", block)
         self.assertNotIn('update(id, type="prb", content)', block)
 

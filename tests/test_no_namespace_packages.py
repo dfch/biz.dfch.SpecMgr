@@ -75,7 +75,7 @@ class TestNoNamespacePackages(unittest.TestCase):
         if shutil.which("git") is None:
             self.skipTest("git is not available")
         probe = subprocess.run(
-            ["git", "rev-parse", "--is-inside-work-tree"], cwd=REPO_ROOT, capture_output=True, text=True
+            ["git", "rev-parse", "--is-inside-work-tree"], cwd=REPO_ROOT, capture_output=True, text=True, check=False
         )
         if probe.returncode != 0:
             self.skipTest("not running inside a git work tree")

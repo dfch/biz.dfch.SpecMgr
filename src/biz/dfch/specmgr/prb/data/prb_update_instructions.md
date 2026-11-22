@@ -4,7 +4,10 @@ Requested change: $instructions
 
 Follow this sequence exactly. Do not write raw markdown yourself beyond
 the body content you pass to `update` -- every change to the document
-goes through the specmgr MCP tools listed below.
+goes through the specmgr MCP tools listed below, with one exception: the
+"Old-shape recovery" block in step 1 repairs a document that fails to
+parse with the host's own file-read/file-write tools and leaves its
+frontmatter block byte-for-byte unchanged.
 
 ## 1. Read current state first
 
@@ -29,18 +32,26 @@ as a fatal error:
    derive-then-confirm flow does: `What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`.
    For any blank with no answer to derive from, use the `question` tool
    to ask for it directly. Then show the fully composed sentence --
-   `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` -- to the user and use
-   the `question` tool to confirm or refine it.
+   `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`
+   -- to the user and use the `question` tool to confirm or refine it.
 3. Insert the confirmed sentence as its own paragraph directly under the
-   H1 title (after any existing leading comment, before `## Current State`) in the raw file text from step 1.
+   H1 title (after any existing leading comment, before
+   `## Current State`) in the raw file text from step 1.
    Leave the frontmatter block byte-for-byte unchanged -- `id`,
    `created`, `status`, `version`, and `updated` included: a repair is
    not an edit.
-4. Write the repaired file back to the same `path` with the host's own
+4. Dry-run the repaired text with
+   `validate(type="prb", content=<the full raw file text>, full=True)`
+   -- `full=True` because the text includes the frontmatter block, not
+   just the body. While it returns `valid: false`, read the
+   `errors[].message`, apply the smallest fix, and call `validate`
+   again, until it returns `valid: true`.
+5. Write the `validate`-green text back to the same `path` with the host's own
    file-write tool -- the generic `update`/`edit` tools re-parse the
    existing document before writing and cannot repair one.
-5. Confirm the repair with a real `get_prb(id)` call -- it must parse
-   successfully -- before proceeding to step 2 below with the originally requested change.
+6. Confirm the repair with a real `get_prb(id)` call -- it must parse
+   successfully -- before
+   proceeding to step 2 below with the originally requested change.
    That change goes through `update` as usual, which bumps `updated`
    itself.
 

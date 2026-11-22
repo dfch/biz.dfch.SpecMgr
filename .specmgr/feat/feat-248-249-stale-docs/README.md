@@ -4,7 +4,7 @@ created: '2026-11-22T15:43:46.858+01:00'
 id: feat-248-249-stale-docs
 status: review
 type: feat
-updated: '2026-11-22T16:47:46.728+01:00'
+updated: '2026-11-22T17:17:33.159+01:00'
 version: 1.0.0
 ---
 
@@ -98,15 +98,28 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 - [x] Task 120.100: Add `CHANGELOG.md` `[Unreleased]` entries for #248 and #249 (REQ-007).
 - [x] Task 120.110: Tick acceptance criteria, update Progress, open the PR against `dev` referencing both issues. (Criteria ticked and Progress updated; the PR is opened by the orchestrator after status `review` is set.)
 
+#### Phase 130: Review fixes
+
+- [x] Task 130.100: G1 -- the `prb_update_instructions.md` preamble names the "Old-shape recovery" block as the one exception to "every change goes through the specmgr MCP tools" (host file tools, frontmatter byte-unchanged); `req/data/req_update_instructions.md` is out of scope (follow-up issue).
+- [x] Task 130.110: D1/D2 -- reword the `update_prb` MCP prompt `description` ("via a raw re-read") and the module docstring (`AssertionError`, "now") to the host file-read/file-write repair and the non-raising `ParseFailureResult` (DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c); grep the repo for other PRB "raw re-read" recovery phrasing; regenerate `docs/MCP.md` and `docs/api/`.
+- [x] Task 130.120: I1/I3 -- add a `validate(type="prb", content=<the full raw file text>, full=True)` dry-run loop step between the insert and the write-back in the recovery block, renumber the steps, and rewrap the long unwrapped recovery-block lines without splitting any test-pinned phrase.
+- [x] Task 130.130: S1/I2 -- rename `test_mentions_old_shape_recovery_via_raw_reread` to `test_mentions_old_shape_recovery_via_host_file_repair`, assert the validate step, and add `assertLess` order checks (file-read < insert < validate < file-write < confirming `get_prb(id)`); show it red against the Phase 100 instructions file.
+- [x] Task 130.140: S2 -- explicit `check=False` on the probe `subprocess.run` in `tests/test_no_namespace_packages.py` `setUp`.
+- [x] Task 130.150: Run the phase-end quality gate.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 (issue #248) committed as `22a84b33`, Phase 110 (issue #249) committed as `232512e1`. Phase 120 (close-out) implemented, uncommitted: `CHANGELOG.md` `[Unreleased]` entries, `AGENTS.md` `prb/` bullet corrected, all acceptance criteria ticked. Next: status `review` and the PR against `dev` (orchestrator).
+**As of 2026-11-22**: Phases 100-120 committed (`22a84b33`, `232512e1`, `fd41f554`); status `review`, PR #271 open. Phase 130 (post-implementation review fixes G1, D1, D2, S1, S2, I1-I3) implemented, uncommitted. Next: commit Phase 130 and push to PR #271 (orchestrator); open a follow-up issue for the same preamble contradiction in `req/data/req_update_instructions.md`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T16:17:33.155Z - Phase 130 implemented
+
+Applied the feat-reviewer findings. G1: the `prb/data/prb_update_instructions.md` preamble names the "Old-shape recovery" block as the one exception to "every change goes through the specmgr MCP tools" (host file tools, frontmatter byte-unchanged). I1/I3: the recovery block has a new step 4, a `validate(type="prb", content=<the full raw file text>, full=True)` dry-run loop until `valid: true` (the generic `repair` prompt's step 4 idiom), between the insert and the write-back; the write-back and confirm steps are renumbered 5 and 6; the long unwrapped lines of steps 3 and 6 are rewrapped with every test-pinned phrase on one line; the step 2 derive-mapping clause and the composed-sentence code span stay on one line each (the clause is pinned verbatim by `tests/prb/data/test_instructions_consistency.py`, shared with `prb_create_instructions.md`). D1: the `update_prb` MCP prompt `description` names the host file-read/file-write repair, not "a raw re-read"; `docs/MCP.md` regenerated. D2: the module docstring says `get_prb(id)` returns the non-raising `ParseFailureResult` (DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c), present tense, and names the `validate` dry-run; `docs/api/biz.dfch.specmgr.prb.prompts.update_prb.md` regenerated. A repo grep (`src/`, `docs/`, `AGENTS.md`, `README.md`, `.opencode/`, the harness bundle, `CHANGELOG.md`) finds no other PRB "raw re-read" recovery phrasing; `.opencode/` is unchanged, so the harness bundle is unchanged. `AGENTS.md`'s `prb/` bullet and the `CHANGELOG.md` #248 bullet name the `validate` dry-run step, the preamble exception, and the MCP `description`. S1/I2: the recovery test is renamed `test_mentions_old_shape_recovery_via_host_file_repair` (REQ-003 and Task 100.110 cite its former name `test_mentions_old_shape_recovery_via_raw_reread` historically and are left as written); it asserts the validate call and the order file-read < insert < validate < file-write < confirming `get_prb(id)` on the block slice. Against the Phase 100 instructions file (`git show 22a84b33:...` swapped in) it fails (`1 failed, 16 passed`, `AssertionError` on the missing validate call); restored, `17 passed`. S2: explicit `check=False` on the `setUp` probe `subprocess.run` in `tests/test_no_namespace_packages.py`. Change-history grep over the added agent-facing lines: no match. `req/data/req_update_instructions.md` carries the same preamble-versus-recovery contradiction; it is out of scope here and needs a follow-up issue.
 
 #### 2026-11-22T15:46:35.000Z - Phase 120 implemented
 
@@ -131,6 +144,10 @@ Feature plan created from GitHub issues #248 and #249. Both findings verified ag
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T16:17:33.155Z - `req` preamble contradiction deferred to a follow-up issue
+
+The feat-reviewer's G1 finding (preamble "every change goes through the specmgr MCP tools" versus the recovery block's host-file read/write) applies equally to `req/data/req_update_instructions.md`'s preamble and its "Legacy `## Level` value recovery." block. Scope stays PRB-only (Explicitly Out Of Scope: recovery directives of any domain other than PRB); the `req` fix needs its own follow-up issue.
 
 #### 2026-11-22T15:46:35.000Z - Correct the `AGENTS.md` `prb/` bullet too
 
