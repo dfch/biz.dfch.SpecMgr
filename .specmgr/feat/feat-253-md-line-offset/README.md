@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
-status: planning
+status: review
 type: feat
-updated: '2026-11-22T16:36:39.453+01:00'
+updated: '2026-11-22T17:01:32.328+01:00'
 version: 1.0.0
 ---
 
@@ -37,15 +37,15 @@ The defect is pre-existing and shared by every domain built on `models/md`. It d
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A synthetic multi-field `MarkdownSection` model in `tests/models/md` with two consumed scalar fields followed by an unconsumed trailing block raises the "text left over" `AssertionError` with the exact normalized-body line of the trailing block (REQ-001, REQ-002). The model is parsed from a section text with its heading, so the heading hand-off is covered too. The test fails on the pre-fix code.
-- [ ] ACC-002: A synthetic model whose mandatory third field finds no match after two consumed scalar fields raises "expected ..., found no match" with the exact normalized-body line where the remainder starts (REQ-003). The test fails on the pre-fix code.
-- [ ] ACC-003: A test asserts that the `_line` of a child parsed after two consumed scalar fields equals its normalized-body line (REQ-004). An `rsk` test pins the corrected line in one `self._line`-based message (tara or assessment) of a real rsk body. Because every child inside a section is affected by the heading hand-off, this case always exists.
-- [ ] ACC-004: The issue's repro is a `dec` body built from the packaged `dec/data/dec_example.md`, where `## Decision Outcome` holds the lead paragraph, a second paragraph, and a block quote. It fails through `parse_dec` with a "text left over" line reference equal to the block quote's line in the normalized body that `parse_dec_body` builds. The test computes the expected line from that normalized body (the first line that starts with `> `) and does not take it from the issue. Measured on `dev` 9c9d7349: true line 38, pre-fix 35, scalar-only fix 36. The test fails on the pre-fix code and on a scalar-only fix. The repro needs feat-247's relaxed `## Decision Outcome` rule, which is on `dev` but not in release v0.38.0, so the test runs against the worktree code and not against a release-based `specmgr` MCP server.
-- [ ] ACC-005: Every pinned message that changes in `tests/models/md/test_validation_error_baseline.py`, `tests/models/md/test_error_messages.py`, or any other test changes only in its line number, upward, and each changed pin is listed in the phase's update entry (REQ-005). A test docstring that states a line number is corrected together with its pin. Known cases: `test_error_messages.py` `test_missing_leaf_paragraph_line_reference_points_at_the_entry_heading` (`### My Update` is line 5, not 4; the missing `content` is reported at line 6 per REQ-003) and `test_a_second_entry_reports_a_deeper_line_reference` (`### Second Update` is line 9; expected line 10, not 8).
-- [ ] ACC-006: `git diff --stat` against `dev` touches only `src/biz/dfch/specmgr/models/md/`, tests, regenerated files (`docs/api/`, `docs/GENERATED.md`, `docs/*_schema.json`, `src/biz/dfch/specmgr/*/data/*_schema.json`), `CHANGELOG.md`, and this plan (REQ-006). No domain model, parser, or tool source file changes.
-- [ ] ACC-007: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, and the `specmgr docs` / `specmgr schema` drift checks.
-- [ ] ACC-008: Synthetic tests pin the own-block hand-off (REQ-007): a section with a paragraph and a nested H3 section (the `## X` / `### Y` shape in the Overview: `A.` line 3, `### Y` line 5, `B.` line 7), and a `MarkdownListItemWithNotes` whose note follows a blank line (note on its true line). The tests fail on the pre-fix code. `MarkdownParagraph` with nested fields gets the same test if a synthetic model can reach that path; otherwise the update entry records why not.
-- [ ] ACC-009: An oracle test parses every packaged `*_example.md` of the `models/md`-based domains and, for every parsed child at every nesting level, asserts that line `child._line` of the normalized body is the first line of that child's text. It needs no hand-computed line numbers and fails on the pre-fix code.
+- [x] ACC-001: A synthetic multi-field `MarkdownSection` model in `tests/models/md` with two consumed scalar fields followed by an unconsumed trailing block raises the "text left over" `AssertionError` with the exact normalized-body line of the trailing block (REQ-001, REQ-002). The model is parsed from a section text with its heading, so the heading hand-off is covered too. The test fails on the pre-fix code.
+- [x] ACC-002: A synthetic model whose mandatory third field finds no match after two consumed scalar fields raises "expected ..., found no match" with the exact normalized-body line where the remainder starts (REQ-003). The test fails on the pre-fix code.
+- [x] ACC-003: A test asserts that the `_line` of a child parsed after two consumed scalar fields equals its normalized-body line (REQ-004). An `rsk` test pins the corrected line in one `self._line`-based message (tara or assessment) of a real rsk body. Because every child inside a section is affected by the heading hand-off, this case always exists.
+- [x] ACC-004: The issue's repro is a `dec` body built from the packaged `dec/data/dec_example.md`, where `## Decision Outcome` holds the lead paragraph, a second paragraph, and a block quote. It fails through `parse_dec` with a "text left over" line reference equal to the block quote's line in the normalized body that `parse_dec_body` builds. The test computes the expected line from that normalized body (the first line that starts with `> `) and does not take it from the issue. Measured on `dev` 9c9d7349: true line 38, pre-fix 35, scalar-only fix 36. The test fails on the pre-fix code and on a scalar-only fix. The repro needs feat-247's relaxed `## Decision Outcome` rule, which is on `dev` but not in release v0.38.0, so the test runs against the worktree code and not against a release-based `specmgr` MCP server.
+- [x] ACC-005: Every pinned message that changes in `tests/models/md/test_validation_error_baseline.py`, `tests/models/md/test_error_messages.py`, or any other test changes only in its line number, upward, and each changed pin is listed in the phase's update entry (REQ-005). A test docstring that states a line number is corrected together with its pin. Known cases: `test_error_messages.py` `test_missing_leaf_paragraph_line_reference_points_at_the_entry_heading` (`### My Update` is line 5, not 4; the missing `content` is reported at line 6 per REQ-003) and `test_a_second_entry_reports_a_deeper_line_reference` (`### Second Update` is line 9; expected line 10, not 8).
+- [x] ACC-006: `git diff --stat` against `dev` touches only `src/biz/dfch/specmgr/models/md/`, tests, regenerated files (`docs/api/`, `docs/GENERATED.md`, `docs/*_schema.json`, `src/biz/dfch/specmgr/*/data/*_schema.json`), `CHANGELOG.md`, and this plan (REQ-006). No domain model, parser, or tool source file changes.
+- [x] ACC-007: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, and the `specmgr docs` / `specmgr schema` drift checks.
+- [x] ACC-008: Synthetic tests pin the own-block hand-off (REQ-007): a section with a paragraph and a nested H3 section (the `## X` / `### Y` shape in the Overview: `A.` line 3, `### Y` line 5, `B.` line 7), and a `MarkdownListItemWithNotes` whose note follows a blank line (note on its true line). The tests fail on the pre-fix code. `MarkdownParagraph` with nested fields gets the same test if a synthetic model can reach that path; otherwise the update entry records why not.
+- [x] ACC-009: An oracle test parses every packaged `*_example.md` of the `models/md`-based domains and, for every parsed child at every nesting level, asserts that line `child._line` of the normalized body is the first line of that child's text. It needs no hand-computed line numbers and fails on the pre-fix code.
 
 ### Scope
 
@@ -119,19 +119,44 @@ Verification environment: run every check with the worktree code (`uv run --froz
 
 #### Phase 120: Verify and Close Out
 
-- [ ] Task 120.100: Run the full quality gate (ACC-007) and check the diff scope (ACC-006).
-- [ ] Task 120.110: Update `CHANGELOG.md` `[Unreleased]` with a Fixed entry referencing issue #253.
-- [ ] Task 120.120: Update this plan's Progress section and set the status to review.
+- [x] Task 120.100: Run the full quality gate (ACC-007) and check the diff scope (ACC-006).
+- [x] Task 120.110: Update `CHANGELOG.md` `[Unreleased]` with a Fixed entry referencing issue #253.
+- [x] Task 120.120: Update this plan's Progress section and set the status to review.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 110 (Fix the Offset) is done: every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. All 12 Phase 100 tests pass with no `xfail` marker, 5 pinned messages elsewhere moved upward to the true line, and the docs are regenerated. Next: Phase 120 (Verify and Close Out).
+**As of 2026-11-22**: The implementation is complete and in review. Phases 100, 110, and 120 are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (except the 2 known, unrelated `tests/evals/test_cli_gates.py` rootless-Docker failures, which PR #272 fixes), and `CHANGELOG.md` has a Fixed entry. Next: review and merge.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T16:01:32.324Z - Phase 120 verified and closed out
+
+Implemented Tasks 120.100 to 120.120. All checks ran with the worktree code (`uv run --frozen ...`).
+
+- Gate (Task 120.100, ACC-007):
+  - `uv run --frozen ruff format --check`: pass (2387 files already formatted).
+  - `uv run --frozen ruff check`: pass.
+  - `uv run --frozen vulture src/ whitelist.py --min-confidence 60`: pass.
+  - `uv run --frozen pytest -n auto -q`: 6127 passed, 18 skipped, 11124 subtests passed, 2 failed. The 2 failures are `tests/evals/test_cli_gates.py::TestCliOverFixtures::test_good_workspace_cli_matches_preexported_fixture` and `test_weak_workspace_cli_is_valid_but_thin`. They come from rootless Docker on this machine, are unrelated to this feature, and are fixed by the separate PR #272.
+  - Drift: `specmgr docs`, `specmgr mcp-docs`, `specmgr schema`, and the 14 `specmgr schema --type <t> --output-dir src/biz/dfch/specmgr/<t>/data` runs, followed by `git status --short`: no change.
+- Pre-fix check: in a temporary detached worktree at HEAD with `src/biz/dfch/specmgr/models/md/` restored from `dev`, the 12 new tests give 11 failed and 1 passed. The test that passes is `test_every_example_has_parsed_children`, the non-empty guard of the oracle. The worktree was removed.
+- Diff scope (ACC-006): `git diff --stat dev...HEAD` lists 58 files. They are the plan, `docs/GENERATED.md`, 43 `docs/api/*.md` pages, 6 files under `src/biz/dfch/specmgr/models/md/`, and 8 test files. No other `src/` file changed and no JSON schema changed. `CHANGELOG.md` is the only other changed file (this phase).
+- ACC walk-through:
+  - ACC-001: `tests/models/md/test_line_offset.py` `test_text_left_over_reports_the_line_of_the_unconsumed_block` (true line 7, pre-fix 4; fails pre-fix).
+  - ACC-002: `test_found_no_match_reports_the_line_where_the_remainder_starts` (true line 7, pre-fix 4; fails pre-fix). The REQ-003 empty-remainder rule: `test_found_no_match_with_an_empty_remainder_reports_the_line_after_the_last_line`.
+  - ACC-003: `test_child_line_after_two_scalar_fields_is_its_normalized_body_line` (engine part) and `tests/rsk/models/v1/test_tara_line_reference.py` `test_invalid_quadrant_bullet_reports_its_normalized_body_line` (rsk tara, true line 24, pre-fix 20). Both fail pre-fix.
+  - ACC-004: `tests/dec/models/v1/test_outcome_line_reference.py` `test_text_left_over_reports_the_block_quote_line` (expected line computed from the normalized body, 38; pre-fix 35; scalar-only fix 36, per the Phase 100 entry). Fails pre-fix.
+  - ACC-005: the 5 changed pins listed in the Phase 110 entry, each changed only in its line number, upward. Diff: `tests/models/md/test_error_messages.py`, `tests/test_schema_metadata_invariance.py`, `tests/general/tools/test_validate.py`.
+  - ACC-006: the diff-scope check above.
+  - ACC-007: the gate above.
+  - ACC-008: `test_nested_section_children_are_on_their_normalized_body_lines` (`(3, 5, 7)`), `test_section_child_after_the_heading_is_on_its_normalized_body_line`, `test_list_item_note_after_a_blank_line_is_on_its_normalized_body_line`, and `test_paragraph_child_after_the_paragraph_is_on_its_normalized_body_line`. All fail pre-fix.
+  - ACC-009: `tests/models/md/test_example_line_oracle.py` `test_every_parsed_child_line_is_the_first_line_of_its_text` over the 14 packaged examples. Fails pre-fix.
+- CHANGELOG (Task 120.110): a `### Fixed` entry under `[Unreleased]` for issue #253.
+- Plan (Task 120.120): ACC-001 to ACC-009 and the Phase 120 tasks ticked, Current Status rewritten, frontmatter `status` set to `review` and `updated` bumped.
 
 #### 2026-11-22T15:36:39.449Z - Phase 110 fixed the offset
 

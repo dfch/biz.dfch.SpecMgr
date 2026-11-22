@@ -279,6 +279,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The shared `models/md` engine's actionable error messages and the
+  `_line` of every parsed child now report the correct 1-based line in
+  the mdformat-normalized body. Before, they under-reported by one line
+  per consumed scalar field and per heading/paragraph/list-item
+  hand-off, because the separator line that the re-normalization removes
+  was not counted. Every hand-off now advances the offset by the
+  consumed line delta from the new shared helper
+  `consume_leading_lines` (`models/md/_markdown.py`). Acceptance,
+  exception types, field paths, and cause/fix hints are unchanged, and
+  every domain-level `self._line` message (e.g. `rsk` TARA quadrants)
+  inherits the fix (feat-253-md-line-offset, GitHub issue #253).
 - The `specmgr://i18n` resource's §5.1 11-tag reference-vocabulary
   correction in the packaged data file `general/data/general_i18n.md`:
   the stale `SOP` tag (not a reference tag) is replaced by `TXT`
