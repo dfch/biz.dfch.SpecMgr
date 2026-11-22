@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: planning
 type: feat
-updated: '2026-11-22T15:33:48.257+01:00'
+updated: '2026-11-22T15:54:01.225+01:00'
 version: 1.0.0
 ---
 
@@ -14,9 +14,14 @@ version: 1.0.0
 
 ### Overview
 
-The actionable error messages of the shared `models/md` engine (feat-27-validation) carry a 1-based line reference into the mdformat-normalized body. For a multi-field `MarkdownSection*` with several scalar (`process_field`) fields, that line reference is too low: it is short by one line for each separator blank line between the fields that were consumed before the offending block. The field path and the cause/fix hint are correct. Only the line number is wrong.
+The actionable error messages of the shared `models/md` engine (feat-27-validation) carry a 1-based line reference into the mdformat-normalized body. That line reference, and the `_line` of every parsed child, is often too low. The field path and the cause/fix hint are correct. Only the line number is wrong.
 
-The root cause is in the scalar-field loop of `MarkdownStr.from_text` (`src/biz/dfch/specmgr/models/md/markdown_str.py`). The loop advances `remaining_offset` by the reported `extent` of the field it just consumed. Then `format_text(...)` re-normalizes the remainder, and that step removes the leading separator line, which is not part of `extent`. As a result, `remaining_offset` never includes the removed separator lines. The `_offset` that each later field receives is short, and so are the "text left over" and "expected ..., found no match" line references and every later child's `_line`. The `process_list_field` path already avoids this problem: it measures a before/after line-count delta. This feature applies the same approach to the scalar path.
+Two mechanisms cause the deficit. Both have the same shape: a parent cuts off the part it has consumed, re-normalizes the rest with `format_text(...)` (which removes the leading blank separator line), and then advances the offset by a count that does not include the removed line.
+
+1. Scalar-field hand-off. The scalar-field loop of `MarkdownStr.from_text` (`src/biz/dfch/specmgr/models/md/markdown_str.py`) advances `remaining_offset` by the reported `extent` of the field it just consumed. The extent of a paragraph or of a block-quote-like leaf field (e.g. feat-247's `OutcomeBlocks`) stops before the trailing blank line, so one line is lost after each such field. The extent of a section-typed field runs up to the next heading and includes its trailing blank line, so no line is lost after a section. This is the mechanism that issue #253 reports.
+2. Own-block hand-off. `MarkdownSection.from_text` (`markdown_section.py`), `MarkdownParagraph.from_text` (`markdown_paragraph.py`), and `MarkdownListItem.from_text` (`markdown_list_item.py`) pass `_offset + own_lines` to their children, where `own_lines` is the token-map end of their own heading, paragraph, or item paragraph. When a blank line follows that block, the re-normalization removes it and the children start one line too low. This affects every section with nested fields, at every nesting level, and every `MarkdownListItemWithNotes` note.
+
+The deficits add up along the nesting path. Measured on `dev` 9c9d7349: in `## X` / blank / `A.` / blank / `### Y` / blank / `B.`, the engine reports `A.` on line 2 (true 3), `### Y` on line 3 (true 5), and `B.` on line 4 (true 7). The `process_list_field` path already avoids the problem, because it measures a before/after line-count delta. This feature applies the same approach to every hand-off.
 
 The defect is pre-existing and shared by every domain built on `models/md`. It does not change whether a document is accepted or rejected. It only makes triage harder, because the reported line points at the wrong place.
 
@@ -24,35 +29,40 @@ The defect is pre-existing and shared by every domain built on `models/md`. It d
 
 - REQ-001: The scalar-field branch of `MarkdownStr.from_text` MUST advance `remaining_offset` by the actually-consumed line count of `remaining_text` (the before/after line-count delta across the re-normalization), not by the field's reported `extent`, matching the `process_list_field` branch.
 - REQ-002: The "text left over after processing all fields" message of a multi-field section MUST report the 1-based line of the unconsumed block in the mdformat-normalized body.
-- REQ-003: The "expected ..., found no match" message for a field that follows one or more consumed scalar fields MUST report the 1-based line, in the mdformat-normalized body, where that field's remaining text starts.
-- REQ-004: The `_line` attribute of every child instance parsed after one or more consumed scalar fields MUST equal its 1-based line in the mdformat-normalized body, so that domain-level messages built from `self._line` (e.g. `rsk/models/v1/tara.py`, `rsk/models/v1/assessment.py`) report the correct line.
+- REQ-003: The "expected ..., found no match" message MUST report the 1-based line, in the mdformat-normalized body, where that field's remaining text starts. When the remaining text is empty (e.g. a mandatory field is missing at the end of its parent), the message MUST report the line directly after the last consumed line, which can be one past the last line of the body.
+- REQ-004: The `_line` attribute of every parsed child, at every nesting level, MUST equal its 1-based line in the mdformat-normalized body. Every domain-level message built from `self._line` therefore reports the correct line, with no change to its own code. The current consumers are `rsk/models/v1/tara.py`, `rsk/models/v1/assessment.py`, `rsk/models/v1/risk_matrix.py`, `vcr/models/v1/body.py`, `feat/models/v1/body.py`, `tsk/models/v1/task_item.py`, and `general/models/dtais.py`, `ears.py`, `iso29148.py`, `rasci.py`.
 - REQ-005: The fix MUST NOT change acceptance or rejection of any document, any exception type, any document-relative field path, or any cause/fix hint. Only line numbers that were too low may change.
-- REQ-006: The change MUST be confined to the shared `models/md` engine. No domain model, parser, or tool changes its behavior except through the corrected line number.
+- REQ-006: The behavioral change MUST be confined to the shared `models/md` engine. No domain model, parser, or tool changes its behavior except through the corrected line number. Regenerated documentation and schema files, `CHANGELOG.md`, and this plan change only as a consequence.
+- REQ-007: `MarkdownSection.from_text`, `MarkdownParagraph.from_text`, and `MarkdownListItem.from_text` MUST advance the offset they hand to their children by the actually-consumed line count of their own text (the before/after line-count delta across the re-normalization), not by the token-map end of their own block.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A synthetic multi-field `MarkdownSection` model in `tests/models/md` with two consumed scalar fields followed by an unconsumed trailing block raises the "text left over" `AssertionError` with the exact normalized-body line of the trailing block (REQ-001, REQ-002); the test fails on the pre-fix code.
-- [ ] ACC-002: A synthetic model whose mandatory third field finds no match after two consumed scalar fields raises "expected ..., found no match" with the exact normalized-body line where the remainder starts (REQ-003); the test fails on the pre-fix code.
-- [ ] ACC-003: A test asserts that the `_line` of a child parsed after two consumed scalar fields equals its normalized-body line (REQ-004), and an `rsk` test pins the corrected line in one `self._line`-based message (tara or assessment) whose field follows a consumed scalar field, or records that no current rsk shape reaches that case.
-- [ ] ACC-004: The issue's repro, a `dec` document whose `## Decision Outcome` is a lead paragraph plus a second paragraph plus a block quote, fails through `parse_dec`/`validate(type="dec")` with a line reference that points at the block quote's normalized-body line (line 5 in the issue's section-relative example), not the pre-fix value (line 3).
-- [ ] ACC-005: Every pinned message that changes in `tests/models/md/test_validation_error_baseline.py` or any other test changes only in its line number, upward, and each changed pin is listed in the phase's update entry (REQ-005).
-- [ ] ACC-006: `git diff --stat` against `dev` touches only `src/biz/dfch/specmgr/models/md/`, tests, and this plan (REQ-006).
-- [ ] ACC-007: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, and `pytest -n auto`.
+- [ ] ACC-001: A synthetic multi-field `MarkdownSection` model in `tests/models/md` with two consumed scalar fields followed by an unconsumed trailing block raises the "text left over" `AssertionError` with the exact normalized-body line of the trailing block (REQ-001, REQ-002). The model is parsed from a section text with its heading, so the heading hand-off is covered too. The test fails on the pre-fix code.
+- [ ] ACC-002: A synthetic model whose mandatory third field finds no match after two consumed scalar fields raises "expected ..., found no match" with the exact normalized-body line where the remainder starts (REQ-003). The test fails on the pre-fix code.
+- [ ] ACC-003: A test asserts that the `_line` of a child parsed after two consumed scalar fields equals its normalized-body line (REQ-004). An `rsk` test pins the corrected line in one `self._line`-based message (tara or assessment) of a real rsk body. Because every child inside a section is affected by the heading hand-off, this case always exists.
+- [ ] ACC-004: The issue's repro is a `dec` body built from the packaged `dec/data/dec_example.md`, where `## Decision Outcome` holds the lead paragraph, a second paragraph, and a block quote. It fails through `parse_dec` with a "text left over" line reference equal to the block quote's line in the normalized body that `parse_dec_body` builds. The test computes the expected line from that normalized body (the first line that starts with `> `) and does not take it from the issue. Measured on `dev` 9c9d7349: true line 38, pre-fix 35, scalar-only fix 36. The test fails on the pre-fix code and on a scalar-only fix. The repro needs feat-247's relaxed `## Decision Outcome` rule, which is on `dev` but not in release v0.38.0, so the test runs against the worktree code and not against a release-based `specmgr` MCP server.
+- [ ] ACC-005: Every pinned message that changes in `tests/models/md/test_validation_error_baseline.py`, `tests/models/md/test_error_messages.py`, or any other test changes only in its line number, upward, and each changed pin is listed in the phase's update entry (REQ-005). A test docstring that states a line number is corrected together with its pin. Known cases: `test_error_messages.py` `test_missing_leaf_paragraph_line_reference_points_at_the_entry_heading` (`### My Update` is line 5, not 4; the missing `content` is reported at line 6 per REQ-003) and `test_a_second_entry_reports_a_deeper_line_reference` (`### Second Update` is line 9; expected line 10, not 8).
+- [ ] ACC-006: `git diff --stat` against `dev` touches only `src/biz/dfch/specmgr/models/md/`, tests, regenerated files (`docs/api/`, `docs/GENERATED.md`, `docs/*_schema.json`, `src/biz/dfch/specmgr/*/data/*_schema.json`), `CHANGELOG.md`, and this plan (REQ-006). No domain model, parser, or tool source file changes.
+- [ ] ACC-007: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, and the `specmgr docs` / `specmgr schema` drift checks.
+- [ ] ACC-008: Synthetic tests pin the own-block hand-off (REQ-007): a section with a paragraph and a nested H3 section (the `## X` / `### Y` shape in the Overview: `A.` line 3, `### Y` line 5, `B.` line 7), and a `MarkdownListItemWithNotes` whose note follows a blank line (note on its true line). The tests fail on the pre-fix code. `MarkdownParagraph` with nested fields gets the same test if a synthetic model can reach that path; otherwise the update entry records why not.
+- [ ] ACC-009: An oracle test parses every packaged `*_example.md` of the `models/md`-based domains and, for every parsed child at every nesting level, asserts that line `child._line` of the normalized body is the first line of that child's text. It needs no hand-computed line numbers and fails on the pre-fix code.
 
 ### Scope
 
 #### Included
 
-- Fix the `remaining_offset` advance in the scalar-field branch of `MarkdownStr.from_text`.
-- Regression tests for the "text left over" and "found no match" line references and for child `_line` values.
+- Delta-based offset advance in the scalar-field branch of `MarkdownStr.from_text` (REQ-001).
+- Delta-based offset hand-off in `MarkdownSection.from_text`, `MarkdownParagraph.from_text`, and `MarkdownListItem.from_text` (REQ-007).
+- One shared helper for the "slice, re-normalize, return (new text, consumed lines)" step, used by every site above and by the `process_list_field` branch.
+- Regression tests for the "text left over" and "found no match" line references, the empty-remainder rule, child `_line` values, and the example-file oracle.
 - The issue's `dec` `## Decision Outcome` repro as a domain-level regression test.
-- Updates to pinned messages whose line numbers were wrong before the fix (baseline tests and downstream `_line` consumers such as `rsk`).
+- Updates to pinned messages and test docstrings whose line numbers were wrong before the fix, in `tests/models/md` and in downstream `_line` consumers (REQ-004 list).
+- Regeneration of the documentation and schema files that carry the changed docstrings.
 
 #### Explicitly Out Of Scope
 
 - Any change to message wording, field paths, cause/fix hints, or exception types.
 - Any change to the acceptance or rejection rules of any domain (e.g. feat-247's relaxed `## Decision Outcome`).
-- Line-number accuracy of the `process_list_field` path, which is already correct.
 - Line references relative to the raw on-disk file (including frontmatter); the reference stays relative to the mdformat-normalized body.
 
 ### Dependencies
@@ -60,10 +70,7 @@ The defect is pre-existing and shared by every domain built on `models/md`. It d
 #### Depends On
 
 - FEAT feat-27-validation: introduced the actionable messages and their 1-based line references that this feature corrects.
-
-#### Blocks
-
-- FEAT feat-247-dec-outcome-blocks: its rejected-kinds errors for `## Decision Outcome` show the same under-reported line. feat-247 does not cause the defect and does not need this fix to ship, but its messages are only correct after it.
+- FEAT feat-247-dec-outcome-blocks: its relaxed `## Decision Outcome` rule is what makes the issue's repro shape (lead paragraph, second paragraph, block quote) reach the "text left over" error that ACC-004 pins. It is merged on `dev` but not in release v0.38.0. feat-247 does not cause the defect. Its rejected-kinds messages show the corrected line only after this fix.
 
 ### Design Notes
 
@@ -75,35 +82,40 @@ remaining_lines = remaining_text.splitlines()[extent:]
 remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
 ```
 
-Proposed change, identical in principle to the list branch directly above it:
+Current own-block hand-off (`markdown_section.py`; `markdown_paragraph.py` and `markdown_list_item.py` use the same pattern with `own_lines`):
 
 ```python
-remaining_lines = remaining_text.splitlines()[extent:]
-new_remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
-consumed = len(remaining_text.splitlines()) - len(new_remaining_text.splitlines())
-remaining_offset += consumed
-remaining_text = new_remaining_text
+heading_lines = heading_map[1]
+body_lines = text.splitlines()[heading_lines:]
+body_text = format_text("\n".join(body_lines)) if body_lines else ""
+instance = super().from_text(body_text, _path=own_path, _offset=_offset + heading_lines)
 ```
 
-`consumed` is `extent` plus the separator lines that the re-normalization removed. Optionally, factor the shared "slice, re-normalize, measure delta" step into one small helper that both branches call, so they cannot drift apart again.
+Proposed change: one shared helper in `models/md` that slices off the first `n` lines, re-normalizes the rest, and returns the new text together with the consumed line count (`len(text.splitlines()) - len(new_text.splitlines())`). Every site above calls it and advances its offset by the returned count. The `process_list_field` branch already computes the same delta inline and uses the helper's count as well, so no site can drift again. The consumed count is the block's own lines plus the separator lines that the re-normalization removed. For an empty rest it is all lines of the text, which gives the REQ-003 empty-remainder rule.
 
-Line-number model: `_offset` is 0-based and relative to the start of the text handed to the outermost `from_text` call; messages report `_offset + 1`. The tests must state which text that is (the normalized body or the section text) and compute the expected line from it, not from the raw file.
+Line-number model: `_offset` is 0-based and relative to the start of the text handed to the outermost `from_text` call; messages report `_offset + 1`. This is feat-27's documented limitation. Real callers pass the whole normalized body (e.g. `parse_dec_body` passes `format_text(content)` to `Decision.from_text`), so the tests compute every expected line from that normalized body, never from the raw file or from a section-relative text.
 
-Impact on `_line`: `process_field` passes `remaining_offset` as the child's `_offset`, so the same deficit reaches every child's `_line`. Domain validators that format `self._line` (currently `rsk/models/v1/tara.py` and `rsk/models/v1/assessment.py`) inherit the fix with no change to their own code.
+Impact on `_line`: `process_field` and the own-block hand-offs pass the corrected offset as the child's `_offset`, so every child's `_line` is correct. The domain validators in the REQ-004 list inherit the fix with no change to their own code.
+
+Verification environment: run every check with the worktree code (`uv run --frozen ...`). The `specmgr` MCP server in the development session is based on the latest release tag (v0.38.0), not on `dev`. It lacks unreleased material such as feat-247's `## Decision Outcome` rule and the ADR removal (feat-46), so its `validate`/`parse_dec` results differ from the worktree for the ACC-004 repro.
 
 ### Task List
 
 #### Phase 100: Pin the Defect
 
 - [ ] Task 100.100: Add failing synthetic engine tests in `tests/models/md` for the "text left over" line (ACC-001), the "found no match" line (ACC-002), and child `_line` (ACC-003, engine part).
-- [ ] Task 100.110: Add the failing `dec` `## Decision Outcome` repro test (ACC-004).
-- [ ] Task 100.120: Find the `rsk` `self._line` message case that follows a consumed scalar field and pin its correct line, or record in this plan that no current rsk shape reaches that case (ACC-003, rsk part).
+- [ ] Task 100.105: Add failing synthetic tests for the own-block hand-off of sections, list items with notes, and (if reachable) paragraphs (ACC-008), and for the REQ-003 empty-remainder rule.
+- [ ] Task 100.110: Add the failing `dec` `## Decision Outcome` repro test with the expected line computed from the normalized body (ACC-004).
+- [ ] Task 100.115: Add the failing example-file oracle test over every packaged `*_example.md` of the `models/md`-based domains (ACC-009).
+- [ ] Task 100.120: Pin the corrected line of one `rsk` `self._line`-based message (tara or assessment) of a real rsk body (ACC-003, rsk part).
 
 #### Phase 110: Fix the Offset
 
-- [ ] Task 110.100: Change the scalar-field branch of `MarkdownStr.from_text` to advance `remaining_offset` by the before/after line-count delta (REQ-001); optionally extract a shared helper for both branches.
-- [ ] Task 110.110: Update the code comment and docstring in `from_text` that describe offset tracking, so both branches are documented as delta-based.
-- [ ] Task 110.120: Make the Phase 100 tests pass; update every other pinned message whose line number changes, and list each one in the update entry (ACC-005).
+- [ ] Task 110.100: Add the shared "slice, re-normalize, return (new text, consumed lines)" helper and use it in the scalar-field and list branches of `MarkdownStr.from_text` (REQ-001).
+- [ ] Task 110.105: Use the helper for the own-block hand-off in `MarkdownSection.from_text`, `MarkdownParagraph.from_text`, and `MarkdownListItem.from_text` (REQ-007).
+- [ ] Task 110.110: Update the code comments and docstrings that describe offset tracking, so every hand-off is documented as delta-based.
+- [ ] Task 110.120: Make the Phase 100 tests pass; update every other pinned message and test docstring whose line number changes (incl. the two `test_error_messages.py` cases in ACC-005 and the downstream consumers in the REQ-004 list, e.g. `tests/tsk/models/v1/test_task_item.py`, `tests/feat/models/v1/test_body.py`), and list each one in the update entry (ACC-005).
+- [ ] Task 110.130: Regenerate `docs/api/`, `docs/GENERATED.md`, and the JSON schemas (`specmgr docs`, `specmgr schema`) for the changed docstrings, e.g. `markdown_str`, `markdown_block_quote`, the domain body pages, `docs/qa_schema.json`, and `qa/data/qa_schema.json`.
 
 #### Phase 120: Verify and Close Out
 
@@ -115,11 +127,27 @@ Impact on `_line`: `process_field` passes `remaining_offset` as the child's `_of
 
 ### Current Status
 
-**As of 2026-11-22**: Planned from GitHub issue #253. No implementation has started.
+**As of 2026-11-22**: Planned from GitHub issue #253 and refined. No implementation has started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T14:54:01.220Z - Plan refined
+
+Applied the refinement review. The main change widens the scope: the deficit has a second mechanism, the own-block hand-off in `MarkdownSection`, `MarkdownParagraph`, and `MarkdownListItem` (new REQ-007, ACC-008, Tasks 100.105 and 110.105). Without that fix, ACC-004 cannot pass. Measured on `dev` 9c9d7349 with the worktree code: the dec repro reports line 35 for a block quote on line 38, and a scalar-only fix would report 36. Other changes:
+
+- ACC-004 is restated against `parse_dec_body`'s normalized body, with the expected line computed in the test.
+- REQ-003 defines the empty-remainder line.
+- REQ-004 lists every `self._line` consumer.
+- ACC-005 names the two `test_error_messages.py` pins whose docstrings state wrong lines.
+- ACC-006 and REQ-006 allow `CHANGELOG.md` and the regenerated docs and schemas (new Task 110.130).
+- ACC-007 includes the drift checks.
+- ACC-009 adds an example-file oracle test (Task 100.115).
+- The ACC-003 escape hatch is dropped.
+- The shared helper is mandatory.
+- feat-247 moves from Blocks to Depends On: it is done and is a precondition of the ACC-004 repro shape, not something this feature blocks.
+- Design Notes record that the session's `specmgr` MCP server runs release v0.38.0, so verification uses the worktree code.
 
 #### 2026-11-22T14:33:13.895Z - Created
 
