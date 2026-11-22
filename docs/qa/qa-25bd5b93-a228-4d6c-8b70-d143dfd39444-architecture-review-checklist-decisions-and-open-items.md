@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-22T17:30:00.000+01:00'
+updated: '2026-11-22T19:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -128,15 +128,13 @@ Superseded on 2026-11-10 (TXT Draft 0.8): the matrix was rebuilt for seven viewp
 
 > **0.0340**: Does the matrix hold up against three contrasting architectures: a traditional enterprise application, a distributed cloud-native platform, and a safety-relevant cyber-physical system?
 
-Partly answered on 2026-11-22 (issue 267). An extra run on specmgr itself (class: single-user local tool, none of the three) is recorded in `.specmgr/feat/feat-267-arch-rvw/validation/specmgr/validation-record.md`, with the model `workspace.dsl`. The matrix structure holds: every specmgr concern found a cell. Ten findings V-01 to V-10, none applied yet. The most important: VP02 x MA and VP05 x MA duplicate for a one-process system (V-01), the main security control sits in the S cell VP02 x SE (V-04), scalability by data volume points to VP03 x FL as P (V-08), and a target criterion without a target ends Unassessable (V-07).
+Answered on 2026-11-22 (issue 267): yes, the structure holds. Four runs: specmgr (an extra class, single-user local tool), AERIS-10 (safety-relevant cyber-physical system), Apache OFBiz (traditional enterprise application) and the OpenTelemetry Demo (distributed cloud-native platform). Every concern of the four systems found a viewpoint and a perspective. The weak points are a few cell values, missing preconditions (system class, subject, operating profile), missing criteria in the home cells XV x SA and XV x RG, and rules for ratings and evidence. The records and models are in `.specmgr/feat/feat-267-arch-rvw/validation/`, the cross-run summary with 16 results and 15 proposed changes in `validation/synthesis.md`. None of the changes is applied yet.
 
-TODO: choose one system for each of the three classes and run them
+TODO: decide the 15 proposed changes of the synthesis, section 3
 
 > **0.0350**: For each of the three architectures: does every important quality concern have a primary location, do the secondary cells give useful cross-checks without duplicating primary criteria, and which concerns fit no viewpoint?
 
-Partly answered on 2026-11-22 for the extra run on specmgr (see 0.0340). Every important concern has a primary location, except the main security control (V-04) and scalability by data volume (V-08). Duplicates: VP02 x MA and VP05 x MA (V-01). No concern fits no viewpoint, but an LLM agent as user has no clear perspective, IC or CO (V-06).
-
-TODO: answer for the three architecture classes
+Answered on 2026-11-22 (issue 267), over the four runs of 0.0340. Primary location: two kinds of main control land in S cells, security input handling (VP02 x SE, runs 1 and 3) and the safety design (VP02, VP04 and VP06 x SA, run 2). The shared data model of an enterprise application has no P cell (VP03 x MA, runs 1 and 3). Duplicates: VP02 x MA and VP05 x MA duplicate only where the runtime calls are the source calls (run 1 yes, run 3 no). Concerns without a home: tenant isolation and an in-process extension interface (run 3), and an LLM agent as user, IC or CO (run 1). See `validation/synthesis.md`, results R4, R7, R9 and R16.
 
 > **0.0360**: Should VP11 x RE, VP08 x MA or VP09 x FL become secondary cells, if the validation shows a coverage gap?
 
