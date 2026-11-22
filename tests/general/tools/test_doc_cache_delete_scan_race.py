@@ -148,9 +148,12 @@ class TestAcc016FindDocPathByIdSkipsAFileThatVanishesMidScan(unittest.TestCase):
 
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     base_dir = Path(tmp_dir)
+                    # feat-245's shard-only scan: each file in its id's own shard ("ta"/"vi").
                     template_text = read_packaged_text(domain, "template")
-                    target = base_dir / "a-target.md"
-                    victim = base_dir / "b-victim.md"
+                    target = base_dir / "ta" / "a-target.md"
+                    victim = base_dir / "vi" / "b-victim.md"
+                    target.parent.mkdir(parents=True)
+                    victim.parent.mkdir(parents=True)
                     target.write_text(_with_id(template_text, "target-id"), encoding="utf-8")
                     victim.write_text(_with_id(template_text, "victim-id"), encoding="utf-8")
 
@@ -188,8 +191,10 @@ class TestAcc017LoadByIdTranslatesAVanishedSecondRead(unittest.TestCase):
 
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     base_dir = Path(tmp_dir)
+                    # feat-245's shard-only scan: the file in its id's own shard ("ta").
                     template_text = read_packaged_text(domain, "template")
-                    path = base_dir / "a.md"
+                    path = base_dir / "ta" / "a.md"
+                    path.parent.mkdir(parents=True)
                     path.write_text(_with_id(template_text, "target-id"), encoding="utf-8")
 
                     with mock.patch.object(io_module, f"read_{domain}", side_effect=FileNotFoundError("vanished")):
@@ -221,11 +226,15 @@ class TestAcc018ListDomainSilentlyOmitsAVanishedFile(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     docs_root = Path(tmp_dir)
                     with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(docs_root)}):
-                        base_dir = docs_root / domain
+                        # feat-245: the list tool scans the domain's sharded ``en/`` directory, each
+                        # file in its id's own shard ("ke"/"va").
+                        base_dir = docs_root / domain / "en"
                         base_dir.mkdir(parents=True)
                         template_text = read_packaged_text(domain, "template")
-                        kept = base_dir / "a-kept.md"
-                        vanished = base_dir / "b-vanished.md"
+                        kept = base_dir / "ke" / "a-kept.md"
+                        vanished = base_dir / "va" / "b-vanished.md"
+                        kept.parent.mkdir(parents=True)
+                        vanished.parent.mkdir(parents=True)
                         kept.write_text(_with_id(template_text, "kept-id"), encoding="utf-8")
                         vanished.write_text(_with_id(template_text, "vanished-id"), encoding="utf-8")
 

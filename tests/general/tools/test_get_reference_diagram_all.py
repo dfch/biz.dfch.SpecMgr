@@ -71,10 +71,10 @@ class TestWideRegistryAllTool(_SeededRegistryTestCase):
     id and title absent from the diagram)."""
 
     SEEDS = (
-        ("wide/req-w001.md", f"docs/req/{_W001}.md"),
-        ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
-        ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-        ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
+        ("wide/req-w001.md", f"docs/req/en/{_W001[:2]}/{_W001}.md"),
+        ("wide/uc-u001.md", f"docs/uc/en/{_U001[:2]}/{_U001}.md"),
+        ("wide/gol-g001.md", f"docs/gol/en/{_WG001[:2]}/{_WG001}.md"),
+        ("wide/dec-d002.md", f"docs/dec/en/{_D002[:2]}/dec-{_D002}-broken.md"),
     )
 
     def test_registry_all_golden(self):
@@ -103,7 +103,7 @@ class TestNoFeatRegistryAllTool(_SeededRegistryTestCase):
     dropped node (the feat target must not appear as a node or an edge)."""
 
     SEEDS = (
-        ("no-feat/req-n001.md", f"docs/req/{_N001}.md"),
+        ("no-feat/req-n001.md", f"docs/req/en/{_N001[:2]}/{_N001}.md"),
         ("no-feat/feat-7-no-feat", "feat/feat-7-no-feat"),
         ("no-feat/feat-8-no-feat-two", "feat/feat-8-no-feat-two"),
     )
@@ -129,7 +129,7 @@ class TestGetReferenceDiagramAllTitleOverride(_SeededRegistryTestCase):
     rendering -- sanitized (an embedded ``"`` becomes ``#quot;``) but NEVER truncated, even past
     the label limit; the node labels still truncate at the default 40."""
 
-    SEEDS = (("cycle/req-c001.md", f"docs/req/{_C001}.md"),)
+    SEEDS = (("cycle/req-c001.md", f"docs/req/en/{_C001[:2]}/{_C001}.md"),)
 
     def test_a_long_title_stays_whole_on_the_startuml_line(self):
         long_title = "A very long registry-wide diagram title well over forty characters"
@@ -155,7 +155,7 @@ class TestGetReferenceDiagramAllEnvVar(_SeededRegistryTestCase):
     (the golden again)."""
 
     SEEDS = (
-        ("no-feat/req-n001.md", f"docs/req/{_N001}.md"),
+        ("no-feat/req-n001.md", f"docs/req/en/{_N001[:2]}/{_N001}.md"),
         ("no-feat/feat-7-no-feat", "feat/feat-7-no-feat"),
         ("no-feat/feat-8-no-feat-two", "feat/feat-8-no-feat-two"),
     )

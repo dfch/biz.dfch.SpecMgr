@@ -49,3 +49,27 @@ procedure must produce JSON that is **byte-identical** to this fixture once
 the temp-dir prefixes are normalized (the `T0` capture prefix in the
 `base_dir` fields, and the process temp dir in `cache_dir`). The
 comparison test does NOT live in this phase.
+
+## `specmgr-config.post-sharding.json`
+
+Post-sharding `specmgr://config` golden (feat-245 Phase 125, Task 125.120
+— REQ-003): the resource's exact JSON payload captured AFTER the sharded
+layout landed, through the same serialization path and under the same
+controlled conditions as the pre-migration fixture above. The only
+intended difference to `specmgr-config.pre-migration.json` is the thirteen
+`SPECMGR_DOCS_DIR` domains' `base_dir` values gaining the `/en` suffix
+(`docs/<type>/en` — the omitted-language resolution of feat-245's uniform
+sharded layout); the `feat` domain's `base_dir` and every other field are
+unchanged.
+
+**The live byte-comparison test in `tests/general/resources/test_config.py`
+(`TestConfigGoldenIdentity`) compares against THIS post-sharding fixture**
+once the temp-dir prefixes are normalized — not against the pre-migration
+one: feat-245's sharding is an intended, observable payload change, so the
+pre-migration fixture is no longer a live comparison target. It is kept as
+an immutable provenance baseline (never regenerated, never renamed): it
+documents the captured-BEFORE state that proved feat-208's migration
+changed no observable behaviour, and the contract text above about that
+baseline stays true. `test_config.py` additionally pins the distinction
+itself (the pre-migration fixture's thirteen `base_dir` values carry no
+`/en` suffix; the post-sharding one's do).

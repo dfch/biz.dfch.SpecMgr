@@ -581,15 +581,16 @@ class TestSourceLanguage(unittest.TestCase):
 
         self.assertEqual((result.source_language, result.language), ("de", "fr"))
         self.assertEqual(result.structural, [])
-        self.assertEqual(Path(result.source_path).parent.name, "de")
-        self.assertEqual(Path(result.variant_path).parent.name, "fr")
+        # the language is the path's first subdirectory under the domain base (feat-245: the shard dir sits in between)
+        self.assertEqual(Path(result.source_path).parent.parent.name, "de")
+        self.assertEqual(Path(result.variant_path).parent.parent.name, "fr")
 
     def test_a_non_en_source_reports_drift_too(self):
         spec = SPECS_BY_NAME["dec"]
         doc_id = spec.fn("create")(spec.en_body()).id
         spec.fn("create")(spec.de_body(), language="de", id=doc_id)
         spec.fn("create")(spec.de_body(), language="fr", id=doc_id)
-        fr_file = spec.base_dir("fr").glob("*.md").__next__()
+        fr_file = next(spec.base_dir("fr").rglob("*.md"))
         rewrite_body(fr_file, lambda body: body.replace("## Weitere Informationen", "## Weitere Infos"))
 
         result = check_translation_drift("dec", doc_id, "fr", source_language="de")

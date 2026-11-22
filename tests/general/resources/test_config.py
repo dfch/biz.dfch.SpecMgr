@@ -127,7 +127,9 @@ class TestConfigResource(unittest.TestCase):
         for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             with self.subTest(domain=domain):
                 self.assertTrue(result.domains[domain].env_var_set)
-                self.assertEqual(result.domains[domain].base_dir, str((DEFAULT_DOCS_ROOT / domain).resolve()))
+                # feat-245 (REQ-003): the omitted-language base-dir resolution targets the sharded
+                # ``docs/<type>/en/`` directory (no flat-EN special case any more).
+                self.assertEqual(result.domains[domain].base_dir, str((DEFAULT_DOCS_ROOT / domain / "en").resolve()))
 
 
 class TestConfigResourceNonDisclosure(unittest.TestCase):
@@ -465,31 +467,45 @@ class TestConfigResourceDiagram(unittest.TestCase):
         self.assertEqual(result.diagram.resolved, 40)
 
 
-#: The Phase 110 pre-migration ``specmgr://config`` golden fixture (feat-208 Task 110.115,
-#: REQ-005/ACC-005): the resource's exact JSON payload captured before any read-site migration,
-#: under the controlled conditions documented in ``tests/fixtures/config-golden/README.md``.
-_CONFIG_GOLDEN_FIXTURE = (
+#: The post-sharding ``specmgr://config`` golden fixture (feat-245 Phase 125, Task 125.120, REQ-003):
+#: the resource's exact JSON payload captured AFTER the sharded layout landed (the thirteen
+#: SPECMGR_DOCS_DIR domains' ``base_dir`` now ``docs/<type>/en``), under the same controlled
+#: conditions documented in ``tests/fixtures/config-golden/README.md`` -- the live comparison
+#: target of ``TestConfigGoldenIdentity``.
+_CONFIG_GOLDEN_POST_SHARDING_FIXTURE = (
+    Path(__file__).resolve().parents[2] / "fixtures" / "config-golden" / "specmgr-config.post-sharding.json"
+)
+
+#: The immutable feat-208 pre-migration provenance baseline (feat-208 Task 110.115, REQ-005/ACC-005):
+#: the resource's exact JSON payload captured before feat-208's read-site migration, documenting the
+#: captured-BEFORE state that proved that migration changed no observable behaviour. It is kept as
+#: found -- never regenerated or renamed -- and is NOT a live comparison target any more: feat-245's
+#: sharding is an intended observable change (the thirteen ``base_dir`` values gain the ``/en``
+#: suffix), captured in the post-sharding fixture above.
+_CONFIG_GOLDEN_PRE_MIGRATION_FIXTURE = (
     Path(__file__).resolve().parents[2] / "fixtures" / "config-golden" / "specmgr-config.pre-migration.json"
 )
 
 
 class TestConfigGoldenIdentity(unittest.TestCase):
-    """feat-208 Task 140.120 (REQ-005, ACC-005): the post-migration ``specmgr://config`` output is
-    byte-identical to the Phase 110 pre-migration golden fixture once the temp-dir prefixes are
-    normalized.
+    """feat-208 Task 140.120 (REQ-005, ACC-005) as re-based by feat-245 Task 125.120 (REQ-003): the
+    live ``specmgr://config`` output is byte-identical to the post-sharding golden fixture once the
+    temp-dir prefixes are normalized.
 
     The golden was captured under a fresh temp-dir CWD with none of the 13 registered env vars set
     (``tests/fixtures/config-golden/README.md``); this test re-runs the same capture procedure
-    against the migrated code and requires byte-identity after normalizing exactly the two
+    against the current code and requires byte-identity after normalizing exactly the two
     machine-dependent locations -- the CWD prefix on each side (derived from each side's own
     payload -- the fixture for the golden, the re-captured result for the current text; the
     payload's ``base_dir`` values are resolved paths, so a raw tempdir path is not a substring of
     them on symlinked tempdirs, e.g. macOS's ``/var`` -> ``/private/var``) and each side's own
     ``similarity.cache_dir`` value (the process temp dir, read out of the payload, never
-    string-guessed). The test skips when the ``similarity`` extra (``fastembed``) is not
-    installed: the golden pins ``similarity.extra_installed=true`` (the README's capture
-    precondition), so a base- or mcp-only venv would fail with a byte-diff that reads like a
-    migration defect rather than an environment mismatch.
+    string-guessed). The comparison is against the POST-SHARDING fixture (feat-245): the feat-208
+    pre-migration fixture stays an immutable provenance baseline and is no longer a live target.
+    The test skips when the ``similarity`` extra (``fastembed``) is not installed: the golden pins
+    ``similarity.extra_installed=true`` (the README's capture precondition), so a base- or mcp-only
+    venv would fail with a byte-diff that reads like a layout defect rather than an environment
+    mismatch.
     """
 
     @unittest.skipUnless(
@@ -497,16 +513,16 @@ class TestConfigGoldenIdentity(unittest.TestCase):
         "the golden pins similarity.extra_installed=true; it requires the similarity extra "
         "(tests/fixtures/config-golden/README.md capture precondition)",
     )
-    def test_post_migration_output_is_byte_identical_to_the_phase_110_golden(self):
+    def test_live_output_is_byte_identical_to_the_post_sharding_golden(self):
         """Re-capture ``config_info()`` through the mcp SDK's own resource serialization path under
         the golden's controlled conditions (fresh temp-dir CWD, every registered env var popped),
         normalize both temp-dir locations on both sides, and require byte-identity with the
-        fixture."""
-        golden_text = _CONFIG_GOLDEN_FIXTURE.read_text(encoding="utf-8")
+        post-sharding fixture."""
+        golden_text = _CONFIG_GOLDEN_POST_SHARDING_FIXTURE.read_text(encoding="utf-8")
         golden = json.loads(golden_text)
         # The capture's CWD prefix T0, derived from the fixture itself (the default req dir is
-        # <CWD>/docs/req, so the prefix sits two levels above it).
-        t0 = str(Path(golden["domains"]["req"]["base_dir"]).parent.parent)
+        # <CWD>/docs/req/en, so the prefix sits three levels above it).
+        t0 = str(Path(golden["domains"]["req"]["base_dir"]).parent.parent.parent)
         # The golden's own cache-dir value (the capture process's temp dir, not T0).
         golden_cache_dir = golden["similarity"]["cache_dir"]
 
@@ -540,10 +556,10 @@ class TestConfigGoldenIdentity(unittest.TestCase):
 
         current_cache_dir = result.similarity.cache_dir
         # The current text's CWD prefix, derived from the payload itself the same way t0 is (the
-        # default req dir is <CWD>/docs/req, so the prefix sits two levels above it): the
+        # default req dir is <CWD>/docs/req/en, so the prefix sits three levels above it): the
         # payload's base_dir values are resolved paths, so the raw tempdir path t1 is not a
         # substring of them on symlinked tempdirs (macOS /var -> /private/var, some containers).
-        t1_resolved = str(Path(result.domains["req"].base_dir).parent.parent)
+        t1_resolved = str(Path(result.domains["req"].base_dir).parent.parent.parent)
 
         # Normalize both sides: each side's own cache-dir value becomes one common token, then
         # each side's own CWD prefix (t0 in the golden, t1_resolved in the current text) becomes
@@ -555,18 +571,34 @@ class TestConfigGoldenIdentity(unittest.TestCase):
         self.assertEqual(
             normalized_current,
             normalized_golden,
-            "specmgr://config's post-migration output differs from the pre-migration golden fixture "
-            f"{_CONFIG_GOLDEN_FIXTURE} after temp-dir normalization:\n"
+            "specmgr://config's live output differs from the post-sharding golden fixture "
+            f"{_CONFIG_GOLDEN_POST_SHARDING_FIXTURE} after temp-dir normalization:\n"
             + "\n".join(
                 difflib.unified_diff(
                     normalized_golden.splitlines(),
                     normalized_current.splitlines(),
-                    fromfile=str(_CONFIG_GOLDEN_FIXTURE),
-                    tofile="post-migration config_info() (this run)",
+                    fromfile=str(_CONFIG_GOLDEN_POST_SHARDING_FIXTURE),
+                    tofile="live config_info() (this run)",
                     lineterm="",
                 )
             ),
         )
+
+    def test_the_pre_migration_fixture_stays_the_immutable_captured_before_state(self):
+        """feat-208 provenance pin: the pre-migration golden documents the captured-BEFORE state
+        that proved feat-208's migration changed no observable behaviour -- its thirteen
+        SPECMGR_DOCS_DIR domains' ``base_dir`` values carry NO ``/en`` suffix (the flat-EN layout),
+        in contrast to the post-sharding fixture's (feat-245's intended observable change)."""
+        pre = json.loads(_CONFIG_GOLDEN_PRE_MIGRATION_FIXTURE.read_text(encoding="utf-8"))
+        post = json.loads(_CONFIG_GOLDEN_POST_SHARDING_FIXTURE.read_text(encoding="utf-8"))
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
+            with self.subTest(domain=domain):
+                self.assertNotEqual(Path(pre["domains"][domain]["base_dir"]).name, "en")
+                self.assertEqual(Path(post["domains"][domain]["base_dir"]).name, "en")
+        with self.subTest(domain="feat"):
+            self.assertEqual(
+                Path(pre["domains"]["feat"]["base_dir"]).name, Path(post["domains"]["feat"]["base_dir"]).name
+            )
 
 
 if __name__ == "__main__":

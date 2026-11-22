@@ -19,16 +19,18 @@
 
 ``find_related``/``find_similar_text`` (semantic similarity) and ``list_references``/``get_reference_diagram``/
 ``get_reference_diagram_all`` (cross-references) must never resolve, enumerate, or index a ``docs/{type}/{language}/``
-entry, and every reference or similarity hit resolves to the EN variant's path (DEC 38efdb66 item 8: a directory-layout
-property of the non-recursive ``iter_doc_paths`` scan, with zero code change in those tools). These tests build a docs
-tree that holds BOTH the EN documents and ``de/`` variants of the same ids -- with content *marked* so a leak is
-unambiguous (a ``gamma``-only German title the deterministic fake embedding backend scores as the nearest possible
-match, a German-only reference edge, German-only titles) -- and assert nothing of the variants surfaces.
+entry, and every reference or similarity hit resolves to the EN variant's path (DEC 38efdb66 item 8, re-stated for
+feat-245's uniform sharded layout: a directory-layout property of the EN scan re-rooted at ``docs/{type}/en/``, with
+zero code change in those tools). These tests build a docs tree that holds BOTH the EN documents and ``de/`` variants
+of the same ids -- with content *marked* so a leak is unambiguous (a ``gamma``-only German title the deterministic fake
+embedding backend scores as the nearest possible match, a German-only reference edge, German-only titles) -- and assert
+nothing of the variants surfaces.
 
 Coverage: every one of the thirteen i18n-eligible domains for the similarity tools and the registry-wide diagram; the
 ``dec``/``req``/``vcr`` source domains deeply; the ``list_references`` resolved-row path/title; a ``de/``-only document
-is no resolvable source; plus the structural fact the whole property rests on -- each domain's flat scan, id lookup and
-listing never see a ``de/`` file, even a hand-planted one -- so a future recursive glob fails these tests.
+is no resolvable source; plus the structural fact the whole property rests on -- each domain's EN scan, id lookup and
+listing never see a ``de/`` file, even a hand-planted one -- so a future recursive glob across languages fails these
+tests.
 """
 
 from __future__ import annotations
@@ -83,13 +85,14 @@ def de_title(spec: DomainSpec) -> str:
 
 
 def seed_pair(spec: DomainSpec) -> tuple[str, Path, Path]:
-    """Create the EN document and its marked ``de/`` variant for ``spec``; return ``(id, EN path, DE path)``."""
+    """Create the EN document and its marked ``de/`` variant for ``spec`` (both sharded, feat-245);
+    return ``(id, EN path, DE path)``."""
     created = spec.fn("create")(retitle(spec.en_body(), en_title(spec)))
     assert not isinstance(created, ValidateResult), created
     variant = spec.fn("create")(translate_to_de(retitle(spec.en_body(), de_title(spec))), language="de", id=created.id)
     assert not isinstance(variant, ValidateResult), variant
-    en_file = next(spec.base_dir().glob(f"*{created.id}*.md"))
-    de_file = spec.base_dir("de") / en_file.name
+    en_file = next(spec.base_dir().rglob(f"*{created.id}*.md"))
+    de_file = spec.base_dir("de") / en_file.relative_to(spec.base_dir())
     assert de_file.is_file()
     return created.id, en_file, de_file
 
@@ -107,10 +110,12 @@ class _EnOnlyTestCase(SimilarityTestCase):
         result = {spec.d: seed_pair(spec) for spec in SPECS}
         return result
 
-    def assert_flat_en_path(self, path: str | Path, domain: str) -> None:
-        """Fail unless ``path`` is a document directly inside ``domain``'s own flat directory (never a subfolder)."""
+    def assert_sharded_en_path(self, path: str | Path, domain: str) -> None:
+        """Fail unless ``path`` is a document inside ``domain``'s own ``en/`` sharded listing (never a variant
+        subfolder or a different shard)."""
         resolved = Path(path).resolve()
-        self.assertEqual(resolved.parent, (self.docs_root / domain).resolve(), f"{path} is not a flat {domain} file")
+        en_dir = (self.docs_root / domain / "en").resolve()
+        self.assertEqual(resolved.parent.parent, en_dir, f"{path} is not a sharded {domain} EN file")
 
 
 class TestFindRelatedStaysEnOnly(_EnOnlyTestCase):
@@ -128,7 +133,7 @@ class TestFindRelatedStaysEnOnly(_EnOnlyTestCase):
 
                 self.assertEqual({Path(hit.path).resolve() for hit in hits}, en_paths - {seeded[spec.d][1].resolve()})
                 for hit in hits:
-                    self.assert_flat_en_path(hit.path, hit.type)
+                    self.assert_sharded_en_path(hit.path, hit.type)
                     self.assertNotIn(_MARKER, hit.title)
                 self.assertEqual(len({hit.id for hit in hits}), len(hits), "an id appeared twice (a variant leaked)")
                 self.assertNotIn(doc_id, [hit.id for hit in hits])
@@ -151,7 +156,7 @@ class TestFindRelatedStaysEnOnly(_EnOnlyTestCase):
         hits = find_related(type="req", id=source.id, top_k=100)
 
         self.assertEqual([hit.id for hit in hits], [other.id])
-        self.assertEqual(Path(hits[0].path).parent, spec.base_dir().resolve())
+        self.assertEqual(Path(hits[0].path).parent.parent, spec.base_dir().resolve())
         self.assertEqual(hits[0].score, 0.0)
 
     def test_dec_and_vcr_sources_resolve_to_the_en_variant_path(self):
@@ -173,7 +178,8 @@ class TestFindRelatedStaysEnOnly(_EnOnlyTestCase):
         spec = SPECS_BY_NAME["dec"]
         orphan_id = "00000000-0000-4000-8000-0000000000d0"
         de_file = seeded["dec"][2]
-        orphan = de_file.parent / f"dec-{orphan_id}-orphan.md"
+        orphan = spec.base_dir("de") / orphan_id[:2] / f"{orphan_id}-orphan.md"
+        orphan.parent.mkdir(parents=True)
         orphan.write_text(de_file.read_text(encoding="utf-8").replace(seeded["dec"][0], orphan_id), encoding="utf-8")
 
         with self.assertRaises(Exception) as context:
@@ -195,7 +201,7 @@ class TestFindSimilarTextStaysEnOnly(_EnOnlyTestCase):
         self.assertEqual({Path(hit.path).resolve() for hit in hits}, en_paths)
         self.assertEqual(len(hits), len(SPECS))
         for hit in hits:
-            self.assert_flat_en_path(hit.path, hit.type)
+            self.assert_sharded_en_path(hit.path, hit.type)
             self.assertNotIn(_MARKER, hit.title)
             self.assertEqual(hit.score, 0.0)  # the EN documents carry none of the query's words
         for text in fake.embed_inputs:
@@ -248,8 +254,8 @@ class _ReferenceFixtureTestCase(_EnOnlyTestCase):
             id=self.gol_g.id,
         )
         assert not isinstance(variant, ValidateResult), variant
-        self.req_b_en = next(req.base_dir().glob(f"*{self.req_b.id}*.md")).resolve()
-        self.gol_de = next(gol.base_dir("de").glob("*.md"))
+        self.req_b_en = next(req.base_dir().rglob(f"*{self.req_b.id}*.md")).resolve()
+        self.gol_de = next(gol.base_dir("de").rglob("*.md"))
 
 
 class TestListReferencesStaysEnOnly(_ReferenceFixtureTestCase):
@@ -272,16 +278,20 @@ class TestListReferencesStaysEnOnly(_ReferenceFixtureTestCase):
         self.assertNotIn("Ziel DE Anforderung", [row.title for row in rows])
 
     def test_the_de_variant_of_a_referenced_requirement_is_never_the_resolution_target(self):
-        """The id exists in both languages; the resolved row is the flat file even though a DE file shares the id."""
+        """The id exists in both languages; the resolved row is the EN (sharded ``en/``) file even though a DE file
+        shares the id."""
         rows = [row for row in list_references(type="gol", id=self.gol_g.id).results if row.type == "req"]
         de_dir = SPECS_BY_NAME["req"].base_dir("de").resolve()
+        en_dir = SPECS_BY_NAME["req"].base_dir().resolve()
 
         self.assertTrue(de_dir.is_dir())
-        self.assertNotEqual(Path(rows[0].path).resolve().parent, de_dir)
+        self.assertEqual(Path(rows[0].path).resolve().parent.parent, en_dir)
 
     def test_a_de_only_document_is_not_a_resolvable_source(self):
+        gol = SPECS_BY_NAME["gol"]
         orphan_id = "00000000-0000-4000-8000-0000000000d1"
-        orphan = self.gol_de.parent / f"gol-{orphan_id}-orphan.md"
+        orphan = gol.base_dir("de") / orphan_id[:2] / f"{orphan_id}-orphan.md"
+        orphan.parent.mkdir(parents=True)
         orphan.write_text(self.gol_de.read_text(encoding="utf-8").replace(self.gol_g.id, orphan_id), encoding="utf-8")
 
         with self.assertRaises(GolNotFoundError):
@@ -291,10 +301,10 @@ class TestListReferencesStaysEnOnly(_ReferenceFixtureTestCase):
         """A reference to an id that exists only below ``de/`` never resolves (it is a dangling reference)."""
         req = SPECS_BY_NAME["req"]
         orphan_id = "00000000-0000-4000-8000-0000000000d2"
-        de_file = req.base_dir("de") / next(req.base_dir("de").glob("*.md")).name
-        (req.base_dir("de") / f"req-{orphan_id}-orphan.md").write_text(
-            de_file.read_text(encoding="utf-8").replace(self.req_b.id, orphan_id), encoding="utf-8"
-        )
+        de_file = next(req.base_dir("de").rglob("*.md"))
+        orphan = req.base_dir("de") / orphan_id[:2] / f"{orphan_id}-orphan.md"
+        orphan.parent.mkdir(parents=True)
+        orphan.write_text(de_file.read_text(encoding="utf-8").replace(self.req_b.id, orphan_id), encoding="utf-8")
         gol = SPECS_BY_NAME["gol"]
         gol_source = gol.fn("create")(_gol_body(gol, "Dangling Source Goal", (orphan_id, "Only in de")))
 
@@ -328,16 +338,20 @@ class TestReferenceDiagramsStayEnOnly(_ReferenceFixtureTestCase):
         self.assertNotIn(f"--> [REQ-{self.req_c.id}]", diagram)
 
     def test_a_de_only_document_is_not_a_resolvable_diagram_source(self):
+        gol = SPECS_BY_NAME["gol"]
         orphan_id = "00000000-0000-4000-8000-0000000000d3"
-        orphan = self.gol_de.parent / f"gol-{orphan_id}-orphan.md"
+        orphan = gol.base_dir("de") / orphan_id[:2] / f"{orphan_id}-orphan.md"
+        orphan.parent.mkdir(parents=True)
         orphan.write_text(self.gol_de.read_text(encoding="utf-8").replace(self.gol_g.id, orphan_id), encoding="utf-8")
 
         with self.assertRaises(GolNotFoundError):
             get_reference_diagram(type="gol", id=orphan_id)
 
     def test_the_registry_wide_diagram_enumerates_no_language_variant(self):
+        gol = SPECS_BY_NAME["gol"]
         orphan_id = "00000000-0000-4000-8000-0000000000d4"
-        orphan = self.gol_de.parent / f"gol-{orphan_id}-orphan.md"
+        orphan = gol.base_dir("de") / orphan_id[:2] / f"{orphan_id}-orphan.md"
+        orphan.parent.mkdir(parents=True)
         orphan.write_text(
             self.gol_de.read_text(encoding="utf-8")
             .replace(self.gol_g.id, orphan_id)
@@ -371,9 +385,10 @@ class TestRegistryDiagramAcrossAllDomainsStaysEnOnly(_EnOnlyTestCase):
         self.assertNotIn("DE ", diagram.replace("DE-", ""))
 
 
-class TestFlatScansNeverSeeALanguageFolder(unittest.TestCase):
-    """The structural fact DEC 38efdb66 item 8 rests on, per domain: a ``de/`` file is invisible to the flat scan,
-    the id lookup and the listing -- even when hand-planted. A future recursive glob fails these tests."""
+class TestEnScansNeverSeeALanguageFolder(unittest.TestCase):
+    """The structural fact DEC 38efdb66 item 8 rests on (re-stated for feat-245), per domain: a ``de/`` file is
+    invisible to the EN scan (the sharded listing of ``en/``), the id lookup and the listing -- even when
+    hand-planted. A future cross-language glob fails these tests."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))

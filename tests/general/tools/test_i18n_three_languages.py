@@ -23,7 +23,8 @@ This module adds a third one (``fr``, whose table is a copy of ``de.json`` redir
 ``heading_table_path`` seam -- the established technique of ``test_check_translation_drift.py``; the *content* of a
 table is irrelevant to the properties pinned here) and asserts, for every i18n-eligible domain, that two NON-EN
 variants of one artifact share the id of the EN source (ACC-003, REQ-003), live in their own language subfolder under
-the identical basename (ACC-001, DEC 38efdb66 item 2), never disturb each other or EN, are each listed by exactly one
+the identical shard directory and basename (ACC-001, DEC 38efdb66 item 2, refined by feat-245's uniform sharded
+layout), never disturb each other or EN, are each listed by exactly one
 ``list_<d>(language=...)`` call, and are all reported by ``list_languages`` (REQ-012).
 """
 
@@ -67,8 +68,13 @@ class TestThreeLanguagesOfOneArtifact(_TempDocsMixin):
             variant = spec.fn("create")(spec.de_body(), language=language, id=created.id)
             assert not isinstance(variant, ValidateResult), variant
             assert variant.id == created.id
-        en_file = next(spec.base_dir().glob("*.md"))
-        return created.id, en_file, spec.base_dir("de") / en_file.name, spec.base_dir("fr") / en_file.name
+        en_file = next(spec.base_dir().rglob("*.md"))
+        return (
+            created.id,
+            en_file,
+            spec.base_dir("de") / en_file.relative_to(spec.base_dir()),
+            spec.base_dir("fr") / en_file.relative_to(spec.base_dir()),
+        )
 
     def test_two_non_en_variants_share_the_en_id_and_basename(self):
         for spec in SPECS:
@@ -81,8 +87,11 @@ class TestThreeLanguagesOfOneArtifact(_TempDocsMixin):
                     self.assertIn(f"id: {doc_id}", path.read_text(encoding="utf-8").split("---\n")[1])
                 self.assertEqual({en_file.name, de_file.name, fr_file.name}, {en_file.name})
                 self.assertEqual(
-                    {p.parent.name for p in (en_file, de_file, fr_file)}, {spec.d, "de", "fr"}
-                )  # ACC-001: EN flat, others in their own subfolder
+                    {p.parent.parent.name for p in (en_file, de_file, fr_file)}, {"en", "de", "fr"}
+                )  # ACC-001: every language in its own subfolder, EN no longer flat (feat-245)
+                self.assertEqual(
+                    {p.parent.name for p in (en_file, de_file, fr_file)}, {en_file.parent.name}
+                )  # the shared shard directory (the id's first two characters)
                 ids = {spec.fn("get")(doc_id, language=lang).frontmatter.id for lang in ("en", "de", "fr")}
                 self.assertEqual(ids, {doc_id})
 

@@ -147,11 +147,11 @@ class TestTheDomainsTheNegativeMatrixSkipped(_TempDocsMixin):
         self.assertIsInstance(rejected, ValidateResult, label)
         self.assertFalse(rejected.valid)
         self.assertEqual(len(rejected.errors), 1)
-        self.assertFalse(spec.base_dir("de").exists() and list(spec.base_dir("de").glob("*.md")))
+        self.assertFalse(spec.base_dir("de").exists() and list(spec.base_dir("de").rglob("*.md")))
 
         accepted = spec.fn("create")(good, language="de", id=created.id)
         self.assertNotIsInstance(accepted, ValidateResult, accepted)
-        de_file = next(spec.base_dir("de").glob("*.md"))
+        de_file = next(spec.base_dir("de").rglob("*.md"))
         before = de_file.read_bytes()
 
         refused = update(type=domain, id=created.id, content=bad, language="de")

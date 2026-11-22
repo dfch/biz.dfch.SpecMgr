@@ -81,31 +81,31 @@ runner = CliRunner()
 #: The committed fixture seed sets (the same ``(fixture, destination)`` pairs the Phase 110/120
 #: tests seed with — the goldens were generated over exactly these registries).
 _SEED_CYCLE = (
-    ("cycle/req-c001.md", f"docs/req/{_C001}.md"),
-    ("cycle/req-c002.md", f"docs/req/{_C002}.md"),
+    ("cycle/req-c001.md", f"docs/req/en/{_C001[:2]}/{_C001}.md"),
+    ("cycle/req-c002.md", f"docs/req/en/{_C002[:2]}/{_C002}.md"),
 )
 _SEED_CHAIN = (
-    ("chain/req-h001.md", f"docs/req/{_H001}.md"),
-    ("chain/gol-g001.md", f"docs/gol/{_G001}.md"),
-    ("chain/rsk-k001.md", f"docs/rsk/{_K001}.md"),
+    ("chain/req-h001.md", f"docs/req/en/{_H001[:2]}/{_H001}.md"),
+    ("chain/gol-g001.md", f"docs/gol/en/{_G001[:2]}/{_G001}.md"),
+    ("chain/rsk-k001.md", f"docs/rsk/en/{_K001[:2]}/{_K001}.md"),
 )
 _SEED_REVERSE = (
-    ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
-    ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
+    ("reverse/req-r001.md", f"docs/req/en/{_R001[:2]}/{_R001}.md"),
+    ("reverse/dec-d001.md", f"docs/dec/en/{_D001[:2]}/{_D001}.md"),
     ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
 )
 _SEED_NO_FEAT = (
-    ("no-feat/req-n001.md", f"docs/req/{_N001}.md"),
+    ("no-feat/req-n001.md", f"docs/req/en/{_N001[:2]}/{_N001}.md"),
     ("no-feat/feat-7-no-feat", "feat/feat-7-no-feat"),
     ("no-feat/feat-8-no-feat-two", "feat/feat-8-no-feat-two"),
 )
 _SEED_WIDE = (
-    ("wide/req-w001.md", f"docs/req/{_W001}.md"),
-    ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
-    ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-    ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
+    ("wide/req-w001.md", f"docs/req/en/{_W001[:2]}/{_W001}.md"),
+    ("wide/uc-u001.md", f"docs/uc/en/{_U001[:2]}/{_U001}.md"),
+    ("wide/gol-g001.md", f"docs/gol/en/{_WG001[:2]}/{_WG001}.md"),
+    ("wide/dec-d002.md", f"docs/dec/en/{_D002[:2]}/dec-{_D002}-broken.md"),
 )
-_SEED_BROKEN_DEC = (("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),)
+_SEED_BROKEN_DEC = (("wide/dec-d002.md", f"docs/dec/en/{_D002[:2]}/dec-{_D002}-broken.md"),)
 
 #: The Phase 120 tool modules the command imports lazily (the ``mcp``-extra dependency).
 _TOOL_MODULES = (

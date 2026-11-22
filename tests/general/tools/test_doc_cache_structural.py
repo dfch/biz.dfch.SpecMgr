@@ -225,9 +225,12 @@ class TestAcc008FindDocPathByIdReconcilesForEveryNonFeatDomain(unittest.TestCase
 
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     base_dir = Path(tmp_dir)
+                    # feat-245's shard-only scan: both ids ("id-1"/"id-2") share the two-char shard "id".
+                    shard_dir = base_dir / "id"
+                    shard_dir.mkdir()
                     template_text = read_packaged_text(domain, "template")
-                    kept = base_dir / "kept.md"
-                    dropped = base_dir / "dropped.md"
+                    kept = shard_dir / "kept.md"
+                    dropped = shard_dir / "dropped.md"
                     kept.write_text(_with_id(template_text, "id-1"), encoding="utf-8")
                     dropped.write_text(_with_id(template_text, "id-2"), encoding="utf-8")
 

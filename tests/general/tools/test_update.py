@@ -1174,7 +1174,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
     def _doc_path(self, case: _Case) -> Path:
         """The single on-disk document file seeded for ``case``."""
-        matches = list((self.docs_root / case.doc_type).glob("*.md"))
+        matches = list((self.docs_root / case.doc_type).rglob("*.md"))
         self.assertEqual(len(matches), 1)
         result = matches[0]
         return result
@@ -1728,7 +1728,7 @@ class TempUpdateInjectionDirTestCase(unittest.TestCase):
         if case.doc_type == "feat":
             result = feat_base_dir() / doc_id / "README.md"
         else:
-            matches = list((self.docs_root / case.doc_type).glob("*.md"))
+            matches = list((self.docs_root / case.doc_type).rglob("*.md"))
             self.assertEqual(len(matches), 1)
             result = matches[0]
         return result

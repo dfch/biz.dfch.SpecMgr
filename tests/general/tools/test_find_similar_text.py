@@ -88,14 +88,17 @@ class TestFindSimilarTextRanking(SimilarityTestCase):
         self.assertIsInstance(hits, list)
         for hit in hits:
             self.assertIsInstance(hit, SimilarityHit)
-        self.assertEqual([hit.title for hit in hits], ["First Doc", "Second Doc", FAILED_TO_PARSE_MARKER])
+        # Among the two 0.0-score candidates the stable sort keeps the corpus order: the unparseable
+        # marker row sits in the lowest shard ("00", feat-245's seed position for id-less documents),
+        # so it precedes the other document.
+        self.assertEqual([hit.title for hit in hits], ["First Doc", FAILED_TO_PARSE_MARKER, "Second Doc"])
         self.assertAlmostEqual(hits[0].score, 2.0 / math.sqrt(5.0), places=6)
         self.assertAlmostEqual(hits[1].score, 0.0, places=6)
         self.assertAlmostEqual(hits[2].score, 0.0, places=6)
         self.assertEqual(fake.embed_query_calls, 1)
         self.assertEqual(fake.embed_query_inputs, ["alpha"])  # the raw query, via embed_query
         self.assertEqual(fake.embed_calls, 3)  # the three document-side candidates
-        self.assertIsNone(hits[2].id)  # the unparseable candidate is a marker row
+        self.assertIsNone(hits[1].id)  # the unparseable candidate is a marker row
 
     def test_target_types_restricts_the_candidate_set(self) -> None:
         self.seed_req("First Req", "alpha")

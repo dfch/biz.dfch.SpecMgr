@@ -680,8 +680,9 @@ class TempRefDirTestCase(unittest.TestCase):
         )
 
     def _flat_path(self, doc_type: str) -> Path:
-        """The single on-disk document file seeded for the flat domain ``doc_type``."""
-        matches = list((self.docs_root / doc_type).glob("*.md"))
+        """The single on-disk document file seeded for the flat (non-``feat``) domain ``doc_type``
+        (the sharded ``<docs_root>/<doc_type>/<lang>/<shard>/`` file, feat-245's uniform layout)."""
+        matches = list((self.docs_root / doc_type).rglob("*.md"))
         self.assertEqual(len(matches), 1)
         result = matches[0]
         return result

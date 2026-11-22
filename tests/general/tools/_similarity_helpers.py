@@ -375,8 +375,9 @@ _UNPARSEABLE_REQ = textwrap.dedent(
 class SimilarityTestCase(unittest.TestCase):
     """Common fixture: temp docs/feat dirs, clean cache, reset provider.
 
-    Points ``SPECMGR_DOCS_DIR`` at a temp dir (every flat domain's base dir is
-    a subdir of it) and ``SPECMGR_FEAT_DIR`` at its own temp dir (mirroring the
+    Points ``SPECMGR_DOCS_DIR`` at a temp dir (every domain's base dir is
+    a subdir of it -- the sharded ``<domain>/en/`` directory, feat-245) and
+    ``SPECMGR_FEAT_DIR`` at its own temp dir (mirroring the
     ``test_delete.py``/``test_set_status.py``/``test_update.py`` fixture
     convention), clears the ``SPECMGR_SIMILARITY_DISABLED`` flag (restoring it
     on teardown if it was set), and resets both the process embedding cache and
@@ -454,12 +455,15 @@ class SimilarityTestCase(unittest.TestCase):
         return result
 
     def seed_unparseable_req(self, filename: str = "zz-broken.md") -> Path:
-        """Write the vocabulary-neutral, malformed-frontmatter ``req`` doc; return its path."""
+        """Write the vocabulary-neutral, malformed-frontmatter ``req`` doc inside a shard
+        directory (feat-245: id-less documents stay list-visible only when placed inside a
+        shard dir -- any shard); return its path."""
         from biz.dfch.specmgr.req.tools._paths import req_base_dir
 
         base_dir = req_base_dir()
-        base_dir.mkdir(parents=True, exist_ok=True)
-        path = base_dir / filename
+        shard_dir = base_dir / "00"
+        shard_dir.mkdir(parents=True, exist_ok=True)
+        path = shard_dir / filename
         path.write_text(_UNPARSEABLE_REQ, encoding="utf-8")
         result = path
         return result
@@ -467,14 +471,14 @@ class SimilarityTestCase(unittest.TestCase):
     def path_for_id(self, domain: str, doc_id: str) -> Path:
         """The on-disk path of the parseable ``domain`` document with frontmatter ``id == doc_id``.
 
-        Scans ``<docs_root>/<domain>/*.md`` (the flat domains' shape) and matches the
-        frontmatter ``id``; unparseable files (e.g. the malformed-frontmatter seed) are
-        skipped. Raises ``AssertionError`` if no parseable document matches.
+        Scans the domain's sharded listing (``<docs_root>/<domain>/*/*.md``, feat-245) and
+        matches the frontmatter ``id``; unparseable files (e.g. the malformed-frontmatter
+        seed) are skipped. Raises ``AssertionError`` if no parseable document matches.
         """
         import frontmatter
 
         base_dir = self.docs_root / domain
-        for path in sorted(base_dir.glob("*.md")):
+        for path in sorted(base_dir.rglob("*.md")):
             try:
                 post = frontmatter.loads(path.read_text(encoding="utf-8"))
             except Exception:  # noqa: BLE001 -- an unparseable seed file is simply not the target
