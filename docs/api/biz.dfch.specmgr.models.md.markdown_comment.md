@@ -283,7 +283,8 @@ breaking that class's own structural field matching. See `get_extent`/
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -691,7 +692,8 @@ breaking that class's own structural field matching. See `get_extent`/
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 

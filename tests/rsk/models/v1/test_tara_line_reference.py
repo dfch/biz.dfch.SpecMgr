@@ -35,7 +35,6 @@ import unittest
 from importlib.resources import files
 
 import pydantic
-import pytest
 
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.rsk.models.v1 import parse_tara
@@ -50,7 +49,6 @@ _INVALID_BULLET = "- **High probability / high impact → avoid**"
 class TestTaraQuadrantItemLineReference(unittest.TestCase):
     """ACC-003 (rsk part): `QuadrantItem.strategy`'s message names the bullet's normalized-body line."""
 
-    @pytest.mark.xfail(strict=True, reason="feat-253: fixed in Phase 110")
     def test_invalid_quadrant_bullet_reports_its_normalized_body_line(self) -> None:
         source = files("biz.dfch.specmgr.rsk.data").joinpath("rsk_tara.md").read_text(encoding="utf-8")
         assert source.count(_VALID_BULLET) == 1, f"{_VALID_BULLET!r} must occur exactly once in rsk_tara.md."

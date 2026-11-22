@@ -1100,7 +1100,7 @@ class TestValidateMessageTruncation(unittest.TestCase):
         self.assertEqual(
             message,
             "req validate (body): Requirement > Characteristics: expected Characteristics "
-            "(heading 'Characteristics'), found no match; remaining text starts at line 3 of "
+            "(heading 'Characteristics'), found no match; remaining text starts at line 4 of "
             "the normalized body (0 line(s)) and begins with:",
         )
 

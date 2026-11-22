@@ -75,7 +75,10 @@ criteria:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -380,7 +383,8 @@ criteria:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -451,7 +455,10 @@ criteria:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -848,7 +855,8 @@ criteria:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -951,7 +959,10 @@ method:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -1256,7 +1267,8 @@ method:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -1327,7 +1339,10 @@ method:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -1724,7 +1739,8 @@ method:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -1781,7 +1797,10 @@ separate pass/fail/waived outcome field anywhere in this domain --
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -2086,7 +2105,8 @@ separate pass/fail/waived outcome field anywhere in this domain --
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -2157,7 +2177,10 @@ separate pass/fail/waived outcome field anywhere in this domain --
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -2554,7 +2577,8 @@ separate pass/fail/waived outcome field anywhere in this domain --
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -2607,7 +2631,10 @@ separate pass/fail/waived outcome field anywhere in this domain --
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -2912,7 +2939,8 @@ separate pass/fail/waived outcome field anywhere in this domain --
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -2983,7 +3011,10 @@ separate pass/fail/waived outcome field anywhere in this domain --
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -3380,7 +3411,8 @@ separate pass/fail/waived outcome field anywhere in this domain --
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -3445,7 +3477,10 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -3750,7 +3785,8 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -3821,7 +3857,10 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -4218,7 +4257,8 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -4294,7 +4334,10 @@ title:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -4599,7 +4642,8 @@ title:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -4670,7 +4714,10 @@ title:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child
   field recursively captures its own full extent this same way, all the
   way down to whichever leaf(ves) ultimately hold the body text. Since
   the body is therefore already fully represented by the nested fields,
@@ -5067,7 +5114,8 @@ title:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -5142,7 +5190,12 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. Each slice-and-re-normalize step
+  goes through `consume_leading_lines`, and the running offset of the
+  next field is advanced by the line count that step actually consumed
+  (the before/after line-count delta, which includes the blank
+  separator line the re-normalization removes), never by the field's
+  own `get_extent` (feat-253).
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -5430,7 +5483,8 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -5505,7 +5559,12 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. Each slice-and-re-normalize step
+  goes through `consume_leading_lines`, and the running offset of the
+  next field is advanced by the line count that step actually consumed
+  (the before/after line-count delta, which includes the blank
+  separator line the re-normalization removes), never by the field's
+  own `get_extent` (feat-253).
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -5885,7 +5944,8 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -6174,7 +6234,8 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -6551,7 +6612,8 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -6839,7 +6901,8 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -7216,7 +7279,8 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -7508,7 +7572,8 @@ notes:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -7885,7 +7950,8 @@ notes:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 

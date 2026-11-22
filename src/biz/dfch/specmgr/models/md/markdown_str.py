@@ -29,7 +29,7 @@ import typing
 from typing import Any
 from pydantic import BaseModel, PrivateAttr
 from .alias_match import describe_alias
-from ._markdown import format_text, not_in_mdformat_message, parse, snippet
+from ._markdown import consume_leading_lines, format_text, not_in_mdformat_message, parse, snippet
 
 #: Class names of the generic, directly-reusable `models/md` leaf/section
 #: types -- used by `_field_label` to decide whether a nested field's own
@@ -431,7 +431,8 @@ class MarkdownStr(BaseModel):
                 (REQ-002) -- `0` at the root. Each matched item's own
                 `_offset` is tracked by measuring the actual line-count
                 delta of `remaining_text` before/after that item is
-                consumed (not a summed `get_extent`), so per-item blank-line
+                consumed (`consume_leading_lines`, not a summed
+                `get_extent`), so per-item blank-line
                 elision from re-normalization (see this docstring's own
                 discussion above) never desynchronizes the running offset.
 
@@ -466,12 +467,8 @@ class MarkdownStr(BaseModel):
             item_text = format_text("\n".join(lines[:extent]))
             items.append(item_type.from_text(item_text, _path=item_path, _offset=item_offset))
 
-            remaining_lines = lines[extent:]
-            new_remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
-
-            consumed = len(remaining_text.splitlines()) - len(new_remaining_text.splitlines())
+            remaining_text, consumed = consume_leading_lines(remaining_text, extent)
             item_offset += consumed
-            remaining_text = new_remaining_text
 
         if not items:
             if optional:
@@ -506,7 +503,12 @@ class MarkdownStr(BaseModel):
         line that `mdformat` would strip), which is exactly what `get_extent`
         requires of its input -- so `remaining_text` is kept compliant by
         construction on every iteration instead of being handed to the next
-        field's `get_extent` unnormalized.
+        field's `get_extent` unnormalized. Each slice-and-re-normalize step
+        goes through `consume_leading_lines`, and the running offset of the
+        next field is advanced by the line count that step actually consumed
+        (the before/after line-count delta, which includes the blank
+        separator line the re-normalization removes), never by the field's
+        own `get_extent` (feat-253).
 
         A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
         allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -581,7 +583,10 @@ class MarkdownStr(BaseModel):
                 # actually-consumed line count (used to advance `remaining_offset`)
                 # is measured as a before/after line-count delta instead, for the
                 # same reason (a summed `get_extent` would not account for
-                # renormalization-elided separator lines).
+                # renormalization-elided separator lines). It equals the sum of the
+                # per-item `consume_leading_lines` counts inside
+                # `process_list_field`, so this branch and every other hand-off
+                # (see `consume_leading_lines`) advance the offset the same way.
                 assert isinstance(item_type, type) and issubclass(item_type, MarkdownStr), type(item_type)
                 new_remaining_text, list_value = cls.process_list_field(
                     field_name,
@@ -613,9 +618,13 @@ class MarkdownStr(BaseModel):
                 continue
             kwargs[field_name] = instance_value
 
-            remaining_offset += extent
-            remaining_lines = remaining_text.splitlines()[extent:]
-            remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
+            # Advance by the actually-consumed line count, not by `extent`
+            # (feat-253): the extent of a paragraph or block-quote-like leaf
+            # field stops before its trailing blank separator line, which the
+            # re-normalization removes, so `extent` alone would lose one line
+            # per such field.
+            remaining_text, consumed = consume_leading_lines(remaining_text, extent)
+            remaining_offset += consumed
 
         assert remaining_text == "", _leftover_text_message(own_path, remaining_offset, remaining_text)
 

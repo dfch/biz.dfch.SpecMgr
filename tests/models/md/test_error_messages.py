@@ -170,20 +170,23 @@ class TestNestedFieldPathComposition(unittest.TestCase):
         self.assertIn("expected MarkdownParagraph, found no match", message)
 
     def test_missing_leaf_paragraph_line_reference_points_at_the_entry_heading(self) -> None:
-        """The `### My Update` heading itself is line 4 of the normalized body; the missing
-        `content` paragraph is reported as starting right after it, also line 4 (there is no
-        body line of its own to point to)."""
+        """The `### My Update` heading itself is line 5 of the normalized body; the missing
+        `content` paragraph is reported as starting right after it, on line 6 -- the line
+        directly after the last consumed line, one past the end of the body (there is no body
+        line of its own to point to; feat-253 REQ-003)."""
         text = mdformat.text("# Task Title\n\n## Recent Updates\n\n### My Update\n")
 
         with self.assertRaises(AssertionError) as ctx:
             Task.from_text(text)
 
-        self.assertIn("remaining text starts at line 4 of the normalized body", str(ctx.exception))
+        self.assertIn("remaining text starts at line 6 of the normalized body", str(ctx.exception))
 
     def test_a_second_entry_reports_a_deeper_line_reference(self) -> None:
         """A second `### ` entry, several lines further down, reports a correspondingly
         higher line number -- the running offset accumulates correctly across a mandatory
-        `list[...]` field's own already-matched items (REQ-002)."""
+        `list[...]` field's own already-matched items (REQ-002). `### Second Update` is line 9
+        of the normalized body, so its missing `content` is reported at line 10 (feat-253
+        REQ-003)."""
         text = mdformat.text(
             "# Task Title\n\n## Recent Updates\n\n### First Update\n\nFirst update text.\n\n### Second Update\n"
         )
@@ -193,7 +196,7 @@ class TestNestedFieldPathComposition(unittest.TestCase):
 
         message = str(ctx.exception)
         self.assertTrue(message.startswith("Task > RecentUpdates > UpdateEntry > content: "))
-        self.assertIn("remaining text starts at line 8 of the normalized body", message)
+        self.assertIn("remaining text starts at line 10 of the normalized body", message)
 
 
 # ---------------------------------------------------------------------------

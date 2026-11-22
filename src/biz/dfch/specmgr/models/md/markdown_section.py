@@ -24,7 +24,7 @@ from abc import ABC
 from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, not_in_mdformat_message, parse
+from ._markdown import consume_leading_lines, format_text, not_in_mdformat_message, parse
 from .markdown import markdown
 from .alias_match import describe_alias, match_alias
 
@@ -186,7 +186,10 @@ class MarkdownSection(MarkdownStr, ABC):
 
         Otherwise the heading's own line span is stripped off `text` and the
         remainder ("body") is delegated to `MarkdownStr.from_text` (via
-        `super()`) for the actual recursive field population -- each child
+        `super()`) for the actual recursive field population, at an offset
+        advanced by the line count actually consumed (the heading plus the
+        blank separator line the re-normalization removes -- see
+        `consume_leading_lines`) -- each child
         field recursively captures its own full extent this same way, all the
         way down to whichever leaf(ves) ultimately hold the body text. Since
         the body is therefore already fully represented by the nested fields,
@@ -253,10 +256,12 @@ class MarkdownSection(MarkdownStr, ABC):
         assert heading_map and len(heading_map) == 2, f"{cls.__name__}: heading token has no line map"
         heading_lines = heading_map[1]
 
-        body_lines = text.splitlines()[heading_lines:]
-        body_text = format_text("\n".join(body_lines)) if body_lines else ""
+        # Hand the body on at the actually-consumed line count (feat-253): the
+        # re-normalization also removes the blank line after the heading, so
+        # `heading_lines` alone would start every child one line too low.
+        body_text, consumed = consume_leading_lines(text, heading_lines)
 
-        instance = super().from_text(body_text, _path=own_path, _offset=_offset + heading_lines)
+        instance = super().from_text(body_text, _path=own_path, _offset=_offset + consumed)
         instance._value = heading_text
         instance._path = own_path
         instance._line = own_line

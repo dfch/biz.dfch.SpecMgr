@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: planning
 type: feat
-updated: '2026-11-22T16:08:43.863+01:00'
+updated: '2026-11-22T16:36:39.453+01:00'
 version: 1.0.0
 ---
 
@@ -111,11 +111,11 @@ Verification environment: run every check with the worktree code (`uv run --froz
 
 #### Phase 110: Fix the Offset
 
-- [ ] Task 110.100: Add the shared "slice, re-normalize, return (new text, consumed lines)" helper and use it in the scalar-field and list branches of `MarkdownStr.from_text` (REQ-001).
-- [ ] Task 110.105: Use the helper for the own-block hand-off in `MarkdownSection.from_text`, `MarkdownParagraph.from_text`, and `MarkdownListItem.from_text` (REQ-007).
-- [ ] Task 110.110: Update the code comments and docstrings that describe offset tracking, so every hand-off is documented as delta-based.
-- [ ] Task 110.120: Make the Phase 100 tests pass; update every other pinned message and test docstring whose line number changes (incl. the two `test_error_messages.py` cases in ACC-005 and the downstream consumers in the REQ-004 list, e.g. `tests/tsk/models/v1/test_task_item.py`, `tests/feat/models/v1/test_body.py`), and list each one in the update entry (ACC-005).
-- [ ] Task 110.130: Regenerate `docs/api/`, `docs/GENERATED.md`, and the JSON schemas (`specmgr docs`, `specmgr schema`) for the changed docstrings, e.g. `markdown_str`, `markdown_block_quote`, the domain body pages, `docs/qa_schema.json`, and `qa/data/qa_schema.json`.
+- [x] Task 110.100: Add the shared "slice, re-normalize, return (new text, consumed lines)" helper and use it in the scalar-field and list branches of `MarkdownStr.from_text` (REQ-001).
+- [x] Task 110.105: Use the helper for the own-block hand-off in `MarkdownSection.from_text`, `MarkdownParagraph.from_text`, and `MarkdownListItem.from_text` (REQ-007).
+- [x] Task 110.110: Update the code comments and docstrings that describe offset tracking, so every hand-off is documented as delta-based.
+- [x] Task 110.120: Make the Phase 100 tests pass; update every other pinned message and test docstring whose line number changes (incl. the two `test_error_messages.py` cases in ACC-005 and the downstream consumers in the REQ-004 list, e.g. `tests/tsk/models/v1/test_task_item.py`, `tests/feat/models/v1/test_body.py`), and list each one in the update entry (ACC-005).
+- [x] Task 110.130: Regenerate `docs/api/`, `docs/GENERATED.md`, and the JSON schemas (`specmgr docs`, `specmgr schema`) for the changed docstrings, e.g. `markdown_str`, `markdown_block_quote`, the domain body pages, `docs/qa_schema.json`, and `qa/data/qa_schema.json`.
 
 #### Phase 120: Verify and Close Out
 
@@ -127,11 +127,32 @@ Verification environment: run every check with the worktree code (`uv run --froz
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 (Pin the Defect) is done: 11 new tests pin the corrected line numbers and are marked strict `xfail`, because they fail on the pre-fix engine. No `src/` file has changed. Next: Phase 110 (Fix the Offset), which also removes the `xfail` markers.
+**As of 2026-11-22**: Phase 110 (Fix the Offset) is done: every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. All 12 Phase 100 tests pass with no `xfail` marker, 5 pinned messages elsewhere moved upward to the true line, and the docs are regenerated. Next: Phase 120 (Verify and Close Out).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T15:36:39.449Z - Phase 110 fixed the offset
+
+Implemented Tasks 110.100 to 110.130. Behavioral changes are only in `src/biz/dfch/specmgr/models/md/`.
+
+- Helper (Task 110.100): `consume_leading_lines(text, count) -> tuple[str, int]` in `src/biz/dfch/specmgr/models/md/_markdown.py`, next to `format_text`. It slices off the first `count` lines, re-normalizes the rest with `format_text` (`""` for an empty rest), and returns the rest with the consumed count `len(text.splitlines()) - len(rest.splitlines())`. For an empty rest the count is all lines of `text`, which gives the REQ-003 empty-remainder rule.
+- Call sites:
+  - `markdown_str.py`: the scalar-field branch of `MarkdownStr.from_text` (REQ-001) and the per-item loop of `process_list_field`. The list branch of `from_text` keeps its before/after delta across `process_list_field`, because that method returns the reduced text and not a count (its public signature is used by tests). That delta is the telescoping sum of the per-item helper counts, so it is the same value. A comment records this.
+  - `markdown_section.py`, `markdown_paragraph.py`, `markdown_list_item.py`: the own-block hand-off (REQ-007) passes `_offset + consumed` instead of `_offset + heading_lines` / `_offset + own_lines`.
+  - `markdown_block_quote.py`: no change in behavior. The composite quote consumes no line (dedenting keeps every line), so its children start at its own `_offset`. A comment records that the delta is `0`.
+- Docs (Task 110.110): the docstrings of `MarkdownStr.from_text`, `process_list_field` (`_offset`), `MarkdownSection.from_text`, `MarkdownParagraph.from_text`, and `MarkdownListItem.from_text` now describe the delta-based hand-off and name `consume_leading_lines`. Inline comments at every call site name feat-253.
+- Phase 100 tests (Task 110.120): removed the 11 strict `xfail` markers, the `_PRE_FIX` constant, the module docstring note about it, and the 4 `import pytest` lines that only served them, in `tests/models/md/test_line_offset.py`, `tests/models/md/test_example_line_oracle.py`, `tests/dec/models/v1/test_outcome_line_reference.py`, and `tests/rsk/models/v1/test_tara_line_reference.py`. All 12 tests pass.
+- Changed pins (ACC-005). Each one changes only in its line number, upward. Field path, message text, hint, and exception type are unchanged:
+  - `tests/models/md/test_error_messages.py` `test_missing_leaf_paragraph_line_reference_points_at_the_entry_heading`: line 4 to line 6 (`### My Update` is line 5 of the 5-line body; the missing `content` is reported one past the end, REQ-003). Docstring corrected.
+  - `tests/models/md/test_error_messages.py` `test_a_second_entry_reports_a_deeper_line_reference`: line 8 to line 10 (`### Second Update` is line 9). Docstring extended with the lines.
+  - `tests/test_schema_metadata_invariance.py` `TestTskCheckboxInvariance.test_bad_marker_character_still_rejected_with_same_message`: `Task > TaskItem (line 2)` to `(line 3)` (`- [z] Bad checkbox` is line 3, after `# Task List` and a blank line).
+  - `tests/test_schema_metadata_invariance.py` `TestTskCheckboxInvariance.test_missing_marker_still_rejected_with_same_message`: `Task > TaskItem (line 2)` to `(line 3)`, same reason.
+  - `tests/general/tools/test_validate.py` `TestValidateMessageTruncation.test_short_message_is_returned_unchanged`: line 3 to line 4 (the `req` body has 3 lines and `Characteristics` is missing at its end, REQ-003).
+- Downstream consumers named in the task: `tests/tsk/models/v1/test_task_item.py` (`TaskItem (line 3)`, through `process_list_field`, which was already delta-based) and `tests/feat/models/v1/test_body.py` (`FeatTaskItem (line 1)`, a standalone item) were already correct and are unchanged. No pin in `tests/models/md/test_validation_error_baseline.py` changed.
+- Regenerated (Task 110.130): `docs/GENERATED.md` (also the test-file count, 502 to 506, from the 4 Phase 100 test files) and 43 `docs/api/*.md` pages: the 6 changed `models/md` modules, every `markdown_section*`, `markdown_code_block`, `markdown_comment`, `common_sections`, and every domain or `general` model page that inherits the changed `from_text` / `process_list_field` docstrings. No JSON schema changed: `specmgr schema` and the 14 `specmgr schema --type <t> --output-dir src/biz/dfch/specmgr/<t>/data` runs produce no diff, because the schemas do not carry these method docstrings. `specmgr mcp-docs` and `specmgr harness-bundle` produce no diff. A second run of all regenerations produces no further diff.
+- Gate: `ruff format --check`, `ruff check`, and `vulture` pass. `pytest -n auto -q`: everything passes, 0 xfailed, except the 2 known `tests/evals/test_cli_gates.py` `TestCliOverFixtures` failures (rootless Docker on this machine, unrelated).
 
 #### 2026-11-22T15:08:43.858Z - Phase 100 pinned the defect
 
@@ -175,6 +196,10 @@ Created the feature plan from GitHub issue #253. The scope is the fix of the sca
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T15:36:39.449Z - Put the hand-off helper in `_markdown.py` and keep `process_list_field`'s signature
+
+`consume_leading_lines` lives in the private `models/md/_markdown.py`, next to `format_text`, because every caller already imports from there and the helper is a pure text operation. `process_list_field` keeps its public `(remaining_text, items)` return value, because domain tests call it directly. The list branch of `MarkdownStr.from_text` therefore keeps its own before/after delta, which equals the sum of the per-item helper counts. The helper does not assert that the consumed count is at least `count`, because a new assertion could change acceptance (REQ-005).
 
 #### 2026-11-22T15:08:43.858Z - Pin pre-fix failures with strict pytest xfail markers
 

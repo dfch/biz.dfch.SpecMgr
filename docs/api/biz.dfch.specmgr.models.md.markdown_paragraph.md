@@ -41,7 +41,9 @@ mechanics.
 
   Otherwise the paragraph's own line span is stripped off `text` and
   the remainder is delegated to `MarkdownStr.from_text` (via `super()`)
-  for recursive field population -- each child field recursively
+  for recursive field population, at an offset advanced by the line
+  count actually consumed (the paragraph plus the blank separator line
+  the re-normalization removes -- see `consume_leading_lines`) -- each child field recursively
   captures its own extent this same way. Since the body is therefore
   already fully represented by the nested fields, this instance's own
   `_value` only needs the paragraph's own inline text (e.g. a lead-in
@@ -318,7 +320,8 @@ mechanics.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 
@@ -386,7 +389,9 @@ mechanics.
 
   Otherwise the paragraph's own line span is stripped off `text` and
   the remainder is delegated to `MarkdownStr.from_text` (via `super()`)
-  for recursive field population -- each child field recursively
+  for recursive field population, at an offset advanced by the line
+  count actually consumed (the paragraph plus the blank separator line
+  the re-normalization removes -- see `consume_leading_lines`) -- each child field recursively
   captures its own extent this same way. Since the body is therefore
   already fully represented by the nested fields, this instance's own
   `_value` only needs the paragraph's own inline text (e.g. a lead-in
@@ -755,7 +760,8 @@ mechanics.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line
           elision from re-normalization (see this docstring's own
           discussion above) never desynchronizes the running offset.
 

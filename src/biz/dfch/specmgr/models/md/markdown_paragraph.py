@@ -22,7 +22,7 @@ from __future__ import annotations
 from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, not_in_mdformat_message, parse
+from ._markdown import consume_leading_lines, format_text, not_in_mdformat_message, parse
 from .markdown import markdown
 from .markdown_section import _HEADING_TAGS
 
@@ -129,7 +129,9 @@ class MarkdownParagraph(MarkdownStr):
 
         Otherwise the paragraph's own line span is stripped off `text` and
         the remainder is delegated to `MarkdownStr.from_text` (via `super()`)
-        for recursive field population -- each child field recursively
+        for recursive field population, at an offset advanced by the line
+        count actually consumed (the paragraph plus the blank separator line
+        the re-normalization removes -- see `consume_leading_lines`) -- each child field recursively
         captures its own extent this same way. Since the body is therefore
         already fully represented by the nested fields, this instance's own
         `_value` only needs the paragraph's own inline text (e.g. a lead-in
@@ -184,10 +186,12 @@ class MarkdownParagraph(MarkdownStr):
         assert own_map and len(own_map) == 2, f"{cls.__name__}: paragraph_open token has no line map"
         own_lines = own_map[1]
 
-        body_lines = text.splitlines()[own_lines:]
-        body_text = format_text("\n".join(body_lines)) if body_lines else ""
+        # Hand the rest on at the actually-consumed line count (feat-253): the
+        # re-normalization also removes the blank line after the paragraph, so
+        # `own_lines` alone would start every child one line too low.
+        body_text, consumed = consume_leading_lines(text, own_lines)
 
-        instance = super().from_text(body_text, _path=own_path, _offset=_offset + own_lines)
+        instance = super().from_text(body_text, _path=own_path, _offset=_offset + consumed)
         instance._value = paragraph_text
         instance._path = own_path
         instance._line = own_line

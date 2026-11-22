@@ -63,6 +63,39 @@ Returns:
     in a code span, or write it as an HTML comment).
 
 
+### `consume_leading_lines(text: str, count: int) -> tuple[str, int]`
+
+Slice the first `count` lines off `text`, re-normalize the rest, and return it with the consumed line count.
+
+This is the one shared hand-off step of the `models/md` engine
+(feat-253): every site that cuts off the part of a text it has already
+handled and passes the rest on (the scalar-field and list-item loops of
+`MarkdownStr`, and the own-block hand-off of `MarkdownSection`,
+`MarkdownParagraph`, and `MarkdownListItem`) calls it and advances its
+0-based line offset by the returned count.
+
+The rest is re-normalized with `format_text`, because a raw substring of
+an `mdformat`-compliant text is not itself guaranteed to be compliant
+(e.g. it can start with the blank line that separated it from the
+consumed block, which `mdformat` strips). The consumed count is
+therefore measured as the before/after line-count delta
+(`len(text.splitlines()) - len(rest.splitlines())`), not taken as
+`count`: it is `count` plus every separator line the re-normalization
+removed. For an empty rest it is the line count of the whole `text`.
+
+Args:
+    text: `mdformat`-normalized markdown text.
+    count: the number of leading lines of `text` already consumed by
+        the caller (e.g. a field's extent, or the token-map end of a
+        heading, paragraph, or list-item paragraph).
+
+Returns:
+    A `(rest, consumed)` pair: `rest` is the re-normalized remainder of
+    `text` after its first `count` lines (`""` if nothing remains), and
+    `consumed` is the number of lines of `text` that precede the first
+    line of `rest`.
+
+
 ### `format_markdown_document(text: str) -> tuple[bool, str]`
 
 Normalize a whole markdown document, preserving any leading YAML frontmatter block.

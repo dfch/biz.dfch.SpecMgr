@@ -30,16 +30,11 @@ mechanisms the plan names are covered:
 Every expected line is computed from the mdformat-normalized text that is
 handed to the outermost `from_text` call (`format_text`), never hard-coded,
 so a test states only which line it means, not where that line is.
-
-The tests that fail on the pre-fix engine carry a strict `xfail` marker
-(`_PRE_FIX`); Phase 110 fixes the engine and removes the markers.
 """
 
 from __future__ import annotations
 
 import unittest
-
-import pytest
 
 from biz.dfch.specmgr.models.md import (
     AliasType,
@@ -51,11 +46,6 @@ from biz.dfch.specmgr.models.md import (
     alias,
 )
 from biz.dfch.specmgr.models.md._markdown import format_text
-
-#: Strict `xfail` for a test that pins the corrected line and so fails on the
-#: pre-fix engine: strict, so the test suite goes red as soon as the test passes
-#: unexpectedly (Phase 110 removes the marker together with the fix).
-_PRE_FIX = pytest.mark.xfail(strict=True, reason="feat-253: fixed in Phase 110")
 
 
 def _line_of(body: str, line_text: str) -> int:
@@ -141,7 +131,6 @@ class _LeadWithQuote(MarkdownParagraph):
 class TestScalarFieldHandOffLineReferences(unittest.TestCase):
     """The line references after two consumed scalar fields of a multi-field section."""
 
-    @_PRE_FIX
     def test_text_left_over_reports_the_line_of_the_unconsumed_block(self) -> None:
         text = format_text("## X\n\nFirst.\n\nSecond.\n\n> Left over.\n")
         expected = f"starting at line {_line_of(text, '> Left over.')} of the normalized body"
@@ -153,7 +142,6 @@ class TestScalarFieldHandOffLineReferences(unittest.TestCase):
         self.assertTrue(message.startswith("_TwoScalars: text left over after processing all fields"), message)
         self.assertIn(expected, message)
 
-    @_PRE_FIX
     def test_found_no_match_reports_the_line_where_the_remainder_starts(self) -> None:
         text = format_text("## X\n\nFirst.\n\nSecond.\n\nThird.\n")
         expected = f"remaining text starts at line {_line_of(text, 'Third.')} of the normalized body"
@@ -165,7 +153,6 @@ class TestScalarFieldHandOffLineReferences(unittest.TestCase):
         self.assertTrue(message.startswith("_ThreeScalars > third: expected MarkdownBlockQuote, found no match"))
         self.assertIn(expected, message)
 
-    @_PRE_FIX
     def test_found_no_match_with_an_empty_remainder_reports_the_line_after_the_last_line(self) -> None:
         text = format_text("## X\n\nFirst.\n\nSecond.\n")
         expected = f"remaining text starts at line {_line_after_last(text)} of the normalized body (0 line(s))"
@@ -177,7 +164,6 @@ class TestScalarFieldHandOffLineReferences(unittest.TestCase):
         self.assertTrue(message.startswith("_ThreeScalars > third: expected MarkdownBlockQuote, found no match"))
         self.assertIn(expected, message)
 
-    @_PRE_FIX
     def test_child_line_after_two_scalar_fields_is_its_normalized_body_line(self) -> None:
         text = format_text("## X\n\nFirst.\n\nSecond.\n\n> Third.\n")
         expected = (_line_of(text, "First."), _line_of(text, "Second."), _line_of(text, "> Third."))
@@ -196,7 +182,6 @@ class TestScalarFieldHandOffLineReferences(unittest.TestCase):
 class TestOwnBlockHandOffLineReferences(unittest.TestCase):
     """The `_line` of a child that follows its parent's own heading, paragraph, or item paragraph."""
 
-    @_PRE_FIX
     def test_section_child_after_the_heading_is_on_its_normalized_body_line(self) -> None:
         text = format_text("### Y\n\nBody.\n")
         expected = _line_of(text, "Body.")
@@ -205,7 +190,6 @@ class TestOwnBlockHandOffLineReferences(unittest.TestCase):
 
         self.assertEqual(sut.body._line, expected)
 
-    @_PRE_FIX
     def test_nested_section_children_are_on_their_normalized_body_lines(self) -> None:
         text = format_text("## X\n\nA.\n\n### Y\n\nB.\n")
         expected = (_line_of(text, "A."), _line_of(text, "### Y"), _line_of(text, "B."))
@@ -215,7 +199,6 @@ class TestOwnBlockHandOffLineReferences(unittest.TestCase):
         result = (sut.lead._line, sut.inner._line, sut.inner.body._line)
         self.assertEqual(result, expected)
 
-    @_PRE_FIX
     def test_list_item_note_after_a_blank_line_is_on_its_normalized_body_line(self) -> None:
         text = format_text("- One item.\n\n  A note.\n")
         expected = _line_of(text, "  A note.")
@@ -225,7 +208,6 @@ class TestOwnBlockHandOffLineReferences(unittest.TestCase):
         assert sut.notes is not None
         self.assertEqual([note._line for note in sut.notes], [expected])
 
-    @_PRE_FIX
     def test_paragraph_child_after_the_paragraph_is_on_its_normalized_body_line(self) -> None:
         text = format_text("Lead.\n\n> A quote.\n")
         expected = _line_of(text, "> A quote.")

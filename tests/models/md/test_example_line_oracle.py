@@ -37,7 +37,6 @@ import unittest
 from importlib.resources import files
 
 import frontmatter
-import pytest
 
 from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_DOMAINS, whole_body_domain
 from biz.dfch.specmgr.models.md import MarkdownStr
@@ -131,7 +130,6 @@ class TestExampleFileLineOracle(unittest.TestCase):
 
         self.assertEqual(result, [])
 
-    @pytest.mark.xfail(strict=True, reason="feat-253: fixed in Phase 110")
     def test_every_parsed_child_line_is_the_first_line_of_its_text(self) -> None:
         sut = [mismatch for domain in WHOLE_BODY_DOMAINS for mismatch in _line_mismatches(domain)]
 

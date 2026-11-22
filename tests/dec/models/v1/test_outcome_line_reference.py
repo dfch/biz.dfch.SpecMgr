@@ -33,7 +33,6 @@ import unittest
 from importlib.resources import files
 
 import frontmatter
-import pytest
 
 from biz.dfch.specmgr.dec.models.v1.parser import parse_dec
 from biz.dfch.specmgr.models.md._markdown import format_text
@@ -60,7 +59,6 @@ def _repro_text() -> str:
 class TestDecisionOutcomeLeftOverLineReference(unittest.TestCase):
     """ACC-004: the "text left over" line of the issue's repro is the block quote's normalized-body line."""
 
-    @pytest.mark.xfail(strict=True, reason="feat-253: fixed in Phase 110")
     def test_text_left_over_reports_the_block_quote_line(self) -> None:
         text = _repro_text()
         body = format_text(frontmatter.loads(text).content)
