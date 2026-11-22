@@ -123,7 +123,7 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
 
         # 1. create_dec: a freshly created document must be a DecFrontmatter in status "draft"
         #    (ACC-003: status is fixed, never caller-supplied), with its file on disk
-        #    named exactly dec-{id}-{slug}.md.
+        #    named exactly {id}-{slug}.md inside its id's own shard directory.
         created = create_dec(_INITIAL_BODY)
         self.assertIsInstance(created, DecFrontmatter)
         self.assertEqual(created.status, "draft")
@@ -132,7 +132,7 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertEqual(created.created, created.updated)
         dec_id = created.id
         assert dec_id is not None
-        expected_path = dec_base_dir() / f"dec-{dec_id}-choose-a-document-store.md"
+        expected_path = dec_base_dir() / dec_id[:2] / f"{dec_id}-choose-a-document-store.md"
         self.assertTrue(expected_path.exists())
 
         # 2. get_dec: must reflect the freshly created document.
@@ -217,7 +217,7 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         DEC's closed six-set), returning a non-raising ``InvalidStatusResult`` (DEC
         b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_dec(_INITIAL_BODY)
-        expected_path = dec_base_dir() / f"dec-{created.id}-choose-a-document-store.md"
+        expected_path = dec_base_dir() / created.id[:2] / f"{created.id}-choose-a-document-store.md"
         before = expected_path.read_text(encoding="utf-8")
 
         result = set_status(created.id, "dec", "implemented")

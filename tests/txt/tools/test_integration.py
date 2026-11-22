@@ -91,7 +91,7 @@ class TestTxtLifecycleIntegration(TempTxtDirTestCase):
         self.assertEqual(initial_page.results, [])
 
         # 1. create_txt: a freshly created document must be a TxtFrontmatter in status "draft",
-        #    with its file on disk named exactly txt-{id}-{slug}.md.
+        #    with its file on disk named exactly {id}-{slug}.md inside its id's own shard directory.
         created = create_txt(_INITIAL_BODY)
         self.assertIsInstance(created, TxtFrontmatter)
         self.assertEqual(created.status, "draft")
@@ -100,7 +100,7 @@ class TestTxtLifecycleIntegration(TempTxtDirTestCase):
         self.assertEqual(created.created, created.updated)
         txt_id = created.id
         assert txt_id is not None
-        expected_path = txt_base_dir() / f"txt-{txt_id}-sample-review-notes.md"
+        expected_path = txt_base_dir() / txt_id[:2] / f"{txt_id}-sample-review-notes.md"
         self.assertTrue(expected_path.exists())
 
         # 2. get_txt: must reflect the freshly created document.
@@ -170,7 +170,8 @@ class TestTxtLifecycleIntegration(TempTxtDirTestCase):
         """With one broken file on disk, an id that matches no file at all must still raise
         TxtNotFoundError (the parse-failure channel only recovers the name-matching case)."""
         create_txt(_INITIAL_BODY)
-        broken_path = txt_base_dir() / "broken.md"
+        broken_path = txt_base_dir() / "00" / "broken.md"
+        broken_path.parent.mkdir(parents=True, exist_ok=True)
         broken_path.write_text("not a valid document, no headings at all\n", encoding="utf-8")
 
         with self.assertRaises(TxtNotFoundError):

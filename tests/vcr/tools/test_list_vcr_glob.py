@@ -96,7 +96,9 @@ def _body_with_title(title: str) -> str:
 def _write_document(base_dir: Path, filename: str, doc_id: str, title: str) -> None:
     """Write one healthy fixture document (frontmatter carrying ``doc_id`` plus the titled body)."""
     content = _FRONTMATTER_TEMPLATE.format(id=doc_id) + _body_with_title(title)
-    (base_dir / filename).write_text(content, encoding="utf-8")
+    shard_dir = base_dir / "en" / doc_id[:2]
+    shard_dir.mkdir(parents=True, exist_ok=True)
+    (shard_dir / filename).write_text(content, encoding="utf-8")
 
 
 class TestListVcrGlob(unittest.TestCase):
@@ -110,7 +112,9 @@ class TestListVcrGlob(unittest.TestCase):
         base_dir.mkdir()
         _write_document(base_dir, "dead.md", _DEAD_ID, "Glob Fixture One")
         _write_document(base_dir, "cafe.md", _CAFE_ID, "Glob Fixture Two")
-        (base_dir / f"{_BROKEN_REF}.md").write_text(_BROKEN_CONTENT, encoding="utf-8")
+        shard_dir = base_dir / "en" / "00"
+        shard_dir.mkdir(parents=True, exist_ok=True)
+        (shard_dir / f"{_BROKEN_REF}.md").write_text(_BROKEN_CONTENT, encoding="utf-8")
 
     def tearDown(self) -> None:
         cache_module.reset_vcr_cache()

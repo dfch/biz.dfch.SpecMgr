@@ -91,7 +91,7 @@ class TestSetLifecycleIntegration(TempSetDirTestCase):
         self.assertEqual(initial_page.results, [])
 
         # 1. create_set: a freshly created document must be a SetFrontmatter in status "draft",
-        #    with its file on disk named exactly set-{id}-{slug}.md.
+        #    with its file on disk named exactly {id}-{slug}.md inside its id's own shard directory.
         created = create_set(_INITIAL_BODY)
         self.assertIsInstance(created, SetFrontmatter)
         self.assertEqual(created.status, "draft")
@@ -100,7 +100,7 @@ class TestSetLifecycleIntegration(TempSetDirTestCase):
         self.assertEqual(created.created, created.updated)
         set_id = created.id
         assert set_id is not None
-        expected_path = set_base_dir() / f"set-{set_id}-sample-review-set.md"
+        expected_path = set_base_dir() / set_id[:2] / f"{set_id}-sample-review-set.md"
         self.assertTrue(expected_path.exists())
 
         # 2. get_set: must reflect the freshly created document.
@@ -173,7 +173,8 @@ class TestSetLifecycleIntegration(TempSetDirTestCase):
         """With one broken file on disk, an id that matches no file at all must still raise
         SetNotFoundError (the parse-failure channel only recovers the name-matching case)."""
         create_set(_INITIAL_BODY)
-        broken_path = set_base_dir() / "broken.md"
+        broken_path = set_base_dir() / "00" / "broken.md"
+        broken_path.parent.mkdir(parents=True, exist_ok=True)
         broken_path.write_text("not a valid document, no headings at all\n", encoding="utf-8")
 
         with self.assertRaises(SetNotFoundError):

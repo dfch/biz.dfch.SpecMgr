@@ -122,7 +122,7 @@ class TestTxtLanguageVariant(unittest.TestCase):
         self.assertEqual(get_txt(self.id, raw=True, language="de"), before)
 
     def test_broken_variant_surfaces_as_parse_failure_result(self) -> None:
-        path = next((self.docs_root / "txt" / "de").glob("*.md"))
+        path = next((self.docs_root / "txt" / "de").rglob("*.md"))
         path.write_text(path.read_text().replace("## Aktualisierungen", "## Nope"))
 
         result = get_txt(self.id, language="de")

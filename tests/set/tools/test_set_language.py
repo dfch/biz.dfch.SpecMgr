@@ -127,7 +127,7 @@ class TestSetLanguageVariant(unittest.TestCase):
         self.assertEqual(get_set(self.id, raw=True, language="de"), before)
 
     def test_broken_variant_surfaces_as_parse_failure_result(self) -> None:
-        path = next((self.docs_root / "set" / "de").glob("*.md"))
+        path = next((self.docs_root / "set" / "de").rglob("*.md"))
         path.write_text(path.read_text().replace("## Elemente", "## Nope"))
 
         result = get_set(self.id, language="de")

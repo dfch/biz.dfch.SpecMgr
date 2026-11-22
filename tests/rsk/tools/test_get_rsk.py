@@ -119,7 +119,7 @@ class TestGetRsk(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def _doc_path(self) -> Path:
         """The single on-disk document file seeded for this test."""
-        matches = list((self.docs_root / "rsk").glob("*.md"))
+        matches = list((self.docs_root / "rsk").rglob("*.md"))
         self.assertEqual(len(matches), 1)
         result = matches[0]
         return result

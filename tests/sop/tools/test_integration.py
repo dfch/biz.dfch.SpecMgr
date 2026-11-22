@@ -128,7 +128,7 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
 
         # 1. create_sop: a freshly created document must be a SopFrontmatter in status "draft"
         #    (ACC-003: status is fixed, never caller-supplied), with its file on disk
-        #    named exactly sop-{id}-{slug}.md.
+        #    named exactly {id}-{slug}.md inside its id's own shard directory.
         created = create_sop(_INITIAL_BODY)
         self.assertIsInstance(created, SopFrontmatter)
         self.assertEqual(created.status, "draft")
@@ -137,7 +137,7 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         self.assertEqual(created.created, created.updated)
         sop_id = created.id
         assert sop_id is not None
-        expected_path = sop_base_dir() / f"sop-{sop_id}-new-employee-it-account-provisioning.md"
+        expected_path = sop_base_dir() / sop_id[:2] / f"{sop_id}-new-employee-it-account-provisioning.md"
         self.assertTrue(expected_path.exists())
 
         # 2. get_sop: must reflect the freshly created document.
@@ -235,7 +235,7 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         closed five-set), returning a non-raising ``InvalidStatusResult`` (DEC
         b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_sop(_INITIAL_BODY)
-        expected_path = sop_base_dir() / f"sop-{created.id}-new-employee-it-account-provisioning.md"
+        expected_path = sop_base_dir() / created.id[:2] / f"{created.id}-new-employee-it-account-provisioning.md"
         before = expected_path.read_text(encoding="utf-8")
 
         result = set_status(created.id, "sop", "implemented")

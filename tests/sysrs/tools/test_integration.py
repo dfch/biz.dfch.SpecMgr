@@ -121,7 +121,7 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         self.assertEqual(initial_page.results, [])
 
         # 1. create_sysrs: a freshly created document must be a SysrsFrontmatter in status "draft",
-        #    with its file on disk named exactly sysrs-{id}-{slug}.md.
+        #    with its file on disk named exactly {id}-{slug}.md inside its id's own shard directory.
         created = create_sysrs(_INITIAL_BODY)
         self.assertIsInstance(created, SysrsFrontmatter)
         self.assertEqual(created.status, "draft")
@@ -130,7 +130,9 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         self.assertEqual(created.created, created.updated)
         sysrs_id = created.id
         assert sysrs_id is not None
-        expected_path = sysrs_base_dir() / f"sysrs-{sysrs_id}-system-requirements-specification-sample-document.md"
+        expected_path = (
+            sysrs_base_dir() / sysrs_id[:2] / f"{sysrs_id}-system-requirements-specification-sample-document.md"
+        )
         self.assertTrue(expected_path.exists())
 
         # 2. get_sysrs: must reflect the freshly created document.
@@ -233,7 +235,9 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         returning a non-raising ``InvalidStatusResult`` (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014)
         instead of raising ``pydantic.ValidationError``."""
         created = create_sysrs(_INITIAL_BODY)
-        expected_path = sysrs_base_dir() / f"sysrs-{created.id}-system-requirements-specification-sample-document.md"
+        expected_path = (
+            sysrs_base_dir() / created.id[:2] / f"{created.id}-system-requirements-specification-sample-document.md"
+        )
         before = expected_path.read_text(encoding="utf-8")
 
         result = set_status(created.id, "sysrs", "accepted")

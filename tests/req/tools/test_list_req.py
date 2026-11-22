@@ -87,7 +87,8 @@ class TestListReq(unittest.TestCase):
         second = create_req(_OTHER_BODY)
 
         base_dir = ensure_req_base_dir()
-        broken_path = base_dir / "broken.md"
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        broken_path = base_dir / "00" / "broken.md"
         broken_path.write_text("not a valid requirement, no headings at all", encoding="utf-8")
 
         sut = list_req()
@@ -129,7 +130,8 @@ class TestListReq(unittest.TestCase):
         create_req(_MINIMAL_BODY)
         base_dir = ensure_req_base_dir()
         malformed = f"---\nid: req-1\nstatus: [unterminated\n---\n{_MINIMAL_BODY}"
-        (base_dir / "malformed-yaml.md").write_text(malformed, encoding="utf-8")
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        (base_dir / "00" / "malformed-yaml.md").write_text(malformed, encoding="utf-8")
 
         sut = list_req()
 
@@ -217,7 +219,8 @@ class TestListReq(unittest.TestCase):
         for i in range(5):
             create_req(_body_with_title(f"Title {i}"))
         base_dir = ensure_req_base_dir()
-        (base_dir / "broken.md").write_text("not a valid requirement, no headings at all", encoding="utf-8")
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        (base_dir / "00" / "broken.md").write_text("not a valid requirement, no headings at all", encoding="utf-8")
 
         sut = list_req(max_results=1, offset=1)
 

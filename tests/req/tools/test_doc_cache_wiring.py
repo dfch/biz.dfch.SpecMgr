@@ -186,7 +186,7 @@ class TestAcc003ContentChangeIsDetected(unittest.TestCase):
         reset_req_cache()
 
     def _sole_doc_path(self) -> Path:
-        matches = list((self.docs_root / "req").glob("*.md"))
+        matches = list((self.docs_root / "req").rglob("*.md"))
         self.assertEqual(len(matches), 1)
         return matches[0]
 
@@ -237,7 +237,7 @@ class TestAcc004OrphanReconciledOnScan(unittest.TestCase):
         first = create_req(_MINIMAL_BODY)
         second = create_req(_OTHER_BODY)
         base_dir = ensure_req_base_dir()
-        first_path = next(p for p in base_dir.glob("*.md") if first.id in p.name)
+        first_path = next(p for p in base_dir.rglob("*.md") if first.id in p.name)
 
         # Warm the cache for both documents via one list_req() scan.
         sut = list_req()
@@ -273,7 +273,7 @@ class TestAcc005DeleteInvalidatesImmediately(unittest.TestCase):
     def test_delete_immediately_drops_the_cache_entry_with_no_further_trigger_call(self) -> None:
         created = create_req(_MINIMAL_BODY)
         base_dir = ensure_req_base_dir()
-        path = next(p for p in base_dir.glob("*.md") if created.id in p.name)
+        path = next(p for p in base_dir.rglob("*.md") if created.id in p.name)
 
         # create_req's own write-path warming already populated the cache entry.
         self.assertIn(path, _cache._entries)  # pylint: disable=protected-access
@@ -352,10 +352,11 @@ class TestAcc012FindReqPathSkipsMalformedYamlFrontmatter(unittest.TestCase):
         created = create_req(_MINIMAL_BODY)
         base_dir = ensure_req_base_dir()
 
-        malformed_path = base_dir / "malformed-yaml-frontmatter.md"
+        malformed_path = base_dir / "00" / "malformed-yaml-frontmatter.md"
+        malformed_path.parent.mkdir(parents=True, exist_ok=True)
         malformed_path.write_text(_MALFORMED_YAML_FRONTMATTER_DOC, encoding="utf-8")
 
-        good_path = next(p for p in base_dir.glob("*.md") if created.id in p.name)
+        good_path = next(p for p in base_dir.rglob("*.md") if created.id in p.name)
         self.assertEqual(find_req_path(base_dir, created.id), good_path)
 
 
@@ -382,7 +383,7 @@ class TestAcc006ColdConcurrentReadsStayBounded(unittest.TestCase):
     def test_20_concurrent_reads_of_a_cold_path_never_exceed_thread_count_parses(self) -> None:
         created = create_req(_MINIMAL_BODY)
         base_dir = ensure_req_base_dir()
-        path = next(p for p in base_dir.glob("*.md") if created.id in p.name)
+        path = next(p for p in base_dir.rglob("*.md") if created.id in p.name)
         reset_req_cache()  # discard create_req's own warming so the path is genuinely cold again
 
         thread_count = 20

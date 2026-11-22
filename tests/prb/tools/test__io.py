@@ -88,7 +88,8 @@ class TestLoadById(unittest.TestCase):
         """load_by_id must return both the resolved path and the parsed document."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            expected_path = base / "doc.md"
+            expected_path = base / "th" / "doc.md"
+            expected_path.parent.mkdir()
             expected_path.write_text(_prb_text("the-id"), encoding="utf-8")
 
             path, document = load_by_id(base, "the-id")

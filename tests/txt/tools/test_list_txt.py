@@ -73,7 +73,8 @@ class TestListTxt(unittest.TestCase):
         second = create_txt(_OTHER_BODY)
 
         base_dir = ensure_txt_base_dir()
-        broken_path = base_dir / "broken.md"
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        broken_path = base_dir / "00" / "broken.md"
         broken_path.write_text("not a valid free-form text document, no headings at all", encoding="utf-8")
 
         sut = list_txt()
@@ -192,7 +193,10 @@ class TestListTxt(unittest.TestCase):
         for i in range(5):
             create_txt(_body_with_title(f"Review Notes Number {i:02d}"))
         base_dir = ensure_txt_base_dir()
-        (base_dir / "broken.md").write_text("not a valid free-form text document, no headings at all", encoding="utf-8")
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        (base_dir / "00" / "broken.md").write_text(
+            "not a valid free-form text document, no headings at all", encoding="utf-8"
+        )
 
         sut = list_txt(max_results=1, offset=1)
 

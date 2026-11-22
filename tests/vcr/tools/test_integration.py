@@ -97,7 +97,7 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
         self.assertEqual(initial_page.results, [])
 
         # 1. create_vcr: a freshly created document must be a VcrFrontmatter in status "draft",
-        #    with its file on disk named exactly vcr-{id}-{slug}.md.
+        #    with its file on disk named exactly {id}-{slug}.md inside its id's own shard directory.
         created = create_vcr(_INITIAL_BODY)
         self.assertIsInstance(created, VcrFrontmatter)
         self.assertEqual(created.status, "draft")
@@ -106,7 +106,7 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
         self.assertEqual(created.created, created.updated)
         vcr_id = created.id
         assert vcr_id is not None
-        expected_path = vcr_base_dir() / f"vcr-{vcr_id}-sample-verification-case.md"
+        expected_path = vcr_base_dir() / vcr_id[:2] / f"{vcr_id}-sample-verification-case.md"
         self.assertTrue(expected_path.exists())
 
         # 2. get_vcr: must reflect the freshly created document.
@@ -185,7 +185,7 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
         four-set), returning a non-raising ``InvalidStatusResult`` (DEC
         b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_vcr(_INITIAL_BODY)
-        expected_path = vcr_base_dir() / f"vcr-{created.id}-sample-verification-case.md"
+        expected_path = vcr_base_dir() / created.id[:2] / f"{created.id}-sample-verification-case.md"
         before = expected_path.read_text(encoding="utf-8")
 
         result = set_status(created.id, "vcr", "accepted")

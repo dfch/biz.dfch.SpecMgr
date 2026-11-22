@@ -72,12 +72,12 @@ class TestSetBaseDir(unittest.TestCase):
         """Without SPECMGR_DOCS_DIR set, the default root's set subdirectory is returned."""
         with mock.patch.dict(os.environ, {}, clear=False):
             os.environ.pop(DOCS_DIR_ENV_VAR, None)
-            self.assertEqual(set_base_dir(), DEFAULT_DOCS_ROOT / SET_TYPE_NAME)
+            self.assertEqual(set_base_dir(), DEFAULT_DOCS_ROOT / SET_TYPE_NAME / "en")
 
     def test_respects_env_var(self) -> None:
         """SPECMGR_DOCS_DIR, when set, overrides the default root."""
         with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/some-custom-docs-dir"}):
-            self.assertEqual(set_base_dir(), Path("/tmp/some-custom-docs-dir/set"))
+            self.assertEqual(set_base_dir(), Path("/tmp/some-custom-docs-dir/set/en"))
 
     def test_does_not_create_the_directory(self) -> None:
         """set_base_dir must never create the directory as a side effect."""
@@ -98,7 +98,7 @@ class TestEnsureSetBaseDir(unittest.TestCase):
             with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(missing_root)}):
                 result = ensure_set_base_dir()
             self.assertTrue(result.exists())
-            self.assertEqual(result, missing_root / SET_TYPE_NAME)
+            self.assertEqual(result, missing_root / SET_TYPE_NAME / "en")
 
 
 class TestIterSetPaths(unittest.TestCase):
@@ -116,9 +116,10 @@ class TestIterSetPaths(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: tmp}):
                 base = ensure_set_base_dir()
-                (base / "b.md").write_text(_set_text("b-id"), encoding="utf-8")
-                (base / "a.md").write_text(_set_text("a-id"), encoding="utf-8")
-                (base / "not-markdown.set").write_text("x", encoding="utf-8")
+                (base / "00").mkdir(parents=True)
+                (base / "00" / "b.md").write_text(_set_text("b-id"), encoding="utf-8")
+                (base / "00" / "a.md").write_text(_set_text("a-id"), encoding="utf-8")
+                (base / "00" / "not-markdown.set").write_text("x", encoding="utf-8")
                 paths = list(iter_set_paths())
             self.assertEqual([p.name for p in paths], ["a.md", "b.md"])
 
@@ -130,7 +131,8 @@ class TestFindSetPath(unittest.TestCase):
         """A file whose frontmatter.id matches must be returned."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            path = base / "target.md"
+            (base / "ta").mkdir(parents=True)
+            path = base / "ta" / "target.md"
             path.write_text(_set_text("target-id"), encoding="utf-8")
             self.assertEqual(find_set_path(base, "target-id"), path)
 
@@ -138,7 +140,8 @@ class TestFindSetPath(unittest.TestCase):
         """An id with no matching file must raise SetNotFoundError with the standardized message."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "one.md").write_text(_set_text("one-id"), encoding="utf-8")
+            (base / "on").mkdir(parents=True)
+            (base / "on" / "one.md").write_text(_set_text("one-id"), encoding="utf-8")
             with self.assertRaises(SetNotFoundError) as ctx:
                 find_set_path(base, "missing-id")
             message = str(ctx.exception)
@@ -151,8 +154,10 @@ class TestFindSetPath(unittest.TestCase):
         """A file that fails to parse must not prevent finding a different, valid id."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "broken.md").write_text("not a valid set file at all, no headings", encoding="utf-8")
-            good_path = base / "good.md"
+            (base / "br").mkdir(parents=True)
+            (base / "br" / "broken.md").write_text("not a valid set file at all, no headings", encoding="utf-8")
+            (base / "go").mkdir(parents=True)
+            good_path = base / "go" / "good.md"
             good_path.write_text(_set_text("good-id"), encoding="utf-8")
             self.assertEqual(find_set_path(base, "good-id"), good_path)
 

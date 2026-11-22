@@ -116,7 +116,8 @@ class TestListRsk(unittest.TestCase):
         second = create_rsk(_OTHER_BODY)
 
         base_dir = ensure_rsk_base_dir()
-        broken_path = base_dir / "broken.md"
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        broken_path = base_dir / "00" / "broken.md"
         broken_path.write_text("not a valid risk, no headings at all", encoding="utf-8")
 
         sut = list_rsk()
@@ -157,7 +158,8 @@ class TestListRsk(unittest.TestCase):
         create_rsk(_MINIMAL_BODY)
         base_dir = ensure_rsk_base_dir()
         malformed = f"---\nid: rsk-1\nstatus: [unterminated\n---\n{_MINIMAL_BODY}"
-        (base_dir / "malformed-yaml.md").write_text(malformed, encoding="utf-8")
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        (base_dir / "00" / "malformed-yaml.md").write_text(malformed, encoding="utf-8")
 
         sut = list_rsk()
 
@@ -245,7 +247,8 @@ class TestListRsk(unittest.TestCase):
         for i in range(5):
             create_rsk(_body_with_title(f"Title {i}"))
         base_dir = ensure_rsk_base_dir()
-        (base_dir / "broken.md").write_text("not a valid risk, no headings at all", encoding="utf-8")
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        (base_dir / "00" / "broken.md").write_text("not a valid risk, no headings at all", encoding="utf-8")
 
         sut = list_rsk(max_results=1, offset=1)
 
