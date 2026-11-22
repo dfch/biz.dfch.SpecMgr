@@ -4,7 +4,7 @@ created: '2026-11-22T15:43:46.858+01:00'
 id: feat-248-249-stale-docs
 status: review
 type: feat
-updated: '2026-11-22T17:17:33.159+01:00'
+updated: '2026-11-22T17:33:44.559+01:00'
 version: 1.0.0
 ---
 
@@ -100,7 +100,7 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 
 #### Phase 130: Review fixes
 
-- [x] Task 130.100: G1 -- the `prb_update_instructions.md` preamble names the "Old-shape recovery" block as the one exception to "every change goes through the specmgr MCP tools" (host file tools, frontmatter byte-unchanged); `req/data/req_update_instructions.md` is out of scope (follow-up issue).
+- [x] Task 130.100: G1 -- the `prb_update_instructions.md` preamble names the "Old-shape recovery" block as the one exception to "every change goes through the specmgr MCP tools" (host file tools, frontmatter byte-unchanged); `req/data/req_update_instructions.md` is out of scope (follow-up issue #273).
 - [x] Task 130.110: D1/D2 -- reword the `update_prb` MCP prompt `description` ("via a raw re-read") and the module docstring (`AssertionError`, "now") to the host file-read/file-write repair and the non-raising `ParseFailureResult` (DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c); grep the repo for other PRB "raw re-read" recovery phrasing; regenerate `docs/MCP.md` and `docs/api/`.
 - [x] Task 130.120: I1/I3 -- add a `validate(type="prb", content=<the full raw file text>, full=True)` dry-run loop step between the insert and the write-back in the recovery block, renumber the steps, and rewrap the long unwrapped recovery-block lines without splitting any test-pinned phrase.
 - [x] Task 130.130: S1/I2 -- rename `test_mentions_old_shape_recovery_via_raw_reread` to `test_mentions_old_shape_recovery_via_host_file_repair`, assert the validate step, and add `assertLess` order checks (file-read < insert < validate < file-write < confirming `get_prb(id)`); show it red against the Phase 100 instructions file.
@@ -111,7 +111,7 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 
 ### Current Status
 
-**As of 2026-11-22**: Phases 100-120 committed (`22a84b33`, `232512e1`, `fd41f554`); status `review`, PR #271 open. Phase 130 (post-implementation review fixes G1, D1, D2, S1, S2, I1-I3) implemented, uncommitted. Next: commit Phase 130 and push to PR #271 (orchestrator); open a follow-up issue for the same preamble contradiction in `req/data/req_update_instructions.md`.
+**As of 2026-11-22**: Phases 100-130 committed (`22a84b33`, `232512e1`, `fd41f554`, `142db7c3`); status `review`. PR #271 is open against `dev` and not merged. The same preamble contradiction in `req/data/req_update_instructions.md` is tracked as GitHub issue #273.
 
 ### Updates
 
@@ -147,7 +147,7 @@ Feature plan created from GitHub issues #248 and #249. Both findings verified ag
 
 #### 2026-11-22T16:17:33.155Z - `req` preamble contradiction deferred to a follow-up issue
 
-The feat-reviewer's G1 finding (preamble "every change goes through the specmgr MCP tools" versus the recovery block's host-file read/write) applies equally to `req/data/req_update_instructions.md`'s preamble and its "Legacy `## Level` value recovery." block. Scope stays PRB-only (Explicitly Out Of Scope: recovery directives of any domain other than PRB); the `req` fix needs its own follow-up issue.
+The feat-reviewer's G1 finding (preamble "every change goes through the specmgr MCP tools" versus the recovery block's host-file read/write) applies equally to `req/data/req_update_instructions.md`'s preamble and its "Legacy `## Level` value recovery." block. Scope stays PRB-only (Explicitly Out Of Scope: recovery directives of any domain other than PRB); the `req` fix is tracked as GitHub issue #273.
 
 #### 2026-11-22T15:46:35.000Z - Correct the `AGENTS.md` `prb/` bullet too
 
@@ -169,6 +169,12 @@ Both issues are small, independent doc-surface fixes from the same feat-173 retr
 
 - `dbd754ee` -- feat-173 squashed commit, including the correct `req` recovery directive (model text) and the phases where the missing `docs/api` pages surfaced.
 - `83be6624` -- PR #254 merge of feat-173 into `dev`.
+- `22a84b33` -- Phase 100, PRB old-shape recovery uses host file tools (#248).
+- `232512e1` -- Phase 110, `req`/`gol` models made regular packages (#249).
+- `fd41f554` -- Phase 120, close-out.
+- `142db7c3` -- Phase 130 review fixes.
+- PR #271 -- this feature into `dev`.
+- Issue #273 -- follow-up for the `req` update-prompt preamble.
 
 ### More Information
 
