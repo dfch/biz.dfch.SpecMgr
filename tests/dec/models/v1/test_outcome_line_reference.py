@@ -23,8 +23,8 @@ rule accepts the second paragraph as `further_blocks` but not the block quote,
 so `parse_dec` fails with "text left over after processing all fields". The
 message must name the block quote's line in the normalized body that
 `parse_dec_body` builds (`format_text` of the frontmatter-stripped content).
-The expected line is computed from that body (the first line that starts
-with `> `), not taken from the issue.
+The expected line is computed from that body (the line that is exactly the
+inserted block quote, `_QUOTE_LINE`), not taken from the issue.
 """
 
 from __future__ import annotations
@@ -40,8 +40,11 @@ from biz.dfch.specmgr.models.md._markdown import format_text
 #: The last line of `dec_example.md`'s `## Decision Outcome` lead paragraph.
 _LEAD_END = "and two home-working days per week.\n"
 
+#: The block quote line added after the second paragraph; the test looks for exactly this line.
+_QUOTE_LINE = "> A block quote inside the outcome."
+
 #: The second paragraph and the block quote added after the lead paragraph.
-_ADDED_BLOCKS = "\nA second paragraph of the outcome.\n\n> A block quote inside the outcome.\n"
+_ADDED_BLOCKS = f"\nA second paragraph of the outcome.\n\n{_QUOTE_LINE}\n"
 
 
 def _repro_text() -> str:
@@ -62,7 +65,9 @@ class TestDecisionOutcomeLeftOverLineReference(unittest.TestCase):
     def test_text_left_over_reports_the_block_quote_line(self) -> None:
         text = _repro_text()
         body = format_text(frontmatter.loads(text).content)
-        expected_line = next(index for index, line in enumerate(body.splitlines(), start=1) if line.startswith("> "))
+        body_lines = body.splitlines()
+        self.assertEqual(body_lines.count(_QUOTE_LINE), 1, "the inserted block quote must occur exactly once")
+        expected_line = body_lines.index(_QUOTE_LINE) + 1
 
         with self.assertRaises(AssertionError) as ctx:
             parse_dec(text)

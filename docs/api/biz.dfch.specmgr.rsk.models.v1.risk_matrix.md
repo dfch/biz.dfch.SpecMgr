@@ -98,14 +98,14 @@ closing:
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -404,9 +404,9 @@ closing:
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -478,14 +478,14 @@ closing:
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -876,9 +876,9 @@ closing:
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -938,14 +938,14 @@ thresholds" list.
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -1244,9 +1244,9 @@ thresholds" list.
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -1318,14 +1318,14 @@ thresholds" list.
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -1716,9 +1716,9 @@ thresholds" list.
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -1787,14 +1787,14 @@ reading_together:
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -2093,9 +2093,9 @@ reading_together:
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -2167,14 +2167,14 @@ reading_together:
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -2565,9 +2565,9 @@ reading_together:
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -2628,14 +2628,14 @@ section's entire extent -- REQ-004 only calls for modeling the
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -2934,9 +2934,9 @@ section's entire extent -- REQ-004 only calls for modeling the
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -3008,14 +3008,14 @@ section's entire extent -- REQ-004 only calls for modeling the
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -3406,9 +3406,9 @@ section's entire extent -- REQ-004 only calls for modeling the
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -3481,11 +3481,12 @@ zone:
   and delegated to `MarkdownStr.from_text` (via `super()`) for the
   declared fields' population, at an offset advanced by the line count
   actually consumed (the leading paragraph plus the blank separator
-  line the re-normalization removes -- see `consume_leading_lines`). `_value` is set to the leading
-  paragraph's own lines verbatim, *marker included* -- unlike
-  `MarkdownParagraph`, whose marker-free `_value` needs no
-  reconstruction, an item cannot reconstruct its own marker from class
-  metadata alone (see the class docstring), so it is kept as-is instead.
+  line the re-normalization removes -- see `consume_leading_lines`).
+  `_value` is set to the leading paragraph's own lines verbatim,
+  *marker included* -- unlike `MarkdownParagraph`, whose marker-free
+  `_value` needs no reconstruction, an item cannot reconstruct its own
+  marker from class metadata alone (see the class docstring), so it is
+  kept as-is instead.
 
   Args:
       text: the markdown text to parse.
@@ -3762,9 +3763,9 @@ zone:
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -3836,11 +3837,12 @@ zone:
   and delegated to `MarkdownStr.from_text` (via `super()`) for the
   declared fields' population, at an offset advanced by the line count
   actually consumed (the leading paragraph plus the blank separator
-  line the re-normalization removes -- see `consume_leading_lines`). `_value` is set to the leading
-  paragraph's own lines verbatim, *marker included* -- unlike
-  `MarkdownParagraph`, whose marker-free `_value` needs no
-  reconstruction, an item cannot reconstruct its own marker from class
-  metadata alone (see the class docstring), so it is kept as-is instead.
+  line the re-normalization removes -- see `consume_leading_lines`).
+  `_value` is set to the leading paragraph's own lines verbatim,
+  *marker included* -- unlike `MarkdownParagraph`, whose marker-free
+  `_value` needs no reconstruction, an item cannot reconstruct its own
+  marker from class metadata alone (see the class docstring), so it is
+  kept as-is instead.
 
   Args:
       text: the markdown text to parse.
@@ -4209,9 +4211,9 @@ zone:
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -4316,14 +4318,14 @@ parsing entirely"); this section's entire extent is stored verbatim.
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -4622,9 +4624,9 @@ parsing entirely"); this section's entire extent is stored verbatim.
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -4696,14 +4698,14 @@ parsing entirely"); this section's entire extent is stored verbatim.
   `super()`) for the actual recursive field population, at an offset
   advanced by the line count actually consumed (the heading plus the
   blank separator line the re-normalization removes -- see
-  `consume_leading_lines`) -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -5094,9 +5096,9 @@ parsing entirely"); this section's entire extent is stored verbatim.
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with

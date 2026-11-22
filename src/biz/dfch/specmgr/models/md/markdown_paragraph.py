@@ -131,12 +131,12 @@ class MarkdownParagraph(MarkdownStr):
         the remainder is delegated to `MarkdownStr.from_text` (via `super()`)
         for recursive field population, at an offset advanced by the line
         count actually consumed (the paragraph plus the blank separator line
-        the re-normalization removes -- see `consume_leading_lines`) -- each child field recursively
-        captures its own extent this same way. Since the body is therefore
-        already fully represented by the nested fields, this instance's own
-        `_value` only needs the paragraph's own inline text (e.g. a lead-in
-        sentence) so that `__str__` can re-emit it without duplicating what
-        the children already carry.
+        the re-normalization removes -- see `consume_leading_lines`) -- each
+        child field recursively captures its own extent this same way. Since
+        the body is therefore already fully represented by the nested
+        fields, this instance's own `_value` only needs the paragraph's own
+        inline text (e.g. a lead-in sentence) so that `__str__` can re-emit
+        it without duplicating what the children already carry.
 
         Args:
             text: the markdown text to parse.

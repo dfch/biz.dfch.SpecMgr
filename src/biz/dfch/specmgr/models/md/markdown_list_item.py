@@ -164,11 +164,12 @@ class MarkdownListItem(MarkdownStr):
         and delegated to `MarkdownStr.from_text` (via `super()`) for the
         declared fields' population, at an offset advanced by the line count
         actually consumed (the leading paragraph plus the blank separator
-        line the re-normalization removes -- see `consume_leading_lines`). `_value` is set to the leading
-        paragraph's own lines verbatim, *marker included* -- unlike
-        `MarkdownParagraph`, whose marker-free `_value` needs no
-        reconstruction, an item cannot reconstruct its own marker from class
-        metadata alone (see the class docstring), so it is kept as-is instead.
+        line the re-normalization removes -- see `consume_leading_lines`).
+        `_value` is set to the leading paragraph's own lines verbatim,
+        *marker included* -- unlike `MarkdownParagraph`, whose marker-free
+        `_value` needs no reconstruction, an item cannot reconstruct its own
+        marker from class metadata alone (see the class docstring), so it is
+        kept as-is instead.
 
         Args:
             text: the markdown text to parse.

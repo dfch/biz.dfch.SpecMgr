@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: review
 type: feat
-updated: '2026-11-22T17:01:32.328+01:00'
+updated: '2026-11-22T17:22:05.600+01:00'
 version: 1.0.0
 ---
 
@@ -40,9 +40,9 @@ The defect is pre-existing and shared by every domain built on `models/md`. It d
 - [x] ACC-001: A synthetic multi-field `MarkdownSection` model in `tests/models/md` with two consumed scalar fields followed by an unconsumed trailing block raises the "text left over" `AssertionError` with the exact normalized-body line of the trailing block (REQ-001, REQ-002). The model is parsed from a section text with its heading, so the heading hand-off is covered too. The test fails on the pre-fix code.
 - [x] ACC-002: A synthetic model whose mandatory third field finds no match after two consumed scalar fields raises "expected ..., found no match" with the exact normalized-body line where the remainder starts (REQ-003). The test fails on the pre-fix code.
 - [x] ACC-003: A test asserts that the `_line` of a child parsed after two consumed scalar fields equals its normalized-body line (REQ-004). An `rsk` test pins the corrected line in one `self._line`-based message (tara or assessment) of a real rsk body. Because every child inside a section is affected by the heading hand-off, this case always exists.
-- [x] ACC-004: The issue's repro is a `dec` body built from the packaged `dec/data/dec_example.md`, where `## Decision Outcome` holds the lead paragraph, a second paragraph, and a block quote. It fails through `parse_dec` with a "text left over" line reference equal to the block quote's line in the normalized body that `parse_dec_body` builds. The test computes the expected line from that normalized body (the first line that starts with `> `) and does not take it from the issue. Measured on `dev` 9c9d7349: true line 38, pre-fix 35, scalar-only fix 36. The test fails on the pre-fix code and on a scalar-only fix. The repro needs feat-247's relaxed `## Decision Outcome` rule, which is on `dev` but not in release v0.38.0, so the test runs against the worktree code and not against a release-based `specmgr` MCP server.
+- [x] ACC-004: The issue's repro is a `dec` body built from the packaged `dec/data/dec_example.md`, where `## Decision Outcome` holds the lead paragraph, a second paragraph, and a block quote. It fails through `parse_dec` with a "text left over" line reference equal to the block quote's line in the normalized body that `parse_dec_body` builds. The test computes the expected line from that normalized body (the line that is exactly the inserted block quote `> A block quote inside the outcome.`) and does not take it from the issue. Measured on `dev` 9c9d7349: true line 38, pre-fix 35, scalar-only fix 36. The test fails on the pre-fix code and on a scalar-only fix. The repro needs feat-247's relaxed `## Decision Outcome` rule, which is on `dev` but not in release v0.38.0, so the test runs against the worktree code and not against a release-based `specmgr` MCP server.
 - [x] ACC-005: Every pinned message that changes in `tests/models/md/test_validation_error_baseline.py`, `tests/models/md/test_error_messages.py`, or any other test changes only in its line number, upward, and each changed pin is listed in the phase's update entry (REQ-005). A test docstring that states a line number is corrected together with its pin. Known cases: `test_error_messages.py` `test_missing_leaf_paragraph_line_reference_points_at_the_entry_heading` (`### My Update` is line 5, not 4; the missing `content` is reported at line 6 per REQ-003) and `test_a_second_entry_reports_a_deeper_line_reference` (`### Second Update` is line 9; expected line 10, not 8).
-- [x] ACC-006: `git diff --stat` against `dev` touches only `src/biz/dfch/specmgr/models/md/`, tests, regenerated files (`docs/api/`, `docs/GENERATED.md`, `docs/*_schema.json`, `src/biz/dfch/specmgr/*/data/*_schema.json`), `CHANGELOG.md`, and this plan (REQ-006). No domain model, parser, or tool source file changes.
+- [x] ACC-006: `git diff --stat` against `dev` touches only `src/biz/dfch/specmgr/models/md/`, tests, regenerated files (`docs/api/`, `docs/GENERATED.md`, `docs/*_schema.json`, `src/biz/dfch/specmgr/*/data/*_schema.json`), `CHANGELOG.md`, and this plan (REQ-006). No domain model, parser, or tool source file changes. Review-fix exception (Phase 130): the hand-written `AGENTS.md` gets one paragraph on `consume_leading_lines` (Task 130.170).
 - [x] ACC-007: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, and the `specmgr docs` / `specmgr schema` drift checks.
 - [x] ACC-008: Synthetic tests pin the own-block hand-off (REQ-007): a section with a paragraph and a nested H3 section (the `## X` / `### Y` shape in the Overview: `A.` line 3, `### Y` line 5, `B.` line 7), and a `MarkdownListItemWithNotes` whose note follows a blank line (note on its true line). The tests fail on the pre-fix code. `MarkdownParagraph` with nested fields gets the same test if a synthetic model can reach that path; otherwise the update entry records why not.
 - [x] ACC-009: An oracle test parses every packaged `*_example.md` of the `models/md`-based domains and, for every parsed child at every nesting level, asserts that line `child._line` of the normalized body is the first line of that child's text. It needs no hand-computed line numbers and fails on the pre-fix code.
@@ -53,7 +53,7 @@ The defect is pre-existing and shared by every domain built on `models/md`. It d
 
 - Delta-based offset advance in the scalar-field branch of `MarkdownStr.from_text` (REQ-001).
 - Delta-based offset hand-off in `MarkdownSection.from_text`, `MarkdownParagraph.from_text`, and `MarkdownListItem.from_text` (REQ-007).
-- One shared helper for the "slice, re-normalize, return (new text, consumed lines)" step, used by every site above and by the `process_list_field` branch.
+- One shared helper for the "slice, re-normalize, return (new text, consumed lines)" step, used by every site above and by the per-item loop of `process_list_field`. The list branch of `MarkdownStr.from_text` keeps its inline before/after delta, which equals the sum of the per-item helper counts (see Decisions Made, 2026-11-22T15:36:39.449Z).
 - Regression tests for the "text left over" and "found no match" line references, the empty-remainder rule, child `_line` values, and the example-file oracle.
 - The issue's `dec` `## Decision Outcome` repro as a domain-level regression test.
 - Updates to pinned messages and test docstrings whose line numbers were wrong before the fix, in `tests/models/md` and in downstream `_line` consumers (REQ-004 list).
@@ -91,7 +91,7 @@ body_text = format_text("\n".join(body_lines)) if body_lines else ""
 instance = super().from_text(body_text, _path=own_path, _offset=_offset + heading_lines)
 ```
 
-Proposed change: one shared helper in `models/md` that slices off the first `n` lines, re-normalizes the rest, and returns the new text together with the consumed line count (`len(text.splitlines()) - len(new_text.splitlines())`). Every site above calls it and advances its offset by the returned count. The `process_list_field` branch already computes the same delta inline and uses the helper's count as well, so no site can drift again. The consumed count is the block's own lines plus the separator lines that the re-normalization removed. For an empty rest it is all lines of the text, which gives the REQ-003 empty-remainder rule.
+Proposed change: one shared helper in `models/md` that slices off the first `n` lines, re-normalizes the rest, and returns the new text together with the consumed line count (`len(text.splitlines()) - len(new_text.splitlines())`). Every site above calls it and advances its offset by the returned count. The per-item loop of `process_list_field` calls it as well. The list branch of `MarkdownStr.from_text` keeps its inline before/after delta across `process_list_field`, because that method returns the reduced text and not a count. That delta equals the sum of the per-item helper counts, so it advances the offset by the same value (see the Phase 110 Decisions Made entry, 2026-11-22T15:36:39.449Z). The consumed count is the block's own lines plus the separator lines that the re-normalization removed. For an empty rest it is all lines of the text, which gives the REQ-003 empty-remainder rule.
 
 Line-number model: `_offset` is 0-based and relative to the start of the text handed to the outermost `from_text` call; messages report `_offset + 1`. This is feat-27's documented limitation. Real callers pass the whole normalized body (e.g. `parse_dec_body` passes `format_text(content)` to `Decision.from_text`), so the tests compute every expected line from that normalized body, never from the raw file or from a section-relative text.
 
@@ -123,15 +123,45 @@ Verification environment: run every check with the worktree code (`uv run --froz
 - [x] Task 120.110: Update `CHANGELOG.md` `[Unreleased]` with a Fixed entry referencing issue #253.
 - [x] Task 120.120: Update this plan's Progress section and set the status to review.
 
+#### Phase 130: Review Fixes
+
+- [x] Task 130.100: G1: add direct unit tests for `consume_leading_lines` in `tests/models/md/test__markdown.py` (`count=0`, a removed leading blank separator line, `count` at or past the end (REQ-003), empty text, a rejected negative count).
+- [x] Task 130.110: D1: make the Scope bullet and the Design Notes match the decision that the list branch of `MarkdownStr.from_text` keeps its inline before/after delta.
+- [x] Task 130.120: D2: narrow the `MarkdownStr.from_text` docstring: only the scalar-field step and the per-item loop of `process_list_field` use `consume_leading_lines`; the per-item slice that builds an item's own text does not and does not move the offset.
+- [x] Task 130.130: S1: rewrap the docstring paragraphs that Phase 110 spliced without reflow (`markdown_list_item.py`, `markdown_paragraph.py`, `markdown_section.py`, and the `process_list_field` `_offset` paragraph in `markdown_str.py`).
+- [x] Task 130.140: I1: assert `count >= 0` in `consume_leading_lines`.
+- [x] Task 130.150: I2: document the `format_text` line-count assumption of the consumed count in the `consume_leading_lines` docstring.
+- [x] Task 130.160: I3: make the ACC-004 test search the exact inserted block-quote line.
+- [x] Task 130.170: I4: add one `AGENTS.md` paragraph on `consume_leading_lines` near the feat-27 / feat-99 `models/md` paragraphs.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-22**: The implementation is complete and in review. Phases 100, 110, and 120 are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (except the 2 known, unrelated `tests/evals/test_cli_gates.py` rootless-Docker failures, which PR #272 fixes), and `CHANGELOG.md` has a Fixed entry. Next: review and merge.
+**As of 2026-11-22**: The implementation is complete and in review. Phases 100, 110, 120, and 130 (review fixes G1, D1, D2, S1, I1 to I4) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (except the 2 known, unrelated `tests/evals/test_cli_gates.py` rootless-Docker failures, which PR #272 fixes), and `CHANGELOG.md` has a Fixed entry. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. Next: re-review and merge.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22T16:22:05.594Z - Phase 130 review fixes
+
+Added Phase 130 to the Task List (Tasks 130.100 to 130.170, one per review finding) and implemented them. All checks ran with the worktree code (`uv run --frozen ...`). No behavior changed except the new negative-`count` assertion (REQ-005/006), which no caller can trigger: every caller passes a token-map end or a `get_extent` value, both non-negative.
+
+- G1 (Task 130.100): new `TestConsumeLeadingLines` in `tests/models/md/test__markdown.py` (7 tests): the fixture text is normalized; `count=0` returns the whole text and consumes 0; `count=1` on `A.` / blank / `B.` returns `B.` and consumes 2 (the removed blank separator line); `count` at the end (3) and past the end (10) return `""` and consume the line count of the whole text (REQ-003); empty text returns `("", 0)` for `count` 0 and 1; a negative `count` raises `AssertionError` ("must not be negative"). The module docstring now names both helpers.
+- D1 (Task 130.110): the Scope bullet and the Design Notes now state that the per-item loop of `process_list_field` uses the helper, while the list branch of `MarkdownStr.from_text` keeps its inline before/after delta, which equals the sum of the per-item helper counts. Both point to the Phase 110 Decisions Made entry. No code changed.
+- D2 (Task 130.120): the `MarkdownStr.from_text` docstring now says that the scalar-field slice goes through `consume_leading_lines`, that the list items are sliced the same way inside `process_list_field` and the list branch advances by the whole-list delta, and that the per-item slice that builds an item's own text does not use the helper and does not move the offset.
+- S1 (Task 130.130): reflowed the spliced docstring paragraphs of `MarkdownListItem.from_text` (`markdown_list_item.py`, the long line and the following lines), `MarkdownParagraph.from_text` (`markdown_paragraph.py`), and `MarkdownSection.from_text` (`markdown_section.py`, the orphan `consume_leading_lines`) -- each child` line). The same problem was in the `_offset` paragraph of `process_list_field` in `markdown_str.py` (orphan `get_extent`), so blank-line` line), which is reflowed too. `_markdown.py` and `markdown_block_quote.py` (a comment only) had no such problem. Every reflowed docstring line is at most 80 columns.
+- I1 (Task 130.140): `consume_leading_lines` asserts `count >= 0` after its `isinstance` asserts, with the message `count: '<n>' must not be negative (it is a number of already-consumed lines).`; the `count` Args entry says it must not be negative.
+- I2 (Task 130.150): the `consume_leading_lines` docstring states the assumption that `format_text` of the rest strips its leading blank lines but keeps the line count of its content, and that the list branch's before/after delta relied on the same assumption before the helper existed. The Returns entry now covers `count` at or past the end and states that, under that assumption, `consumed` is `count` plus the removed blank separator lines.
+- I3 (Task 130.160): `tests/dec/models/v1/test_outcome_line_reference.py` has a `_QUOTE_LINE` constant (`> A block quote inside the outcome.`) that `_ADDED_BLOCKS` inserts, asserts that it occurs exactly once in `parse_dec_body`'s normalized body (`format_text` of the frontmatter-stripped content), and takes its 1-based index there as the expected line (still 38). The module docstring and the ACC-004 text are updated to match.
+- I4 (Task 130.170): `AGENTS.md` has a new paragraph after the feat-99 `models/md` paragraph: feat-253 added `consume_leading_lines` (`models/md/_markdown.py`), and every `models/md` site that slices off consumed lines and hands the re-normalized rest on must use it and advance its offset by the returned delta. `AGENTS.md` is hand-written, so ACC-006 now records it as a Phase 130 review-fix exception to the diff scope.
+- Regenerated: `specmgr docs` updated 43 `docs/api/*.md` pages (the changed `models/md` docstrings and every page that inherits them); `docs/GENERATED.md` did not change. `specmgr mcp-docs`, `specmgr schema`, and the 14 `specmgr schema --type <t> --output-dir src/biz/dfch/specmgr/<t>/data` runs gave no diff. A second run of all regenerations gave no further diff.
+- Gate:
+  - `uv run --frozen ruff format --check && uv run --frozen ruff check`: pass (2387 files already formatted; all checks passed).
+  - `uv run --frozen vulture src/ whitelist.py --min-confidence 60`: pass.
+  - `uv run --frozen pytest -n auto -q`: 6134 passed, 18 skipped, 11126 subtests passed, 2 failed. The 2 failures are the known `tests/evals/test_cli_gates.py::TestCliOverFixtures` rootless-Docker failures, which PR #272 fixes.
+  - `uv run --frozen specmgr lint .specmgr/feat/feat-253-md-line-offset/README.md`: `linted=1 failed=0 skipped=0`.
 
 #### 2026-11-22T16:01:32.324Z - Phase 120 verified and closed out
 

@@ -250,9 +250,9 @@ content -- comment-only use raises (see `get_extent`/`from_text`).
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -628,9 +628,9 @@ content -- comment-only use raises (see `get_extent`/`from_text`).
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with

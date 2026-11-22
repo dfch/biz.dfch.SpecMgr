@@ -62,11 +62,12 @@ content:
   and delegated to `MarkdownStr.from_text` (via `super()`) for the
   declared fields' population, at an offset advanced by the line count
   actually consumed (the leading paragraph plus the blank separator
-  line the re-normalization removes -- see `consume_leading_lines`). `_value` is set to the leading
-  paragraph's own lines verbatim, *marker included* -- unlike
-  `MarkdownParagraph`, whose marker-free `_value` needs no
-  reconstruction, an item cannot reconstruct its own marker from class
-  metadata alone (see the class docstring), so it is kept as-is instead.
+  line the re-normalization removes -- see `consume_leading_lines`).
+  `_value` is set to the leading paragraph's own lines verbatim,
+  *marker included* -- unlike `MarkdownParagraph`, whose marker-free
+  `_value` needs no reconstruction, an item cannot reconstruct its own
+  marker from class metadata alone (see the class docstring), so it is
+  kept as-is instead.
 
   Args:
       text: the markdown text to parse.
@@ -343,9 +344,9 @@ content:
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -417,11 +418,12 @@ content:
   and delegated to `MarkdownStr.from_text` (via `super()`) for the
   declared fields' population, at an offset advanced by the line count
   actually consumed (the leading paragraph plus the blank separator
-  line the re-normalization removes -- see `consume_leading_lines`). `_value` is set to the leading
-  paragraph's own lines verbatim, *marker included* -- unlike
-  `MarkdownParagraph`, whose marker-free `_value` needs no
-  reconstruction, an item cannot reconstruct its own marker from class
-  metadata alone (see the class docstring), so it is kept as-is instead.
+  line the re-normalization removes -- see `consume_leading_lines`).
+  `_value` is set to the leading paragraph's own lines verbatim,
+  *marker included* -- unlike `MarkdownParagraph`, whose marker-free
+  `_value` needs no reconstruction, an item cannot reconstruct its own
+  marker from class metadata alone (see the class docstring), so it is
+  kept as-is instead.
 
   Args:
       text: the markdown text to parse.
@@ -790,9 +792,9 @@ content:
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
           consumed (`consume_leading_lines`, not a summed
-          `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
