@@ -4,7 +4,7 @@ created: '2026-11-18T13:21:29.973+01:00'
 id: feat-267-arch-rvw
 status: planning
 type: feat
-updated: '2026-11-22T16:30:00.000+01:00'
+updated: '2026-11-22T16:45:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -29,7 +29,7 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 
 - [x] ACC-001: A new TXT "Architecture Model" exists and passes validation.
 - [x] ACC-002: The checklist TXT refers to the new TXT for concern lists and states that the applicability derivation is our interpretation.
-- [ ] ACC-003: Both metamodel diagrams exist in the feature folder and pass validate_plantuml.
+- [x] ACC-003: Both metamodel diagrams exist in the feature folder and pass validate_plantuml.
 - [ ] ACC-004: Open items of QA 25bd5b93 are closed or narrowed, and missing sources are named.
 - [x] ACC-005: The ChatGPT transcripts and the old review file are in the feature folder.
 
@@ -96,7 +96,7 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-003 is open: both diagrams pass only the structure-only floor of validate_plantuml, because no PlantUML source is configured. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). The render check of the changed diagrams with a real PlantUML source is still to do. Phase 120 waits for the user's validation of the design. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
+**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120 waits for the user's validation of the design. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
 
 ### Blockers
 
@@ -108,7 +108,7 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 
 #### 2026-11-22 15:30:00.000Z - Metamodel gaps closed, Structurizr perspective test
 
-Structurizr test (QA 0.0680): a perspective name is unique on an element, and a repeated property key is overwritten silently. Review results are now one perspective per criterion, named by the criterion ID. Diagram A: MatrixRow with Viewpoint and CrossView, CrossView spans the description, decision applies pattern and tactic. Diagram B: Element supertype, link to the 42010 View of diagram A. Both diagrams pass the structure-only check; rendering is not yet checked.
+Structurizr test (QA 0.0680): a perspective name is unique on an element, and a repeated property key is overwritten silently. Review results are now one perspective per criterion, named by the criterion ID. Diagram A: MatrixRow with Viewpoint and CrossView, CrossView spans the description, decision applies pattern and tactic. Diagram B: Element supertype, link to the 42010 View of diagram A. Both diagrams pass the structure-only check and render without errors with the `plantuml/plantuml` Docker image (run by the user, 2026-11-22). ACC-003 is checked.
 
 #### 2026-11-22 14:27:37.000Z - Review corrections
 
