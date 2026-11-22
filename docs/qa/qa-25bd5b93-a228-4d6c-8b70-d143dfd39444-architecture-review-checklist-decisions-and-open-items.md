@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-22T16:30:00.000+01:00'
+updated: '2026-11-22T17:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -128,11 +128,15 @@ Superseded on 2026-11-10 (TXT Draft 0.8): the matrix was rebuilt for seven viewp
 
 > **0.0340**: Does the matrix hold up against three contrasting architectures: a traditional enterprise application, a distributed cloud-native platform, and a safety-relevant cyber-physical system?
 
-TODO: answer pending
+Partly answered on 2026-11-22 (issue 267). An extra run on specmgr itself (class: single-user local tool, none of the three) is recorded in `.specmgr/feat/feat-267-arch-rvw/validation/specmgr/validation-record.md`, with the model `workspace.dsl`. The matrix structure holds: every specmgr concern found a cell. Ten findings V-01 to V-10, none applied yet. The most important: VP02 x MA and VP05 x MA duplicate for a one-process system (V-01), the main security control sits in the S cell VP02 x SE (V-04), scalability by data volume points to VP03 x FL as P (V-08), and a target criterion without a target ends Unassessable (V-07).
+
+TODO: choose one system for each of the three classes and run them
 
 > **0.0350**: For each of the three architectures: does every important quality concern have a primary location, do the secondary cells give useful cross-checks without duplicating primary criteria, and which concerns fit no viewpoint?
 
-TODO: answer pending
+Partly answered on 2026-11-22 for the extra run on specmgr (see 0.0340). Every important concern has a primary location, except the main security control (V-04) and scalability by data volume (V-08). Duplicates: VP02 x MA and VP05 x MA (V-01). No concern fits no viewpoint, but an LLM agent as user has no clear perspective, IC or CO (V-06).
+
+TODO: answer for the three architecture classes
 
 > **0.0360**: Should VP11 x RE, VP08 x MA or VP09 x FL become secondary cells, if the validation shows a coverage gap?
 

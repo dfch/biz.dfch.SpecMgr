@@ -4,7 +4,7 @@ created: '2026-11-18T13:21:29.973+01:00'
 id: feat-267-arch-rvw
 status: planning
 type: feat
-updated: '2026-11-22T16:45:00.000+01:00'
+updated: '2026-11-22T17:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -89,14 +89,14 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 
 #### Phase 120: Validation (not started, needs the user)
 
-- [ ] Task 120.100: Validate the design against three contrasting architectures.
+- [ ] Task 120.100: Validate the design against three contrasting architectures. Extra run 1 on specmgr (local tool) is done: `validation/specmgr/`, findings V-01 to V-10, QA 0.0340 and 0.0350 partly answered. The three classes of QA 0.0340 still need a system each.
 - [ ] Task 120.110: Re-run the Structurizr probe from a committed location.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120 waits for the user's validation of the design. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
+**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120 has started: validation run 1 on specmgr (a local tool, an extra class) is done, with ten catalogue findings that are not yet applied. The three architecture classes of QA 0.0340 need one system each, chosen by the user. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
 
 ### Blockers
 
@@ -105,6 +105,10 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22 16:30:00.000Z - Validation run 1: specmgr
+
+C4 model of specmgr in `validation/specmgr/workspace.dsl` (Structurizr validate OK; inspect: no documentation and no decisions, expected, V-05). The validation record `validation/specmgr/validation-record.md` checks the C4 coverage of Architecture Model section 8.1, walks the 12 perspectives against the matrix, and applies five criteria of VP06 x RE. Ten findings V-01 to V-10. None is applied to the matrix or the texts before the other runs. specmgr is a fourth class (local tool), so it does not replace one of the three classes of QA 0.0340.
 
 #### 2026-11-22 15:30:00.000Z - Metamodel gaps closed, Structurizr perspective test
 
