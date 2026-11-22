@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-20T13:01:55.720+01:00'
+updated: '2026-11-22T15:27:37.000+01:00'
 version: 1.0.0
 ---
 
@@ -324,6 +324,8 @@ Judgement calls to check in the validation of 0.0340 and 0.0350: VP06 x CO as P,
 
 Decided on 2026-11-10. Names of viewpoints, of the row CrossView and of the perspectives added from R+W are single words without special characters, so that they work in IDs, tags and tool properties: Concurrency (not Runtime/Process), CrossView, Regulation, Location, DevelopmentResource. The viewpoint names follow R+W. The nine ISO perspective names are kept as ISO writes them. Codes: VP01 to VP07 and XV for the row; FS, PE, CO, IC, RE, SE, MA, FL, SA for the ISO perspectives; RG, LO, DR for the added ones.
 
+Superseded in part on 2026-11-20 by 0.0670: DevelopmentResource (DR) is renamed to Resources (RS). The other rules stay.
+
 > **0.0550**: Which of the judgement-call cells of the 8 x 12 matrix stay P or S?
 
 Follow-up of 0.0530 (TXT Draft 0.8). Cells to check: VP06 x CO, VP07 x FL, VP01 x SE and VP06 x SE (all P), and VP02 x RE, VP05 x RE and XV x RE (all S). The share of P cells rose from 26 percent to 33 percent. Rule: demote a cell to S if it produces duplicate criteria. The check is done together with the validation of 0.0340 and 0.0350, which is still open for the new matrix. The TOGAF question stays in 0.0260.
@@ -427,6 +429,8 @@ TODO: answer pending
 > **0.0320**: Is a `specmgr://iso29148` resource worth a separate feature?
 
 It is not worth a feature, but a separate Phase in a feature.
+
+Update 2026-11-22: done. The resource `specmgr://iso29148` exists (feat-173-req-iso29148-level-set, issue 173). It documents the four requirement specifications BRS, StRS, SyRS and SRS, and the characteristics of a requirement set (clause 5.2.6). The characteristics of an individual requirement (clause 5.2.5), which the checklist uses in section 6.2, are not in it.
 
 > **0.0330**: How are the remaining primary cells expanded, and in which order?
 

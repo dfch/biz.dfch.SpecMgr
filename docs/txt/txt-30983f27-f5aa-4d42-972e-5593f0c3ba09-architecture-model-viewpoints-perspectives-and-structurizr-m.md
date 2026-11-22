@@ -4,7 +4,7 @@ created: '2026-11-18T13:25:56.718+01:00'
 id: 30983f27-f5aa-4d42-972e-5593f0c3ba09
 status: draft
 type: txt
-updated: '2026-11-20T12:56:15.654+01:00'
+updated: '2026-11-22T15:27:37.000+01:00'
 version: 1.0.0
 ---
 
@@ -181,7 +181,7 @@ The table maps the concerns of each R+W perspective, with the tactics and pitfal
 | Evolution | Reliability of change | MA | Modifiability, Testability. The mechanics are in VP05 |
 | Evolution | When to pay for change, product management | RS | Economic viability (AD14) |
 | Accessibility (ch. 29) | Types of disability, functional availability, disability regulation | IC and RG | Inclusivity. The legal part: Regulation |
-| Development Resource | Time, cost, skills, resources, budgets, external dependencies | RS | Book perspective, re-scoped to build and operate (catalogue extension) |
+| Development Resource | Time, cost, skills, resources, budgets, external dependencies | RS | Book perspective, re-scoped to the full lifecycle (catalogue extension) |
 | Internationalization | Character sets, language needs, cultural norms | IC | Inclusivity |
 | Internationalization | Currency conversion, locale, cultural neutrality | FL | Adaptability |
 | Location | All concerns | LO | Same concern |
@@ -325,6 +325,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-22 14:27:37.000Z - Draft 0.4
+
+Section 5.1: the Development Resource row says "re-scoped to the full lifecycle", the same words as section 5 and the checklist. Issue 267.
 
 ### 2026-11-20 11:43:54.000Z - Draft 0.3
 

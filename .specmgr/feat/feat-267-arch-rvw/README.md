@@ -4,7 +4,7 @@ created: '2026-11-18T13:21:29.973+01:00'
 id: feat-267-arch-rvw
 status: planning
 type: feat
-updated: '2026-11-18T15:13:27.268+01:00'
+updated: '2026-11-22T15:27:37.000+01:00'
 version: 1.0.0
 ---
 
@@ -20,18 +20,18 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 
 - REQ-001: The viewpoint concern lists quote the R+W book verbatim. Every deviation is labelled "catalogue extension".
 - REQ-002: Every extra topic of the earlier viewpoint definitions has a placement in a viewpoint, a perspective or a matrix cell.
-- REQ-003: The perspective set is the 9 ISO/IEC 25010:2023 characteristics plus Regulation, Location and DevelopmentResource. R+W perspective guidance is mapped to these 12 codes.
+- REQ-003: The perspective set is the 9 ISO/IEC 25010:2023 characteristics plus Regulation, Location and Resources (RS; the R+W Development Resource perspective, re-scoped to the full lifecycle). R+W perspective guidance is mapped to these 12 codes.
 - REQ-004: The metamodel is given as PlantUML class diagrams that pass the specmgr validation.
 - REQ-005: Each viewpoint and each perspective has a concrete Structurizr mapping with a coverage statement. Unverified facts are marked "to be confirmed".
 - REQ-006: Principles, patterns and tactics have a defined home. Adopted principles and patterns are DECs.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A new TXT "Architecture Model" exists and passes validation.
-- [ ] ACC-002: The checklist TXT refers to the new TXT for concern lists and states that the applicability derivation is our interpretation.
+- [x] ACC-001: A new TXT "Architecture Model" exists and passes validation.
+- [x] ACC-002: The checklist TXT refers to the new TXT for concern lists and states that the applicability derivation is our interpretation.
 - [ ] ACC-003: Both metamodel diagrams exist in the feature folder and pass validate_plantuml.
 - [ ] ACC-004: Open items of QA 25bd5b93 are closed or narrowed, and missing sources are named.
-- [ ] ACC-005: The ChatGPT transcripts and the old review file are in the feature folder.
+- [x] ACC-005: The ChatGPT transcripts and the old review file are in the feature folder.
 
 ### Scope
 
@@ -95,7 +95,7 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 
 ### Current Status
 
-**As of 2026-11-18**: Phase 100 and 110 are done. Nothing is committed. Phase 120 waits for the user's validation of the design. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
+**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-003 is open: both diagrams pass only the structure-only floor of validate_plantuml, because no PlantUML source is configured. ACC-004 is open until the open items are narrowed after Phase 120. Phase 120 waits for the user's validation of the design. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
 
 ### Blockers
 
@@ -104,6 +104,14 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22 14:27:37.000Z - Review corrections
+
+Mechanical corrections after a review. REQ-003 uses the new name Resources (RS). ACC-001, ACC-002 and ACC-005 are checked. Checklist Draft 0.12: skill directory `.opencode/skill/`, ADR removed as an input type, RS wording aligned. Architecture Model Draft 0.4: RS wording aligned. QA 25bd5b93: 0.0540 marked as superseded in part by 0.0670, 0.0320 updated (`specmgr://iso29148` exists).
+
+#### 2026-11-20 11:43:54.000Z - Perspective DR renamed to RS
+
+DevelopmentResource (DR) is renamed to Resources (RS) and re-scoped to the full lifecycle (QA 0.0670, checklist Draft 0.11, Architecture Model Draft 0.3).
 
 #### 2026-11-18 15:00:00.000Z - Clean Architecture added as a source
 

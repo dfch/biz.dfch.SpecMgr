@@ -4,7 +4,7 @@ created: '2026-11-05T06:53:20.701+01:00'
 id: 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9
 status: draft
 type: txt
-updated: '2026-11-20T12:44:40.748+01:00'
+updated: '2026-11-22T15:27:37.000+01:00'
 version: 1.0.0
 ---
 
@@ -139,7 +139,7 @@ There are twelve perspectives. The first nine are the ISO/IEC 25010:2023 quality
 | SA | Safety | ISO/IEC 25010 | None. R+W mention safety only under Regulation (health and safety law). This is an extension of R+W |
 | RG | Regulation | R+W | Regulation |
 | LO | Location | R+W | Location |
-| RS | Resources | R+W | Development Resource, re-scoped to build and operate (catalogue extension) |
+| RS | Resources | R+W | Development Resource, re-scoped to the full lifecycle (catalogue extension) |
 
 Concerns in focus of the three added perspectives, from R+W:
 
@@ -577,7 +577,7 @@ The criteria in sections 6 to 10 stay tool neutral and name no product. Product 
 ### 11.2 Inputs and Outputs
 
 - Input, source code: one or more repository paths.
-- Input, specmgr artifacts: one or more artifact IDs, for example a SYSRS and the REQ, UC, DEC, ADR, RSK and GOL documents it references.
+- Input, specmgr artifacts: one or more artifact IDs, for example a SYSRS and the REQ, UC, DEC, RSK and GOL documents it references.
 - Input, intake answers: the preconditions of section 3 as far as they are known. At least the baseline, the review type, the safety relevance declaration and the stakeholders.
 - Output, facts file: one structured file per system. It holds every element and relationship with origin and provenance (section 11.4).
 - Output, workspace: one DSL file per workspace.
@@ -617,13 +617,13 @@ Agents, in `.opencode/agent/`:
 | c4-specmgr-extractor | specmgr artifacts to facts file | Read only |
 | c4-model-checker | Validates the workspace, runs the inspections and compares a sample of facts with the source | Read only |
 
-Skills, in `.opencode/skills/`. A skill holds knowledge, not behaviour, and loads on demand:
+Skills, in `.opencode/skill/`, one subfolder each. A skill holds knowledge, not behaviour, and loads on demand:
 
 | Skill | Content |
 |-------|---------|
 | c4-structurizr-dsl | DSL syntax and conventions: identifiers, views, styles, tags, properties, deployment, perspectives, the validation and export tools |
 | c4-from-source | How to find containers, components, relationships and external systems in code. Containers come from compose files, Kubernetes manifests, Dockerfiles and build manifests. Relationships come from HTTP, queue and database clients. External systems come from environment variables and SDKs. Where to stop |
-| c4-from-specmgr | The mapping from specmgr artifact types to C4 constructs. UC actors become persons. REQ items about interfaces and compatibility become external systems. DEC and ADR become documentation and properties. Everything is Proposed unless an artifact states a structure |
+| c4-from-specmgr | The mapping from specmgr artifact types to C4 constructs. UC actors become persons. REQ items about interfaces and compatibility become external systems. DEC becomes documentation and properties. Everything is Proposed unless an artifact states a structure |
 | c4-viewpoint-mapping | Reads the mapping and the property conventions of the Architecture Model TXT, section 8. It holds no copy |
 | c4-model-quality | The checks of section 11.8 as modelling rules, including the severity setting per inspection |
 
@@ -693,6 +693,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-22 14:27:37.000Z - Draft 0.12
+
+Mechanical corrections. Section 5.1: RS is re-scoped to the full lifecycle, as in the Architecture Model TXT. Section 11.5: the skill directory is `.opencode/skill/` (singular, one subfolder for each skill), the only skill directory that the harness bundle includes. Sections 11.2 and 11.5: ADR removed as an input artifact type, because the ADR artifact type was removed in favour of DEC (issue 46). Issue 267.
 
 ### 2026-11-20 11:43:54.000Z - Draft 0.11
 
