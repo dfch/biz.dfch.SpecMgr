@@ -4,7 +4,7 @@ created: '2026-11-18T13:25:56.718+01:00'
 id: 30983f27-f5aa-4d42-972e-5593f0c3ba09
 status: draft
 type: txt
-updated: '2026-11-22T22:30:00.000+01:00'
+updated: '2026-11-22T23:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -32,7 +32,8 @@ This document holds definitions. The review criteria, the applicability matrix, 
 | ISO/IEC 25010:2023 | Nine quality characteristics, used as perspectives | Names and sub-characteristics checked against specmgr://iso25010. The original standard is not in the docs repository |
 | Structurizr documentation and tool, version 2026.10.26 | Mapping in section 6 | Property and perspective behaviour verified in QA 25bd5b93 (0.0380, 0.0500). Everything else is to be confirmed |
 | ISO/IEC/IEEE 42030 | Architecture evaluation framework | Missing. Only cited in the texts of 12207 and 15288 |
-| TOGAF, ATAM report of the SEI | Possible alignment, Business/Capability viewpoint | Missing |
+| TOGAF 9.1 | Business Architecture view, architecture compliance review, ACMM | Checked against the markdown copy in the sibling docs repository (2026-11-22). TOGAF gives view guidelines and artifacts, not formal viewpoints (ch. 35), so the viewpoint set of section 4 is unchanged |
+| ATAM report of the SEI | Possible alignment of the review method | Missing |
 
 ## 3. Metamodel
 
@@ -333,6 +334,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-22 22:30:00.000Z - Draft 0.8
+
+Section 2: TOGAF 9.1 is now a checked source (sibling docs repository); ATAM stays missing. No change to viewpoints or perspectives. Issue 267.
 
 ### 2026-11-22 21:30:00.000Z - Draft 0.7
 

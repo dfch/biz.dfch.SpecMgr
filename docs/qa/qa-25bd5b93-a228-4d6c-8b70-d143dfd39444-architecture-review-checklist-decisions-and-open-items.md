@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-22T22:30:00.000+01:00'
+updated: '2026-11-22T23:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -90,7 +90,9 @@ TODO: check the 42030 statements once the standard is available
 
 Blocked on 2026-11-18 by missing sources: ISO/IEC/IEEE 42030 (only cited in the texts of 12207 and 15288) and the ATAM report of the SEI (CMU/SEI-2000-TR-004). Neither is in the docs repository.
 
-TODO: answer pending, needs the sources
+Partly answered on 2026-11-22 (issue 267). TOGAF 9.1 (sibling docs repository, `md/togaf-9-1/`) ch. 48 describes the architecture compliance review. Its timing matches the precondition review type, and its checklists already have the catalogue's shape (principle and what to look for: principle tags and expected evidence). Two process steps were missing and are added as one precondition in checklist section 3 (Draft 0.15): the requester and objectives of the review, and who accepts the result. Where results are stored is deferred with 0.0310. Its compliance levels (Irrelevant, Consistent, Compliant, Conformant, Fully Conformant, Non-conformant) compare the feature sets of an implementation and a specification. They answer a different question from the per-criterion rating and do not replace it. 42030 and the ATAM report are still not in the docs repository.
+
+TODO: check 42030 and ATAM once they are available
 
 > **0.0220**: Which capability level names does the current ISACA COBIT version use, and does it differ from ISO/IEC 33020?
 
@@ -100,7 +102,9 @@ Answered on 2026-11-22 (issue 267). The COBIT 2019 texts are in the sibling docs
 
 > **0.0230**: Which practice areas make up the capability profile?
 
-TODO: answer pending
+Partly answered on 2026-11-22 (issue 267). A practice area is a COBIT 2019 focus area, a set of governance and management objectives. Each of the eight proposed areas is mapped to COBIT objectives in checklist section 7.3 (Draft 0.15): APO03 and EDM01, BAI02, APO03.05 and MEA04, APO13 and DSS05, DSS02 and DSS03, BAI06 and BAI07, APO07. Decision management has no direct counterpart (nearest EDM01.01 and BAI08). Candidate additions found in COBIT: risk management (APO12), compliance with external requirements (MEA03), continuity (DSS04), availability and capacity (BAI04), solution build and test (BAI03). TOGAF 9.1 ch. 51 names the ACMM; its nine elements can cross-check the list.
+
+TODO: decide the candidate additions
 
 > **0.0240**: How are the overlaps between Functional, Logical and Application/Software, and between Technology/Infrastructure and Deployment, resolved?
 
@@ -108,17 +112,15 @@ Answered on 2026-11-10 (TXT Draft 0.8). The overlaps disappear because the thirt
 
 > **0.0250**: How are the overlaps between the AD list and ISO 25010 resolved, namely AD08 and AD10 against Maintainability and Flexibility, and the names shared by AD01, AD03 and AD05 with Functional Suitability?
 
-TODO: answer pending
+Decided on 2026-11-22 (issue 267) by the user. AD08 Modularity and AD10 Extensibility are deprecated: they restate the perspectives Maintainability and Flexibility. The IDs stay reserved and are never reused. The three criteria that carried them were re-tagged: XV-SA-130 and VP05-MA-090 to AD12, VP02-CO-090 to AD02. AD01, AD03 and AD05 stay, with the rule that they judge the architecture, not the product functions. Checklist Draft 0.15, section 6.3.
 
 > **0.0260**: Is Organisational promoted to an actual viewpoint, and are Business/Capability, Scenarios, Evolution and Migration, and Privacy and Regulatory added?
-
-**TODO** What does TOGAF or ISO 42010 say about this?
 
 Partly answered on 2026-11-10 (TXT Draft 0.8), based on R+W (0.0520). Not added as viewpoints: Evolution (it is covered by the perspectives MA and FL), Privacy and Regulatory (perspective RG Regulation), Organisational (perspective DR DevelopmentResource, which covers skills, budget, time and external dependencies), Scenarios (a technique of R+W, ch. 10, used for quality targets), Migration (part of VP07 Operational). Business/Capability is not in the R+W set. VP01 Context holds scope and responsibilities. It can be added per review.
 
 ISO/IEC/IEEE 42010 defines no viewpoint catalogue. Its text names the R+W viewpoints Functional, Information, Concurrency, Development, Deployment and Operational and the perspectives Security, Performance and Scalability, Availability and Resilience, and Evolution as an example (bibliography entry for R+W). It refers to TOGAF only in a list of architecture frameworks.
 
-TODO: check what TOGAF says about a Business/Capability viewpoint, if a review needs one. Missing source (2026-11-18): the TOGAF Standard of The Open Group is not in the docs repository. The BIZBOK (Business Architecture Guild) is in the sources folder of the docs repository and can be checked for capability maps.
+Answered on 2026-11-22 (issue 267) with TOGAF 9.1 (sibling docs repository, `md/togaf-9-1/`). TOGAF has a Business Architecture view (ch. 35) with the concerns people, process, function, business information, usability and performance, built from business scenarios. TOGAF states that its views are not a full definition of a viewpoint. Phase B (ch. 8) asks to select business viewpoints but defines none; it lists catalogs, matrices and diagrams, among them the Functional Decomposition diagram that shows the capabilities. Capability-based planning (ch. 32) is a planning technique, not a view. Decision: no VP08. Business/Capability stays a review-specific addition, and the TOGAF Phase B artifacts can be its model kinds (checklist section 4, Draft 0.15). The BIZBOK PDF is password-protected and was not read. Previous note: Missing source (2026-11-18): the TOGAF Standard of The Open Group is not in the docs repository. The BIZBOK (Business Architecture Guild) is in the sources folder of the docs repository and can be checked for capability maps.
 
 > **0.0270**: Is the applicability matrix and its cell count correct?
 
@@ -229,11 +231,11 @@ In TXT section 11, as a design proposal (TXT Draft 0.6). It is not implemented. 
 
 Proposed in TXT section 11.2: `diagrams/c4/<system>/`.
 
-TODO: answer pending
+Deferred on 2026-11-22 (issue 267) by the user to issue 250 (C4 agent skills).
 
 > **0.0470**: In which format is the facts file written?
 
-TODO: answer pending
+Deferred on 2026-11-22 (issue 267) by the user to issue 250.
 
 > **0.0480**: Does the viewpoint to C4 view mapping live only in the skill c4-viewpoint-mapping, or does the skill read it from the TXT?
 
@@ -243,7 +245,7 @@ Answered on 2026-11-18 (issue 267). The mapping is defined once, in TXT 30983f27
 
 > **0.0490**: How many failed check attempts end phase 5 of the flow, and how large is the sample of facts compared with the source?
 
-TODO: answer pending
+Deferred on 2026-11-22 (issue 267) by the user to issue 250.
 
 > **0.0500**: Do the property conventions `trust.boundary`, `failure.domain`, `review.safety.relevant` and `review.safety.justification` survive the Structurizr parse and the exports?
 
@@ -271,7 +273,7 @@ Answered on 2026-11-22 (issue 267, Task 120.110). The probe is rebuilt and commi
 
 Candidates: this repository for the code path and one SYSRS for the specmgr path. This follows 0.0110.
 
-TODO: answer pending
+Deferred on 2026-11-22 (issue 267) by the user to issue 250. Ready as pilot inputs: the four validation systems with their models (`.specmgr/feat/feat-267-arch-rvw/validation/`) and the committed probe (`probe/`).
 
 > **0.0520**: Which viewpoint set and which perspective set does the TXT use, and what happened to the old viewpoints VP01 to VP13?
 
@@ -406,6 +408,8 @@ Update 2026-11-22: COBIT 2019 is available in the docs repository (`md/cobit-201
 
 Answered on 2026-11-18 (issue 267). Not available as markdown, or not available at all: ISO/IEC/IEEE 42030, the ATAM report of the SEI, COBIT 2019, ISO/IEC 33020, TOGAF and the ISO/IEC 25010:2023 text (see 0.0210, 0.0220, 0.0260 and 0.0620). Also without a copy: Saltzer and Schroeder, Release It!, Enterprise Integration Patterns and the GoF Design Patterns book. PDF files exist, not yet converted to markdown, for the three POSA books (in `sources/praedeep/` of the docs repository). The checklist cites POSA only as a pattern source and as "to be confirmed". Converting them is not part of this feature.
 
+Update 2026-11-22: TOGAF 9.1 is now available as markdown (used in 0.0210, 0.0230 and 0.0260). Still missing: ISO/IEC/IEEE 42030, the ATAM report, Saltzer and Schroeder, Release It!, Enterprise Integration Patterns, GoF; the POSA PDFs are not converted; the BIZBOK PDF is password-protected.
+
 TODO: decide which of these sources to add and convert, in the order of the pattern and principle tags that cite them (PR07, PR08, PR13, PR14)
 
 > **0.0670**: Is the perspective DevelopmentResource renamed, and if so to what?
@@ -432,17 +436,17 @@ Answered in TXT Draft 0.5. The checklist defines no knock-out criteria. The knoc
 
 > **0.0290**: Is a criticality weight attached to each criterion, and how is it defined?
 
-TODO: answer pending
+Decided on 2026-11-22 (issue 267) by the user: no. The catalogue defines no criticality weight. What is critical is decided in the final evaluation of a review (checklist section 7.1, Draft 0.15).
 
 > **0.0300**: Is the optional numeric report mapping 0/3/7/10 needed for the four scored ratings?
 
 Since TXT Draft 0.5 the rating is derived from Applicability, Evidence and Outcome. A numeric mapping would apply to the derived rating word, not to the three fields. Which of the five words are scored is still to be decided.
 
-TODO: answer pending
+Decided on 2026-11-22 (issue 267) by the user: no numeric mapping. Ratings are ordinal and are never averaged; a report gives the count per rating word.
 
 > **0.0310**: How is a completed review stored and linked?
 
-TODO: answer pending
+Deferred on 2026-11-22 (issue 267) by the user to issue 228 (ARC artifact). TOGAF 9.1 ch. 48 places review results in the architecture repository; the ARC artifact is the specmgr counterpart.
 
 > **0.0320**: Is a `specmgr://iso29148` resource worth a separate feature?
 
@@ -452,7 +456,7 @@ Update 2026-11-22: done. The resource `specmgr://iso29148` exists (feat-173-req-
 
 > **0.0330**: How are the remaining primary cells expanded, and in which order?
 
-TODO: answer pending
+Decided on 2026-11-22 (issue 267) by the user. Order: (1) the home cells without criteria, XV x SE and XV x RS, each starting with its target criterion; (2) the primary cells where the validation found the real gaps: VP04 x RE, VP02 x SE, VP03 x MA, VP06 x FL; (3) the rest, one perspective at a time. Each step is its own feature or phase.
 
 ## Functional Suitability
 

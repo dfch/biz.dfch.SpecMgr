@@ -4,7 +4,7 @@ created: '2026-11-18T13:21:29.973+01:00'
 id: feat-267-arch-rvw
 status: planning
 type: feat
-updated: '2026-11-22T22:30:00.000+01:00'
+updated: '2026-11-22T23:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -97,15 +97,19 @@ GitHub issue #267. The architecture review checklist (TXT 23ded6d8-b184-4ef5-9fd
 
 ### Current Status
 
-**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120: Task 120.100 is done. Four validation runs (specmgr, AERIS-10, Apache OFBiz, OpenTelemetry Demo) show that the matrix structure holds. The user accepted all 15 proposed changes of the synthesis, and they are applied (Task 120.105: checklist Draft 0.13, Architecture Model Draft 0.6, QA 0.0690). Since then: the metamodel diagrams show the review scope and the new keys (rendered with the local PlantUML server), tenant isolation and extension interfaces have criteria (QA 0.0700), and the maturity scale is COBIT 2019 (QA 0.0220). Task 120.110 is done: the Structurizr probe is rebuilt and committed in `probe/`. Remaining open: the QA items that wait for sources or decisions. Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
+**As of 2026-11-22**: Phase 100 and 110 are done and committed. ACC-004 is open until the open items are narrowed after Phase 120. The metamodel gaps of the review are closed (Task 110.150). Both diagrams render without errors with the PlantUML Docker image (ACC-003). Phase 120: Task 120.100 is done. Four validation runs (specmgr, AERIS-10, Apache OFBiz, OpenTelemetry Demo) show that the matrix structure holds. The user accepted all 15 proposed changes of the synthesis, and they are applied (Task 120.105: checklist Draft 0.13, Architecture Model Draft 0.6, QA 0.0690). Since then: the metamodel diagrams show the review scope and the new keys (rendered with the local PlantUML server), tenant isolation and extension interfaces have criteria (QA 0.0700), and the maturity scale is COBIT 2019 (QA 0.0220). Task 120.110 is done: the Structurizr probe is rebuilt and committed in `probe/`. The open QA items were worked on 2026-11-22: decided 0.0250, 0.0260, 0.0290, 0.0300, 0.0330; deferred 0.0310 (issue 228) and 0.0460, 0.0470, 0.0490, 0.0510 (issue 250); partly answered 0.0210 and 0.0230. Still open: 0.0200 and 0.0210 (42030, ATAM missing), 0.0230 (candidate practice areas), 0.0660 (sources to convert). Open design points: the cells that differ from R+W Table 4-1 (QA 0.0640), and the decoupling-mode mapping of Architecture Model section 8.5, which is our interpretation. Clean Architecture is now a checked source for PR09 to PR12 (Task 110.140).
 
 ### Blockers
 
-- Missing sources: ISO/IEC/IEEE 42030, ATAM report, TOGAF, ISO/IEC 25010:2023 original text. Cited by the principle and pattern tags, with no markdown copy: Saltzer and Schroeder, Release It!, Enterprise Integration Patterns, GoF, POSA (PDF files exist, QA 0.0660).
+- Missing sources: ISO/IEC/IEEE 42030, ATAM report, ISO/IEC 25010:2023 original text. Cited by the principle and pattern tags, with no markdown copy: Saltzer and Schroeder, Release It!, Enterprise Integration Patterns, GoF, POSA (PDF files exist, QA 0.0660).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-22 22:30:00.000Z - Open QA items
+
+User decisions: AD08 and AD10 deprecated, no criticality weight and no numeric mapping, criterion expansion order (home cells, then validation gaps), review storage and agent items deferred to issues 228 and 250. Research with TOGAF 9.1 (now in the docs repository): no Business/Capability viewpoint (TOGAF has view guidelines, not viewpoints), a precondition on requester, objectives and sign-off from the compliance review process, COBIT objectives per practice area. Checklist Draft 0.15, Architecture Model Draft 0.8.
 
 #### 2026-11-22 21:30:00.000Z - Structurizr probe re-run
 

@@ -4,7 +4,7 @@ created: '2026-11-05T06:53:20.701+01:00'
 id: 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9
 status: draft
 type: txt
-updated: '2026-11-22T21:30:00.000+01:00'
+updated: '2026-11-22T23:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -32,6 +32,7 @@ This document is the template and catalogue. The criteria are general and indexe
 | ISO/IEC 25010:2023 | Nine quality characteristics and their sub-characteristics. They are the first nine perspectives | Characteristic and sub-characteristic names checked against specmgr://iso25010. The original standard is not in the docs repository |
 | ISO/IEC/IEEE 29148:2018 | Characteristics of a well-formed requirement and of a requirement set, applied to checklist criteria | The nine characteristics of an individual requirement (clause 5.2.5) and the five characteristics of a set (clause 5.2.6) checked against the text (2026-11-18). It is a requirements standard and is applied here by analogy |
 | ISO/IEC/IEEE 42030 | Architecture evaluation framework, possible alignment | Missing. The standard is not in the docs repository. It is only cited in the texts of 12207 and 15288 |
+| TOGAF 9.1 (The Open Group) | Business Architecture view and its artifacts (ch. 8, 35), architecture compliance reviews and compliance levels (ch. 48), the ACMM maturity model (ch. 51) | Checked against the markdown copy in the sibling docs repository (2026-11-22). Used for the Business/Capability note in section 4, the precondition on requester and sign-off in section 3, and the note in section 7.3 |
 | ISACA COBIT 2019 (COBIT 2019 Framework: Introduction and Methodology, section 6.4) | Process capability levels 0 to 5 for practice criteria, focus area maturity levels 0 to 5 for the capability profile, and the achievement rating Fully, Largely, Partially, Not (section 7.2) | Checked against the markdown copy in the sibling docs repository (2026-11-22), Figures 6.2 and 6.3. COBIT states that its scheme largely aligns to and extends CMMI Development V2.0. The CMMI model text itself is not in the docs repository. ISO/IEC 33020 is no longer used |
 | Assessment dimensions AD01 to AD12 | Tag on each criterion, plus an architecture-level pass | Draft list collected from several interviews. No single reference. Do not cite as ISO |
 | Assessment dimensions AD13 to AD15 | Necessity, economic viability, organisational fit | Added in this catalogue to close gaps in AD01 to AD12. AD14 and AD15 are carried by the Resources perspective (RS, section 5) |
@@ -64,6 +65,7 @@ A review cannot start meaningfully without these inputs. If one is missing, reco
 - Safety relevance declared: yes or no, each with a one-line justification (see section 5).
 - Practice evidence for the capability profile (section 7.3), as far as available.
 - Review team, reviewers' independence and review date.
+- Requester and objectives of the review, and who accepts the result (sign-off). Following the architecture compliance review process of TOGAF 9.1 (ch. 48).
 
 ### 3.1 Default tailoring by system class
 
@@ -110,7 +112,7 @@ Other viewpoints and topics are placed as follows:
 - Evolution, Regulation, Privacy and Organisational concerns are perspectives (section 5), not viewpoints.
 - Migration is part of VP07 Operational.
 - Scenarios are a technique of R+W (ch. 10), used here to state quality targets. They are not a viewpoint.
-- Business/Capability is not in the R+W set. VP01 Context holds the scope and responsibilities. A review can add a Business/Capability viewpoint if the concerns exist.
+- Business/Capability is not in the R+W set. VP01 Context holds the scope and responsibilities. A review can add a Business/Capability viewpoint if the concerns exist. TOGAF 9.1 gives a Business Architecture view guideline, not a full viewpoint (ch. 35). Its Phase B artifacts (ch. 8: catalogs, matrices and diagrams such as Functional Decomposition, Business Footprint and Business Service/Information) can serve as the model kinds of such an added viewpoint.
 
 ### 4.1 Mapping from the earlier viewpoint list
 
@@ -307,9 +309,9 @@ The AD list is a draft collected from interviews. AD13 to AD15 were added in thi
 | AD05 | Appropriateness | Is the solution appropriate for the system's context and complexity? |
 | AD06 | Traceability | Can decisions be traced to requirements, concerns and constraints? |
 | AD07 | Verifiability | Can architectural properties and claims be objectively verified? |
-| AD08 | Modularity | Are responsibilities and components appropriately separated? |
+| AD08 | Modularity (deprecated) | Deprecated on 2026-11-22. The Maintainability perspective (MA, sub-characteristic Modularity) carries it. Not used for new criteria, never reused |
 | AD09 | Understandability | Is the architecture understandable to its intended stakeholders? |
-| AD10 | Extensibility | Can it accommodate foreseeable changes? |
+| AD10 | Extensibility (deprecated) | Deprecated on 2026-11-22. The Flexibility perspective (FL, sub-characteristic Adaptability) carries it. Not used for new criteria, never reused |
 | AD11 | Compliance | Does it comply with applicable standards, regulations and principles? |
 | AD12 | Risk management | Are architectural risks identified and adequately addressed? |
 | AD13 | Necessity | Is every significant element and decision needed, with a stakeholder need or constraint behind it? |
@@ -322,10 +324,10 @@ How the new dimensions differ from existing ones:
 - AD14 asks whether the architecture is worth building and running. AD04 asks only whether it can be built within the constraints.
 - AD15 asks whether the organisation can build and operate it. The capability profile (section 7.3) supplies the evidence.
 
-Known issues with the AD list, to resolve in later drafts:
+Resolved overlaps with ISO/IEC 25010 (QA 0.0250):
 
 - AD01, AD03 and AD05 share names with the Functional Suitability sub-characteristics. Read them here as properties of the architecture, not of the product functions.
-- AD08 Modularity and AD10 Extensibility restate Maintainability (Modularity) and Flexibility.
+- AD08 Modularity and AD10 Extensibility restated the perspectives Maintainability and Flexibility. They are deprecated; a criterion names the perspective instead.
 
 Relation of the dimensions to the perspectives: a perspective says which property or constraint is judged. A dimension says what kind of merit is judged. They are independent axes. Two dimensions have a natural home perspective: AD11 Compliance in Regulation (RG), and AD14 Economic viability and AD15 Organisational fit in Resources (RS). A criterion in another perspective can carry these tags too.
 
@@ -382,7 +384,7 @@ Rules:
 - A finding is mandatory for the ratings Partially, Unsatisfactory and Unassessable. An Unassessable finding is recorded against AD01 or AD07 and states whether the evidence is insufficient or missing. The severity of a finding does not define the rating.
 - Do not average ratings. Ratings are ordinal. Report the count per rating.
 - This catalogue does not define knock-out criteria. Which criteria are critical depends on the organisation and the architecture. The final evaluation of a review decides this for its specific environment.
-- A criticality weight, if used, is a separate attribute of the criterion and is never built into the rating.
+- The catalogue defines no criticality weight and no numeric mapping of the rating words (QA 0.0290, 0.0300). A report gives the count per rating word. What is critical is decided in the final evaluation of the review.
 
 ### 7.2 Maturity of practices
 
@@ -415,18 +417,18 @@ Each review records one capability profile. It is required. It rates the organis
 | 5 | Optimizing | The organisation is focused on continuous improvement |
  Do not average the levels. Report the profile as a list. The profile is the main evidence for AD15 Organisational fit.
 
-The practice areas below are a proposal. The final list is to be agreed.
+A practice area is a COBIT focus area: a set of governance and management objectives (COBIT 2019 Framework: Introduction and Methodology, section 6.4.3). The objectives column makes the profile traceable to COBIT. The list of practice areas is still a proposal; candidate additions are in QA 0.0230. TOGAF 9.1 (ch. 51) names the ACMM as a related architecture maturity model. Its nine elements can cross-check the list, but its level names differ from COBIT and it averages the levels, so it is not used for rating.
 
-| Practice area | Related viewpoint | Level (0 to 5) | Evidence |
-|---------------|-------------------|----------------|----------|
-| Architecture governance | XV | | |
-| Decision management and decision records | XV | | |
-| Traceability from requirements to architecture | XV | | |
-| Architecture evaluation and conformance checking | VP05 | | |
-| Security engineering practice | XV (SE) | | |
-| Operations and incident learning | VP07 | | |
-| Change, release and deployment | VP07 | | |
-| Skills and ownership | XV (RS) | | |
+| Practice area | Related viewpoint | COBIT 2019 objectives | Level (0 to 5) | Evidence |
+|---------------|-------------------|-----------------------|----------------|----------|
+| Architecture governance | XV | APO03 Managed Enterprise Architecture, EDM01 Ensured Governance Framework Setting and Maintenance | | |
+| Decision management and decision records | XV | No direct counterpart. Nearest: EDM01.01 (decision-making model), BAI08 Managed Knowledge | | |
+| Traceability from requirements to architecture | XV | BAI02 Managed Requirements Definition, BAI03.09 (changes to requirements) | | |
+| Architecture evaluation and conformance checking | VP05 | APO03.05 (architecture services and compliance), MEA04 Managed Assurance | | |
+| Security engineering practice | XV (SE) | APO13 Managed Security, DSS05 Managed Security Services | | |
+| Operations and incident learning | VP07 | DSS02 Managed Service Requests and Incidents, DSS03 Managed Problems | | |
+| Change, release and deployment | VP07 | BAI06 Managed IT Changes, BAI07 Managed IT Change Acceptance and Transitioning | | |
+| Skills and ownership | XV (RS) | APO07 Managed Human Resources | | |
 
 ## 8. Findings and Evidence
 
@@ -653,7 +655,7 @@ Practice criterion:
 
 - Type: design.
 - Sub-characteristic: Safe Integration.
-- Primary AD: AD08 Modularity.
+- Primary AD: AD12 Risk management.
 - Principle tags: PR06.
 - Depends on: XV-SA-120.
 - Question: How is each safety function kept independent of the mission function that it protects against, and which elements do both share?
@@ -753,7 +755,7 @@ Practice criterion:
 
 - Type: design.
 - Sub-characteristic: Interoperability.
-- Primary AD: AD10 Extensibility.
+- Primary AD: AD02 Consistency.
 - Principle tags: PR04.
 - Applicability: only if the scope has an extension interface (section 3).
 - Question: Where is the extension interface defined, how is it versioned, and how are extensions told about a breaking change?
@@ -763,7 +765,7 @@ Practice criterion:
 
 - Type: design.
 - Sub-characteristic: Modularity, Modifiability.
-- Primary AD: AD08 Modularity.
+- Primary AD: AD12 Risk management.
 - Principle tags: PR02.
 - Applicability: only if the scope has an extension interface (section 3).
 - Question: How are extensions built, tested and released independently of the system, and which parts of the system must change when an extension changes?
@@ -902,6 +904,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-22 22:30:00.000Z - Draft 0.15
+
+Open items of QA 25bd5b93-a228-4d6c-8b70-d143dfd39444 decided by the user. AD08 and AD10 deprecated (0.0250); XV-SA-130 and VP05-MA-090 re-tagged to AD12, VP02-CO-090 to AD02. No criticality weight and no numeric mapping (0.0290, 0.0300). Capability profile: COBIT 2019 objectives per practice area, ACMM note (0.0230, partly). TOGAF 9.1 added to the sources: Business/Capability note in section 4 (0.0260), precondition requester, objectives and sign-off in section 3 (0.0210, partly). Issue 267.
 
 ### 2026-11-22 20:30:00.000Z - Draft 0.14
 
