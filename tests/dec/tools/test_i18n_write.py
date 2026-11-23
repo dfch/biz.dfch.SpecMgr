@@ -68,7 +68,10 @@ def _seed(docs_root: Path) -> tuple[str, Path, Path]:
     assert created.id is not None
     variant = create_dec(_DE_BODY, language="de", id=created.id)
     assert isinstance(variant, DecFrontmatter)
-    en_path = next((docs_root / "dec").rglob("*.md"))
+    # Scope the selection to the EN language dir: an rglob over the DOMAIN dir would span en/ + de/
+    # (both hold the same basename), and pathlib's traversal order is Python-version-dependent
+    # (3.11 yields the variant first) -- next() must never pick the variant as the EN path.
+    en_path = next((docs_root / "dec" / "en").rglob("*.md"))
     de_path = docs_root / "dec" / "de" / en_path.parent.name / en_path.name
     return created.id, en_path, de_path
 

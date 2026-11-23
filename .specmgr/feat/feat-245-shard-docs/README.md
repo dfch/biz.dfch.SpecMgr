@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: review
 type: feat
-updated: '2026-11-23T10:10:35.674+01:00'
+updated: '2026-11-23T14:19:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -138,6 +138,15 @@ Key invariants and rationale:
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-23 13:19:00.000Z - Phase 125 correction: order-independent EN file selection in test_i18n_write seed (CI 3.11)
+
+A deterministic Python-3.11-only CI failure cluster (15 failed / 25 passed in one file; 3.12/3.13 green), root-caused to the Phase 125 re-seed:
+
+- Root cause: `tests/dec/tools/test_i18n_write.py::_seed()` selected the EN path with `next((docs_root / "dec").rglob("*.md"))` — an rglob over the DOMAIN dir that spans BOTH `en/` and `de/` (the variant carries the EN source's exact basename, so both match). `next()` picks whichever the pathlib traversal yields first, and that order is Python-version-dependent (3.13's rewritten glob vs 3.11's): on 3.11 the DE variant is yielded first, so `en_path` was actually the DE file and every "EN untouched" byte-equality assertion in the shared `_TempDocsTestCase` compared the DE file against its own pre-write snapshot (signature: actual `status: accepted` + mocked 2031 timestamp vs expected seeded draft). The write tools were correct; the test's file selection was the bug.
+- The fix (tests only — no src/, no docs/): scoped the EN selection to the EN language dir, `next((docs_root / "dec" / "en").rglob("*.md"))` (exactly one file exists there by construction of the seed); `de_path`'s derivation is unchanged.
+- Audit of the whole test tree for the same hazard (every `next(...)`/`[0]` over an rglob whose scope is a DOMAIN dir rather than a specific language dir or shard dir): **6 occurrences fixed** — `test_i18n_write.py::_seed` (the CI bug), `test_i18n_language.py::_seed_en_and_de` and `TestI18nVariantWithFurtherBlocks.setUp` (same `next()` over `docs/dec/`; safe only because the variant is written after the selection — now EN-scoped), `test_edit.py::_doc_path` and `test_list_references.py`'s txt-target selection (domain-scoped `next(... if id in p.name ...)`; EN-only seeds today — now EN-scoped), and the SHARED helper `SimilarityTestCase.path_for_id` in `_similarity_helpers.py` (9 call sites over `test_find_related`/`test__similarity_corpus`/`test__similarity_search`; domain-scoped first-match by frontmatter id, where `sorted()` would deterministically prefer a `de/` variant over `en/` — now EN-scoped, behavior-preserving for all 9 callers). **Already safe, not changed**: every `next(spec.base_dir(...) / ...)` selection (EN- or `de`/`fr`-scoped: `test_translate_artifact_flow` ×8, `test_i18n_all_domains:203`, `test_i18n_three_languages:71`, `test_list_languages:75`, `test_i18n_closed_vocabulary:154`, `test_check_translation_drift:593`, `test_i18n_en_only_consumers` ×5, `test_txt_language:125`, `test_set_language:130`, `test_i18n_write`'s own de/`dec_base_dir()` globs), `ensure_req_base_dir()`-scoped selections in `req/test_doc_cache_wiring` ×4, and every domain-dir `list(...rglob)` + `assertEqual(len(matches), 1)` count-assert pattern (the 13 `get_<d>`/`create`-adjacent `_doc_path` helpers, the general-framework `_doc_path`/`_flat_path` helpers, `req/test_doc_cache_wiring:189`, `test_i18n_all_domains:227/662`) — a two-language-dir state there fails loudly and deterministically on every Python version instead of silently mis-selecting; `uc/test_get_use_case_package_diagram:157` (order-insensitive unlink cleanup) and the non-doc-tree rglobs (`test_list_languages` snapshots, `test_i18n_feat_adr_exclusion` relative-path sets, `tests/commands/*`, `tests/opencode/*`) are order-independent. The Phase 130 re-seeded `tests/<d>/` dirs were included in the audit: no silent domain-scoped `next()` selection exists there beyond the count-asserted patterns.
+- Verification (the 3.11 matrix is the arbiter): `uv run --frozen --all-extras --python 3.11 pytest tests/dec/tools/test_i18n_write.py -q` → **40 passed, 0 failed** (was 15 failed / 25 passed); the five other touched files on 3.11 → 160 passed, 0 failed; full suite on 3.11 `uv run --frozen --all-extras --python 3.11 pytest -n auto -q` (captured at `/tmp/opencode/fix311-pytest.txt`) → **6210 passed, 18 skipped, 0 failed**, 11274 subtests, exit 0; then `uv sync --frozen --all-extras --python 3.13` and `uv run --frozen pytest -n auto -q` → **6210 passed, 18 skipped, 0 failed**, 11274 subtests (the expected post-merge counts); `ruff format --check` clean (2388 files), `ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` exit 0, `specmgr lint --all` → `linted=180 failed=0 skipped=0 layout=0` exit 0. Venv left on 3.13.
 
 #### 2026-11-23 03:49:17.000Z - Phase 140 complete (docs, DEC, regeneration, final gate)
 

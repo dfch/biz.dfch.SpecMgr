@@ -140,7 +140,9 @@ def _seed_en_and_de(docs_root: Path) -> tuple[str, Path, Path]:
     """
     created = create_dec(_EN_BODY)
     assert created.id is not None  # create_dec always assigns the frontmatter id
-    en_file = next((docs_root / "dec").rglob("*.md"))
+    # EN dir scope: a domain-dir rglob would also see the de/ variant once it exists, and the
+    # traversal order (hence next()'s pick) is Python-version-dependent.
+    en_file = next((docs_root / "dec" / "en").rglob("*.md"))
     de_dir = docs_root / "dec" / "de" / en_file.parent.name
     de_dir.mkdir(parents=True)
     frontmatter = en_file.read_text(encoding="utf-8").split("---\n")[1]
@@ -660,7 +662,7 @@ class TestI18nVariantWithFurtherBlocks(unittest.TestCase):
         created = create_dec(self._EN_BODY_WITH_BLOCKS)
         assert created.id is not None
         self.doc_id = created.id
-        en_file = next((self.docs_root / "dec").rglob("*.md"))
+        en_file = next((self.docs_root / "dec" / "en").rglob("*.md"))  # EN dir scope (see _seed_en_and_de)
         de_dir = self.docs_root / "dec" / "de" / en_file.parent.name
         de_dir.mkdir(parents=True)
         frontmatter = en_file.read_text(encoding="utf-8").split("---\n")[1]

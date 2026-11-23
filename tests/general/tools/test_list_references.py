@@ -917,8 +917,11 @@ class TestListReferencesTxtSource(TempListReferencesDirTestCase):
         self.assertEqual((row.type, row.id), ("txt", created_target.id))
         self.assertEqual(row.title, _TXT_TITLE)
         self.assertIsNone(row.error)
-        # Two txt documents share the temp base dir: the target is the file named after its own id.
-        target_path = next(path for path in (self.docs_root / "txt").rglob("*.md") if created_target.id in path.name)
+        # Two txt documents share the temp base dir: the target is the file named after its own id
+        # (EN dir scope: a domain-dir rglob would also see a <lang>/ variant of the same id).
+        target_path = next(
+            path for path in (self.docs_root / "txt" / "en").rglob("*.md") if created_target.id in path.name
+        )
         self.assertEqual(Path(row.path), target_path.resolve())
 
 

@@ -978,7 +978,10 @@ class TempEditDirTestCase(unittest.TestCase):
         if case.doc_type == "feat":
             result = case.base_dir() / doc_id / "README.md"
         else:
-            result = next(p for p in (self.docs_root / case.doc_type).rglob("*.md") if doc_id in p.name)
+            # EN dir scope: a domain-dir rglob would also see a <lang>/ variant of the same id
+            # (same basename), and the traversal order (hence next()'s pick) is
+            # Python-version-dependent.
+            result = next(p for p in (self.docs_root / case.doc_type / "en").rglob("*.md") if doc_id in p.name)
         return result
 
     def _seed(self, case: _Case, body: str) -> Any:

@@ -469,15 +469,18 @@ class SimilarityTestCase(unittest.TestCase):
         return result
 
     def path_for_id(self, domain: str, doc_id: str) -> Path:
-        """The on-disk path of the parseable ``domain`` document with frontmatter ``id == doc_id``.
+        """The on-disk path of the parseable EN ``domain`` document with frontmatter ``id == doc_id``.
 
-        Scans the domain's sharded listing (``<docs_root>/<domain>/*/*.md``, feat-245) and
-        matches the frontmatter ``id``; unparseable files (e.g. the malformed-frontmatter
-        seed) are skipped. Raises ``AssertionError`` if no parseable document matches.
+        Scans the EN language dir's sharded listing (``<docs_root>/<domain>/en/*/*.md``, feat-245)
+        and matches the frontmatter ``id``; unparseable files (e.g. the malformed-frontmatter
+        seed) are skipped. The scan is deliberately EN-scoped: a domain-dir scan would also see
+        a ``<lang>/`` variant of the same id (same basename), and the first match is then
+        Python-version-order-dependent. Raises ``AssertionError`` if no parseable document
+        matches.
         """
         import frontmatter
 
-        base_dir = self.docs_root / domain
+        base_dir = self.docs_root / domain / "en"
         for path in sorted(base_dir.rglob("*.md")):
             try:
                 post = frontmatter.loads(path.read_text(encoding="utf-8"))
