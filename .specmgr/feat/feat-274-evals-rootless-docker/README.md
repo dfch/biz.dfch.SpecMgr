@@ -1,9 +1,9 @@
 ---
 created: '2026-11-23T05:47:05.215Z'
 id: feat-274-evals-rootless-docker
-status: review
+status: done
 type: feat
-updated: '2026-11-23T06:01:51.136Z'
+updated: '2026-11-23T07:57:41.477+01:00'
 version: 1.0.0
 ---
 
@@ -33,7 +33,7 @@ A second defect surfaced on the PR: CI failed its `docs/` drift check because `d
 - [x] ACC-002: `tests/evals/test_preflight_user_flags.py` covers, with `subprocess.run` mocked inside `preflight` only: rootless (`--user 0:0`), rootful (`--user uid:gid`), every probe failure (missing CLI, timeout, non-zero exit, text that is not JSON, empty output, a JSON object, non-string entries, a non-exact `rootless` match), the cache (one probe after a success, a retry after a failure, the explicit clear), and the non-POSIX path (`[]`, no probe) (REQ-001 to REQ-003).
 - [x] ACC-003: `scripts/check_generated_test_count.py` exits 0 when the count in `docs/GENERATED.md` matches, and exits 1 with an actionable message after adding or after deleting one test file; the `specmgr-docs-test-count` hook runs it on every commit (`always_run`) (REQ-004).
 - [x] ACC-004: `run_preflight` records `docker_rootless` and `container_user_flags` (REQ-005).
-- [ ] ACC-005: PR #272 CI is green, including the Python 3.13 `docs/` drift check.
+- [x] ACC-005: PR #272 CI is green, including the Python 3.13 `docs/` drift check.
 
 ### Scope
 
@@ -89,7 +89,7 @@ pre-commit never passes deleted files to a hook (its staged-file list uses `git 
 
 - [x] Task 120.100: Open GitHub issue #274 and link PR #272 to it (`Fixes #274`).
 - [x] Task 120.110: Write this retrospective plan.
-- [ ] Task 120.120: Confirm PR #272 CI is green (ACC-005), merge, and set the status to done.
+- [x] Task 120.120: Confirm PR #272 CI is green (ACC-005), merge, and set the status to done (PR #272 merged 2026-11-23 as squash `880144c8`).
 
 #### Phase 130: Review Fixes
 
@@ -106,11 +106,15 @@ pre-commit never passes deleted files to a hook (its staged-file list uses `git 
 
 ### Current Status
 
-**As of 2026-11-23**: The implementation and the Phase 130 review fixes are complete and in review on PR #272. ACC-001 to ACC-004 are met. ACC-005 waits on the CI run for the review-fix commit.
+**As of 2026-11-23**: PR #272 was merged to `dev` on 2026-11-23 as squash commit `880144c8`, and GitHub issue #274 was closed by it. The feature is closed out to `done`; ACC-001 to ACC-005 are met and nothing remains. The closeout satisfies the feat-233-update-release precheck feat-closeout gate for the v0.39.0 release window. The historical record lives in the dated Updates entries below.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-23T07:57:41.477+01:00 - Closeout: PR #272 merged to dev, status review -> done, issue #274 closed
+
+PR #272 was merged to `dev` on 2026-11-23 (2026-11-23T06:43:26Z) as squash commit `880144c85a39309f8799e9a4aa64af448b350d5a`, after every check on head `5e6eb145` passed (`build (3.11)`, `build (3.12)`, `build (3.13)`, `plantuml-parser`, CodeQL, and the three Analyze jobs). GitHub issue #274 was closed by the PR's `Fixes #274`. `git diff 5e6eb145 880144c8 --stat` is empty (tree identity), and `origin/dev` pointed at `880144c8` at verification time. The frontmatter `status` is flipped `review` -> `done`, ACC-005 and Task 120.120 are ticked. Gate attribution: the branch was named `fix-evals-rootless-docker`, which matches neither the folder id `feat-274-evals-rootless-docker` nor the `feat-274-` prefix, so the release precheck does not attribute PR #272's delivery to this folder; future work on a folder-matching branch name would re-enable the gate. Branch and worktree cleanup is the user's call.
 
 #### 2026-11-23T06:01:51.136Z - Phase 130 review fixes
 
@@ -152,3 +156,5 @@ The `specmgr-docs` hook gap is fixed in PR #272 rather than in a separate featur
 - 482e4d95: fix(evals): skip --user under rootless Docker so mounted work dirs stay readable.
 - 6b85f09b: fix(docs): regenerate GENERATED.md test count; run specmgr-docs hook on tests/ changes (#274).
 - 4b4fb355: docs(feat-274): retrospective plan for the rootless Docker evals fix (issue #274).
+- 5e6eb145: fix(evals,hooks): address feat-274 review findings (issue #274).
+- 880144c8: the squash merge of PR #272 into `dev`.
