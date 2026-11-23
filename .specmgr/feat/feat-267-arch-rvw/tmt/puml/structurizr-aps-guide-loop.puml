@@ -1,0 +1,42 @@
+@startuml
+title <size:24>Dynamic View: TMT Observatory System - Alignment and Phasing System</size>\n<size:24>VP04 Concurrency: APT guide loop between ESW, APS and TCS (order Inferred)</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+!include <C4/C4_Component>
+
+System_Boundary("TMTObservatorySystem_boundary", "TMT Observatory System", $tags="") {
+  Container_Boundary("TMTObservatorySystem.AlignmentandPhasingSystem_boundary", "Alignment and Phasing System", $tags="") {
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, "APT Loop", $techn="Software", $descr="Acquisition, pointing and tracking loop; produces guide camera data.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.AcquisitionPointingandTrackingAssembly, "Acquisition Pointing and Tracking Assembly", $techn="Opto-mechanical assembly", $descr="Acquisition and tracking optics and camera.", $tags="", $link="")
+  }
+
+  Container(TMTObservatorySystem.ExecutiveSoftware, "Executive Software", $techn="Software", $descr="Coordinates observations: acquisition, guiding, pointing acquisition.", $tags="", $link="")
+  Container(TMTObservatorySystem.TelescopeControlSystem, "Telescope Control System", $techn="Software", $descr="Tracking, main-axis and M3 offsets, guider offsets, M2 moves.", $tags="", $link="")
+}
+
+Container(TMTObservatorySystem.ExecutiveSoftware, "Executive Software", $techn="Software", $descr="Coordinates observations: acquisition, guiding, pointing acquisition.", $tags="", $link="")
+Container(TMTObservatorySystem.TelescopeControlSystem, "Telescope Control System", $techn="Software", $descr="Tracking, main-axis and M3 offsets, guider offsets, M2 moves.", $tags="", $link="")
+
+Rel(TMTObservatorySystem.ExecutiveSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, "1: Starts the APT full-frame guide loop", $techn="ESW2GC", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, TMTObservatorySystem.AlignmentandPhasingSystem.AcquisitionPointingandTrackingAssembly, "2: Controls", $techn="APTL2APTA", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.AcquisitionPointingandTrackingAssembly, TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, "3: Sends acquisition images", $techn="APTA2APTL", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, TMTObservatorySystem.ExecutiveSoftware, "4: Sends guide camera data", $techn="GCData", $tags="", $link="")
+Rel(TMTObservatorySystem.ExecutiveSoftware, TMTObservatorySystem.TelescopeControlSystem, "5: Sends guider offsets and tracking demands", $techn="ESW2TCS", $tags="", $link="")
+Rel(TMTObservatorySystem.TelescopeControlSystem, TMTObservatorySystem.ExecutiveSoftware, "6: Acknowledges", $techn="TCS2ESW", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+footer Derived from the TMT SysML model (github.com/Open-MBEE/TMT-SysML-Model), Copyright (c) 2016 Caltech, Apache-2.0. Design: TMT Observatory Corporation. Not endorsed by Caltech, JPL or TMT. See NOTICE.
+@enduml

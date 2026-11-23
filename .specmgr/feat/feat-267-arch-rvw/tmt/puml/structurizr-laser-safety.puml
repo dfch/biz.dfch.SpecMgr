@@ -1,0 +1,49 @@
+@startuml
+title <size:24>Container View: TMT Observatory System</size>\n<size:24>VP02 Functional, SA perspective: laser propagation chain</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+
+System_Boundary("TMTObservatorySystem_boundary", "TMT Observatory System", $tags="") {
+  AddBoundaryTag("Adaptive optics (NFIRAOS)", $borderColor="#cccccc", $fontColor="#cccccc", $borderStyle="dashed")
+  Boundary(group_1, "Adaptive optics (NFIRAOS)", $tags="Adaptive optics (NFIRAOS)") {
+    Container(TMTObservatorySystem.AOSequencer, "AO Sequencer", $techn="Software", $descr="Sequences the adaptive optics system.", $tags="", $link="")
+  }
+
+  AddBoundaryTag("Laser guide stars", $borderColor="#cccccc", $fontColor="#cccccc", $borderStyle="dashed")
+  Boundary(group_2, "Laser guide stars", $tags="Laser guide stars") {
+    Container(TMTObservatorySystem.LaserGuideStarFacility, "Laser Guide Star Facility", $techn="Hardware and software", $descr="Generates the laser guide star asterism.", $tags="", $link="")
+    Container(TMTObservatorySystem.Laser, "Laser", $techn="Hardware", $descr="Laser source.", $tags="", $link="")
+    Container(TMTObservatorySystem.BeamTransferOptics, "Beam Transfer Optics", $techn="Opto-mechanical assembly", $descr="Transfers the laser beams to the launch telescope.", $tags="", $link="")
+    Container(TMTObservatorySystem.LaserInterlockSystem, "Laser Interlock System", $techn="Hardware and software", $descr="Interlocks laser propagation.", $tags="", $link="")
+  }
+
+  AddBoundaryTag("Safety", $borderColor="#cccccc", $fontColor="#cccccc", $borderStyle="dashed")
+  Boundary(group_3, "Safety", $tags="Safety") {
+    Container(TMTObservatorySystem.ObservatorySafetySystem, "Observatory Safety System", $techn="Hardware and software", $descr="Observatory-wide safety system.", $tags="", $link="")
+  }
+
+}
+
+Rel(TMTObservatorySystem.AOSequencer, TMTObservatorySystem.LaserGuideStarFacility, "Requests laser propagation and asterism", $techn="Command", $tags="", $link="")
+Rel(TMTObservatorySystem.AOSequencer, TMTObservatorySystem.LaserInterlockSystem, "Checks laser propagation permission", $techn="Command", $tags="", $link="")
+Rel(TMTObservatorySystem.LaserGuideStarFacility, TMTObservatorySystem.Laser, "Controls", $techn="Command", $tags="", $link="")
+Rel(TMTObservatorySystem.LaserGuideStarFacility, TMTObservatorySystem.BeamTransferOptics, "Aligns the beam transfer optics", $techn="Command", $tags="", $link="")
+Rel(TMTObservatorySystem.LaserInterlockSystem, TMTObservatorySystem.Laser, "Inhibits propagation", $techn="Interlock", $tags="", $link="")
+Rel(TMTObservatorySystem.ObservatorySafetySystem, TMTObservatorySystem.LaserInterlockSystem, "Sends safety state", $techn="Interlock", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+footer Derived from the TMT SysML model (github.com/Open-MBEE/TMT-SysML-Model), Copyright (c) 2016 Caltech, Apache-2.0. Design: TMT Observatory Corporation. Not endorsed by Caltech, JPL or TMT. See NOTICE.
+@enduml

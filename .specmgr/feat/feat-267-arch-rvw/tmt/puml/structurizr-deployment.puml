@@ -1,0 +1,72 @@
+@startuml
+title <size:24>Deployment View: TMT Observatory System - Summit (illustrative)</size>\n<size:24>VP06 Deployment and VP07 Operational (illustrative, Proposed)</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+!include <C4/C4_Deployment>
+
+Deployment_Node(Summitillustrative.Observatorysite, "Observatory site", $type="Site", $descr="Telescope site. Not in the SysML model.", $tags="", $link="") {
+  Deployment_Node(Summitillustrative.Observatorysite.Summitcomputerroom, "Summit computer room", $type="Servers", $descr="Hosts the observatory software.", $tags="", $link="") {
+    Container(Summitillustrative.Observatorysite.Summitcomputerroom.ExecutiveSoftware_1, "Executive Software", $techn="Software", $descr="Coordinates observations: acquisition, guiding, pointing acquisition.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Summitcomputerroom.ESWSequencer_1, "ESW Sequencer", $techn="Software", $descr="Executive sequencer of the observatory workflows.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Summitcomputerroom.ESWAcquisition_1, "ESW Acquisition", $techn="Software", $descr="Executive acquisition function.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Summitcomputerroom.CommonServices_1, "Common Services", $techn="Software", $descr="Shared observatory services used by subsystems.", $tags="", $link="")
+    ContainerDb(Summitillustrative.Observatorysite.Summitcomputerroom.DataManagementSystem_1, "Data Management System", $techn="Software", $descr="Observatory data management.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, "Telescope Control System", $techn="Software", $descr="Tracking, main-axis and M3 offsets, guider offsets, M2 moves.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Summitcomputerroom.AOSequencer_1, "AO Sequencer", $techn="Software", $descr="Sequences the adaptive optics system.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Summitcomputerroom.IRISSequencer_1, "IRIS Sequencer", $techn="Software", $descr="Sequences the IRIS instrument.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Summitcomputerroom.WFOSSequencer_1, "WFOS Sequencer", $techn="Software", $descr="Sequences the WFOS instrument.", $tags="", $link="")
+  }
+
+  Deployment_Node(Summitillustrative.Observatorysite.Telescopestructure, "Telescope structure", $type="Telescope", $descr="Mount, mirrors and the APS optical bench.", $tags="", $link="") {
+    Container(Summitillustrative.Observatorysite.Telescopestructure.MountControlSystem_1, "Mount Control System", $techn="Hardware and software", $descr="Controls the telescope mount axes.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Telescopestructure.M1ControlSystem_1, "M1 Control System", $techn="Hardware and software", $descr="Controls the 492 primary mirror segments: piston/tip/tilt, warping harness, edge sensors.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Telescopestructure.M2System_1, "M2 System", $techn="Hardware and software", $descr="Active secondary mirror.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Telescopestructure.M3System_1, "M3 System", $techn="Hardware and software", $descr="Articulated tertiary mirror.", $tags="", $link="")
+    Container(Summitillustrative.Observatorysite.Telescopestructure.IRISImagerDetector_1, "IRIS Imager Detector", $techn="Hardware and software", $descr="IRIS imager detector.", $tags="", $link="")
+    Deployment_Node(Summitillustrative.Observatorysite.Telescopestructure.APSopticalbench, "APS optical bench", $type="Optical bench", $descr="Optical bench with the SH and PIT assemblies.", $tags="", $link="") {
+      Container(Summitillustrative.Observatorysite.Telescopestructure.APSopticalbench.AlignmentandPhasingSystem_1, "Alignment and Phasing System", $techn="Hardware and software", $descr="Shack-Hartmann wavefront sensor for the pre-AO wavefront quality: aligns and phases M1, aligns M2 and M3.", $tags="", $link="")
+    }
+
+  }
+
+}
+
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ExecutiveSoftware_1, Summitillustrative.Observatorysite.Summitcomputerroom.ESWSequencer_1, "Runs observation workflows", $techn="Function", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ExecutiveSoftware_1, Summitillustrative.Observatorysite.Summitcomputerroom.ESWAcquisition_1, "Runs acquisition", $techn="Function", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, Summitillustrative.Observatorysite.Summitcomputerroom.ExecutiveSoftware_1, "Acknowledges", $techn="TCS2ESW", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ExecutiveSoftware_1, Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, "Sends guider offsets and tracking demands", $techn="ESW2TCS", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ESWSequencer_1, Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, "Slews the telescope", $techn="Command", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ESWAcquisition_1, Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, "Acquires telescope pointing", $techn="Command", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ExecutiveSoftware_1, Summitillustrative.Observatorysite.Summitcomputerroom.AOSequencer_1, "Commands AO pointing acquisition", $techn="ESW2AOSeq", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ESWSequencer_1, Summitillustrative.Observatorysite.Summitcomputerroom.AOSequencer_1, "Slews the AO system", $techn="Command", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ESWSequencer_1, Summitillustrative.Observatorysite.Summitcomputerroom.IRISSequencer_1, "Slews IRIS", $techn="Command", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ESWSequencer_1, Summitillustrative.Observatorysite.Summitcomputerroom.WFOSSequencer_1, "Slews WFOS", $techn="Command", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, Summitillustrative.Observatorysite.Telescopestructure.MountControlSystem_1, "Offsets the main axes and tracks", $techn="Command", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, Summitillustrative.Observatorysite.Telescopestructure.M2System_1, "Moves M2 in piston/tip/tilt", $techn="Command", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, Summitillustrative.Observatorysite.Telescopestructure.M3System_1, "Offsets M3 and moves the pupil", $techn="Command", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Telescopestructure.IRISImagerDetector_1, Summitillustrative.Observatorysite.Summitcomputerroom.DataManagementSystem_1, "Delivers science data", $techn="Data", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.IRISSequencer_1, Summitillustrative.Observatorysite.Telescopestructure.IRISImagerDetector_1, "Configures and starts exposures", $techn="Command", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Telescopestructure.APSopticalbench.AlignmentandPhasingSystem_1, Summitillustrative.Observatorysite.Summitcomputerroom.ExecutiveSoftware_1, "Reports results", $techn="PEAS2ESW", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.ExecutiveSoftware_1, Summitillustrative.Observatorysite.Telescopestructure.APSopticalbench.AlignmentandPhasingSystem_1, "Starts APS sessions", $techn="ESW2PEAS", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Telescopestructure.APSopticalbench.AlignmentandPhasingSystem_1, Summitillustrative.Observatorysite.Summitcomputerroom.CommonServices_1, "Uses common services", $techn="PEAS2CS", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Telescopestructure.APSopticalbench.AlignmentandPhasingSystem_1, Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, "Requests M2/M3 moves and offsets", $techn="PEAS2TCS", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Summitcomputerroom.TelescopeControlSystem_1, Summitillustrative.Observatorysite.Telescopestructure.APSopticalbench.AlignmentandPhasingSystem_1, "Acknowledges and reports status", $techn="TCS2PEAS", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Telescopestructure.APSopticalbench.AlignmentandPhasingSystem_1, Summitillustrative.Observatorysite.Telescopestructure.M1ControlSystem_1, "Commands segment piston/tip/tilt and warping harness", $techn="PEAS2M1CS / APS to M1CS Interface", $tags="", $link="")
+Rel(Summitillustrative.Observatorysite.Telescopestructure.M1ControlSystem_1, Summitillustrative.Observatorysite.Telescopestructure.APSopticalbench.AlignmentandPhasingSystem_1, "Acknowledges, reports status and segment configuration", $techn="m1cs2PEAS", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+footer Derived from the TMT SysML model (github.com/Open-MBEE/TMT-SysML-Model), Copyright (c) 2016 Caltech, Apache-2.0. Design: TMT Observatory Corporation. Not endorsed by Caltech, JPL or TMT. See NOTICE.
+@enduml

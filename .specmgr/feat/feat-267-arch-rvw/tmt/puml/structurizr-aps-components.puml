@@ -1,0 +1,79 @@
+@startuml
+title <size:24>Component View: TMT Observatory System - Alignment and Phasing System</size>\n<size:24>VP02 Functional and VP05 Development: APS logical components</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+!include <C4/C4_Component>
+
+Person(APSUser, "APS User", $descr="Runs alignment and phasing procedures. Stakeholder block of the APS mission.", $tags="", $link="")
+
+System_Boundary("TMTObservatorySystem_boundary", "TMT Observatory System", $tags="") {
+  Container_Boundary("TMTObservatorySystem.AlignmentandPhasingSystem_boundary", "Alignment and Phasing System", $tags="") {
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, "Procedure Executive and Analysis Software", $techn="Software", $descr="Runs the APS procedures and wavefront analysis; commands every APS assembly.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.SHcamera, "SH camera", $techn="Camera", $descr="Shack-Hartmann camera.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.PEASPITTracking, "PEAS PIT Tracking", $techn="Software", $descr="Pupil and image tracking control.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.PupilandImageTrackingAssembly, "Pupil and Image Tracking Assembly", $techn="Opto-mechanical assembly", $descr="Pupil and image tracking optics and camera.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, "APT Loop", $techn="Software", $descr="Acquisition, pointing and tracking loop; produces guide camera data.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.AcquisitionPointingandTrackingAssembly, "Acquisition Pointing and Tracking Assembly", $techn="Opto-mechanical assembly", $descr="Acquisition and tracking optics and camera.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.InternalSource, "Internal Source", $techn="Light source", $descr="Internal reference light source.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.Shearplate, "Shear plate", $techn="Optical element", $descr="Shear plate.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.Kmirror, "K-mirror", $techn="Opto-mechanical assembly", $descr="Field rotator of the APS.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.BeamSplitterStage, "BeamSplitterStage", $techn="Opto-mechanical assembly", $descr="Beam splitter stage.", $tags="", $link="")
+    Component(TMTObservatorySystem.AlignmentandPhasingSystem.Stimulus, "Stimulus", $techn="Light source", $descr="Stimulus source.", $tags="", $link="")
+  }
+
+  Container(TMTObservatorySystem.M1ControlSystem, "M1 Control System", $techn="Hardware and software", $descr="Controls the 492 primary mirror segments: piston/tip/tilt, warping harness, edge sensors.", $tags="", $link="")
+  Container(TMTObservatorySystem.ExecutiveSoftware, "Executive Software", $techn="Software", $descr="Coordinates observations: acquisition, guiding, pointing acquisition.", $tags="", $link="")
+  Container(TMTObservatorySystem.CommonServices, "Common Services", $techn="Software", $descr="Shared observatory services used by subsystems.", $tags="", $link="")
+  Container(TMTObservatorySystem.TelescopeControlSystem, "Telescope Control System", $techn="Software", $descr="Tracking, main-axis and M3 offsets, guider offsets, M2 moves.", $tags="", $link="")
+}
+
+Rel(APSUser, TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, "Requests APS procedures", $techn="APS2User port", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.M1ControlSystem, "Commands segment piston/tip/tilt and warping harness", $techn="PEAS2M1CS / APS to M1CS Interface", $tags="", $link="")
+Rel(TMTObservatorySystem.M1ControlSystem, TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, "Acknowledges, reports status and segment configuration", $techn="m1cs2PEAS", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.TelescopeControlSystem, "Requests M2/M3 moves and offsets", $techn="PEAS2TCS", $tags="", $link="")
+Rel(TMTObservatorySystem.TelescopeControlSystem, TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, "Acknowledges and reports status", $techn="TCS2PEAS", $tags="", $link="")
+Rel(TMTObservatorySystem.TelescopeControlSystem, TMTObservatorySystem.AlignmentandPhasingSystem.PEASPITTracking, "Sends pointing information", $techn="PIT2TCS", $tags="", $link="")
+Rel(TMTObservatorySystem.ExecutiveSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, "Starts APS sessions", $techn="ESW2PEAS", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.ExecutiveSoftware, "Reports results", $techn="PEAS2ESW", $tags="", $link="")
+Rel(TMTObservatorySystem.ExecutiveSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, "Starts the APT full-frame guide loop", $techn="ESW2GC", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, TMTObservatorySystem.ExecutiveSoftware, "Sends guide camera data", $techn="GCData", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, TMTObservatorySystem.TelescopeControlSystem, "Sends guide camera data", $techn="guideCamData", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.CommonServices, "Uses common services", $techn="PEAS2CS", $tags="", $link="")
+Rel(TMTObservatorySystem.ExecutiveSoftware, TMTObservatorySystem.TelescopeControlSystem, "Sends guider offsets and tracking demands", $techn="ESW2TCS", $tags="", $link="")
+Rel(TMTObservatorySystem.TelescopeControlSystem, TMTObservatorySystem.ExecutiveSoftware, "Acknowledges", $techn="TCS2ESW", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.SHcamera, "Commands", $techn="PEAS2SH", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.SHcamera, TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, "Sends Shack-Hartmann frames and status", $techn="CC_SH2PEAS", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.PEASPITTracking, "Commands tracking", $techn="PEAS2PITTrack", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.PEASPITTracking, TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, "Sends PIT data and status", $techn="PITDataProducerIF", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.PupilandImageTrackingAssembly, "Commands", $techn="PEAS2PIT", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.PupilandImageTrackingAssembly, TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, "Reports status", $techn="PEAS2PIT", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.PEASPITTracking, TMTObservatorySystem.AlignmentandPhasingSystem.PupilandImageTrackingAssembly, "Controls", $techn="PITT2PITA", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.PupilandImageTrackingAssembly, TMTObservatorySystem.AlignmentandPhasingSystem.PEASPITTracking, "Sends tracking images", $techn="PITA2PITT", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.PEASPITTracking, TMTObservatorySystem.AlignmentandPhasingSystem.Kmirror, "Rotates", $techn="PIT2KMirror", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.PEASPITTracking, TMTObservatorySystem.AlignmentandPhasingSystem.Shearplate, "Controls", $techn="PIT2SP", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.Kmirror, "Commands", $techn="PEAS2KM", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.Shearplate, "Commands", $techn="PEAS2SP", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.InternalSource, "Commands", $techn="PEAS2Insource", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.BeamSplitterStage, "Commands", $techn="peas2bss", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.Stimulus, "Commands", $techn="peas2Stimulus", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.AcquisitionPointingandTrackingAssembly, "Commands", $techn="PEAS2APT", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.ProcedureExecutiveandAnalysisSoftware, TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, "Commands the loop", $techn="PEAS2APTLoop", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, TMTObservatorySystem.AlignmentandPhasingSystem.AcquisitionPointingandTrackingAssembly, "Controls", $techn="APTL2APTA", $tags="", $link="")
+Rel(TMTObservatorySystem.AlignmentandPhasingSystem.AcquisitionPointingandTrackingAssembly, TMTObservatorySystem.AlignmentandPhasingSystem.APTLoop, "Sends acquisition images", $techn="APTA2APTL", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+footer Derived from the TMT SysML model (github.com/Open-MBEE/TMT-SysML-Model), Copyright (c) 2016 Caltech, Apache-2.0. Design: TMT Observatory Corporation. Not endorsed by Caltech, JPL or TMT. See NOTICE.
+@enduml

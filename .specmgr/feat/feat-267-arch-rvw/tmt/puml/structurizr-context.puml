@@ -1,0 +1,27 @@
+@startuml
+title <size:24>System Context View: TMT Observatory System</size>\n<size:24>VP01 Context: who uses the TMT Observatory System</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+
+Person(APSUser, "APS User", $descr="Runs alignment and phasing procedures. Stakeholder block of the APS mission.", $tags="", $link="")
+Person(APSOperator, "APS Operator", $descr="Operates the APS. Stakeholder block of the APS mission.", $tags="", $link="")
+System(TMTObservatorySystem, "TMT Observatory System", $descr="Wide-field alt-az Ritchey-Chretien telescope, 492-segment 30 m primary mirror, active M2, articulated M3, with adaptive optics, lasers and instruments.", $tags="", $link="")
+
+Rel(APSUser, TMTObservatorySystem, "Requests APS procedures", $techn="APS2User port", $tags="", $link="")
+Rel(APSOperator, TMTObservatorySystem, "Operates", $techn="Console", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+footer Derived from the TMT SysML model (github.com/Open-MBEE/TMT-SysML-Model), Copyright (c) 2016 Caltech, Apache-2.0. Design: TMT Observatory Corporation. Not endorsed by Caltech, JPL or TMT. See NOTICE.
+@enduml
