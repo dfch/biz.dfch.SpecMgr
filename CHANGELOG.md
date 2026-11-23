@@ -316,6 +316,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   existing tools-layer consumer is untouched) — importing the model
   module no longer pulls the `mcp` extra into the model import graph
   (feat-255-i18n-typo, GitHub issue #255).
+- A commit that only adds or deletes a test file no longer passes the
+  local pre-commit hooks with a stale test-file count in
+  `docs/GENERATED.md` (previously caught only by the CI `docs/` drift
+  check): the new `specmgr-docs-test-count` hook runs on every commit
+  (pre-commit never passes deleted files to a hook, so no `files:`
+  pattern can catch a deletion) and compares the count with the one
+  `specmgr docs` would write, via `scripts/check_generated_test_count.py`.
+  The `specmgr-docs` hook itself stays scoped to `src/**/*.py`. The
+  development-only evals harness also no longer fails under rootless
+  Docker: its containers run as `--user 0:0` there (the host user) instead
+  of `--user uid:gid`, which made the mounted work dirs unreadable
+  (feat-274-evals-rootless-docker, GitHub issue #274).
 
 ## [0.38.0] - 2026-10-31
 
