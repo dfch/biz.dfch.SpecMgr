@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: review
 type: feat
-updated: '2026-11-23T08:02:26.359+01:00'
+updated: '2026-11-23T13:01:48.200+01:00'
 version: 1.0.0
 ---
 
@@ -142,15 +142,31 @@ Verification environment: run every check with the worktree code (`uv run --froz
 - [x] Task 140.130: I2: describe `tests/models/md/test_line_offset.py` as the feat-253 regression suite, not as the Phase 100 deficit pin.
 - [x] Task 140.140: I3: replace the bare `assert sut.notes is not None` in `tests/models/md/test_line_offset.py` with `self.assertIsNotNone`.
 
+#### Phase 150: Fix phase (review cycle 3)
+
+- [x] Task 150.100: Fix D1 -- in the Phase 120 update entry, change "and 8 test files" to "and 7 test files" (`tests/models/md/test__markdown.py` was first changed in Phase 130, so the entry's own 58-file total is consistent with 7) (.specmgr/feat/feat-253-md-line-offset/README.md:201).
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-23**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), and 140 (second review fixes G1, D1, I1 to I3) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. Next: re-review and merge.
+**As of 2026-11-23**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), and 150 (third review fix D1: corrected test-file count in the Phase 120 entry) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. Next: re-review and merge.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-23T12:01:48.200Z - Phase 150 third review fix
+
+Added Phase 150 (Task 150.100) to the Task List from the third review's D1 finding and implemented it. The Phase 120 update entry now reads "and 7 test files": `tests/models/md/test__markdown.py` was first changed in Phase 130 (commit `827d93d5`), so the entry's own 58-file total is consistent with the itemization (the plan, `docs/GENERATED.md`, 43 `docs/api/*.md` pages, 6 `src/biz/dfch/specmgr/models/md/` files, and 7 test files; `CHANGELOG.md` is the 59th). No code, no tests, no regeneration.
+
+- Gate:
+  - `uv run --frozen ruff format --check`: pass (all files already formatted).
+  - `uv run --frozen ruff check`: pass.
+  - `uv run --frozen vulture src/ whitelist.py --min-confidence 60`: pass.
+  - `uv run --frozen pytest -n auto -q`: 6156 passed, 18 skipped, 0 failed.
+  - `uv run --frozen specmgr lint .specmgr/feat/feat-253-md-line-offset/README.md`: `linted=1 failed=0 skipped=0`.
+  - `git status --short` / `git diff --stat`: only this plan's README changed.
 
 #### 2026-11-23T07:02:26.365Z - Rebased onto dev after PR #272
 
@@ -198,7 +214,7 @@ Implemented Tasks 120.100 to 120.120. All checks ran with the worktree code (`uv
   - `uv run --frozen pytest -n auto -q`: 6127 passed, 18 skipped, 11124 subtests passed, 2 failed. The 2 failures are `tests/evals/test_cli_gates.py::TestCliOverFixtures::test_good_workspace_cli_matches_preexported_fixture` and `test_weak_workspace_cli_is_valid_but_thin`. They come from rootless Docker on this machine, are unrelated to this feature, and are fixed by the separate PR #272.
   - Drift: `specmgr docs`, `specmgr mcp-docs`, `specmgr schema`, and the 14 `specmgr schema --type <t> --output-dir src/biz/dfch/specmgr/<t>/data` runs, followed by `git status --short`: no change.
 - Pre-fix check: in a temporary detached worktree at HEAD with `src/biz/dfch/specmgr/models/md/` restored from `dev`, the 12 new tests give 11 failed and 1 passed. The test that passes is `test_every_example_has_parsed_children`, the non-empty guard of the oracle. The worktree was removed.
-- Diff scope (ACC-006): `git diff --stat dev...HEAD` lists 58 files. They are the plan, `docs/GENERATED.md`, 43 `docs/api/*.md` pages, 6 files under `src/biz/dfch/specmgr/models/md/`, and 8 test files. No other `src/` file changed and no JSON schema changed. `CHANGELOG.md` is the only other changed file (this phase).
+- Diff scope (ACC-006): `git diff --stat dev...HEAD` lists 58 files. They are the plan, `docs/GENERATED.md`, 43 `docs/api/*.md` pages, 6 files under `src/biz/dfch/specmgr/models/md/`, and 7 test files. No other `src/` file changed and no JSON schema changed. `CHANGELOG.md` is the only other changed file (this phase).
 - ACC walk-through:
   - ACC-001: `tests/models/md/test_line_offset.py` `test_text_left_over_reports_the_line_of_the_unconsumed_block` (true line 7, pre-fix 4; fails pre-fix).
   - ACC-002: `test_found_no_match_reports_the_line_where_the_remainder_starts` (true line 7, pre-fix 4; fails pre-fix). The REQ-003 empty-remainder rule: `test_found_no_match_with_an_empty_remainder_reports_the_line_after_the_last_line`.
