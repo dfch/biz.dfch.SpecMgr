@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""feat-253-md-line-offset Phase 100: pin the `models/md` line-offset deficit (GitHub issue #253).
+"""feat-253-md-line-offset: regression suite for the `models/md` line-offset hand-off (GitHub issue #253).
 
 Synthetic engine tests for the 1-based line references that the shared
 `models/md` engine reports in its actionable error messages and stores as
@@ -205,7 +205,7 @@ class TestOwnBlockHandOffLineReferences(unittest.TestCase):
 
         sut = MarkdownListItemWithNotes.from_text(text)
 
-        assert sut.notes is not None
+        self.assertIsNotNone(sut.notes)
         self.assertEqual([note._line for note in sut.notes], [expected])
 
     def test_paragraph_child_after_the_paragraph_is_on_its_normalized_body_line(self) -> None:

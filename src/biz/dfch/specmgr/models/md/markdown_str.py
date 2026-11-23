@@ -137,6 +137,9 @@ def _no_match_message(path: str, offset: int, type_: type, text: str, *, is_list
         offset: the 0-based line at which `text` (the not-yet-consumed
             remainder) starts, relative to the root document's own
             `mdformat`-normalized body (REQ-002) -- `0` at the very root.
+            For an empty `text` (every line already consumed), `offset + 1`
+            is the line after the last consumed line, which can be one past
+            the end of the body (REQ-003).
         type_: the field's (or, for a list field, the item's) declared
             `MarkdownStr` type.
         text: the not-yet-consumed remainder of the parent's text, in which

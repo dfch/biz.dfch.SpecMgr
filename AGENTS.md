@@ -1343,9 +1343,11 @@ helper `consume_leading_lines(text, count) -> (rest, consumed)`
 (`models/md/_markdown.py`), and any `models/md` site that slices consumed
 lines off a text and hands the re-normalized rest on must use it and
 advance its line offset by the returned `consumed` delta (which includes
-the blank separator line the re-normalization removes), never by its own
-`count`/`get_extent`, or every later line reference and child `_line` is
-off by one per hand-off.
+the blank separator line the re-normalization removes) -- or, where a site
+already measures the text before and after the hand-off (the list branch of
+`MarkdownStr.from_text`, by decision), an equivalent before/after
+line-count delta -- never by its own `count`/`get_extent`, or every later
+line reference and child `_line` is off by one per hand-off.
 
 `feat-107-doc-cache` (GitHub issue #107) added a process-local,
 per-domain, content-hash-validated in-memory read cache

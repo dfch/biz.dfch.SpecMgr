@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: review
 type: feat
-updated: '2026-11-22T17:22:05.600+01:00'
+updated: '2026-11-23T08:02:26.359+01:00'
 version: 1.0.0
 ---
 
@@ -134,15 +134,39 @@ Verification environment: run every check with the worktree code (`uv run --froz
 - [x] Task 130.160: I3: make the ACC-004 test search the exact inserted block-quote line.
 - [x] Task 130.170: I4: add one `AGENTS.md` paragraph on `consume_leading_lines` near the feat-27 / feat-99 `models/md` paragraphs.
 
+#### Phase 140: Second Review Fixes
+
+- [x] Task 140.100: G1: run the ACC-009 oracle also over the packaged guidance documents of the non-whole-body `models/md` consumers that REQ-004 names (`rsk_tara.md`, `rsk_risk_matrix.md`, `general_dtais.md`, `general_ears.md`, `general_iso29148.md`, `general_rasci.md`, `general_iso25010.md`).
+- [x] Task 140.110: D1: reword the `AGENTS.md` `consume_leading_lines` rule so that the list branch's equivalent before/after line-count delta is allowed.
+- [x] Task 140.120: I1: state the REQ-003 empty-remainder meaning of `offset + 1` in the `offset` Args entry of `_no_match_message`.
+- [x] Task 140.130: I2: describe `tests/models/md/test_line_offset.py` as the feat-253 regression suite, not as the Phase 100 deficit pin.
+- [x] Task 140.140: I3: replace the bare `assert sut.notes is not None` in `tests/models/md/test_line_offset.py` with `self.assertIsNotNone`.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-22**: The implementation is complete and in review. Phases 100, 110, 120, and 130 (review fixes G1, D1, D2, S1, I1 to I4) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (except the 2 known, unrelated `tests/evals/test_cli_gates.py` rootless-Docker failures, which PR #272 fixes), and `CHANGELOG.md` has a Fixed entry. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. Next: re-review and merge.
+**As of 2026-11-23**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), and 140 (second review fixes G1, D1, I1 to I3) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. Next: re-review and merge.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-23T07:02:26.365Z - Rebased onto dev after PR #272
+
+Rebased the branch onto `dev` at `04896142`, which contains PR #272 (squash `880144c8`, the rootless-Docker evals fix and the `specmgr-docs-test-count` hook, feat-274-evals-rootless-docker). The only conflict was the test-file count in `docs/GENERATED.md`, resolved by regenerating with `specmgr docs` (508: the 504 on `dev` plus this feature's 4 new test files); `scripts/check_generated_test_count.py` exits 0. On the rebased branch, with the Phase 140 changes, `uv run --frozen pytest -q -n auto` gave 6156 passed, 18 skipped, 0 failed: the 2 `tests/evals/test_cli_gates.py` rootless-Docker failures recorded in the earlier entries are gone.
+
+#### 2026-11-22T16:49:15.483Z - Phase 140 second review fixes
+
+Added Phase 140 to the Task List (Tasks 140.100 to 140.140, one per finding of the second review) and implemented them. No behavior changed.
+
+- G1 (Task 140.100): `tests/models/md/test_example_line_oracle.py` has a new `TestGuidanceDocumentLineOracle` class. It parses each of the seven packaged guidance documents with its model's own `parse_*` function (`parse_tara`, `parse_risk_matrix`, `parse_dtais`, `parse_ears`, `parse_iso29148`, `parse_rasci`, `parse_iso25010`) and runs the same `_line` oracle over every parsed child, one subtest per document. It also checks that every document has parsed children. `_line_mismatches` now takes the label, normalized text, and children, so both oracle classes share it. All seven documents pass.
+- D1 (Task 140.110): the `AGENTS.md` paragraph now allows an equivalent before/after line-count delta where a site already measures the text before and after the hand-off (the list branch of `MarkdownStr.from_text`, by decision), and still forbids advancing by `count`/`get_extent`.
+- I1 (Task 140.120): the `offset` Args entry of `_no_match_message` (`markdown_str.py`) now says that, for an empty `text`, `offset + 1` is the line after the last consumed line and can be one past the end of the body (REQ-003).
+- I2 (Task 140.130): the module docstring title of `tests/models/md/test_line_offset.py` now reads "regression suite for the `models/md` line-offset hand-off".
+- I3 (Task 140.140): the bare `assert` is now `self.assertIsNotNone(sut.notes)`.
+- Regenerated: `specmgr docs` updated `docs/api/biz.dfch.specmgr.models.md.markdown_str.md` (the changed docstring).
+- Gate: `ruff format --check`, `ruff check`, and `vulture` are clean. The full suite gave 6136 passed, 18 skipped, and 2 failed: the 2 known, unrelated `tests/evals/test_cli_gates.py` rootless-Docker failures (PR #272).
 
 #### 2026-11-22T16:22:05.594Z - Phase 130 review fixes
 
