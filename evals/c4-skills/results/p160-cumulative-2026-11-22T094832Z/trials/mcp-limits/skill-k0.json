@@ -1,0 +1,141 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/mcp-limits/skill-k0.events.ndjson",
+  "event_file_bytes": 240127,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-22T20:38:33Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (3045 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=1: 20:38:33.704 [main] ERROR com.structurizr.command.ValidateCommand -- Workspace is landscape scoped, but the software system named Order Service has containers.",
+      "name": "cli_valid",
+      "passed": false
+    },
+    {
+      "detail": "CLI export rc=1: 20:38:34.200 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+      "name": "cli_export",
+      "passed": false
+    },
+    {
+      "detail": "no softwareSystem in the export JSON",
+      "name": "has_system",
+      "passed": false
+    },
+    {
+      "detail": "no person in the export JSON",
+      "name": "has_person",
+      "passed": false
+    },
+    {
+      "detail": "only 0 container(s) in the export JSON",
+      "name": "two_containers",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "2 terminal parse call(s)",
+      "name": "parse_called",
+      "passed": true
+    },
+    {
+      "detail": "2 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "2 terminal inspect call(s)",
+      "name": "inspect_called",
+      "passed": true
+    },
+    {
+      "detail": "returned DSL is byte-identical to the validated OK text (the on-disk file)",
+      "name": "validated_before_return",
+      "passed": true
+    },
+    {
+      "detail": "all 3 finding(s) labeled fix/expected/reported",
+      "name": "triage_complete",
+      "passed": true
+    },
+    {
+      "detail": "final text names: !docs, !include",
+      "name": "limits_acknowledged",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.004635041004803497,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 2,
+    "inspect_findings": [
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "ERROR: The software system \"Order Service\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Order Service\" has containers, but is missing decisions."
+    ],
+    "inspect_triage": {
+      "ERROR: The software system \"Order Service\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Order Service\" has containers, but is missing documentation.": "expected",
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "reported"
+    },
+    "parse_calls": 2,
+    "relationship_technology_coverage": null,
+    "skills_loaded": [
+      "structurizr-dsl-authoring",
+      "structurizr-validate-loop"
+    ],
+    "steps": 18,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 1294838,
+      "output": 80265,
+      "reasoning": 0
+    },
+    "tool_calls": 27,
+    "validate_calls": 2,
+    "validate_ok_calls": 2,
+    "validated_before_return": true,
+    "validated_by_file": true,
+    "validated_by_final_text": false,
+    "wall_time_s": 1101.185,
+    "workdir_dsl": "workspace \"Order Service\" \"A C4 model of the order processing system\" {\n    model {\n        customer = person \"Customer\" \"A customer who places orders\"\n        orders = softwareSystem \"Order Service\" \"Manages customer orders\" {\n            web = container \"Web App\" \"The customer-facing web application\" \"React\" \"Web\"\n            api = container \"API\" \"The REST API for orders\" \"Spring Boot\"\n            db = container \"Order Database\" \"Stores order data\" \"PostgreSQL\" \"Database\"\n            queue = container \"Event Queue\" \"Buffers order events\" \"RabbitMQ\" \"Queue\"\n            worker = container \"Order Worker\" \"Processes order events\" \"Spring Boot\"\n        }\n        payments = softwareSystem \"Payment Provider\" \"External payment processing\" \"External\"\n\n        customer -> web \"Places orders through\" \"HTTPS\"\n        web -> api \"Submits order requests to\" \"HTTPS/JSON\"\n        api -> db \"Persists orders to\" \"SQL\"\n        api -> queue \"Publishes order events to\" \"AMQP\" \"Async\"\n        worker -> queue \"Consumes order events from\" \"AMQP\" \"Async\"\n        worker -> db \"Updates order status in\" \"SQL\"\n        api -> payments \"Charges customers via\" \"HTTPS/JSON\"\n    }\n    views {\n        systemLandscape \"Landscape\" \"All systems in the landscape\" {\n            include *\n            autoLayout\n            title \"System Landscape\"\n        }\n        systemContext orders \"SystemContext\" \"The Order Service and its users\" {\n            include *\n            autoLayout\n            title \"System Context for Order Service\"\n        }\n        container orders \"Containers\" \"The containers of the Order Service\" {\n            include *\n            autoLayout\n            title \"Containers for Order Service\"\n        }\n        dynamic orders \"OrderFlow\" \"The order placement flow\" {\n            customer -> web \"Places orders through\" \"HTTPS\"\n            web -> api \"Submits order requests to\" \"HTTPS/JSON\"\n            api -> db \"Persists orders to\" \"SQL\"\n            api -> queue \"Publishes order events to\" \"AMQP\"\n            autoLayout\n            title \"Order Placement Flow\"\n        }\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n            element \"Web\" {\n                shape WebBrowser\n            }\n            element \"Queue\" {\n                shape Pipe\n            }\n            relationship \"Relationship\" {\n                routing Orthogonal\n            }\n            relationship \"Async\" {\n                style dashed\n            }\n        }\n    }\n    configuration {\n        scope Landscape\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "mcp-limits",
+    "condition": "skill",
+    "k_index": 0
+  },
+  "run_id": "p160-cumulative-2026-11-22T094832Z",
+  "skills_installed": [
+    "c4-model-review",
+    "c4-modeling",
+    "c4-view-design",
+    "structurizr-dsl-authoring",
+    "structurizr-validate-loop"
+  ],
+  "started_at": "2026-11-22T20:20:08Z",
+  "timeout": false,
+  "wall_time_s": 1104.6161026289992,
+  "workdir": "/home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/work/mcp-limits.skill-k0.p160-cumulative-2026-11-22T094832Z"
+}

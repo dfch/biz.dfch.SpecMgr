@@ -1,0 +1,285 @@
+{
+  "cases": [
+    "create-system",
+    "fix-dsl",
+    "modeling-decisions",
+    "mcp-limits",
+    "design-views",
+    "review-model",
+    "no-trigger",
+    "heldout-modeling",
+    "heldout-views"
+  ],
+  "comparison": "upstream",
+  "conditions": [
+    "none",
+    "upstream",
+    "skill"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 9.0,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1201.7,
+    "mean_wall_time_s": 511.5,
+    "measured_trials": 135,
+    "median_wall_time_s": 360.3,
+    "within_budget_at_median": true
+  },
+  "k": 5,
+  "label": "p160-cumulative",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 0,
+        "contended": 14,
+        "timeout": 12
+      },
+      "gate_failures": {
+        "cli_export": 10,
+        "cli_valid": 10,
+        "container_count": 10,
+        "crowded_view_found": 4,
+        "dsl_written": 1,
+        "elements_described": 10,
+        "explicit_view_keys": 3,
+        "external_system_tagged": 17,
+        "has_person": 10,
+        "has_system": 10,
+        "has_view": 14,
+        "inspect_called": 5,
+        "limits_acknowledged": 3,
+        "mcp_limit_stated": 5,
+        "no_false_findings": 5,
+        "no_library_container": 8,
+        "no_vague_labels": 6,
+        "parse_called": 5,
+        "relationship_technology": 28,
+        "triage_complete": 6,
+        "two_containers": 5,
+        "vague_label_found": 3,
+        "validate_ok_called": 24,
+        "validated_before_return": 10,
+        "views_within_element_bound": 7
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "create-system": {
+          "passes": 0,
+          "trials": 5
+        },
+        "design-views": {
+          "passes": 0,
+          "trials": 5
+        },
+        "fix-dsl": {
+          "passes": 0,
+          "trials": 5
+        },
+        "heldout-modeling": {
+          "passes": 0,
+          "trials": 5
+        },
+        "heldout-views": {
+          "passes": 0,
+          "trials": 5
+        },
+        "mcp-limits": {
+          "passes": 0,
+          "trials": 5
+        },
+        "modeling-decisions": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        },
+        "review-model": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 45,
+      "wilson": [
+        0.0,
+        0.07865159987608598
+      ]
+    },
+    "skill": {
+      "flags": {
+        "cached": 0,
+        "contended": 3,
+        "timeout": 0
+      },
+      "gate_failures": {
+        "cli_export": 4,
+        "cli_valid": 4,
+        "dsl_written": 1,
+        "elements_described": 5,
+        "explicit_view_keys": 1,
+        "external_system_tagged": 1,
+        "has_person": 4,
+        "has_system": 4,
+        "has_view": 4,
+        "mcp_limit_stated": 5,
+        "no_deletions": 2,
+        "no_false_findings": 3,
+        "relationship_technology": 4,
+        "relationships_described": 2,
+        "triage_complete": 3,
+        "two_containers": 3,
+        "validate_ok_called": 1,
+        "validated_before_return": 1,
+        "views_within_element_bound": 6
+      },
+      "pass_power_k": 1.2743981816703385e-15,
+      "pass_rate": 0.4666666666666667,
+      "passes": 21,
+      "per_case": {
+        "create-system": {
+          "passes": 3,
+          "trials": 5
+        },
+        "design-views": {
+          "passes": 2,
+          "trials": 5
+        },
+        "fix-dsl": {
+          "passes": 1,
+          "trials": 5
+        },
+        "heldout-modeling": {
+          "passes": 5,
+          "trials": 5
+        },
+        "heldout-views": {
+          "passes": 1,
+          "trials": 5
+        },
+        "mcp-limits": {
+          "passes": 2,
+          "trials": 5
+        },
+        "modeling-decisions": {
+          "passes": 5,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        },
+        "review-model": {
+          "passes": 2,
+          "trials": 5
+        }
+      },
+      "trials": 45,
+      "wilson": [
+        0.32935131967087283,
+        0.6092254536541993
+      ]
+    },
+    "upstream": {
+      "flags": {
+        "cached": 0,
+        "contended": 8,
+        "timeout": 15
+      },
+      "gate_failures": {
+        "cli_export": 8,
+        "cli_valid": 8,
+        "container_count": 4,
+        "crowded_view_found": 5,
+        "dsl_written": 4,
+        "elements_described": 9,
+        "external_system_tagged": 4,
+        "has_person": 8,
+        "has_system": 8,
+        "has_view": 8,
+        "inspect_called": 5,
+        "mcp_limit_stated": 5,
+        "no_false_findings": 5,
+        "no_library_container": 5,
+        "no_mounted_skill_loaded": 4,
+        "no_vague_labels": 4,
+        "parse_called": 5,
+        "relationship_technology": 13,
+        "triage_complete": 7,
+        "two_containers": 4,
+        "validate_ok_called": 25,
+        "validated_before_return": 10,
+        "views_within_element_bound": 10
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "create-system": {
+          "passes": 0,
+          "trials": 5
+        },
+        "design-views": {
+          "passes": 0,
+          "trials": 5
+        },
+        "fix-dsl": {
+          "passes": 0,
+          "trials": 5
+        },
+        "heldout-modeling": {
+          "passes": 0,
+          "trials": 5
+        },
+        "heldout-views": {
+          "passes": 0,
+          "trials": 5
+        },
+        "mcp-limits": {
+          "passes": 0,
+          "trials": 5
+        },
+        "modeling-decisions": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        },
+        "review-model": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 45,
+      "wilson": [
+        0.0,
+        0.07865159987608598
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p160-cumulative-2026-11-22T094832Z",
+  "seed": 340912,
+  "skill_margins": {
+    "margin": {
+      "better_than_none": true,
+      "clearly_worse_cases": [],
+      "none_rate": 0.0,
+      "ok": true,
+      "rate_margin_pp": -46.67,
+      "within_rate_margin": true
+    },
+    "wilson": [
+      0.32935131967087283,
+      0.6092254536541993
+    ]
+  },
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

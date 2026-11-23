@@ -1,0 +1,114 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/heldout-views/none-k4.events.ndjson",
+  "event_file_bytes": 257450,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-22T19:07:51Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (4920 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=1: 19:07:51.658 [main] ERROR com.structurizr.command.ValidateCommand -- Workspace is landscape scoped, but the software system named Claims Center has containers.",
+      "name": "cli_valid",
+      "passed": false
+    },
+    {
+      "detail": "CLI export rc=1: 19:07:52.147 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+      "name": "cli_export",
+      "passed": false
+    },
+    {
+      "detail": "no softwareSystem in the export JSON",
+      "name": "has_system",
+      "passed": false
+    },
+    {
+      "detail": "no person in the export JSON",
+      "name": "has_person",
+      "passed": false
+    },
+    {
+      "detail": "no elements in the export JSON",
+      "name": "elements_described",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "1 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views to check (vacuously within the bound)",
+      "name": "views_within_element_bound",
+      "passed": true
+    },
+    {
+      "detail": "no views at all in the export JSON",
+      "name": "explicit_view_keys",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.004723641002783552,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 6,
+    "inspect_findings": [],
+    "inspect_triage": {},
+    "parse_calls": 1,
+    "relationship_technology_coverage": null,
+    "skills_loaded": [],
+    "steps": 24,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 1254356,
+      "output": 83786,
+      "reasoning": 0
+    },
+    "tool_calls": 24,
+    "validate_calls": 13,
+    "validate_ok_calls": 1,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 1169.905,
+    "workdir_dsl": "workspace \"Claims Center\" \"C4 model of the insurance company's claims platform\" {\n\n    model {\n\n        policyholder = person \"Policyholder\" \"Reports claims and tracks their progress\"\n\n        claimsCenter = softwareSystem \"Claims Center\" \"Owned and operated by the insurance company; policyholders use it to report claims and track their progress\" {\n\n            webPortal = container \"Web Portal\" \"Web Application\" \"Where policyholders report claims and track their progress\"\n            mobileAppBackend = container \"Mobile App Backend\" \"Service\" \"Serves the insurer's mobile app\"\n            intakeService = container \"Claims Intake Service\" \"Service\" \"Registers new claims\"\n            triageService = container \"Triage Service\" \"Service\" \"Classifies and prioritizes claims\"\n            assessmentService = container \"Assessment Service\" \"Service\" \"Calculates settlement amounts\"\n            payoutService = container \"Payout Service\" \"Service\" \"Executes claim settlements\"\n            fraudScreeningService = container \"Fraud Screening Service\" \"Service\" \"Flags suspicious claims\"\n            documentService = container \"Document Service\" \"Service\" \"Accepts claim photos and reports\"\n            notificationService = container \"Notification Service\" \"Service\" \"Emails and messages policyholders\"\n            assignmentService = container \"Assignment Service\" \"Service\" \"Routes claims to adjusters\"\n            adjusterWorkbench = container \"Adjuster Workbench\" \"Web Application\" \"Where staff process their assigned claims\"\n            policyVerificationService = container \"Policy Verification Service\" \"Service\" \"Checks that a claim is covered by the policy\"\n            reinsuranceAllocationService = container \"Reinsurance Allocation Service\" \"Service\" \"Apportions large losses across reinsurance partners\"\n            batchScheduler = container \"Batch Scheduler\" \"Service\" \"Runs the nightly reserves calculation\"\n            eventQueue = container \"Event Queue\" \"Queue\" \"Carries claim events between the application parts\"\n            claimsDatabase = container \"Claims Database\" \"Database\" \"Stores claim records\"\n            policyDatabase = container \"Policy Database\" \"Database\" \"Stores policy and cover records\"\n            auditDatabase = container \"Audit Database\" \"Database\" \"Stores the compliance audit trail\"\n            documentStore = container \"Document Store\" \"Document Store\" \"Holds claim photos, reports, and correspondence\"\n        }\n\n        dataBureau = softwareSystem \"National Claims Data Bureau\" \"A national claims data bureau operated by a different organization\"\n        clearingHouse = softwareSystem \"Clearing House\" \"A clearing house operated by a different organization\"\n\n        policyholder -> webPortal \"reports claims and tracks progress\" \"HTTPS\"\n        policyholder -> mobileAppBackend \"reports claims and tracks progress via the mobile app\" \"HTTPS\"\n\n        webPortal -> intakeService \"reaches\" \"HTTP\"\n        webPortal -> assessmentService \"reaches\" \"HTTP\"\n        webPortal -> payoutService \"reaches\" \"HTTP\"\n        webPortal -> documentService \"reaches\" \"HTTP\"\n        webPortal -> notificationService \"reaches\" \"HTTP\"\n\n        mobileAppBackend -> intakeService \"reaches\" \"HTTP\"\n        mobileAppBackend -> assessmentService \"reaches\" \"HTTP\"\n        mobileAppBackend -> payoutService \"reaches\" \"HTTP\"\n        mobileAppBackend -> documentService \"reaches\" \"HTTP\"\n        mobileAppBackend -> notificationService \"reaches\" \"HTTP\"\n\n        intakeService -> triageService \"hands accepted claims\" \"HTTP\"\n        triageService -> assessmentService \"routes claims\" \"HTTP\"\n        assessmentService -> payoutService \"requests settlements\" \"HTTP\"\n\n        assignmentService -> adjusterWorkbench \"routes claims\" \"HTTP\"\n\n        documentService -> documentStore \"reads\" \"HTTP\"\n        batchScheduler -> claimsDatabase \"reads and writes\" \"SQL\"\n        batchScheduler -> policyDatabase \"reads and writes\" \"SQL\"\n        notificationService -> policyholder \"reports claim status changes\" \"Email/SMS\"\n\n        fraudScreeningService -> dataBureau \"consults\" \"HTTPS\"\n        payoutService -> clearingHouse \"executes settlements\" \"HTTPS\"\n\n        policyVerificationService -> policyDatabase \"checks the cover\" \"SQL\"\n        reinsuranceAllocationService -> claimsDatabase \"reads large losses\" \"SQL\"\n        intakeService -> eventQueue \"publishes claim events\" \"AMQP\"\n        eventQueue -> triageService \"delivers claim events\" \"AMQP\"\n        payoutService -> auditDatabase \"writes the compliance audit trail\" \"SQL\"\n    }\n\n    views {\n        systemContext claimsCenter \"SystemContext\" \"System context diagram of the Claims Center\" {\n            include *\n            autoLayout\n        }\n\n        container claimsCenter \"Containers\" \"Container diagram of the Claims Center\" {\n            include *\n            autoLayout\n        }\n    }\n\n    configuration {\n        scope \"Landscape\"\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "heldout-views",
+    "condition": "none",
+    "k_index": 4
+  },
+  "run_id": "p160-cumulative-2026-11-22T094832Z",
+  "skills_installed": [],
+  "started_at": "2026-11-22T18:47:49Z",
+  "timeout": true,
+  "wall_time_s": 1201.3708476320026,
+  "workdir": "/home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-views.none-k4.p160-cumulative-2026-11-22T094832Z"
+}

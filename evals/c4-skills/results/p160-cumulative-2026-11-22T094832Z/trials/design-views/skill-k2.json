@@ -1,0 +1,135 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/design-views/skill-k2.events.ndjson",
+  "event_file_bytes": 364671,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-22T12:59:13Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (7956 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "3/ 3 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "description on all 23 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 27 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "4 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "1 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "top-level element(s) with the External tag: ['Card Payment Network', 'Credit Reference Agency']",
+      "name": "external_system_tagged",
+      "passed": true
+    },
+    {
+      "detail": "every one of 4 user-defined view(s) carries at most 20 element(s)",
+      "name": "views_within_element_bound",
+      "passed": true
+    },
+    {
+      "detail": "every one of 4 view(s) has an explicit key",
+      "name": "explicit_view_keys",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.003995618000772083,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 1,
+    "inspect_findings": [
+      "ERROR: The software system \"Bank Portal\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Bank Portal\" has containers, but is missing decisions.",
+      "ERROR: The container \"Bank Portal.Audit Database\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "ERROR: The container \"Bank Portal.Cache\" is disconnected - add a relationship to/from it, or consider removing it from the model."
+    ],
+    "inspect_triage": {
+      "ERROR: The container \"Bank Portal.Audit Database\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "ERROR: The container \"Bank Portal.Cache\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "ERROR: The software system \"Bank Portal\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Bank Portal\" has containers, but is missing documentation.": "expected"
+    },
+    "parse_calls": 1,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "structurizr-dsl-authoring",
+      "structurizr-validate-loop",
+      "c4-modeling",
+      "c4-view-design"
+    ],
+    "steps": 11,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 497713,
+      "output": 36220,
+      "reasoning": 0
+    },
+    "tool_calls": 19,
+    "validate_calls": 1,
+    "validate_ok_calls": 1,
+    "validated_before_return": true,
+    "validated_by_file": true,
+    "validated_by_final_text": false,
+    "wall_time_s": 510.045,
+    "workdir_dsl": "workspace \"Bank Portal\" \"The online banking platform owned and operated by our company.\" {\n\n    model {\n\n        customer = person \"Bank Customer\" \"A customer of the bank who manages accounts, moves money, and tracks activity.\"\n\n        cardPaymentNetwork = softwareSystem \"Card Payment Network\" \"A card payment network operated by a different organization, through which card authorisations are routed.\" \"External\"\n        creditReferenceAgency = softwareSystem \"Credit Reference Agency\" \"A credit reference agency operated by a different organization, through which credit checks are performed.\" \"External\"\n\n        bankPortal = softwareSystem \"Bank Portal\" \"The online banking platform owned and operated by our company, through which customers manage accounts, move money, and track activity.\" {\n\n            webPortal = container \"Web Portal\" \"Where customers log in and manage their accounts.\" \"Web application\" \"Web\"\n            mobileAppBackend = container \"Mobile App Backend\" \"Serves the bank's mobile app.\" \"API service\"\n            accountService = container \"Account Service\" \"Holds the customer account records.\" \"Service\"\n            transactionService = container \"Transaction Service\" \"Processes deposits, withdrawals, and transfers.\" \"Service\"\n            paymentService = container \"Payment Service\" \"Executes card payments and bank transfers.\" \"Service\"\n            cardService = container \"Card Service\" \"Manages debit and credit cards.\" \"Service\"\n            fraudDetectionService = container \"Fraud Detection Service\" \"Scores transactions for fraud.\" \"Service\"\n            notificationService = container \"Notification Service\" \"Sends email and SMS alerts.\" \"Service\"\n            onboardingService = container \"Onboarding Service\" \"Verifies new customers.\" \"Service\"\n            statementsService = container \"Statements Service\" \"Generates monthly statements.\" \"Service\"\n            directDebitService = container \"Direct Debit Service\" \"Processes standing orders and direct debits.\" \"Service\"\n            exchangeRatesService = container \"Exchange Rates Service\" \"Provides currency conversion rates.\" \"Service\"\n            batchScheduler = container \"Batch Scheduler\" \"Runs the nightly interest calculation and reconciliation.\" \"Batch job\"\n            eventQueue = container \"Event Queue\" \"Carries internal events between the application parts.\" \"Message queue\" \"Queue\"\n            ledgerDb = container \"Ledger Database\" \"Stores every account movement.\" \"Database\" \"Database\"\n            customerDb = container \"Customer Database\" \"Stores account and profile records.\" \"Database\" \"Database\"\n            auditDb = container \"Audit Database\" \"Stores the compliance audit trail.\" \"Database\" \"Database\"\n            cache = container \"Cache\" \"Stores sessions and frequently read account data.\" \"In-memory cache\" \"Database\"\n            documentStore = container \"Document Store\" \"Holds the generated statement PDFs.\" \"Document store\" \"Database\"\n\n            customer -> webPortal \"Logs in and manages accounts, moves money, and tracks activity\" \"HTTPS/JSON\"\n            customer -> mobileAppBackend \"Uses the bank's mobile app to manage accounts, move money, and track activity\" \"HTTPS/JSON\"\n\n            webPortal -> accountService \"Manages accounts\" \"HTTPS/JSON\"\n            webPortal -> transactionService \"Moves money\" \"HTTPS/JSON\"\n            webPortal -> paymentService \"Makes payments\" \"HTTPS/JSON\"\n            webPortal -> cardService \"Manages cards\" \"HTTPS/JSON\"\n            webPortal -> statementsService \"Views statements\" \"HTTPS/JSON\"\n            webPortal -> directDebitService \"Manages standing orders and direct debits\" \"HTTPS/JSON\"\n\n            mobileAppBackend -> accountService \"Manages accounts\" \"HTTPS/JSON\"\n            mobileAppBackend -> transactionService \"Moves money\" \"HTTPS/JSON\"\n            mobileAppBackend -> paymentService \"Makes payments\" \"HTTPS/JSON\"\n            mobileAppBackend -> cardService \"Manages cards\" \"HTTPS/JSON\"\n            mobileAppBackend -> statementsService \"Views statements\" \"HTTPS/JSON\"\n            mobileAppBackend -> directDebitService \"Manages standing orders and direct debits\" \"HTTPS/JSON\"\n\n            transactionService -> ledgerDb \"Updates the ledger\" \"SQL\"\n            transactionService -> fraudDetectionService \"Scores transactions for fraud\" \"HTTPS/JSON\"\n            transactionService -> eventQueue \"Publishes events\" \"AMQP\" \"Async\"\n\n            notificationService -> eventQueue \"Consumes events\" \"AMQP\" \"Async\"\n            statementsService -> ledgerDb \"Reads account movements\" \"SQL\"\n            statementsService -> documentStore \"Writes statement PDFs\" \"S3\"\n            batchScheduler -> ledgerDb \"Reads and writes account movements\" \"SQL\"\n            batchScheduler -> customerDb \"Reads and writes account and profile records\" \"SQL\"\n\n            paymentService -> cardService \"Manages debit and credit cards\" \"HTTPS/JSON\"\n            paymentService -> exchangeRatesService \"Gets currency conversion rates\" \"HTTPS/JSON\"\n            onboardingService -> customerDb \"Reads account and profile records\" \"SQL\"\n\n            paymentService -> cardPaymentNetwork \"Routes card authorisations\" \"HTTPS/JSON\"\n            onboardingService -> creditReferenceAgency \"Performs credit checks\" \"HTTPS/JSON\"\n        }\n    }\n\n    views {\n\n        systemContext bankPortal \"SystemContext\" \"Who uses the Bank Portal and what other systems it talks to.\" {\n            include *\n            autoLayout\n            title \"Bank Portal - System Context\"\n        }\n\n        container bankPortal \"FrontOffice\" \"How customers use the platform to manage accounts, move money, and make payments.\" {\n            include customer\n            include webPortal\n            include mobileAppBackend\n            include accountService\n            include transactionService\n            include paymentService\n            include cardService\n            include statementsService\n            include directDebitService\n            include exchangeRatesService\n            include cardPaymentNetwork\n            autoLayout\n            title \"Bank Portal - Front Office\"\n        }\n\n        container bankPortal \"RiskCompliance\" \"How the platform detects fraud and verifies new customers.\" {\n            include transactionService\n            include fraudDetectionService\n            include onboardingService\n            include creditReferenceAgency\n            include customerDb\n            include auditDb\n            include eventQueue\n            autoLayout\n            title \"Bank Portal - Risk and Compliance\"\n        }\n\n        container bankPortal \"DataAndBatch\" \"How data is stored and how batch and event-driven processes work.\" {\n            include ledgerDb\n            include customerDb\n            include cache\n            include documentStore\n            include eventQueue\n            include batchScheduler\n            include statementsService\n            include notificationService\n            include transactionService\n            autoLayout\n            title \"Bank Portal - Data and Batch\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n            element \"Web\" {\n                shape WebBrowser\n            }\n            element \"Queue\" {\n                shape Pipe\n            }\n            relationship \"Async\" {\n                style dashed\n            }\n        }\n    }\n\n    configuration {\n        scope softwaresystem\n    }\n}\n"
+  },
+  "passed": true,
+  "plan": {
+    "case_id": "design-views",
+    "condition": "skill",
+    "k_index": 2
+  },
+  "run_id": "p160-cumulative-2026-11-22T094832Z",
+  "skills_installed": [
+    "c4-model-review",
+    "c4-modeling",
+    "c4-view-design",
+    "structurizr-dsl-authoring",
+    "structurizr-validate-loop"
+  ],
+  "started_at": "2026-11-22T12:50:40Z",
+  "timeout": false,
+  "wall_time_s": 513.1585310830014,
+  "workdir": "/home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/work/design-views.skill-k2.p160-cumulative-2026-11-22T094832Z"
+}

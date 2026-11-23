@@ -1,0 +1,141 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": true,
+  "event_file": "trials/heldout-modeling/none-k0.events.ndjson",
+  "event_file_bytes": 121569,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-22T15:19:21Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (1542 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "2/ 2 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "4 container(s), expected 3: ['Dashboard Web App', 'Scheduling Service', 'Rates Library', 'Database']",
+      "name": "container_count",
+      "passed": false
+    },
+    {
+      "detail": "technology on 0% of 6 relationship(s); missing: ['Manages household energy use and costs', 'Sees consumption and costs', 'Embeds', 'Embeds', 'Fetches live meter readings', 'Stores meter readings and schedules']",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "description on all 7 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "2 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "1 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "forbidden element(s) modeled as a container or component: container 'Rates Library'",
+      "name": "no_library_container",
+      "passed": false
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "no vague label on any of the 6 relationship(s)",
+      "name": "no_vague_labels",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.004427169998962199,
+  "metrics": {
+    "contended": true,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 13,
+    "inspect_findings": [
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "ERROR: The relationship between the person \"Homeowner\" and the software system \"Energy Manager\" is missing a technology.",
+      "ERROR: The relationship between the person \"Homeowner\" and the container \"Energy Manager.Dashboard Web App\" is missing a technology.",
+      "ERROR: The software system \"Energy Manager\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Energy Manager\" has containers, but is missing decisions.",
+      "ERROR: The relationship between the software system \"Energy Manager\" and the software system \"Smart Meter Provider\" is missing a technology.",
+      "ERROR: The relationship between the container \"Energy Manager.Dashboard Web App\" and the container \"Energy Manager.Rates Library\" is missing a technology.",
+      "ERROR: The relationship between the container \"Energy Manager.Scheduling Service\" and the container \"Energy Manager.Rates Library\" is missing a technology.",
+      "ERROR: The relationship between the container \"Energy Manager.Scheduling Service\" and the software system \"Smart Meter Provider\" is missing a technology.",
+      "ERROR: The relationship between the container \"Energy Manager.Scheduling Service\" and the container \"Energy Manager.Database\" is missing a technology."
+    ],
+    "inspect_triage": {
+      "ERROR: The relationship between the container \"Energy Manager.Dashboard Web App\" and the container \"Energy Manager.Rates Library\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Energy Manager.Scheduling Service\" and the container \"Energy Manager.Database\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Energy Manager.Scheduling Service\" and the container \"Energy Manager.Rates Library\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Energy Manager.Scheduling Service\" and the software system \"Smart Meter Provider\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the person \"Homeowner\" and the container \"Energy Manager.Dashboard Web App\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the person \"Homeowner\" and the software system \"Energy Manager\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the software system \"Energy Manager\" and the software system \"Smart Meter Provider\" is missing a technology.": "untriaged",
+      "ERROR: The software system \"Energy Manager\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Energy Manager\" has containers, but is missing documentation.": "expected",
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+    },
+    "parse_calls": 0,
+    "relationship_technology_coverage": 0.0,
+    "skills_loaded": [],
+    "steps": 22,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 622333,
+      "output": 63533,
+      "reasoning": 0
+    },
+    "tool_calls": 23,
+    "validate_calls": 4,
+    "validate_ok_calls": 1,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 832.695,
+    "workdir_dsl": "workspace \"Home Energy Management Platform\" \"C4 model of the home energy management platform\" {\n\n    model {\n        homeowner = person \"Homeowner\" \"A homeowner who manages their household's energy use and costs\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"A home energy management platform, owned and operated by our company\" {\n            dashboard = container \"Dashboard Web App\" \"Where homeowners see consumption and costs\" \"Web application\"\n            schedulingService = container \"Scheduling Service\" \"Plans charging and heating\" \"Service\"\n            ratesLibrary = container \"Rates Library\" \"Computes energy prices from tariff and time of day\" \"Library\"\n            database = container \"Database\" \"Stores meter readings and schedules\" \"Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"Provides live meter readings, operated by a different organization\"\n\n        homeowner -> energyManager \"Manages household energy use and costs\"\n        homeowner -> dashboard \"Sees consumption and costs\"\n        dashboard -> ratesLibrary \"Embeds\"\n        schedulingService -> ratesLibrary \"Embeds\"\n        schedulingService -> smartMeterProvider \"Fetches live meter readings\"\n        schedulingService -> database \"Stores meter readings and schedules\"\n    }\n\n    views {\n        systemContext energyManager \"SystemContext\" {\n            include *\n            autoLayout\n        }\n\n        container energyManager \"Containers\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "heldout-modeling",
+    "condition": "none",
+    "k_index": 0
+  },
+  "run_id": "p160-cumulative-2026-11-22T094832Z",
+  "skills_installed": [],
+  "started_at": "2026-11-22T14:59:19Z",
+  "timeout": true,
+  "wall_time_s": 1201.4923040469985,
+  "workdir": "/home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.none-k0.p160-cumulative-2026-11-22T094832Z"
+}
