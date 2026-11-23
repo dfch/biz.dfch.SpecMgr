@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: review
 type: feat
-updated: '2026-11-23T13:01:48.200+01:00'
+updated: '2026-11-23T18:54:47.578+01:00'
 version: 1.0.0
 ---
 
@@ -146,15 +146,32 @@ Verification environment: run every check with the worktree code (`uv run --froz
 
 - [x] Task 150.100: Fix D1 -- in the Phase 120 update entry, change "and 8 test files" to "and 7 test files" (`tests/models/md/test__markdown.py` was first changed in Phase 130, so the entry's own 58-file total is consistent with 7) (.specmgr/feat/feat-253-md-line-offset/README.md:201).
 
+#### Phase 160: Bookkeeping fixes (user-requested)
+
+- [x] Task 160.100: Rewrite the S1 bullet of the Phase 130 update entry (mangled: dangling backticks and lost fragments in its middle clauses) so it states only verifiable facts, keeping its file/paragraph enumeration and closing sentences (corrected per verification).
+- [x] Task 160.110: Add one sentence to the "Rebased onto dev after PR #272" update entry accounting for the pass-count delta (Phase 140 entry: 6136 passed, 2 failed; rebased run: 6156 passed, 0 failed) with the added-test count verified against `880144c8`.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-23**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), and 150 (third review fix D1: corrected test-file count in the Phase 120 entry) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. Next: re-review and merge.
+**As of 2026-11-23**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), 150 (third review fix D1: corrected test-file count in the Phase 120 entry), and 160 (user-requested bookkeeping fixes: rewrote the mangled Phase 130 S1 bullet and accounted for the rebase pass-count delta) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. The Phase 160 fixes are log-text only and change no behavior. Next: re-review and merge.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-23T17:54:47.575Z - Phase 160 bookkeeping fixes (user-requested)
+
+Added Phase 160 (Tasks 160.100, 160.110) to the Task List from a user-requested audit of this plan's own update log and implemented it. The S1 bullet of the Phase 130 entry was rewritten because the original wording was mangled beyond recovery (dangling backticks, lost fragments in its middle clauses); it now states only verified facts, keeping its file/paragraph enumeration and closing sentences. The "Rebased onto dev after PR #272" entry now accounts for the +20 pass-count delta from the Phase 140 entry: the 2 previously failing `tests/evals/test_cli_gates.py` rootless-Docker tests now pass, and PR #272 added 18 tests on `dev` (verified against `880144c8`). No code, no tests, no regeneration.
+
+- Gate:
+  - `uv run --frozen ruff format --check`: pass (all files already formatted).
+  - `uv run --frozen ruff check`: pass.
+  - `uv run --frozen vulture src/ whitelist.py --min-confidence 60`: pass.
+  - `uv run --frozen pytest -n auto -q`: 6156 passed, 18 skipped, 0 failed.
+  - `uv run --frozen specmgr lint .specmgr/feat/feat-253-md-line-offset/README.md`: `linted=1 failed=0 skipped=0`.
+  - `git status --short` / `git diff --stat`: only this plan's README changed.
 
 #### 2026-11-23T12:01:48.200Z - Phase 150 third review fix
 
@@ -170,7 +187,7 @@ Added Phase 150 (Task 150.100) to the Task List from the third review's D1 findi
 
 #### 2026-11-23T07:02:26.365Z - Rebased onto dev after PR #272
 
-Rebased the branch onto `dev` at `04896142`, which contains PR #272 (squash `880144c8`, the rootless-Docker evals fix and the `specmgr-docs-test-count` hook, feat-274-evals-rootless-docker). The only conflict was the test-file count in `docs/GENERATED.md`, resolved by regenerating with `specmgr docs` (508: the 504 on `dev` plus this feature's 4 new test files); `scripts/check_generated_test_count.py` exits 0. On the rebased branch, with the Phase 140 changes, `uv run --frozen pytest -q -n auto` gave 6156 passed, 18 skipped, 0 failed: the 2 `tests/evals/test_cli_gates.py` rootless-Docker failures recorded in the earlier entries are gone.
+Rebased the branch onto `dev` at `04896142`, which contains PR #272 (squash `880144c8`, the rootless-Docker evals fix and the `specmgr-docs-test-count` hook, feat-274-evals-rootless-docker). The only conflict was the test-file count in `docs/GENERATED.md`, resolved by regenerating with `specmgr docs` (508: the 504 on `dev` plus this feature's 4 new test files); `scripts/check_generated_test_count.py` exits 0. On the rebased branch, with the Phase 140 changes, `uv run --frozen pytest -q -n auto` gave 6156 passed, 18 skipped, 0 failed: the 2 `tests/evals/test_cli_gates.py` rootless-Docker failures recorded in the earlier entries are gone. The pass count rose by 20 from the Phase 140 entry (6136 passed, 2 failed): the 2 previously failing tests now pass, and PR #272 added 18 tests on `dev` (verified against `880144c8`).
 
 #### 2026-11-22T16:49:15.483Z - Phase 140 second review fixes
 
@@ -191,7 +208,7 @@ Added Phase 130 to the Task List (Tasks 130.100 to 130.170, one per review findi
 - G1 (Task 130.100): new `TestConsumeLeadingLines` in `tests/models/md/test__markdown.py` (7 tests): the fixture text is normalized; `count=0` returns the whole text and consumes 0; `count=1` on `A.` / blank / `B.` returns `B.` and consumes 2 (the removed blank separator line); `count` at the end (3) and past the end (10) return `""` and consume the line count of the whole text (REQ-003); empty text returns `("", 0)` for `count` 0 and 1; a negative `count` raises `AssertionError` ("must not be negative"). The module docstring now names both helpers.
 - D1 (Task 130.110): the Scope bullet and the Design Notes now state that the per-item loop of `process_list_field` uses the helper, while the list branch of `MarkdownStr.from_text` keeps its inline before/after delta, which equals the sum of the per-item helper counts. Both point to the Phase 110 Decisions Made entry. No code changed.
 - D2 (Task 130.120): the `MarkdownStr.from_text` docstring now says that the scalar-field slice goes through `consume_leading_lines`, that the list items are sliced the same way inside `process_list_field` and the list branch advances by the whole-list delta, and that the per-item slice that builds an item's own text does not use the helper and does not move the offset.
-- S1 (Task 130.130): reflowed the spliced docstring paragraphs of `MarkdownListItem.from_text` (`markdown_list_item.py`, the long line and the following lines), `MarkdownParagraph.from_text` (`markdown_paragraph.py`), and `MarkdownSection.from_text` (`markdown_section.py`, the orphan `consume_leading_lines`) -- each child` line). The same problem was in the `_offset` paragraph of `process_list_field` in `markdown_str.py` (orphan `get_extent`), so blank-line` line), which is reflowed too. `_markdown.py` and `markdown_block_quote.py` (a comment only) had no such problem. Every reflowed docstring line is at most 80 columns.
+- S1 (Task 130.130): reflowed the docstring paragraphs that Phase 110 spliced without reflow: `MarkdownListItem.from_text` (`markdown_list_item.py`, the long line and the following lines), `MarkdownParagraph.from_text` (`markdown_paragraph.py`), `MarkdownSection.from_text` (`markdown_section.py`, the orphan `consume_leading_lines` mention), and the `_offset` paragraph of `process_list_field` in `markdown_str.py` (the orphan `get_extent` mention). The spliced sentences no longer fit as written, so each affected paragraph was rewrapped as a whole. `_markdown.py` and `markdown_block_quote.py` (a comment only) had no such problem. Every reflowed docstring line is at most 80 columns.
 - I1 (Task 130.140): `consume_leading_lines` asserts `count >= 0` after its `isinstance` asserts, with the message `count: '<n>' must not be negative (it is a number of already-consumed lines).`; the `count` Args entry says it must not be negative.
 - I2 (Task 130.150): the `consume_leading_lines` docstring states the assumption that `format_text` of the rest strips its leading blank lines but keeps the line count of its content, and that the list branch's before/after delta relied on the same assumption before the helper existed. The Returns entry now covers `count` at or past the end and states that, under that assumption, `consumed` is `count` plus the removed blank separator lines.
 - I3 (Task 130.160): `tests/dec/models/v1/test_outcome_line_reference.py` has a `_QUOTE_LINE` constant (`> A block quote inside the outcome.`) that `_ADDED_BLOCKS` inserts, asserts that it occurs exactly once in `parse_dec_body`'s normalized body (`format_text` of the frontmatter-stripped content), and takes its 1-based index there as the expected line (still 38). The module docstring and the ACC-004 text are updated to match.
