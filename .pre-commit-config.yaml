@@ -31,11 +31,13 @@ repos:
         description: >-
           Regenerate docs/api/ and docs/GENERATED.md, then fail if that
           changed anything -- standard formatter-hook UX: review and
-          `git add` the regenerated files, then commit again.
+          `git add` the regenerated files, then commit again. Also scoped
+          to tests/ because docs/GENERATED.md records the test-file count,
+          so adding or removing a test file alone changes it.
         entry: bash -c 'uv run --frozen specmgr docs && git diff --exit-code -- docs/'
         language: system
         pass_filenames: false
-        files: ^src/.*\.py$
+        files: ^(src|tests)/.*\.py$
 
       - id: specmgr-mcp-docs
         name: specmgr mcp-docs
