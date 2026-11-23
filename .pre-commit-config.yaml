@@ -31,13 +31,27 @@ repos:
         description: >-
           Regenerate docs/api/ and docs/GENERATED.md, then fail if that
           changed anything -- standard formatter-hook UX: review and
-          `git add` the regenerated files, then commit again. Also scoped
-          to tests/ because docs/GENERATED.md records the test-file count,
-          so adding or removing a test file alone changes it.
+          `git add` the regenerated files, then commit again. The one
+          tests/-derived value in docs/, the test-file count in
+          docs/GENERATED.md, is checked by specmgr-docs-test-count below.
         entry: bash -c 'uv run --frozen specmgr docs && git diff --exit-code -- docs/'
         language: system
         pass_filenames: false
-        files: ^(src|tests)/.*\.py$
+        files: ^src/.*\.py$
+
+      - id: specmgr-docs-test-count
+        name: specmgr docs test-file count
+        description: >-
+          Fail when the test-file count that specmgr docs records in
+          docs/GENERATED.md no longer matches tests/**/test_*.py (feat-274).
+          Runs on every commit (always_run): pre-commit never passes deleted
+          files to a hook, so no files: pattern can catch a commit that only
+          adds or deletes a test file. Cheap -- one directory walk, no
+          regeneration.
+        entry: uv run --frozen python scripts/check_generated_test_count.py
+        language: system
+        pass_filenames: false
+        always_run: true
 
       - id: specmgr-mcp-docs
         name: specmgr mcp-docs

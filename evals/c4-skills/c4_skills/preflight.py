@@ -22,7 +22,8 @@ the vLLM version, the speculative configuration (as deployed -- vLLM 0.26.0
 exposes no external metric for it, so it is recorded as not externally
 verifiable rather than guessed), the sampling parameters the harness
 injects, the pinned images with their digests, the host Python and jq
-versions, the upstream SHA, and the server's idle state
+versions, the Docker daemon mode (rootless or not) with the resulting
+container `--user` flags, the upstream SHA, and the server's idle state
 (``vllm:num_requests_running`` summed over all engines).
 
 The preflight ABORTS the run (returns `ok=False`) when a pin no longer
@@ -32,7 +33,6 @@ version differs from the pin, or a pinned image is missing locally.
 
 from __future__ import annotations
 
-import functools
 import json
 import os
 import re
@@ -223,6 +223,8 @@ def run_preflight(
         "structurizr_cli_image": pins.STRUCTURIZR_CLI_IMAGE,
         "python": ".".join(str(x) for x in sys.version_info[:3]),
         "conditions": list(conditions),
+        "docker_rootless": docker_is_rootless(),
+        "container_user_flags": host_user_flags(),
     }
     if mcp_port is not None:
         data["mcp_port"] = mcp_port
@@ -322,20 +324,23 @@ def local_host_addr() -> str:
 #: The `docker info` SecurityOptions entry a rootless daemon reports.
 _ROOTLESS_SECURITY_OPTION = "name=rootless"
 
+#: The container user passed under rootless Docker: container uid/gid 0 is
+#: the host user there, independent of any image's default `USER`.
+ROOTLESS_CONTAINER_USER = "0:0"
 
-@functools.lru_cache(maxsize=1)
-def docker_is_rootless() -> bool:
-    """Return True iff the Docker daemon runs in rootless mode.
+#: The cached result of the last SUCCESSFUL `docker info` probe; `None`
+#: until a probe succeeds. A failed probe is never cached (see
+#: `docker_is_rootless`).
+_rootless_probe_cache: bool | None = None
 
-    Probes `docker info --format '{{json .SecurityOptions}}'` once per
-    process (cached: the daemon mode cannot change under a running
-    harness) and looks for the `name=rootless` security option.
+
+def _probe_docker_rootless() -> bool | None:
+    """Run the `docker info` SecurityOptions probe once, uncached.
 
     Returns:
-        True for a rootless daemon; False for a rootful daemon and
-        whenever the probe fails (docker CLI missing, daemon unreachable,
-        non-zero exit, timeout, unparseable output), so a failed probe
-        keeps the rootful default.
+        True for a rootless daemon, False for a rootful one, and None when
+        the probe fails (docker CLI missing, daemon unreachable, non-zero
+        exit, timeout, output that is not a JSON list).
     """
     try:
         proc = subprocess.run(  # noqa: S603 -- fixed docker CLI invocation
@@ -345,21 +350,56 @@ def docker_is_rootless() -> bool:
             timeout=30,
         )
     except (OSError, subprocess.TimeoutExpired):
-        return False
+        return None
     if proc.returncode != 0:
-        return False
+        return None
     try:
         options = json.loads(proc.stdout or "null")
     except json.JSONDecodeError:
-        return False
+        return None
     if not isinstance(options, list):
-        return False
+        return None
     result = any(isinstance(option, str) and _ROOTLESS_SECURITY_OPTION in option.split(",") for option in options)
     return result
 
 
+def docker_is_rootless() -> bool:
+    """Return True iff the Docker daemon runs in rootless mode.
+
+    Probes `docker info --format '{{json .SecurityOptions}}'` and looks for
+    the exact `name=rootless` element of a security option. A successful
+    probe is cached for the life of the process (the daemon mode cannot
+    change under a running harness). A FAILED probe is not cached, so a
+    transient failure (e.g. a timeout while the daemon starts) is retried
+    on the next call instead of fixing the rootful default for the whole
+    run.
+
+    A rootful daemon with user-namespace remapping (`name=userns`) is
+    reported as rootful; that mode is out of scope (feat-274).
+
+    Returns:
+        True for a rootless daemon; False for a rootful daemon and
+        whenever the probe fails, so a failed probe keeps the rootful
+        default.
+    """
+    global _rootless_probe_cache  # noqa: PLW0603 -- process-wide probe cache
+    if _rootless_probe_cache is not None:
+        return _rootless_probe_cache
+    probed = _probe_docker_rootless()
+    if probed is not None:
+        _rootless_probe_cache = probed
+    result = bool(probed)
+    return result
+
+
+def clear_docker_rootless_cache() -> None:
+    """Forget the cached `docker_is_rootless` probe result (for tests)."""
+    global _rootless_probe_cache  # noqa: PLW0603 -- process-wide probe cache
+    _rootless_probe_cache = None
+
+
 def host_user_flags() -> list[str]:
-    """Return the docker `--user uid:gid` flags for host-owned file output.
+    """Return the docker `--user` flags for host-owned file output.
 
     The trial and CLI containers must write host-owned files into the
     mounted work dirs (the event stream is host-written; the CLI `export`
@@ -371,18 +411,19 @@ def host_user_flags() -> list[str]:
     opposite: container uid 0 already maps to the host user, while any
     other container uid (e.g. 1000) maps to a subordinate uid that cannot
     read the host user's 0700 work dirs -- the mount becomes unreadable.
-    So no `--user` is passed there and the container's default (root)
-    user writes host-owned files.
+    So `--user 0:0` is passed there explicitly, which keeps the mount
+    readable whatever default `USER` an image declares.
 
     Returns:
-        `[]` under rootless Docker (see `docker_is_rootless`) and when the
-        user identity is unavailable (non-POSIX; the containers then run
-        as their default user); `["--user", "uid:gid"]` otherwise,
-        including when the rootless probe fails.
+        `[]` when the user identity is unavailable (non-POSIX; the probe is
+        not run and the containers run as their default user);
+        `["--user", "0:0"]` under rootless Docker (see
+        `docker_is_rootless`); `["--user", "uid:gid"]` otherwise, including
+        when the rootless probe fails.
     """
     if not hasattr(os, "getuid"):
         return []
     if docker_is_rootless():
-        return []
+        return ["--user", ROOTLESS_CONTAINER_USER]
     result = ["--user", f"{os.getuid()}:{os.getgid()}"]
     return result
