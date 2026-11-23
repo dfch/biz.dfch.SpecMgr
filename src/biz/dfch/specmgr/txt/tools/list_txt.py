@@ -51,9 +51,9 @@ result).
 **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/6/7).**
 A 1:1 port of ``list_req``'s ``language`` handling. The optional
 ``language`` parameter (default ``"en"``) selects which directory this tool
-scans: omitted/``"en"`` = the flat ``docs/txt/`` directory -- today's exact
+scans: omitted/``"en"`` = the ``docs/txt/en/`` sharded directory -- today's exact
 behavior; any other shape-validated code (e.g. ``"de"``) = only the
-``docs/txt/{language}/`` subdirectory, listing exactly the existing
+``docs/txt/{language}/`` sharded directory, listing exactly the existing
 variants of that language (ACC-007). There is deliberately NO "all
 languages" mode (the ``DocSummary`` row shape carries no language column
 and would repeat ids). The language is shape-guarded before any filesystem
@@ -109,8 +109,8 @@ def _to_failed_summary(path: Path, error: Exception) -> TxtSummary:
         "max_results/offset control paging (default page size 25, capped at 100); "
         "out-of-range values are clamped, not errored. "
         "The optional `language` parameter (default 'en') selects the directory scanned: omitted/'en' "
-        "= the flat docs/txt/ directory (the default behavior, unchanged); any other ISO 639-1-shaped "
-        "lowercase two-letter code (e.g. 'de') = only that language's docs/txt/{language}/ subdirectory, "
+        "= the docs/txt/en/ sharded directory (the default behavior, unchanged); any other ISO 639-1-shaped "
+        "lowercase two-letter code (e.g. 'de') = only that language's docs/txt/{language}/ sharded directory, "
         "listing exactly the existing variants of that language (there is deliberately no "
         "'all languages' mode). The language is shape-validated before any file access (an "
         "invalid-shaped value is a ValueError, like an invalid id), and a shape-valid language without "
@@ -166,7 +166,7 @@ def list_txt(
     language:
         The language whose directory to list (feat-197-i18n Phase 125, DEC
         38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
-        scans the flat ``docs/txt/`` directory -- today's exact behavior;
+        scans the ``docs/txt/en/`` sharded directory -- today's exact behavior;
         any other ISO 639-1-shaped lowercase two-letter code (e.g.
         ``"de"``) scans only ``docs/txt/{language}/``, listing exactly the
         existing variants of that language (ACC-007). There is deliberately
@@ -199,10 +199,10 @@ def list_txt(
     paths = list(iter_txt_paths(language))
     # feat-107-doc-cache REQ-005 -- and feat-197-i18n (DEC 38efdb66 item 9): with {language}
     # subfolders, a scan of one language's directory no longer covers the whole domain, so
-    # reconcile against the domain-wide live listing (flat EN files plus every {language}
-    # subdirectory's files), never just the scanned directory -- or listing one language would
-    # evict the other languages' cached entries. With no subdirectory present the union is the
-    # scanned listing itself (the pre-i18n behavior, byte-identical).
+    # reconcile against the domain-wide live listing (the union of the sharded listings of
+    # en/ plus every {language} subdirectory), never just the scanned directory -- or listing
+    # one language would evict the other languages' cached entries. With no subdirectory
+    # present the union is the scanned listing itself (the pre-i18n behavior, byte-identical).
     reconcile_txt_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(TXT_TYPE_NAME))))
     summaries, error_count = build_summaries(paths, read_txt, _to_summary, _to_failed_summary)
 

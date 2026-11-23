@@ -37,7 +37,7 @@ The ``feat`` adapter (``_set_status_feat``) diverges from every other
 whole-body domain's identical shape in the same way ``_update_feat``
 (in ``update.py``) does: it resolves ``id`` via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
-flat-file directory scan (see
+file-per-document directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes). It bumps
 ``updated`` to the same shared date+time timestamp (via
 ``general.tools._timestamps.now_timestamp()``) as every other domain --
@@ -735,7 +735,7 @@ def _set_status_feat(id_: str, status: str) -> FeatFrontmatter | ParseFailureRes
     :func:`_set_status_req` for the full semantics -- with the same
     feat-only divergence ``_update_feat`` (in ``update.py``) documents:
     ``id_`` resolves via ``feat.tools._paths``'s bespoke folder-per-document
-    shortcut, not a flat-file directory scan. ``updated`` is bumped to the
+    shortcut, not a file-per-document directory scan. ``updated`` is bumped to the
     same shared date+time timestamp as every other domain.
     """
 
@@ -1095,10 +1095,11 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
         "frontmatter only (no body) on success; use the "
         "corresponding `get_<d>` tool to fetch the full document afterward. "
         "The optional `language` parameter (default 'en', feat-197-i18n) selects the language variant to "
-        "act on: omitted/'en' = the flat default-language document, exactly the default behavior; a "
-        "non-default ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
-        "docs/<type>/{language}/ (found by id-scan of that subdirectory), acting on that file ONLY -- the "
-        "EN file's content and `updated` timestamp stay untouched. "
+        "act on: omitted/'en' = the default-language document in the `en/` sharded directory, exactly "
+        "the default behavior; a non-default ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = "
+        "that language's variant in its own docs/<type>/{language}/ sharded directory (found by id-scan "
+        "of that directory), acting on that file ONLY -- the EN file's content and `updated` timestamp "
+        "stay untouched. "
         "Every whole-body type except `feat` supports a non-default language; for `feat` "
         "(always English) a non-default `language` raises a `ValueError`, as does a malformed "
         "`language` or one with no packaged heading-mapping table -- all raised before any file "
@@ -1181,7 +1182,7 @@ def set_status(
            language:
                The language variant to act on (feat-197-i18n Phase 120, DEC
                38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
-               it) acts on the flat default-language document -- today's exact
+               it) acts on the default-language document in the ``en/`` sharded directory -- today's exact
                behavior; any other ISO 639-1-shaped lowercase two-letter code
                (e.g. ``"de"``) acts on that language's variant, located by
                id-scan of ``docs/<type>/{language}/`` (the variant's basename is

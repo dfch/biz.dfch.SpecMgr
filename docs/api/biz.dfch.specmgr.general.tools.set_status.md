@@ -20,7 +20,7 @@ The ``feat`` adapter (``_set_status_feat``) diverges from every other
 whole-body domain's identical shape in the same way ``_update_feat``
 (in ``update.py``) does: it resolves ``id`` via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
-flat-file directory scan (see
+file-per-document directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes). It bumps
 ``updated`` to the same shared date+time timestamp (via
 ``general.tools._timestamps.now_timestamp()``) as every other domain --
@@ -170,7 +170,7 @@ Mirrors :func:`_set_status_dec`'s shape (same ``feat_lock``,
 :func:`_set_status_req` for the full semantics -- with the same
 feat-only divergence ``_update_feat`` (in ``update.py``) documents:
 ``id_`` resolves via ``feat.tools._paths``'s bespoke folder-per-document
-shortcut, not a flat-file directory scan. ``updated`` is bumped to the
+shortcut, not a file-per-document directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
@@ -450,7 +450,7 @@ Replace the status of an existing document, across every domain.
        language:
            The language variant to act on (feat-197-i18n Phase 120, DEC
            38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
-           it) acts on the flat default-language document -- today's exact
+           it) acts on the default-language document in the ``en/`` sharded directory -- today's exact
            behavior; any other ISO 639-1-shaped lowercase two-letter code
            (e.g. ``"de"``) acts on that language's variant, located by
            id-scan of ``docs/<type>/{language}/`` (the variant's basename is

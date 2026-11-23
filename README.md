@@ -244,7 +244,10 @@ tool call, so hand-editing a file between calls is safe.
 - Requirements (REQ) and future document types: share one root directory,
   configurable via the `SPECMGR_DOCS_DIR` environment variable (default
   `docs`), with each type's own subdirectory appended automatically (e.g.
-  `docs/req` for requirements).
+  `docs/req` for requirements). Every such type directory holds
+  per-language sharded subdirectories, English included
+  (`docs/req/en/<id[:2]>/...`, the shard named by the id's first two hex
+  digits); the base resolved for an omitted language is `docs/<type>/en/`.
 - Features (FEAT): base directory defaults to `.specmgr/feat`, configurable
   via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific and
   not shared via `SPECMGR_DOCS_DIR`.
@@ -644,15 +647,17 @@ command, and codifies the graph, batch, and reverse workflows that
 
 ## Multi-Language Artifacts
 
-The same artifact can exist in several languages. English is the default
-and keeps its location (`docs/<type>/`); every other language is a
-`docs/<type>/<language>/` subfolder (`<language>` is a lowercase
-two-letter code such as `de`) that holds the variant under the **exact
-same file name** as its English source, with the **same `id`** and the
-identical frontmatter and body structure. The language lives in the
-file's location only — there is no `language` frontmatter field. It
-applies to the twelve domains `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
-`rsk`, `dec`, `sop`, `vcr`, `sysrs` and `txt`.
+The same artifact can exist in several languages. Every language —
+English included — is a sharded `docs/<type>/<language>/` directory
+(`<language>` is a lowercase two-letter code such as `en` or `de`), and
+each document lives in its own two-hex-digit shard subdirectory,
+`docs/<type>/<language>/<id[:2]>/<id>-<slug>.md` (the shard named by the
+first two hex digits of the id), under the **exact same file name** as its
+English source, with the **same `id`** and the identical frontmatter and
+body structure. The language lives in the file's location only — there is
+no `language` frontmatter field. It applies to the thirteen domains
+`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`,
+`sysrs`, `txt` and `set`.
 
 **`feat` is always English**, permanently: no `feat` tool, resource or
 prompt takes a `language`, and the generic tools reject a non-default

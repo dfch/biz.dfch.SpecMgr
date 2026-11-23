@@ -746,8 +746,9 @@ type or cross-cutting:
   `list_txt` for a near-duplicate; `update_txt` names the generic
   `update`/`edit`/`set_status`/`set_classification` tools with
   `type="txt"`). Its schema lives at `txt/models/v1/`, inside the domain
-  package, not top-level `models/`. Documents live flat under the shared
-  docs root as `docs/txt/txt-{uuid}-{slug}.md` (the shared
+  package, not top-level `models/`. Documents live sharded under the shared
+  docs root as `docs/txt/<lang>/<id[:2]>/<uuid>-<slug>.md` (`en` a normal
+  language dir — feat-245-shard-docs; the shared
   `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
   `SPECMGR_TXT_DIR`). `txt` is one of the thirteen language-aware domains
   (feat-197-i18n, see its paragraph below): `get_txt`/`list_txt`/`create_txt`
@@ -812,8 +813,9 @@ type or cross-cutting:
   duplicate-guard precedent); no `## Owner`, no `## Source`, no `## Tags`,
   no other section (the engine's trailing-completeness error rejects any
   further H2). Its schema lives at `set/models/v1/`, inside the domain
-  package, not top-level `models/`. Documents live flat under the shared
-  docs root as `docs/set/set-{uuid}-{slug}.md` (the shared
+  package, not top-level `models/`. Documents live sharded under the shared
+  docs root as `docs/set/<lang>/<id[:2]>/<uuid>-<slug>.md` (`en` a normal
+  language dir — feat-245-shard-docs; the shared
   `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
   `SPECMGR_SET_DIR`). `set` is one of the thirteen language-aware domains
   (feat-197-i18n, see its paragraph below): `get_set`/`list_set`/
@@ -1400,13 +1402,15 @@ unchanged; only the startup orchestration moved.
 added first-class **multi-language variants of the same artifact** for the
 **thirteen** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
 `rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`/`set` (`general/tools/_language_guard.
-LANGUAGE_AWARE_DOMAINS`, derived from the shared domain registry). English is
-the default and keeps its exact, unchanged location; every other language is
-a `docs/{type}/{language}/` subfolder holding the variant under the EN
-source's **exact basename** (the slug always derives from the EN title, never
-a translated one), with the **same `id`** and the identical frontmatter/body
-schema — the language lives in the file's location only, there is no
-`language` frontmatter field. **`feat` is permanently excluded**
+LANGUAGE_AWARE_DOMAINS`, derived from the shared domain registry). Every
+language — English included — is a sharded `docs/{type}/{language}/<id[:2]>/`
+directory (feat-245-shard-docs, refining this DEC's item 1: the flat-EN
+special case is retired, the uniform layout holds for every language)
+holding the variant under the EN source's **exact basename** in its own
+shard dir (the slug always derives from the EN title, never a translated
+one), with the **same `id`** and the identical frontmatter/body schema — the
+language lives in the file's location only, there is no `language`
+frontmatter field. **`feat` is permanently excluded**
 (REQ-002, ACC-002): no `feat` tool, resource or prompt
 has a `language` parameter, no `{language}` path convention reaches `feat`'s
 folder-per-document addressing, and a `language` that
@@ -1628,9 +1632,13 @@ locally
 instead of failing later in CI. The local `specmgr lint` hook (feat-218)
 lints the staged in-tree spec artifacts (the feature README.md files under
 `.specmgr/feat/` and the documents under `docs/{type}/`, selected by the
-anchored pattern `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$`)
-with the `specmgr lint` full-parse gate, and is placed ahead of the `pytest`
-hook. It is the config's first `pass_filenames: true` hook (every other
+anchored pattern `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/.+\.md)$` —
+an open-depth docs match so misplaced depths are selected for the placement
+validator and non-domain dirs are selected and then skipped) with the
+`specmgr lint` full-parse gate, plus the sharded-layout placement check
+(missing language dir, missing shard dir, non-hex shard, or deeper than one
+shard level is a blocking layout violation — exit 2, naming the correct
+path), and is placed ahead of the `pytest` hook. It is the config's first `pass_filenames: true` hook (every other
 local hook takes no file list) and runs with `require_serial: true`, so the
 staged files are linted by one process with one ordered summary (a staged
 list longer than the OS argument-length limit is still split into sequential
@@ -1721,10 +1729,13 @@ extras onto every consumer of the base library.
   path, whose `list_feat` dirty stage (frontmatter+H1 only, DEC 3982712a)
   is precisely the masking that hid the feat-214 defect) and reports every
   unparseable document (path + parse error), each followed by its per-type
-  repair pointer (whole-body domains `/repair {type} {id}`, the id derived
-  from the path — the folder name for feat, the file-name UUID for the
-   others — falling back to `/repair {type}`), plus one summary
-   (`linted`/`failed`/`skipped`). Three scopes, so the cost
+   repair pointer (whole-body domains `/repair {type} {id}`, the id derived
+   from the path — the folder name for feat, the file-name UUID for the
+    others — falling back to `/repair {type}`), plus — for a misplaced
+    docs-domain file (missing language dir, missing shard dir, non-hex
+    shard, or deeper than one shard level) — a blocking layout violation
+    (exit 2, naming the correct path; the file is never parsed), plus one
+    summary (`linted`/`failed`/`skipped`/`layout`). Three scopes, so the cost
   scales with the size of a change and never with the size of the corpus:
   path mode (the type is inferred from the path layout alone — the
   containing directory named after a type, or the `feat/{id}/README.md`
@@ -1740,8 +1751,11 @@ extras onto every consumer of the base library.
   issue #238), **2** usage-or-resolution error (no paths and no sweep
   flag, an unreadable or missing path, an unrecognized layout without
   `--skip-unrecognized`, `--dir` without `--type` or combined with explicit
-   paths, paths combined with `--all`, an unknown `--type`, `--all`
-    discovering nothing at all -- no document). Accepted
+    paths, paths combined with `--all`, an unknown `--type`, `--all`
+     discovering nothing at all -- no document, or a docs-domain file
+     violating the sharded layout — missing language dir, missing shard
+     dir, non-hex shard, deeper than one shard level — reported as a
+     layout violation naming the correct path). Accepted
    limitation: because the gate is change-scoped, a schema or parser change
    can break untouched documents without failing any gate — the full sweep
    (manual, or the follow-up nightly workflow whose issue owns the

@@ -114,7 +114,7 @@ def iter_candidate_paths(target_types: Sequence[str] | None = None) -> Iterator[
     caller-supplied ``target_types`` restricts the walk to that
     (order-preserving, de-duplicated) subset. Within each domain the
     paths come from the domain's own registry adapter -- the shared
-    flat-file ``iter_doc_paths`` (every domain other than ``feat``) or
+    sharded ``iter_doc_paths`` (every domain other than ``feat``) or
     ``feat``'s own ``iter_feat_paths`` (``<base>/<id>/README.md``,
     folder-per-document, DEC 8cf940c5) -- in the adapter's own sorted
     order, so the enumeration is deterministic for a given on-disk

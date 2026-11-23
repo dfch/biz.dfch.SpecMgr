@@ -202,9 +202,10 @@ def find_dec_path(base_dir: Path, id_: str) -> Path:
     Mirrors ``gol.tools._paths.find_gol_path``'s own skip-on-parse-failure
     rule. Before scanning, the cache is reconciled
     (:func:`~._cache.reconcile_dec_cache`) against the freshly
-    materialized domain-wide live path listing (the flat EN files plus
-    every ``{language}`` subdirectory's files -- a scan of one language
-    must not evict the other languages' entries, feat-197-i18n Phase 110),
+    materialized domain-wide live path listing (the ``en/`` sharded
+    listing plus every ``{language}/`` sharded listing -- a scan of one
+    language must not evict the other languages' entries, feat-197-i18n
+    Phase 110),
     dropping any cached entry for a file deleted outside specmgr's own
     tooling (REQ-005).
 

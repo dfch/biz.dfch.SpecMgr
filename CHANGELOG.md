@@ -157,6 +157,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING**: the thirteen UUID whole-body domains (`req`, `uc`, `tsk`,
+  `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`, `set`)
+  now store every document in a uniform sharded layout for every
+  language, English included:
+  `docs/<type>/<language>/<id[:2]>/<id>-<slug>.md` (the shard named by
+  the first two hex digits of the id, 256 shards per language).
+  Pre-existing flat trees are invisible to every MCP read path until
+  moved under `<lang>/<shard>/` (no dual-layout compatibility, no
+  migration CLI); file names lose the `<type>-` prefix (DEC's
+  prefix-less `<uuid>-<slug>.md` convention extended to the other
+  twelve domains); `ref` values change from `<type>-<uuid>-<slug>` to
+  `<uuid>-<slug>` (`ref` stays opaque and is never an input to
+  `get_<d>`); and English moves from `docs/<type>/` into
+  `docs/<type>/en/`, retiring DEC
+  38efdb66-8025-45c5-bbe8-45b25fc7a772 item 1's flat-EN special case.
+  The `specmgr lint` gate recognizes the sharded layout and fails with
+  exit 2 (naming the correct path) on a file that misses the language
+  dir, misses the shard dir, carries a non-hex shard, or sits deeper
+  than one shard level. Id resolution is shard-narrowed with a
+  per-language full-listing fallback, and the 76 in-repo documents
+  migrated in the same change (feat-245-shard-docs, GitHub issue #245).
+
 - The `specmgr harness-bundle` generator and its install protocol, refined
   by the feat-167-mcp-lifecycle-commands-2 Phase 170 fix phase (review
   cycle 3, GitHub issue #167): the feat-numbering skill

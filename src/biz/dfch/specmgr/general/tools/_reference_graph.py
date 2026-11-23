@@ -251,7 +251,7 @@ def _iter_source_documents() -> Iterator[tuple[str, Path, Any]]:
 
     The full scan the reverse and registry-wide builders share (no listing,
     no pagination), in ``ALL_DOMAINS`` order and each domain's own sorted
-    path order (the domain's own path iterator: the shared flat-file
+    path order (the domain's own path iterator: the shared sharded
     ``iter_doc_paths`` for every whole-body domain other than ``feat``,
     ``iter_feat_paths`` for ``feat``). Each path is read through the
     domain's own leg (the cache-aware ``read_<d>`` for every whole-body
@@ -293,10 +293,10 @@ def _raise_broken_source(type_: str, base_dir: Path, id_: str, read_fn: Callable
     ``XNotFoundError`` (a broken source's own id is unreadable by the id
     lookup, which skips unparseable files -- so missing and broken surface
     as the same ``LookupError`` and must be probed apart here). The
-    flat domains go through the shared
+    single-file domains go through the shared
     :func:`general.tools._doc_paths.find_parse_failure` name-match scan;
     ``feat`` goes through its folder-per-document
-    counterpart :func:`find_feat_parse_failure` (the flat-file stem match
+    counterpart :func:`find_feat_parse_failure` (the single-file stem match
     cannot see a ``<base>/<id>/README.md``). For a name-matching broken
     file, the leg is re-run on the matched path to re-raise the live
     exception (the cache-backed leg re-raises a fresh, equivalent stored

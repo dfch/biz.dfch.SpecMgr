@@ -54,8 +54,8 @@ this one returns instead): ``feat`` goes through
 counterpart -- its ``error`` is byte-identical to ``list_feat``'s own
 failed row for the same file once that file's clean stage has converged,
 time-qualified by DEC 3982712a), every other domain through the shared
-flat-file ``find_parse_failure`` name-match scan called with the
-domain's own ``read_<d>`` leg (cache-backed for the 11 flat-file
+``find_parse_failure`` name-match scan called with the
+domain's own ``read_<d>`` leg (cache-backed for the 13 sharded
 whole-body domains, whose ``list_<d>`` failed row reads with the same
 ``read_fn``, so the captured ``str(exc)`` is byte-identical to that
 row's ``error`` -- DEC 9080b37c). The probed path

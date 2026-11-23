@@ -20,7 +20,7 @@ be a TOCTOU race.
 ``feat`` is the one domain whose adapter (``_edit_feat``) diverges from
 every other domain's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
-flat-file directory scan (see
+file-per-document directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
 
 The signature and the stage-1 runtime error strings mirror the OpenCode
@@ -99,7 +99,7 @@ non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
 ``XNotFoundError``: the adapter catches the ``load_by_id`` failure (inside
 the domain lock, before the match stage ever runs), probes the domain's
 existing parse-failure lookup (:func:`general.tools._doc_paths.
-find_parse_failure` for the 11 flat-file domains, called with the domain's
+find_parse_failure` for the 13 sharded domains, called with the domain's
 own cache-backed ``read_<d>`` as ``read_fn``;
 :func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
 returns the result when the probe finds a name-matching broken file (the
@@ -172,7 +172,7 @@ Mirror of :func:`_edit_dec`'s shape (same ``feat_lock``, ``load_by_id``,
 ``write_feat_file``, ``FeatNotFoundError``) with one feat-only
 divergence (see the module docstring): ``id_`` resolves via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut (through
-``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
+``load_by_id``/``feat_base_dir``), not a file-per-document directory scan.
 
 
 ### `_edit_gol(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult | ValidateResult'`
@@ -541,7 +541,7 @@ replace_all:
 language:
     The language variant to edit (feat-197-i18n Phase 120, DEC
     38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
-    it) edits the flat default-language document -- today's exact
+    it) edits the default-language document in the ``en/`` sharded directory -- today's exact
     behavior; any other ISO 639-1-shaped lowercase two-letter code
     (e.g. ``"de"``) edits that language's variant, located by id-scan
     of ``docs/<type>/{language}/``: ``old_str`` is matched against that

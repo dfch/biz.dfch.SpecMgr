@@ -13,10 +13,10 @@ language with its resolved path and a ``parseable`` flag (a variant that exists 
 with the parse error -- never dropped, never raised).
 
 **Layout probing, not scanning.** The tool never uses or alters the EN-only scans of the other tools (REQ-013): it
-probes the flat ``docs/{type}/`` directory and each shape-valid ``docs/{type}/{language}/`` subdirectory through the
-domain's own language-aware readers (:mod:`._language_variants`). Only ``*.md`` documents participate: a non-``.md``
-sibling (the ``.pdf`` next to a ``sysrs`` document) and a shape-invalid directory name (``Notes``, ``de-DE``) are
-ignored. An id with variants but no EN source is reported as such (no ``"en"``); an id that exists in no language at
+probes the ``docs/{type}/en/`` sharded directory and each shape-valid ``docs/{type}/{language}/`` sharded directory
+through the domain's own language-aware readers (:mod:`._language_variants`). Only ``*.md`` documents participate: a
+non-``.md`` sibling (the ``.pdf`` next to a ``sysrs`` document) and a shape-invalid directory name (``Notes``,
+``de-DE``) are ignored. An id with variants but no EN source is reported as such (no ``"en"``); an id that exists in
 all raises the domain's own not-found error. Strictly read-only: it writes, creates, and invalidates nothing.
 
 **Error semantics.** ``feat`` is permanently English (REQ-002): it is rejected with the

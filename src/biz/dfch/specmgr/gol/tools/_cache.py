@@ -104,10 +104,10 @@ def read_gol(path: Path) -> GolDocument:
 
     **Language-aware (feat-197-i18n Phase 125).** The effective language is
     derived from the file's own position relative to the goal base
-    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
-    directly in the flat ``docs/gol/`` directory parses canonical/EN, a file
-    directly in ``docs/gol/{language}/`` parses in that language, anything
-    else canonical), never from a caller argument: the location *is* the
+    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file in the
+    ``docs/gol/en/`` directory parses canonical/EN, a file in
+    ``docs/gol/{language}/`` parses in that language, anything else
+    canonical), never from a caller argument: the location *is* the
     language encoding (DEC 38efdb66 item 1), so every consumer of this
     reader (``find_gol_path``'s scan, ``list_gol``'s rows, ``load_by_id``'s
     second read, the generic tools' own gol adapters) parses a variant file

@@ -18,14 +18,17 @@ first).
 
 ## 2. Directory layout and basename rule
 
-- **English** stays exactly where it always was: `docs/{type}/<type>-<id>-<slug>.md`.
-  An omitted `language` and an explicit `language="en"` both mean this flat
-  directory.
-- **Every other language `L`** lives in a subfolder:
-  `docs/{type}/{L}/<type>-<id>-<slug>.md`.
-- **The variant's file name is byte-identical to the EN source's file name.**
-  The slug always derives from the EN title, never from the translated
-  title. Re-titling or translating a document never moves a variant's file.
+- **One uniform sharded layout for every language, English included**
+  (feat-245-shard-docs, refining DEC 38efdb66 item 1's flat-EN special
+  case): each language `L` (an ISO 639-1-shaped two-letter code, `en` for
+  English) is a `docs/{type}/{L}/` directory holding one two-hex-digit
+  shard subdirectory per document, `docs/{type}/{L}/<id[:2]>/`, named by
+  the first two hex digits of the document's id. An omitted `language` and
+  an explicit `language="en"` both mean the `docs/{type}/en/` directory.
+- **The variant's file name is byte-identical to the EN source's file
+  name.** Every file is named `<id>-<slug>.md` (no type prefix); the slug
+  always derives from the EN title, never from the translated title.
+  Re-titling or translating a document never moves a variant's file.
 - **The `id` is shared.** Every language variant of one artifact carries the
   same `id` in its frontmatter; the id is never language-qualified.
 - The language of a variant is encoded by its location only. The frontmatter
@@ -34,8 +37,9 @@ first).
 - A variant can only be created when its EN source (same `id`) exists.
 - Only `.md` files take part. The EN-only consumers (`find_related`,
   `find_similar_text`, `list_references`, `get_reference_diagram`,
-  `get_reference_diagram_all`) never see a language subfolder; every
-  reference and similarity hit resolves to the EN variant.
+  `get_reference_diagram_all`) never see a language variant: the EN scan
+  is re-rooted at the `en/` directory, so every reference and similarity
+  hit resolves to the EN variant.
 
 ## 3. Language vocabulary and heading tables
 

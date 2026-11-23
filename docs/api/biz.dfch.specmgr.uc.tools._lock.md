@@ -50,8 +50,8 @@ Parameters
 id_:
     The use case's id (shared across every language variant).
 language:
-    The variant's language; ``None``/omitted or ``"en"`` = the default
-    (flat EN) document.
+    The variant's language; ``None``/omitted or ``"en"`` = the default (EN)
+    document, sharded like every other language.
 
 Returns
 -------

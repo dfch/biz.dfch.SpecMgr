@@ -20,9 +20,10 @@
 The shared, private, ``mcp``-free helper behind the ``list_languages`` and ``check_translation_drift`` tools: given a
 document ``type``/``id`` it finds the on-disk document of one *language* (or of every language) without ever
 touching the EN-only scans of the other generic tools (REQ-013) -- it resolves each language's own directory through
-the domain's own ``<d>_base_dir(language)`` (DEC 38efdb66 item 1: EN = the flat ``docs/{type}/``, any other validated
-code = ``docs/{type}/{language}/``), reads through the domain's own cache-backed ``load_by_id``/``read_<d>``
-(a variant is parsed through its language's heading table, derived from its path position), and discovers the
+the domain's own ``<d>_base_dir(language)`` (DEC 38efdb66 item 1, refined by feat-245-shard-docs: every language, EN
+included = the sharded ``docs/{type}/{language}/`` directory), reads through the domain's own cache-backed
+``load_by_id``/``read_<d>`` (a variant is parsed through its language's heading table, derived from its path
+position), and discovers the
 language directories of a domain through the shared :func:`~biz.dfch.specmgr.general.tools._doc_paths.
 iter_language_dirs`. Nothing here writes, creates, or invalidates anything.
 
@@ -72,7 +73,7 @@ class Location:
     Attributes
     ----------
     language:
-        The language code of the variant (``"en"`` for the flat default-language document).
+        The language code of the variant (``"en"`` for the default-language document in the ``en/`` sharded directory).
     path:
         The resolved on-disk path.
     parseable:
@@ -140,7 +141,7 @@ def locate(type_: str, id_: str, language: str) -> Location:
     id_:
         The document id (shared by every language variant).
     language:
-        The language to locate; ``"en"`` = the flat directory.
+        The language to locate; ``"en"`` = the ``en/`` sharded directory.
 
     Returns
     -------

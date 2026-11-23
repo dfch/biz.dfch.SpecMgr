@@ -37,7 +37,7 @@ be a TOCTOU race.
 ``feat`` is the one domain whose adapter (``_edit_feat``) diverges from
 every other domain's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
-flat-file directory scan (see
+file-per-document directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
 
 The signature and the stage-1 runtime error strings mirror the OpenCode
@@ -116,7 +116,7 @@ non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
 ``XNotFoundError``: the adapter catches the ``load_by_id`` failure (inside
 the domain lock, before the match stage ever runs), probes the domain's
 existing parse-failure lookup (:func:`general.tools._doc_paths.
-find_parse_failure` for the 11 flat-file domains, called with the domain's
+find_parse_failure` for the 13 sharded domains, called with the domain's
 own cache-backed ``read_<d>`` as ``read_fn``;
 :func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
 returns the result when the probe finds a name-matching broken file (the
@@ -741,7 +741,7 @@ def _edit_feat(
     ``write_feat_file``, ``FeatNotFoundError``) with one feat-only
     divergence (see the module docstring): ``id_`` resolves via
     ``feat.tools._paths``'s bespoke folder-per-document shortcut (through
-    ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
+    ``load_by_id``/``feat_base_dir``), not a file-per-document directory scan.
     """
     base_dir = feat_base_dir()
     with feat_lock(id_):
@@ -1082,10 +1082,11 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
         "for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter "
         "only (no body; `updated` bumped) on success; use the corresponding `get_<d>` tool to fetch "
         "the full document afterward. The optional `language` parameter (default 'en', feat-197-i18n) "
-        "selects the language variant to edit: omitted/'en' = the flat default-language document, "
-        "exactly the default behavior; a non-default ISO 639-1-shaped lowercase two-letter code "
-        "(e.g. 'de') = that language's variant at docs/<type>/{language}/ (found by id-scan of that "
-        "subdirectory), matched against and written to that file ONLY -- the EN file's content and "
+        "selects the language variant to edit: omitted/'en' = the default-language document in the "
+        "`en/` sharded directory, exactly the default behavior; a non-default ISO 639-1-shaped lowercase "
+        "two-letter code (e.g. 'de') = that language's variant in its own docs/<type>/{language}/ "
+        "sharded directory (found by id-scan of that directory), matched against and written to that "
+        "file ONLY -- the EN file's content and "
         "`updated` timestamp stay untouched -- with the stage-2 validation going through that "
         "language's heading-mapping table. "
         "Every whole-body type except `feat` supports a non-default language; for `feat` (always "
@@ -1188,7 +1189,7 @@ def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     language:
         The language variant to edit (feat-197-i18n Phase 120, DEC
         38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
-        it) edits the flat default-language document -- today's exact
+        it) edits the default-language document in the ``en/`` sharded directory -- today's exact
         behavior; any other ISO 639-1-shaped lowercase two-letter code
         (e.g. ``"de"``) edits that language's variant, located by id-scan
         of ``docs/<type>/{language}/``: ``old_str`` is matched against that

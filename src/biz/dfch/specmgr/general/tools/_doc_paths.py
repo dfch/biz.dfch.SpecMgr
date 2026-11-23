@@ -208,7 +208,10 @@ _docs_dir_var = _envregistry.register(
     description=(
         "Shared base directory root for the document-type domains that do not have their own dedicated "
         "directory environment variable (req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs, txt, set). "
-        "Each domain's own subdirectory is appended automatically, e.g. docs/req."
+        "Each domain's own subdirectory is appended automatically, e.g. docs/req; every such domain "
+        "directory holds per-language sharded subdirectories, English included (docs/req/en/<id[:2]>/..., "
+        "the shard named by the id's first two hex digits), and the base resolved for an omitted "
+        "language is docs/<type>/en/."
     ),
     owner="general",
     format="filepath",

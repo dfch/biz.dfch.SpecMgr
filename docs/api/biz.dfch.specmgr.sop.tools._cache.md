@@ -83,10 +83,10 @@ re-raised cached failure) is returned without re-invoking
 
 **Language-aware (feat-197-i18n Phase 125).** The effective language is
 derived from the file's own position relative to the Standard Operating Procedure base
-directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
-directly in the flat ``docs/sop/`` directory parses canonical/EN, a file
-directly in ``docs/sop/{language}/`` parses in that language, anything
-else canonical), never from a caller argument: the location *is* the
+directory (``general.tools._doc_paths.language_for_doc_path`` -- a file in the
+``docs/sop/en/`` directory parses canonical/EN, a file in
+``docs/sop/{language}/`` parses in that language, anything else
+canonical), never from a caller argument: the location *is* the
 language encoding (DEC 38efdb66 item 1), so every consumer of this
 reader (``find_sop_path``'s scan, ``list_sop``'s rows, ``load_by_id``'s
 second read, the generic tools' own sop adapters) parses a variant file

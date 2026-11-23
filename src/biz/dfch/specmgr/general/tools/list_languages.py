@@ -30,10 +30,10 @@ language with its resolved path and a ``parseable`` flag (a variant that exists 
 with the parse error -- never dropped, never raised).
 
 **Layout probing, not scanning.** The tool never uses or alters the EN-only scans of the other tools (REQ-013): it
-probes the flat ``docs/{type}/`` directory and each shape-valid ``docs/{type}/{language}/`` subdirectory through the
-domain's own language-aware readers (:mod:`._language_variants`). Only ``*.md`` documents participate: a non-``.md``
-sibling (the ``.pdf`` next to a ``sysrs`` document) and a shape-invalid directory name (``Notes``, ``de-DE``) are
-ignored. An id with variants but no EN source is reported as such (no ``"en"``); an id that exists in no language at
+probes the ``docs/{type}/en/`` sharded directory and each shape-valid ``docs/{type}/{language}/`` sharded directory
+through the domain's own language-aware readers (:mod:`._language_variants`). Only ``*.md`` documents participate: a
+non-``.md`` sibling (the ``.pdf`` next to a ``sysrs`` document) and a shape-invalid directory name (``Notes``,
+``de-DE``) are ignored. An id with variants but no EN source is reported as such (no ``"en"``); an id that exists in
 all raises the domain's own not-found error. Strictly read-only: it writes, creates, and invalidates nothing.
 
 **Error semantics.** ``feat`` is permanently English (REQ-002): it is rejected with the
@@ -65,7 +65,7 @@ __all__ = ["list_languages"]
         "code -- and one `entries` row per language with `language`, `path` (the resolved absolute file path), "
         "`parseable`, and `error`; a variant that exists but fails to parse is listed with `parseable=false` and "
         "the parse error (byte-identical to the domain's list_<d>/get_<d> failure text for that file), never "
-        "dropped and never raised. Only .md documents under docs/{type}/ (EN) and docs/{type}/{language}/ "
+        "dropped and never raised. Only .md documents under docs/{type}/en/ (EN) and docs/{type}/{language}/ "
         "participate; non-.md siblings and directory names that are not a two-letter lowercase language code are "
         "ignored. An id that exists in no language raises the domain's own not-found error; an unknown type or a "
         "path-injection/wrong-format id is a ValueError raised before any file access. It writes, creates and "

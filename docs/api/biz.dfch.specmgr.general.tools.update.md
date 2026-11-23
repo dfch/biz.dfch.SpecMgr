@@ -48,7 +48,7 @@ assembles the ``UpdateResult``.
 ``feat`` is the one domain whose adapter (``_update_feat``) diverges from
 every other domain's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
-flat-file directory scan (see
+file-per-document directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
 It bumps ``updated`` to the same shared date+time timestamp (via
 ``general.tools._timestamps.now_timestamp()``) as every other domain --
@@ -66,8 +66,8 @@ non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
 (``error``/``path``/``id``) instead of raising the domain's own
 ``XNotFoundError``: the adapter catches the ``load_by_id`` failure (inside
 the domain lock, before any write), probes the domain's existing
-parse-failure lookup (:func:`._doc_paths.find_parse_failure` for the 11
-flat-file domains, called with the domain's own cache-backed ``read_<d>``
+parse-failure lookup (:func:`._doc_paths.find_parse_failure` for the 13
+sharded domains, called with the domain's own cache-backed ``read_<d>``
 as ``read_fn``;
 :func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
 returns the result when the probe finds a name-matching broken file (the
@@ -176,7 +176,7 @@ domain -- merged from dev while still on the old per-domain mechanism
 ``language`` (the caller's already-guarded value; default ``"en"``,
 byte-identical to the pre-i18n adapter) selects which variant file the
 adapter acts on: the id is scanned for in ``dec_base_dir(language)``
-(the flat EN directory, or the ``{language}`` subdirectory -- the
+(the ``en/`` sharded directory, or the ``{language}`` sharded directory -- the
 basename is never re-derived), the lock is the variant's own
 (``dec_lock(dec_lock_key(id_, language))``), the submitted/spliced body is validated
 through the variant's heading table
@@ -194,7 +194,7 @@ Mirrors :func:`_update_dec`'s shape (same ``feat_lock``, ``load_by_id``,
 ``write_feat_file``, ``FeatNotFoundError``) with one feat-only
 divergence (see the module docstring): ``id_`` resolves via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut (through
-``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
+``load_by_id``/``feat_base_dir``), not a file-per-document directory scan.
 ``updated`` is bumped to the same shared date+time timestamp as every
 other domain.
 
@@ -540,7 +540,7 @@ limit:
 language:
     The language variant to act on (feat-197-i18n Phase 120, DEC
     38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
-    it) acts on the flat default-language document -- today's exact
+    it) acts on the default-language document in the ``en/`` sharded directory -- today's exact
     behavior; any other ISO 639-1-shaped lowercase two-letter code
     (e.g. ``"de"``) acts on that language's variant, located by
     id-scan of ``docs/<type>/{language}/`` (the variant's basename is

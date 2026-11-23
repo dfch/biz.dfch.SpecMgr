@@ -104,10 +104,10 @@ def read_rsk(path: Path) -> RskDocument:
 
     **Language-aware (feat-197-i18n Phase 125).** The effective language is
     derived from the file's own position relative to the risk base
-    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
-    directly in the flat ``docs/rsk/`` directory parses canonical/EN, a file
-    directly in ``docs/rsk/{language}/`` parses in that language, anything
-    else canonical), never from a caller argument: the location *is* the
+    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file in the
+    ``docs/rsk/en/`` directory parses canonical/EN, a file in
+    ``docs/rsk/{language}/`` parses in that language, anything else
+    canonical), never from a caller argument: the location *is* the
     language encoding (DEC 38efdb66 item 1), so every consumer of this
     reader (``find_rsk_path``'s scan, ``list_rsk``'s rows, ``load_by_id``'s
     second read, the generic tools' own rsk adapters) parses a variant file

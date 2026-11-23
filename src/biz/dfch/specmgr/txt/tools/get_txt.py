@@ -58,9 +58,9 @@ form.
 **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/5/6/7).**
 A 1:1 port of ``get_req``'s ``language`` handling. The optional ``language``
 parameter (default ``"en"``) selects which on-disk variant of the id to
-read: omitted/``"en"`` = the flat ``docs/txt/<id>.md`` document, exactly
+read: omitted/``"en"`` = the sharded ``docs/txt/en/<id[:2]>/`` document, exactly
 today's behavior; any other shape-validated ISO 639-1-shaped code (e.g.
-``"de"``) = the variant at ``docs/txt/{language}/<id>.md`` (the EN source's
+``"de"``) = the variant at ``docs/txt/{language}/<id[:2]>/`` (the EN source's
 exact basename). The language is shape-guarded by
 :func:`biz.dfch.specmgr.general.tools._path_safety.assert_language` before
 any filesystem access (the same discipline as ``id``), and a shape-valid
@@ -116,9 +116,9 @@ from ._paths import TxtNotFoundError, txt_base_dir
         'verbatim into `content` for `update` or `create_txt` -- strip the `"<n>: "` prefix from each '
         "line first (it is likewise never a valid `edit` `old_str`)."
         " The optional `language` parameter (default 'en') selects the language variant to read: "
-        "omitted/'en' = the flat docs/txt/ document, exactly the default behavior; any other "
+        "omitted/'en' = the sharded docs/txt/en/ document, exactly the default behavior; any other "
         "ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
-        "docs/txt/{language}/ (the EN source's exact basename). The language is shape-validated "
+        "docs/txt/{language}/<id[:2]>/ (the EN source's exact basename). The language is shape-validated "
         "before any file access (a path-injection-shaped payload is a ValueError, like an invalid "
         "id), and a shape-valid language without a packaged heading-mapping table is rejected "
         "up front with an actionable ValueError, also before any file access. A raw=True read of "
@@ -172,9 +172,9 @@ def get_txt(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     language:
         The language variant to read (feat-197-i18n Phase 125, DEC
         38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
-        reads the flat ``docs/txt/`` document -- today's exact behavior;
+        reads the sharded ``docs/txt/en/`` document -- today's exact behavior;
         any other ISO 639-1-shaped lowercase two-letter code (e.g.
-        ``"de"``) reads the variant at ``docs/txt/{language}/`` under the
+        ``"de"``) reads the variant at ``docs/txt/{language}/<id[:2]>/`` under the
         EN source's exact basename. Shape-guarded before any filesystem
         access (like ``id``); a shape-valid code without a packaged
         heading-mapping table is rejected up front with the table

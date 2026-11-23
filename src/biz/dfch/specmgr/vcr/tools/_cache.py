@@ -104,10 +104,10 @@ def read_vcr(path: Path) -> VcrDocument:
 
     **Language-aware (feat-197-i18n Phase 125).** The effective language is
     derived from the file's own position relative to the verification case record base
-    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
-    directly in the flat ``docs/vcr/`` directory parses canonical/EN, a file
-    directly in ``docs/vcr/{language}/`` parses in that language, anything
-    else canonical), never from a caller argument: the location *is* the
+    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file in the
+    ``docs/vcr/en/`` directory parses canonical/EN, a file in
+    ``docs/vcr/{language}/`` parses in that language, anything else
+    canonical), never from a caller argument: the location *is* the
     language encoding (DEC 38efdb66 item 1), so every consumer of this
     reader (``find_vcr_path``'s scan, ``list_vcr``'s rows, ``load_by_id``'s
     second read, the generic tools' own vcr adapters) parses a variant file

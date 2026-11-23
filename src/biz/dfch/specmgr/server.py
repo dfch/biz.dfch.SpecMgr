@@ -147,8 +147,9 @@ specmgr://reference-graph -- The frozen reference-graph rulebook: the determinis
                              §3–§6 for the validation chain reused as-is -- raw markdown
                              domain-knowledge guidance (feat-207-reference-graph Phase 100).
 specmgr://i18n --       How language variants of the same artifact are stored and
-                        translated (feat-197-i18n Phase 130): the ``docs/{type}/{language}/``
-                        layout and the EN-slug basename rule, the language vocabulary and
+                        translated (feat-197-i18n Phase 130): the uniform sharded
+                        ``docs/{type}/{language}/<id[:2]>/`` layout (English included) and the
+                        EN-slug basename rule, the language vocabulary and
                         per-language heading tables, the tool surface honoring ``language``,
                         the exact never-translate list per domain (closed-vocabulary and
                         schema-constant tokens, the ``prb`` ``problem_statement``
@@ -357,9 +358,9 @@ into the generic ``update`` tool's ``offset``)), ``list_rsk``,
  ``get_rsk_template``, ``get_rsk_schema``, ``create_rsk``.
     Decision tools (``dec/tools/``): ``parse_dec`` (takes no ``language`` parameter -- it
 derives the file's language from its path position relative to the decision base
-directory: flat ``docs/dec/`` = canonical/no table, a direct two-letter
-``docs/dec/{language}/`` subdirectory = that language's packaged heading-mapping
-table), ``get_dec`` (``raw=True`` returns the
+directory: the ``docs/dec/en/`` language directory = canonical/no table, a direct
+two-letter ``docs/dec/{language}/`` language directory = that language's packaged
+heading-mapping table), ``get_dec`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
 ``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
@@ -368,28 +369,32 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``; the optional ``language`` parameter
 (feat-197-i18n Phase 110, default ``"en"``) selects the variant to read --
-omitted/``"en"`` = the flat ``docs/dec/`` document exactly as before, any other
-ISO 639-1-shaped lowercase two-letter code = that language's variant at
-``docs/dec/{language}/`` (shape-guarded before any file access like ``id``, and a
-shape-valid code without a heading-mapping table is rejected up front); ``raw=True``
+omitted/``"en"`` = the ``docs/dec/en/`` sharded document exactly as before, any other
+ISO 639-1-shaped lowercase two-letter code = that language's variant in its own
+``docs/dec/{language}/`` sharded directory (shape-guarded before any file access
+like ``id``, and a shape-valid code without a heading-mapping table is rejected up
+front); ``raw=True``
 returns the variant's body verbatim, ``raw=False`` parses it through the variant's
 table so the model holds canonical heading text), ``list_dec`` (the same optional
-``language`` parameter, default ``"en"`` -- omitted/``"en"`` scans the flat
-directory exactly as before, any other code scans only that language's
-subdirectory, listing exactly the existing variants of that language; deliberately
+``language`` parameter, default ``"en"`` -- omitted/``"en"`` scans the ``en/``
+sharded directory exactly as before, any other code scans only that language's
+own sharded directory, listing exactly the existing variants of that language;
+deliberately
 no "all languages" mode -- the row shape is unchanged, no language column),
     ``get_dec_example``,
     ``get_dec_template``, ``get_dec_schema``, ``create_dec`` (optional ``language``
 (default ``"en"``) and ``id`` parameters, feat-197-i18n Phase 120: omitted/``"en"``
-= a new flat ``docs/dec/`` document with a fresh server-assigned id exactly as
-before, ``id`` then must be omitted; a non-default ``language`` creates a
+= a new sharded ``docs/dec/en/<id[:2]>/<uuid>-<slug>.md`` document with a fresh
+server-assigned id exactly as before, ``id`` then must be omitted; a non-default
+``language`` creates a
 TRANSLATION of an existing decision instead -- ``id``, the shared id of the EN
 source document, is then required (a missing one, or one given for the default
 language, is a ``ValueError`` before any file access), the EN source must exist
-(``DecNotFoundError`` otherwise), the variant is written to
-``docs/dec/{language}/`` under the EN source's exact file name with the shared id
-as its frontmatter ``id`` (``status`` draft), its body is validated through the
-language's heading-mapping table and persisted verbatim, and an existing variant of
+(``DecNotFoundError`` otherwise), the variant is written to its own
+``docs/dec/{language}/<id[:2]>/`` sharded directory under the EN source's exact file
+name with the shared id as its frontmatter ``id`` (``status`` draft), its body is
+validated through the language's heading-mapping table and persisted verbatim, and
+an existing variant of
 that id and language is never overwritten (``FileExistsError``)).
      SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
@@ -511,10 +516,11 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
  EN source, required for a non-default language and forbidden for ``"en"``) for all
  thirteen domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
  ``vcr``/``sysrs``/``txt``/``set`` -- exactly the behavior documented for ``get_dec``/``list_dec``/
- ``create_dec`` above (flat ``docs/<type>/`` for ``"en"``, ``docs/<type>/{language}/``
- under the EN source's exact file name for any other code, shape-guarded before any file
- access, single language per ``list_<d>`` call, a new variant's ``status`` is the
- domain's own create status: ``draft``, ``open`` for ``rsk``); every ``parse_<d>`` tool
+ ``create_dec`` above (the ``docs/<type>/en/`` sharded directory for ``"en"``, the
+ ``docs/<type>/{language}/`` sharded directory under the EN source's exact file name
+ for any other code, shape-guarded before any file access, single language per
+ ``list_<d>`` call, a new variant's ``status`` is the domain's own create status:
+ ``draft``, ``open`` for ``rsk``); every ``parse_<d>`` tool
  derives the language from its path position; ``prb``'s ``problem_statement`` lead
  paragraph is exempt from translation (the one regex-locked English field, it stays the
   canonical English template sentence in every language). ``feat`` (always
@@ -524,8 +530,9 @@ the generic ``update``/``edit``/``set_status``/``set_classification``/``delete``
 tools each take an optional ``language`` parameter (default ``"en"``, appended
 last). Omitted/``"en"`` dispatches exactly as before. A non-default
 ISO 639-1-shaped lowercase two-letter code acts on that language's variant file
-ONLY (``docs/<type>/{language}/``, located by id-scan; the EN file's bytes,
-``updated`` timestamp, and cache entry stay untouched, and a variant's content is
+ONLY (that language's own ``docs/<type>/{language}/`` sharded directory, located by
+id-scan; the EN file's bytes, ``updated`` timestamp, and cache entry stay
+untouched, and a variant's content is
 validated through the language's heading-mapping table) -- honored by every
 whole-body domain except ``feat``; ``feat`` raises a ``ValueError`` for a
 non-default language before any file access (that document is always English),
@@ -703,9 +710,10 @@ English" ``ValueError``, before the id is looked at) and an ``id``, and returns 
 every other language holding a variant sorted by code -- plus one entry per
 language (resolved ``path``, ``parseable``, and the parse ``error`` of a variant
 that exists but fails to parse, byte-identical to the domain's ``list_<d>``
-failed-row ``error``). It probes the flat ``docs/{type}/`` directory and each
-shape-valid ``docs/{type}/{language}/`` subdirectory through the domains' own
-language-aware readers -- never through, and never altering, the EN-only scans
+failed-row ``error``). It probes the ``docs/{type}/en/`` sharded directory and
+each shape-valid ``docs/{type}/{language}/`` sharded directory through the
+domains' own language-aware readers -- never through, and never altering, the
+EN-only scans
 of the other tools (REQ-013); only ``*.md`` documents participate. A
 path-injection/wrong-format ``id`` is a ``ValueError`` before any filesystem
 access; an id that exists in no language raises the domain's own
