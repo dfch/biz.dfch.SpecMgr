@@ -16,7 +16,7 @@
   - S. Herzig, R. Karban, G. Trancho, F. Dekens, N. Jankevičius, M. Troy, "Analyzing the Operational
     Behavior of the Alignment and Phasing System of the Thirty Meter Telescope using SysML",
     AO4ELT5, 2017.
-  - R. Karban, A. G. Crawford, G. Trancho, M. Zamparelli, S. Herzig, I. Gomes, M. Pettete, E. Brower,
+  - R. Karban, A. G. Crawford, G. Trancho, M. Zamparelli, S. Herzig, I. Gomes, M. Piette, E. Brower,
     "The OpenSE Cookbook", Proc. SPIE 10705, 2018.
 
 This workspace is a derived work and is not endorsed by Caltech, JPL or the TMT Observatory Corporation.

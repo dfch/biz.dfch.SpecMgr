@@ -4,7 +4,7 @@ created: '2026-11-23T16:54:55.699+01:00'
 id: 0881bc3f-cc34-463d-9eeb-a919c5cd934c
 status: draft
 type: txt
-updated: '2026-11-23T17:06:11.673+01:00'
+updated: '2026-11-23T17:08:08.204+01:00'
 version: 1.0.0
 ---
 
@@ -24,7 +24,7 @@ The architecture in this report is not ours. The work here is the C4 mapping onl
 - Publications on the model:
   - R. Karban, F. G. Dekens, S. Herzig, M. Elaasar, N. Jankevičius, "Creating system engineering products with executable models in a model-based engineering environment", Proc. SPIE 9911, 99110B, 2016.
   - S. Herzig, R. Karban, G. Trancho, F. Dekens, N. Jankevičius, M. Troy, "Analyzing the Operational Behavior of the Alignment and Phasing System of the Thirty Meter Telescope using SysML", AO4ELT5, 2017.
-  - R. Karban, A. G. Crawford, G. Trancho, M. Zamparelli, S. Herzig, I. Gomes, M. Pettete, E. Brower, "The OpenSE Cookbook", Proc. SPIE 10705, 2018.
+  - R. Karban, A. G. Crawford, G. Trancho, M. Zamparelli, S. Herzig, I. Gomes, M. Piette, E. Brower, "The OpenSE Cookbook", Proc. SPIE 10705, 2018.
 
 The derived files (workspace, documentation, PlantUML sources, SVGs, static site) carry this attribution: a header comment and the model property `copyright` in `workspace.dsl`, an Attribution section in `docs/01-provenance.md`, and a footer on each SVG. This derived work is not endorsed by Caltech, JPL or the TMT Observatory Corporation. The names of Caltech and JPL are used here for attribution only.
 
