@@ -1613,7 +1613,10 @@ Without `--all-extras` on `uv run`, only base dependencies are installed, causin
 
 `pre-commit install` is one-time per clone (see `.pre-commit-config.yaml`):
 runs `ruff format`/`ruff check`, `vulture`, a local `specmgr docs` hook
-(scoped to `src/**/*.py` changes), a local `specmgr harness-bundle` hook (scoped
+(scoped to `src/**/*.py` changes), a local `specmgr-docs-test-count` hook
+(runs on every commit, since pre-commit never passes deleted files to a hook:
+fails when the test-file count in `docs/GENERATED.md` is stale, via
+`scripts/check_generated_test_count.py`), a local `specmgr harness-bundle` hook (scoped
 to `.opencode/{agent,command,skill}/` markdown changes: regenerate the
 packaged harness bundle
 `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` from the
