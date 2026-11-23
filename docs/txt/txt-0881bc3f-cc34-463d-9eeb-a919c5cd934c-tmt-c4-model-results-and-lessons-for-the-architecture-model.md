@@ -4,7 +4,7 @@ created: '2026-11-23T16:54:55.699+01:00'
 id: 0881bc3f-cc34-463d-9eeb-a919c5cd934c
 status: draft
 type: txt
-updated: '2026-11-23T17:08:08.204+01:00'
+updated: '2026-11-23T17:17:31.843+01:00'
 version: 1.0.0
 ---
 
@@ -153,6 +153,8 @@ TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09: Architecture Model: Viewpoints, Perspe
 TXT 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9: Architecture Review Checklist: Viewpoints x Perspectives
 
 TXT 4a09922d-bc32-4c03-86ba-d30ebc34e0b8: Structurizr and C4 for specmgr: Spike Findings and Design Suggestions
+
+TXT cb1cc65a-ebd6-4f1d-882d-a8bc71483a6f: OpenSE Cookbook Application
 
 ## Updates
 
