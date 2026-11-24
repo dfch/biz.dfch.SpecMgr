@@ -33,11 +33,15 @@ precisely the masking that hid the feat-214 defect for three consecutive
 commits. The content parse of a sharded ``docs/<type>/<lang>/<shard>/``
 file is LANGUAGE-AWARE (feat-245 Phase 120): the language is the path's
 own shape-valid language dir (``en`` = the canonical parse, byte-
-identical to today's EN path), and a shape-valid language dir WITHOUT a
-packaged heading-mapping table fails the file with the table loader's
-own actionable ``ValueError`` (the existing no-table content error,
-exit 1 -- the placement itself is valid, so it is NOT a layout
-violation).
+identical to today's EN path) -- derived from the literal ``docs``
+anchor in path mode, and POSITION-RELATIVE to the domain's configured
+base directory in sweep mode (root-name-independent: the sweep
+behaves identically under any ``SPECMGR_DOCS_DIR`` root, not only one
+named ``docs`` -- feat-245 Phase 160, D9) -- and a shape-valid language
+dir WITHOUT a packaged heading-mapping table fails the file with the
+table loader's own actionable ``ValueError`` (the existing no-table
+content error, exit 1 -- the placement itself is valid, so it is NOT a
+layout violation).
 
 Three scopes, so the cost scales with the size of a change and never with
 the size of the corpus (REQ-004):
@@ -75,7 +79,12 @@ the size of the corpus (REQ-004):
   listing (unchanged -- the single-language domain). The explicit
   ``--dir`` argument (valid with ``--type`` ONLY, and without explicit
   paths) narrows the sweep to exactly that one directory's sharded (or
-  ``feat`` folder) listing (REQ-006). ``--type T`` against an empty
+  ``feat`` folder) listing (REQ-006). Each sweep item's parse language
+  is derived POSITION-RELATIVE to the domain's configured base
+  directory (``language_for_doc_path`` over ``doc_domain_base_dir`` --
+  root-name-independent, Phase 160, D9: the sweep behaves identically
+  under any ``SPECMGR_DOCS_DIR`` root; path mode keeps its literal-
+  ``docs``-anchor derivation, unchanged). ``--type T`` against an empty
   or missing base directory exits 0 with a 0-document summary: a
   registered-but-empty domain is not a misconfiguration.
 * **All sweep** -- ``--all`` sweeps every registered type, each with
@@ -234,6 +243,13 @@ class _RegistryBacked:
             _doc_paths.iter_doc_paths_all_languages``): the union of the
             sharded listings of ``en/`` plus every shape-valid language
             directory under the domain base (Task 150.155).
+        language_for_doc_path:
+            The position-relative language derivation (``general.tools.
+            _doc_paths.language_for_doc_path``): the path's first
+            subdirectory under a given domain base, a shape-valid
+            two-letter code, ``None`` otherwise -- the sweep items'
+            parse-language source (Task 160.100, D9: root-name-
+            independent, unlike the path-mode docs-anchor derivation).
         caught_exceptions:
             The whole-body parse-failure channels (``general.models.
             validate_result._CAUGHT_EXCEPTIONS``: ``AssertionError``,
@@ -247,6 +263,7 @@ class _RegistryBacked:
     whole_body_domain: Callable[[str], Any]
     domain_base_dir: Callable[[str], Path]
     iter_all_languages: Callable[[Path], Iterator[Path]]
+    language_for_doc_path: Callable[[Path, Path], str | None]
     caught_exceptions: tuple[type[Exception], ...]
 
 
@@ -267,11 +284,19 @@ class _WorkItem:
             their text is read at parse time, where a read failure is a
             per-file parse failure (the file was enumerated by the
             registry, not named by the user).
+        sweep:
+            ``True`` for sweep-enumerated items, ``False`` for user-named
+            path-mode items (Task 160.100, D9): the two modes derive the
+            parse language differently -- path mode over the literal
+            ``docs`` anchor (:func:`_parse_language`, unchanged), the
+            sweep position-relative to the configured domain base
+            (:func:`_sweep_parse_language`, root-name-independent).
     """
 
     path: Path
     doc_type: str
     text: str | None
+    sweep: bool
 
 
 @dataclass(frozen=True)
@@ -345,6 +370,7 @@ def _registry_backed() -> _RegistryBacked:
         SHARD_DIGITS,
         doc_domain_base_dir,
         iter_doc_paths_all_languages,
+        language_for_doc_path,
     )
     from ..general.tools._domains import ALL_DOMAINS, FEAT, UUID_DOMAINS, whole_body_domain  # noqa: PLC0415
 
@@ -356,6 +382,7 @@ def _registry_backed() -> _RegistryBacked:
         whole_body_domain=whole_body_domain,
         domain_base_dir=doc_domain_base_dir,
         iter_all_languages=iter_doc_paths_all_languages,
+        language_for_doc_path=language_for_doc_path,
         caught_exceptions=_CAUGHT_EXCEPTIONS,
     )
     return result
@@ -614,9 +641,12 @@ def _all_languages_paths_for(doc_type: str, reg: _RegistryBacked) -> Iterator[Pa
     sharded listing of ``en/`` plus the sharded listing of every other
     shape-valid ``{language}/`` directory under it. A variant document
     in any language directory is therefore linted by the ``--type T``/
-    ``--all`` sweep exactly like its EN file, and the union's own
-    dedup semantics keep a single EN document counted exactly once
-    (``en/`` is listed once, explicitly). Shard-only at the language
+    ``--all`` sweep exactly like its EN file (each sweep item parsed in
+    its own language, derived position-relative to the domain's
+    configured base -- root-name-independent, Phase 160, D9 -- see
+    :func:`_sweep_parse_language`), and the union's own dedup semantics
+    keep a single EN document counted exactly once (``en/`` is listed
+    once, explicitly). Shard-only at the language
     level, like every other scan: a flat file directly inside a
     language directory is not part of the live listing (the placement
     gate remains path mode's job). ``feat`` (folder-per-document,
@@ -670,16 +700,21 @@ def _iter_paths_for(doc_type: str, base_dir: Path, reg: _RegistryBacked) -> Iter
 
 
 def _parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> str | None:
-    """The parse language for one work item (feat-245 Phase 120, the path-derived language).
+    """The parse language for one PATH-MODE work item (feat-245 Phase 120, the docs-anchor derivation).
 
-    For the thirteen UUID domains: the shape-valid language dir the path
-    sits in when it carries the valid sharded placement under its OWN
-    ``docs/<domain>/`` anchor (``en`` resolves to the canonical parse,
-    byte-identical to ``None`` -- the shared table resolver treats the
-    two the same). ``None`` otherwise: every ``feat`` item (no language
-    dimension at all), a sweep of a non-docs tree, a non-sharded
-    position, and a ``--type`` override whose value disagrees with the
-    path's own docs anchor.
+    The literal-``docs``-anchor derivation (path mode ONLY since
+    Phase 160, D9 -- the anchor also drives the layout inference and
+    the placement validator, which must stay on it; SWEEP work items
+    use :func:`_sweep_parse_language` instead, position-relative to
+    the configured domain base, root-name-independent; the dispatch is
+    :func:`_item_parse_language`). For the thirteen UUID domains: the
+    shape-valid language dir the path sits in when it carries the valid
+    sharded placement under its OWN ``docs/<domain>/`` anchor (``en``
+    resolves to the canonical parse, byte-identical to ``None`` -- the
+    shared table resolver treats the two the same). ``None``
+    otherwise: every ``feat`` item (no language dimension at all), a
+    non-docs-anchored position, a non-sharded position, and a ``--type``
+    override whose value disagrees with the path's own docs anchor.
 
     Args:
         doc_type: The item's resolved document type.
@@ -700,6 +735,67 @@ def _parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> str | No
         result = None
         return result
     result = layout[1][0]
+    return result
+
+
+def _sweep_parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> str | None:
+    """The parse language for one SWEEP work item (Task 160.100, D9): POSITION-RELATIVE to the
+    domain's configured base.
+
+    ``language_for_doc_path`` over ``doc_domain_base_dir(doc_type)`` --
+    the domain's own base directory under whatever the configured
+    ``SPECMGR_DOCS_DIR`` root is NAMED (root-name-independent, unlike
+    the path-mode docs-anchor derivation of :func:`_parse_language`):
+    the path's first subdirectory under the domain base, a shape-valid
+    two-letter code (``en`` resolves to the canonical parse via the
+    shared table resolver, like ``None``), ``None`` for every other
+    position (a ``--dir`` tree outside the configured base, a
+    non-sharded position). ``feat`` (no language dimension at all) is
+    always ``None``. This is what makes the sweep's unconditional
+    contract -- a variant document is linted exactly like its EN file,
+    in its own path-derived language -- hold under any docs root, not
+    only a root literally named ``docs``.
+
+    Args:
+        doc_type: The item's resolved document type.
+        path: The item's on-disk path.
+        reg: The registry-backed names.
+
+    Returns:
+        The parse language, or ``None`` for the canonical parse.
+    """
+    assert isinstance(doc_type, str), type(doc_type)
+    assert isinstance(path, Path), type(path)
+    assert isinstance(reg, _RegistryBacked), type(reg)
+    if doc_type == reg.feat:
+        result: str | None = None
+    else:
+        result = reg.language_for_doc_path(reg.domain_base_dir(doc_type), path)
+    return result
+
+
+def _item_parse_language(item: _WorkItem, reg: _RegistryBacked) -> str | None:
+    """The parse language for one work item, by its mode (Task 160.100, D9).
+
+    Path-mode items keep the literal-``docs``-anchor derivation
+    (:func:`_parse_language`, unchanged -- the anchor also drives the
+    placement validator, which must stay on it); sweep items take the
+    position-relative derivation (:func:`_sweep_parse_language`,
+    root-name-independent).
+
+    Args:
+        item: The work item.
+        reg: The registry-backed names.
+
+    Returns:
+        The parse language, or ``None`` for the canonical parse.
+    """
+    assert isinstance(item, _WorkItem), type(item)
+    assert isinstance(reg, _RegistryBacked), type(reg)
+    if item.sweep:
+        result: str | None = _sweep_parse_language(item.doc_type, item.path, reg)
+    else:
+        result = _parse_language(item.doc_type, item.path, reg)
     return result
 
 
@@ -982,7 +1078,7 @@ def lint(
         except UnicodeDecodeError as ex:
             pre_failures.append(_Failure(path, doc_type, f"not valid {_ENCODING}: {ex}"))
             continue
-        items.append(_WorkItem(path, doc_type, text))
+        items.append(_WorkItem(path, doc_type, text, sweep=False))
     if path_errors:
         _fail_usage(path_errors)
 
@@ -1002,15 +1098,15 @@ def lint(
             # directory for a sharded domain, never the whole-domain
             # union.
             for path in _iter_paths_for(doc_type, dir, reg):
-                items.append(_WorkItem(path, doc_type, None))
+                items.append(_WorkItem(path, doc_type, None, sweep=True))
         elif doc_type == reg.feat:
             for path in _iter_paths_for(doc_type, _base_dir_for(doc_type, reg), reg):
-                items.append(_WorkItem(path, doc_type, None))
+                items.append(_WorkItem(path, doc_type, None, sweep=True))
         else:
             # the domain-wide union of every language directory's
             # sharded listing (en/ + every variant language dir)
             for path in _all_languages_paths_for(doc_type, reg):
-                items.append(_WorkItem(path, doc_type, None))
+                items.append(_WorkItem(path, doc_type, None, sweep=True))
 
     # The --all zero-documents guard (a probable misconfiguration; a
     # single empty/missing --type base directory is NOT one). It fires
@@ -1019,8 +1115,10 @@ def lint(
         _fail_usage(["--all found zero documents in total (check the SPECMGR_*_DIR configuration)"])
 
     # Parse every work item (full model-level parse, REQ-003) in the
-    # item's own language (the path-derived one -- feat-245 Phase 120);
-    # per-file catch of the repo's existing parse-failure channels, the
+    # item's own language (by mode -- Task 160.100, D9: the docs-anchor
+    # derivation for path-mode items, the position-relative derivation
+    # for sweep items); per-file catch of the repo's existing
+    # parse-failure channels, the
     # table loader's no-table ValueError (a shape-valid language dir
     # without a packaged heading table: the existing no-table CONTENT
     # error, exit 1 -- the placement is valid, so NOT a layout
@@ -1042,7 +1140,7 @@ def lint(
                 # UnicodeDecodeError, path mode said "not valid utf-8")
                 parse_failures.append(_Failure(item.path, item.doc_type, f"not valid {_ENCODING}: {ex}"))
                 continue
-        language = _parse_language(item.doc_type, item.path, reg)
+        language = _item_parse_language(item, reg)
         try:
             _parse_document(item.doc_type, text, language, reg)
         except reg.caught_exceptions as ex:

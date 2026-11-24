@@ -1749,7 +1749,11 @@ extras onto every consumer of the base library.
    domain-wide union of every language directory — EN + every variant
    language dir — for the sharded domains, the registered base directory
    for `feat`) and the `--all` sweep (the same per-type enumeration) —
-   both CLI-only, never on the commit path or in the test suite. Exit codes:
+   both CLI-only in the sense that NO hook/CI/test file invokes `specmgr lint`
+   with a sweep flag at shell level (the change-scoped gates lint staged/changed
+   paths only); the sweeps ARE covered in the test suite via in-process
+   Typer-app invocations (`tests/commands/test_lint.py`, incl. the Phase 150
+   `TestLintSweepAllLanguages`). Exit codes:
    **0** every document parsed (incl. a run where every path was skipped),
   **1** at least one document failed to parse or the `mcp` extra is
   missing (required, like `specmgr diagram`; the decoupling is tracked as

@@ -1233,13 +1233,15 @@ class TestLintSweepAllLanguages(_LintTestBase):
     every language directory for the thirteen sharded domains (the domain-wide union of
     the sharded listings, ``en/`` + every variant) -- a variant document is linted
     exactly like its EN file, and the sweep is not language-blind (a broken variant is
-    a parse failure, exit 1). The seeds sit under a docs root literally named ``docs``
-    so the path's own docs anchor derives the parse language from the sharded
-    placement, exactly as on the repo's real tree. A mis-PLACED (flat) variant file
-    directly inside a language dir stays invisible to the sweep (shard-only listing --
-    the placement gate remains path mode's job), and the union's dedup semantics keep
-    a single EN document counted exactly once (the 6e90d3de double-count defect
-    class)."""
+    a parse failure, exit 1). The sweep derives each item's parse language
+    POSITION-RELATIVE to the configured domain base -- the root's NAME is irrelevant
+    (Phase 160, D9: the same healthy EN + ``de/`` variant seeds lint clean under a
+    root NOT named ``docs``, the unnamed-root pin -- before the fix the variant was
+    canonical-parsed and spurious failed the sweep, exit 1). A mis-PLACED (flat)
+    variant file directly inside a language dir stays invisible to the sweep
+    (shard-only listing -- the placement gate remains path mode's job), and the
+    union's dedup semantics keep a single EN document counted exactly once (the
+    6e90d3de double-count defect class)."""
 
     DOC_TYPE = "dec"
 
@@ -1248,18 +1250,19 @@ class TestLintSweepAllLanguages(_LintTestBase):
 
     def _docs_root(self) -> Path:
         # The SPECMGR_DOCS_DIR root (the directory that CONTAINS the domain
-        # dirs -- the default is literally "docs"): named "docs" so the
-        # swept paths carry a docs anchor and the parse language is derived
-        # from the sharded placement, exactly as on the repo's real tree.
+        # dirs -- the default is literally "docs"): "docs" is a root NAME,
+        # not a dependency -- the D9 fix derives each sweep item's parse
+        # language position-relative to this configured base, so the
+        # unnamed-root sibling pin exercises any other name.
         return self.tmp / "docs"
 
-    def _sweep(self) -> Result:
-        with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(self._docs_root())}):
+    def _sweep(self, root: Path | None = None) -> Result:
+        with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(root or self._docs_root())}):
             return self._invoke("--type", self.DOC_TYPE)
 
-    def _seed_sharded(self, language: str, text: str) -> Path:
+    def _seed_sharded(self, language: str, text: str, root: Path | None = None) -> Path:
         doc_id = self._doc_id()
-        path = self._docs_root() / self.DOC_TYPE / language / doc_id[:2] / f"{doc_id}-sweep.md"
+        path = (root or self._docs_root()) / self.DOC_TYPE / language / doc_id[:2] / f"{doc_id}-sweep.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
         return path
@@ -1318,6 +1321,25 @@ class TestLintSweepAllLanguages(_LintTestBase):
 
         self.assertEqual(result.exit_code, 0, result.output)
         self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
+
+    def test_type_sweep_lints_a_variant_under_an_unnamed_docs_root(self):
+        """(e) Phase 160, D9 (user decision Option A): the sweep's parse-language
+        derivation is POSITION-RELATIVE to the configured domain base -- a
+        ``SPECMGR_DOCS_DIR`` root NOT named ``docs`` (``specdocs``) still
+        lints a healthy EN doc + a healthy table-closed ``de/`` variant
+        clean (count 2, exit 0 -- the variant parses through its own
+        heading table). Before the fix the variant was canonical-parsed
+        under an unnamed root and spurious failed the sweep with the
+        German-heading mismatch (exit 1) -- the pre-fix red is proven by
+        stashing the src fix (the Phase 160 entry records it)."""
+        root = self.tmp / "specdocs"
+        self._seed_sharded("en", _healthy_whole_body_text(self.DOC_TYPE), root)
+        self._seed_sharded("de", _de_variant_text(self.DOC_TYPE), root)
+
+        result = self._sweep(root)
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("summary: linted=2 failed=0 skipped=0 layout=0", result.stdout)
 
 
 if __name__ == "__main__":
