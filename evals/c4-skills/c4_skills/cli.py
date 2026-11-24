@@ -212,6 +212,9 @@ def cmd_run(args: argparse.Namespace) -> int:
             raise ValueError("the skill condition needs --skills-dir <path>")
     elif args.skills_dir is not None:
         raise ValueError("--skills-dir is only valid with the skill condition")
+    skill_names = [s.strip() for s in args.skills.split(",") if s.strip()] if args.skills is not None else None
+    if skill_names is not None and args.skills_dir is None:
+        raise ValueError("--skills needs --skills-dir <root of skill folders>")
     for case_id in cases:
         get_case(case_id)  # unknown case -> KeyError -> usage error
     for condition in conditions:
@@ -219,18 +222,26 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(f"unknown condition: {condition!r}")
             return 2
     run_id = args.run_id or _run_id(args.label)
+    workroot = Path(args.workroot) if args.workroot else DEFAULT_WORKROOT
+    skills_dir = Path(args.skills_dir) if args.skills_dir else None
+    if skill_names is not None:
+        assert skills_dir is not None
+        # Task 190.150 (I4): stage only the named folders into a run-local
+        # variant root under the work root (never a hand-staged root)
+        skills_dir = runner.stage_skills(skills_dir, skill_names, workroot / f"skills.{run_id}")
+        print(f"staged skills {skill_names} -> {skills_dir}")
     config = runner.RunConfig(
         run_id=run_id,
         case_ids=cases,
         conditions=conditions,
         k=args.k,
         seed=args.seed,
-        workroot=Path(args.workroot) if args.workroot else DEFAULT_WORKROOT,
+        workroot=workroot,
         results_dir=Path(args.results_dir) if args.results_dir else pins.HARNESS_ROOT / "results" / run_id,
         cache_root=Path(args.cache) if args.cache else DEFAULT_CACHE_ROOT,
         timeout_s=args.timeout,
         label=args.label,
-        skills_dir=Path(args.skills_dir) if args.skills_dir else None,
+        skills_dir=skills_dir,
     )
     config.results_dir.mkdir(parents=True, exist_ok=True)
     print(f"run {run_id}: cases={cases} conditions={conditions} k={config.k} seed={config.seed}")
@@ -304,6 +315,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="the skill condition's variant directory (a skill folder or a root of skill folders)",
     )
+    p.add_argument(
+        "--skills",
+        default=None,
+        help="comma-separated skill folder names: stage only these from --skills-dir into a run-local root",
+    )
     p.add_argument("--timeout", type=int, default=pins.TRIAL_TIMEOUT_S, help="per-trial timeout in seconds")
     p.add_argument(
         "--comparison", default=pins.CONDITION_UPSTREAM, help="the phase's comparison condition for the margins"
@@ -343,6 +359,12 @@ def main(argv: list[str] | None = None) -> int:
     """
     parser = build_parser()
     args = parser.parse_args(argv)
+    if pins.PIN_OVERRIDE_ERRORS:
+        # Task 190.150 (I4): an invalid C4EVAL_* pin override is a usage
+        # error before any command runs (the pin keeps its default value)
+        for problem in pins.PIN_OVERRIDE_ERRORS:
+            print(f"usage error: {problem}")
+        return 2
     if args.command == "run" and args.seed is None:
         args.seed = int(time.time()) % 1_000_000
     try:

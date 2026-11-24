@@ -80,6 +80,68 @@ class TestUsageErrorsReturnTwo(unittest.TestCase):
         self.assertEqual(result, 2)
 
 
+class TestPinOverrideAndSkillsUsage(unittest.TestCase):
+    """Task 190.150 (I4): an invalid override and a misplaced --skills are usage errors."""
+
+    def test_an_invalid_pin_override_returns_2_before_any_command(self) -> None:
+        with mock.patch(
+            "c4_skills.pins.PIN_OVERRIDE_ERRORS", ["C4EVAL_MODEL_ID='a b' is not a valid MODEL_ID override"]
+        ):
+            with mock.patch("c4_skills.runner.run") as run_mock:
+                result = main(["run", "--cases", "smoke-create-system", "--conditions", "none", "--k", "1"])
+
+        self.assertEqual(result, 2)
+        self.assertFalse(run_mock.called)
+
+    def test_skills_without_skills_dir_returns_2(self) -> None:
+        result = main(["run", "--cases", "smoke-create-system", "--conditions", "skill", "--skills", "a"])
+
+        self.assertEqual(result, 2)
+
+    def test_skills_naming_a_missing_folder_returns_2(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="c4eval-cli-") as tmp:
+            root = Path(tmp)
+            (root / "skills" / "present").mkdir(parents=True)
+            (root / "skills" / "present" / "SKILL.md").write_text("# p\n", encoding="utf-8")
+            argv = ["run", "--cases", "smoke-create-system", "--conditions", "skill", "--k", "1"]
+            argv += ["--skills-dir", str(root / "skills"), "--skills", "present,absent"]
+            argv += ["--workroot", str(root / "work"), "--results-dir", str(root / "results")]
+            with mock.patch("c4_skills.runner.run") as run_mock:
+                result = main(argv)
+
+        self.assertEqual(result, 2)
+        self.assertFalse(run_mock.called)
+
+
+class TestSkillsStagingWiring(unittest.TestCase):
+    def test_skills_stage_a_run_local_root_that_reaches_the_run_config(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="c4eval-cli-") as tmp:
+            root = Path(tmp)
+            for name in ("one", "two", "three"):
+                (root / "skills" / name).mkdir(parents=True)
+                (root / "skills" / name / "SKILL.md").write_text(f"# {name}\n", encoding="utf-8")
+            captured: dict = {}
+
+            def fake_run(config) -> dict:
+                captured["config"] = config
+                captured["staged"] = sorted(p.name for p in config.skills_dir.iterdir())
+                return {}
+
+            argv = ["run", "--cases", "smoke-create-system", "--conditions", "none,skill", "--k", "1"]
+            argv += ["--run-id", "rid", "--skills-dir", str(root / "skills"), "--skills", "three,one"]
+            argv += ["--workroot", str(root / "work"), "--results-dir", str(root / "results")]
+            argv += ["--cache", str(root / "cache")]
+            with (
+                mock.patch("c4_skills.runner.run", side_effect=fake_run),
+                mock.patch("c4_skills.report.build_and_write", return_value={"per_condition": {}}),
+            ):
+                result = main(argv)
+
+        self.assertEqual(result, 0)
+        self.assertEqual(captured["config"].skills_dir, root / "work" / "skills.rid")
+        self.assertEqual(captured["staged"], ["one", "three"])
+
+
 class TestRuntimeErrorsReturnOne(unittest.TestCase):
     def test_runner_runtime_error_returns_1(self) -> None:
         argv = ["run", "--cases", "smoke-create-system", "--conditions", "none", "--k", "1"]

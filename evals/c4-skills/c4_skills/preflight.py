@@ -216,6 +216,10 @@ def run_preflight(
         "provider_id": pins.PROVIDER_ID,
         "model_id": pins.MODEL_ID,
         "vllm_endpoint": pins.VLLM_ENDPOINT,
+        "vllm_metrics_url": pins.VLLM_METRICS_URL,
+        # Task 190.150 (I4): the C4EVAL_* pin overrides in effect ({} = the
+        # pinned defaults)
+        "pin_overrides": dict(pins.PIN_OVERRIDES),
         "sampling_parameters": dict(pins.SAMPLING_PARAMETERS),
         "speculative_config": dict(pins.SPECULATIVE_CONFIG),
         "opencode_image": pins.OPENCODE_IMAGE,
@@ -228,6 +232,7 @@ def run_preflight(
     }
     if mcp_port is not None:
         data["mcp_port"] = mcp_port
+    problems.extend(pins.PIN_OVERRIDE_ERRORS)
 
     # vLLM: version + model id + idle state
     version_doc = _http_get_json(pins.VLLM_ENDPOINT.removesuffix("/v1") + "/version")

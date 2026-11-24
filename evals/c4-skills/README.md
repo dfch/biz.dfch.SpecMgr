@@ -74,16 +74,54 @@ uv run --frozen python evals/c4-skills/run.py run \
     --cases <phase-cases> --conditions none,upstream,skill --k 5 \
     --skills-dir .opencode/skill/<name> --label <phase>
 
-# 4. rebuild the report of an existing run
-uv run --frozen python evals/c4-skills/run.py report --results-dir evals/c4-skills/results/<run-id>
+# 3c. a multi-skill bundle without a hand-staged root: --skills stages only
+#     the named folders of --skills-dir into the run-local directory
+#     work/skills.<run-id>/ (hashed and mounted like any variant root)
+uv run --frozen python evals/c4-skills/run.py run \
+    --cases <cases> --conditions none,upstream,skill --k 5 \
+    --skills-dir .opencode/skill --skills c4-modeling,structurizr-validate-loop --label <label>
+
+# 4. rebuild the report of an existing run (--out-dir keeps a committed
+#    run dir untouched; --baseline-results flags every case whose skill
+#    pass count is >= 2 trials lower than in the baseline run)
+uv run --frozen python evals/c4-skills/run.py report --results-dir evals/c4-skills/results/<run-id> \
+    [--baseline-results evals/c4-skills/results/<baseline-run-id>] [--out-dir <dir>]
 ```
+
+The report carries the per-case skill trigger table of the `skill`
+condition (for every mounted skill, the trials of each case in which it
+loaded) and the recorded `grader_hash`, `version_tuple_hash` and
+`skill_variant_hash` (`null` for a run that predates the field). The
+grader hash is taken over the grader sources' paths relative to
+`evals/c4-skills/`, so it does not depend on the checkout path.
+
+### Model and endpoint overrides
+
+The four model/endpoint pins can be overridden from the environment (read
+once at start; empty means unset):
+
+| Variable | Pin | Shape |
+|---|---|---|
+| `C4EVAL_VLLM_ENDPOINT` | `VLLM_ENDPOINT` (`http://127.0.0.1:8081/v1`) | `http://<host>:<port>/v1` |
+| `C4EVAL_VLLM_METRICS_URL` | `VLLM_METRICS_URL` (`http://127.0.0.1:8081/metrics`) | `http://<host>:<port>[/path]` |
+| `C4EVAL_MODEL_ID` | `MODEL_ID` (`qwen3.8-27b-bf16-896k`) | a model id |
+| `C4EVAL_PROVIDER_ID` | `PROVIDER_ID` (`vllm-sys0`) | a provider id (no `/`) |
+
+An override is recorded in the preflight (`pin_overrides`) and in the
+version tuple (`pin_overrides`), so its hash moves and cached `none`/
+`upstream` results never mix models or endpoints. An invalid value is a
+usage error (exit `2`). With none of the variables set, every pin and the
+version tuple hash are the pinned defaults. The preflight still checks the
+served model's `max_model_len` against `MODEL_MAX_CONTEXT`, which has no
+override.
 
 Exit codes: `0` ok; `1` a runtime-shaped failure (a pin/preflight
 violation, the sidecar or a trial container failing, a runner error, a
 hung Structurizr CLI run -- the graders' `_run_cli` maps its 300 s
 `subprocess.TimeoutExpired` to `RuntimeError`, Task 125.130/I3 -- an I/O
 failure); `2` a usage-shaped failure (an invalid argument such as
-`k <= 0` or a missing/misplaced `--skills-dir`, an unknown case, or a
+`k <= 0`, a missing/misplaced `--skills-dir`, a `--skills` entry that
+names no skill folder, or an invalid `C4EVAL_*` override, an unknown case, or a
 missing artifact the command needs, e.g. `report` on a dir without
 `run.json`). Any other exception type is a harness bug and stays a raw
 traceback. The `probe` subcommand's failed outcome is a `2` by its own

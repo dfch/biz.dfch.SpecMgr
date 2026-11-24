@@ -54,6 +54,7 @@ from c4_skills.runner import (
     load_skill_source,
     run,
     run_trial,
+    stage_skills,
 )
 
 MINIMAL_STREAM = (
@@ -902,6 +903,52 @@ class TestRunLifecycle(unittest.TestCase):
         )
         # no trial container ever ran
         self.assertNotIn("container_network", self.captured)
+
+
+class TestStageSkills(unittest.TestCase):
+    """Task 190.150 (I4): `run --skills` stages only the named folders."""
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory(prefix="c4eval-stage-")
+        self.base = Path(self._tmp.name)
+        self.skills = self.base / "skill"
+        for name in ("alpha", "beta", "gamma"):
+            (self.skills / name / "references").mkdir(parents=True)
+            (self.skills / name / "SKILL.md").write_text(f"# {name}\n", encoding="utf-8")
+            (self.skills / name / "references" / "r.md").write_text(f"ref {name}\n", encoding="utf-8")
+        (self.skills / "not-a-skill").mkdir()
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_only_the_named_folders_are_staged(self) -> None:
+        sut = stage_skills
+
+        result = sut(self.skills, ["gamma", "alpha"], self.base / "work" / "skills.r1")
+
+        self.assertEqual(sorted(p.name for p in result.iterdir()), ["alpha", "gamma"])
+        self.assertTrue((result / "alpha" / "references" / "r.md").is_file())
+
+    def test_the_staged_root_hashes_like_the_same_folders_in_place(self) -> None:
+        staged = stage_skills(self.skills, ["alpha", "gamma"], self.base / "work" / "skills.r2")
+        in_place = [f for f in load_skill_source(self.skills).files if f[0].split("/", 1)[0] in ("alpha", "gamma")]
+
+        self.assertEqual(pins.skill_variant_hash(load_skill_source(staged).files), pins.skill_variant_hash(in_place))
+
+    def test_usage_errors(self) -> None:
+        target = self.base / "work" / "skills.r3"
+        for names in ([], ["alpha", "alpha"], ["missing"], ["not-a-skill"], ["../alpha"]):
+            with self.subTest(names=names):
+                with self.assertRaises(ValueError):
+                    stage_skills(self.skills, names, target)
+        self.assertFalse(target.exists())
+
+    def test_an_existing_target_is_refused(self) -> None:
+        target = self.base / "work" / "skills.r4"
+        target.mkdir(parents=True)
+
+        with self.assertRaises(ValueError):
+            stage_skills(self.skills, ["alpha"], target)
 
 
 if __name__ == "__main__":

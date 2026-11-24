@@ -17,10 +17,13 @@
 
 """Pins, cache and report machinery tests (no model call, no Docker)."""
 
+import importlib
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from c4_skills import pins, report
 from c4_skills.cache import CacheKey, ResultCache
@@ -273,6 +276,115 @@ class TestReportFigures(unittest.TestCase):
             self.assertEqual(result["run_id"], "unit-run")
             self.assertTrue((results_dir / "report.md").is_file())
             self.assertTrue((results_dir / "report.json").is_file())
+
+
+_GOLDEN_VERSION_TUPLE_HASH = "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+
+
+def _environ_without_overrides() -> dict[str, str]:
+    """The current environment minus every C4EVAL_* pin variable."""
+    result = {k: v for k, v in os.environ.items() if k not in pins.PIN_OVERRIDE_ENV.values()}
+    return result
+
+
+class TestPinOverrideParsing(unittest.TestCase):
+    """Task 190.150 (I4): the C4EVAL_* override parsing (pure)."""
+
+    def test_nothing_set_means_no_override(self) -> None:
+        result = pins.parse_pin_overrides({"PATH": "/usr/bin"})
+
+        self.assertEqual(result, ({}, []))
+
+    def test_empty_and_blank_values_are_unset(self) -> None:
+        result = pins.parse_pin_overrides({"C4EVAL_MODEL_ID": "", "C4EVAL_PROVIDER_ID": "   "})
+
+        self.assertEqual(result, ({}, []))
+
+    def test_valid_values_are_applied_and_stripped(self) -> None:
+        environ = {
+            "C4EVAL_VLLM_ENDPOINT": " http://10.0.0.7:8000/v1 ",
+            "C4EVAL_VLLM_METRICS_URL": "http://10.0.0.7:8000/metrics",
+            "C4EVAL_MODEL_ID": "org/other-model-7b",
+            "C4EVAL_PROVIDER_ID": "vllm-sys1",
+        }
+
+        overrides, errors = pins.parse_pin_overrides(environ)
+
+        self.assertEqual(errors, [])
+        self.assertEqual(
+            overrides,
+            {
+                "MODEL_ID": "org/other-model-7b",
+                "PROVIDER_ID": "vllm-sys1",
+                "VLLM_ENDPOINT": "http://10.0.0.7:8000/v1",
+                "VLLM_METRICS_URL": "http://10.0.0.7:8000/metrics",
+            },
+        )
+
+    def test_invalid_values_are_reported_and_not_applied(self) -> None:
+        environ = {
+            "C4EVAL_VLLM_ENDPOINT": "https://host/v1",  # no port, not http
+            "C4EVAL_PROVIDER_ID": "a/b",  # a provider id carries no slash
+            "C4EVAL_MODEL_ID": "ok-model",
+        }
+
+        overrides, errors = pins.parse_pin_overrides(environ)
+
+        self.assertEqual(overrides, {"MODEL_ID": "ok-model"})
+        self.assertEqual(len(errors), 2)
+        self.assertTrue(any("C4EVAL_VLLM_ENDPOINT" in e for e in errors))
+        self.assertTrue(any("C4EVAL_PROVIDER_ID" in e for e in errors))
+
+
+class TestPinOverridesInEffect(unittest.TestCase):
+    """Task 190.150 (I4): an override moves the pin and the version tuple; no
+    override keeps the pinned defaults and the golden tuple hash."""
+
+    def tearDown(self) -> None:
+        with mock.patch.dict(os.environ, _environ_without_overrides(), clear=True):
+            importlib.reload(pins)
+
+    def test_defaults_and_golden_hash_when_nothing_is_set(self) -> None:
+        with mock.patch.dict(os.environ, _environ_without_overrides(), clear=True):
+            importlib.reload(pins)
+
+        self.assertEqual(pins.PIN_OVERRIDES, {})
+        self.assertEqual(pins.VLLM_ENDPOINT, "http://127.0.0.1:8081/v1")
+        self.assertEqual(pins.VLLM_METRICS_URL, "http://127.0.0.1:8081/metrics")
+        self.assertEqual(pins.MODEL_ID, "qwen3.8-27b-bf16-896k")
+        self.assertEqual(pins.PROVIDER_ID, "vllm-sys0")
+        self.assertNotIn("pin_overrides", pins.version_tuple())
+        self.assertEqual(pins.version_tuple_hash(), _GOLDEN_VERSION_TUPLE_HASH)
+
+    def test_an_override_moves_the_pin_and_the_version_tuple(self) -> None:
+        environ = _environ_without_overrides() | {"C4EVAL_MODEL_ID": "other-model", "C4EVAL_PROVIDER_ID": "vllm-x"}
+        with mock.patch.dict(os.environ, environ, clear=True):
+            importlib.reload(pins)
+
+        self.assertEqual(pins.MODEL_ID, "other-model")
+        self.assertEqual(pins.PROVIDER_ID, "vllm-x")
+        result = pins.version_tuple()
+        self.assertEqual(result["model_id"], "other-model")
+        self.assertEqual(result["pin_overrides"], {"MODEL_ID": "other-model", "PROVIDER_ID": "vllm-x"})
+        self.assertNotEqual(pins.version_tuple_hash(), _GOLDEN_VERSION_TUPLE_HASH)
+
+    def test_a_metrics_url_override_alone_still_moves_the_version_tuple(self) -> None:
+        # the metrics URL is no tuple field of its own; the recorded
+        # `pin_overrides` block makes every override visible in the hash
+        environ = _environ_without_overrides() | {"C4EVAL_VLLM_METRICS_URL": "http://127.0.0.1:9090/metrics"}
+        with mock.patch.dict(os.environ, environ, clear=True):
+            importlib.reload(pins)
+
+        self.assertEqual(pins.VLLM_METRICS_URL, "http://127.0.0.1:9090/metrics")
+        self.assertNotEqual(pins.version_tuple_hash(), _GOLDEN_VERSION_TUPLE_HASH)
+
+    def test_an_endpoint_override_moves_the_forwarder_host_and_port(self) -> None:
+        environ = _environ_without_overrides() | {"C4EVAL_VLLM_ENDPOINT": "http://10.1.2.3:8000/v1"}
+        with mock.patch.dict(os.environ, environ, clear=True):
+            importlib.reload(pins)
+
+        self.assertEqual(pins.vllm_host(), "10.1.2.3")
+        self.assertEqual(pins.vllm_host_port(), 8000)
 
 
 class TestSourceHashIsCheckoutPathIndependent(unittest.TestCase):

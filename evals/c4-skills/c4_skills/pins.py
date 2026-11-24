@@ -29,12 +29,23 @@ The version tuple (REQ-008 reproducibility) is the canonical JSON of
 ``version_tuple_hash`` recorded with every run and used as a result-cache
 key component (a changed pin invalidates every cached ``none``/
 ``upstream`` result).
+
+Task 190.150 (I4): the four model/endpoint pins -- :data:`VLLM_ENDPOINT`,
+:data:`VLLM_METRICS_URL`, :data:`MODEL_ID` and :data:`PROVIDER_ID` -- can
+be overridden by the environment variables of :data:`PIN_OVERRIDE_ENV`,
+read once at import time. An override is recorded in the preflight and in
+the version tuple (``pin_overrides``), so cached results never mix
+models or endpoints; with none of the variables set, every pin and the
+version tuple hash are exactly the pinned defaults.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
+from collections.abc import Mapping
 from pathlib import Path
 
 #: The harness root (evals/c4-skills), the parent of this package. Both the
@@ -66,11 +77,71 @@ CONDITIONS: tuple[str, ...] = (CONDITION_NONE, CONDITION_UPSTREAM, CONDITION_SKI
 CACHEABLE_CONDITIONS: frozenset[str] = frozenset({CONDITION_NONE, CONDITION_UPSTREAM})
 
 # ---------------------------------------------------------------------------
+# the environment overrides of the model/endpoint pins (Task 190.150, I4)
+# ---------------------------------------------------------------------------
+
+#: The environment variable that overrides each overridable pin.
+PIN_OVERRIDE_ENV: dict[str, str] = {
+    "VLLM_ENDPOINT": "C4EVAL_VLLM_ENDPOINT",
+    "VLLM_METRICS_URL": "C4EVAL_VLLM_METRICS_URL",
+    "MODEL_ID": "C4EVAL_MODEL_ID",
+    "PROVIDER_ID": "C4EVAL_PROVIDER_ID",
+}
+
+#: The accepted shape of each override (fullmatch). The endpoint keeps the
+#: `http://<host>:<port>/v1` shape the forwarder and the gateway URL derive
+#: their host and port from; a provider id is a JSON key and the first half
+#: of OpenCode's `<provider>/<model>` id, so it carries no `/`.
+_PIN_OVERRIDE_PATTERNS: dict[str, re.Pattern[str]] = {
+    "VLLM_ENDPOINT": re.compile(r"http://[A-Za-z0-9.\-]+:[0-9]{1,5}/v1"),
+    "VLLM_METRICS_URL": re.compile(r"http://[A-Za-z0-9.\-]+:[0-9]{1,5}(/\S*)?"),
+    "MODEL_ID": re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/\-]*"),
+    "PROVIDER_ID": re.compile(r"[A-Za-z0-9][A-Za-z0-9._\-]*"),
+}
+
+
+def parse_pin_overrides(environ: Mapping[str, str]) -> tuple[dict[str, str], list[str]]:
+    """Parse the pin overrides from an environment mapping (pure).
+
+    A variable that is absent, empty or whitespace-only is unset. A set
+    value is stripped and must fullmatch its pin's shape; an invalid value
+    is not applied and is reported instead (the CLI refuses to start with
+    a usage error, and the preflight lists it as a problem).
+
+    Args:
+        environ: The environment (e.g. `os.environ`).
+
+    Returns:
+        `(overrides, errors)`: the applied overrides keyed by pin name
+        (sorted), and one message per invalid variable.
+    """
+    assert isinstance(environ, Mapping)
+    overrides: dict[str, str] = {}
+    errors: list[str] = []
+    for pin, variable in PIN_OVERRIDE_ENV.items():
+        raw = environ.get(variable)
+        if raw is None or not raw.strip():
+            continue
+        value = raw.strip()
+        if not _PIN_OVERRIDE_PATTERNS[pin].fullmatch(value):
+            errors.append(f"{variable}={raw!r} is not a valid {pin} override")
+            continue
+        overrides[pin] = value
+    result = (dict(sorted(overrides.items())), errors)
+    return result
+
+
+#: The overrides in effect for this process and the invalid variables
+#: (both empty when no `C4EVAL_*` pin variable is set).
+PIN_OVERRIDES, PIN_OVERRIDE_ERRORS = parse_pin_overrides(os.environ)
+
+# ---------------------------------------------------------------------------
 # model and provider (the shared sys0 vLLM server)
 # ---------------------------------------------------------------------------
 
-#: The OpenCode provider id the harness injects (REQ-008).
-PROVIDER_ID = "vllm-sys0"
+#: The OpenCode provider id the harness injects (REQ-008); overridable by
+#: `C4EVAL_PROVIDER_ID`.
+PROVIDER_ID = PIN_OVERRIDES.get("PROVIDER_ID", "vllm-sys0")
 
 #: The vLLM OpenAI-compatible endpoint the harness PROBES from the host.
 #: The shared vLLM server actually answers on `0.0.0.0:8081` (verified via
@@ -82,7 +153,8 @@ PROVIDER_ID = "vllm-sys0"
 #: when the 0.0.0.0 bind already owns the gateway address:port -- the
 #: option-C conditional in `runner.establish_vllm_access` (strictly
 #: verified in that case). The trial's vLLM URL is mode-invariant.
-VLLM_ENDPOINT = "http://127.0.0.1:8081/v1"
+#: Overridable by `C4EVAL_VLLM_ENDPOINT` (same `http://host:port/v1` shape).
+VLLM_ENDPOINT = PIN_OVERRIDES.get("VLLM_ENDPOINT", "http://127.0.0.1:8081/v1")
 
 
 def vllm_host() -> str:
@@ -113,12 +185,14 @@ def vllm_host_port() -> int:
 
 
 #: The Prometheus metrics endpoint the runner uses for the idle/contention
-#: checks (`vllm:num_requests_running`).
-VLLM_METRICS_URL = "http://127.0.0.1:8081/metrics"
+#: checks (`vllm:num_requests_running`); overridable by
+#: `C4EVAL_VLLM_METRICS_URL`.
+VLLM_METRICS_URL = PIN_OVERRIDES.get("VLLM_METRICS_URL", "http://127.0.0.1:8081/metrics")
 
 #: The model id served at :data:`VLLM_ENDPOINT` (verified via
-#: ``GET /v1/models``: `max_model_len` 917504).
-MODEL_ID = "qwen3.8-27b-bf16-896k"
+#: ``GET /v1/models``: `max_model_len` 917504); overridable by
+#: `C4EVAL_MODEL_ID`.
+MODEL_ID = PIN_OVERRIDES.get("MODEL_ID", "qwen3.8-27b-bf16-896k")
 
 #: The model's context limit as reported by the server (`max_model_len`).
 MODEL_MAX_CONTEXT = 917504
@@ -303,7 +377,9 @@ def version_tuple() -> dict[str, object]:
     the vLLM version pin, the host Python and jq versions, the upstream
     commit, the sampling parameters, the runner timeout and the trial
     network topology (Phase 110: `internal-bridge`, the per-run egress-
-    blocking private network).
+    blocking private network). Task 190.150 (I4): when any pin override is
+    in effect, the tuple also carries `pin_overrides` (absent otherwise, so
+    the default tuple and its hash are unchanged).
 
     Returns:
         A JSON-serialisable dict, sorted for stable hashing.
@@ -328,6 +404,8 @@ def version_tuple() -> dict[str, object]:
         "vllm_endpoint": VLLM_ENDPOINT,
         "vllm_version": VLLM_VERSION_PIN,
     }
+    if PIN_OVERRIDES:
+        result["pin_overrides"] = dict(PIN_OVERRIDES)
     result = dict(sorted(result.items()))
     return result
 
