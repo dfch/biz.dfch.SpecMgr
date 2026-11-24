@@ -20,9 +20,12 @@
 The first of the feature's five skills, ``.opencode/skill/structurizr-validate-loop/``
  — the mandatory loop over the Structurizr MCP's ``parse``, ``validate`` and
  ``inspect`` tools (REQ-003) — as measured to its stop rule in iteration 2
- (the measured winner was variant ``927d6c3fc039…``; the committed variant is
- ``48c9b87bdee8…``, differing only in the one-character DEC-citation typo the
- 2026-11-07 review remediation fixed — a citation-only editorial change, the
+ (variant chain: the measured winner was ``927d6c3fc039…``; the 2026-11-07
+ review remediation's one-character DEC-citation typo fix moved it to
+ ``48c9b87bdee8…`` (commit f7cfa86d); the 2026-11-13 origin/dev merge
+ ed4b4ad9's ADR→DEC wording (dev commit 80d883f2) moved it to the committed
+ ``5ecf5b0760762d7f13401f19f70c6f61dc461bc82102a2190c69cdd27aad79e9`` —
+ both post-measurement moves are citation-only editorial changes, the
  trigger description and instructions are byte-identical, so the measured
  behavioral identity is preserved). These tests pin, read-only from
 the committed files (no network, no Docker, no model): the file location (the

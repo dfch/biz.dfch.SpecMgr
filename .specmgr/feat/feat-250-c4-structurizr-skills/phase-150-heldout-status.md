@@ -3,6 +3,8 @@
 Status at 2026-11-19 (this file is finalized at the end of the session;
 it exists so no session knowledge lives only in a transcript).
 
+SUPERSEDED for the sys1 run by `phase-150-heldout-resume-prompt.md`'s 'sys1 adaptations' section (2026-11-21) and the README's 2026-11-21/2026-11-22 entries: the held-out ran on sys1 with 0 cache hits / 15 fresh trials (`p150-heldout-2026-11-22T064104Z`, clean acceptance); this file's 10-hit/5-fresh expectations are sys0-only history.
+
 ## What this note is for
 
 Task 150.140 (the held-out `heldout-review` campaign) plus the

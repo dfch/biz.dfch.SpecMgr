@@ -62,11 +62,15 @@ skill-owned adjudication stands on the per-trial records, the 2026-11-15
 Stop-rule run `p110-iter2-2026-11-05T143241Z` (seed 865648; cases
 `create-system`, `mcp-limits`, `no-trigger`; conditions `none`, `skill`):
 `skill` 4/15 (`create-system` 2/5, `mcp-limits` 2/5, `no-trigger` 0/5 as
-designed) vs `none` 0/15. Measured variant hash `927d6c3fc039…`
-(`run.json → skill_variant_hash`); the committed variant is
-`48c9b87bdee8…` after the 2026-11-07 review remediation's one-character
-ADR-citation fix (citation-only editorial change post-dating the
-measurement — the E1 Decisions-Made entry). Held-out
+designed) vs `none` 0/15. Variant hash chain: measured
+`927d6c3fc039…` (`run.json → skill_variant_hash`) → `48c9b87bdee8…`
+after the 2026-11-07 review remediation's one-character ADR-citation fix
+(commit `f7cfa86d`; a citation-only editorial change post-dating the
+measurement — the E1 Decisions-Made entry) → committed
+`5ecf5b0760762d7f13401f19f70c6f61dc461bc82102a2190c69cdd27aad79e9`
+(the 2026-11-13 origin/dev merge `ed4b4ad9`'s ADR→DEC wording, dev
+commit `80d883f2` — citation-only, trigger description and instructions
+unchanged). Held-out
 `p110-heldout-2026-11-05T203735Z` (seed 743505, `heldout-validate`):
 `skill` 4/5 vs `none` 0/5 (all 5 `none` trials cache hits) — clean, no
 caveat. Prove `p110-prove2-2026-11-04T200612Z` (seed 448993; cases
@@ -334,8 +338,9 @@ matcher deviation — see below), `no_mounted_skill_loaded` 0→0. Worse (2
 gates, both confined to the two no-valid-workspace `fix-dsl` skill trials
 `skill-k1`/`skill-k3`, which fail 10 gates incl. `cli_valid`):
 `no_deletions` 0→2, `relationships_described` 0→2. Better than
-`upstream` (22 gates): the same 23 minus `explicit_view_keys` (0→1 worse
-vs `upstream`) plus `dsl_written` 4→1 and `no_mounted_skill_loaded` 4→0
+`upstream` (22 gates): the same 23 minus `explicit_view_keys` (moved to
+worse, 0→1), `limits_acknowledged` and `vague_label_found` (moved to tie,
+0→0), plus `dsl_written` 4→1 and `no_mounted_skill_loaded` 4→0
 (the upstream's ungated trigger descriptions load on 4/5 `no-trigger`
 render prompts — the harsh baseline; ours load 0/15); ties vs
 `upstream`: `limits_acknowledged` 0→0, `mcp_limit_stated` 5→5,
@@ -415,8 +420,10 @@ Better than `none`: `cli_export` 4→1, `cli_valid` 5→2, `has_person` 4→1,
 `relationship_technology` 5→1, `triage_complete` 8→3, `two_containers`
 4→2, `validate_ok_called` 5→1, `validated_before_return` 10→1. Tie:
 `mcp_limit_stated` 5→5 (the documented Phase 110 no-trigger matcher
-deviation — affects both conditions identically). The wins are exactly the
-loop-delta gates (`parse_called`/`validate_ok_called`/`inspect_called`/
+deviation — affects both conditions identically). Worse: `dsl_written`
+0→1 (the one `mcp-limits` skill trial that wrote no `.dsl` file at all —
+`mcp-limits/skill-k2`). The wins are exactly the loop-delta gates
+(`parse_called`/`validate_ok_called`/`inspect_called`/
 `triage_complete`/`validated_before_return`), as designed.
 
 ### `structurizr-dsl-authoring` (`p120-iter1-2026-11-07T231831Z`, 20 trials per condition)
@@ -455,7 +462,9 @@ deviation). The wins are exactly the modeling-decision gates
 `upstream`: `container_count` 2→0,
 `no_library_container` 4→0, `no_mounted_skill_loaded` 3→0 (the upstream's
 ungated `c4-model` description loaded on 3/5 no-trigger prompts; ours
-0/10), `validate_ok_called` 5→3. Tie: `mcp_limit_stated` 4→4.
+0/10), `validate_ok_called` 5→3. Tie: `mcp_limit_stated` 4→4. Worse vs
+`upstream`: `has_view` 0→1 (the one `modeling-decisions` skill trial whose
+export carried only auto-generated views — `modeling-decisions/skill-k0`).
 
 ### `c4-view-design` (`p140r-skill-2026-11-15T083350Z`, 10 trials per condition, locked 12-gate)
 
@@ -482,9 +491,15 @@ degradation — they report nothing); the two completed full passes (k1, k3)
 clear every one of the 9 gates. Better than `upstream`:
 `crowded_view_found` 4→3, `no_false_findings` 5→0,
 `no_mounted_skill_loaded` 5→0 (the upstream's ungated skill description
-loads on 5/5 no-trigger prompts). Tie: `mcp_limit_stated` 5→5.
-(`upstream` passed the six detection gates on its trials — its `c4-review`
-skill does produce findings — but failed the clean control 5/5.)
+loads on 5/5 no-trigger prompts). Tie: `mcp_limit_stated` 5→5. Worse vs
+`upstream`: `external_tag_found` 0→3, `keyless_view_found` 0→3,
+`library_container_found` 0→3, `orphan_found` 0→3,
+`vague_label_found` 0→3 (all five confined to the same 3 timed-out
+`review-model` skill trials — they report nothing; the delta is the
+window artifact, not a teaching gap). (`upstream` passed five of the six
+detection gates on every trial and `crowded_view_found` on 6 of 10 — its
+`c4-review` skill does produce findings — but failed the clean control
+5/5.)
 
 ## Provenance
 
@@ -552,7 +567,7 @@ evidence below.
 | ACC-001 — the five skills exist under `.opencode/skill/`, each `SKILL.md` `name` == folder name, trigger `description` present | VERIFIED | `.opencode/skill/{c4-modeling,c4-model-review,c4-view-design,structurizr-dsl-authoring,structurizr-validate-loop}/SKILL.md` — frontmatter `name` read from each file (all five equal their folder names) and each carries a single-task trigger `description` with example phrases (read 2026-11-20, re-verified 2026-11-23 — the folders are committed and unchanged; `c4-model-review`'s folder + pinning test + bundle 49→55 landed in `ad555af4`, the phase closed with the 2026-11-22 held-out clean acceptance). |
 | ACC-002 — `structurizr-validate-loop` forbids returning unvalidated DSL, requires `parse`+`inspect`, defines triage | VERIFIED | `.opencode/skill/structurizr-validate-loop/SKILL.md`: the loop mandates `parse` + `validate` + `inspect`; "never return text that was never validated to `OK`"; "A DSL result that was only parsed, and not validated to `OK`, is NOT a pass" (the DEC 7a626b12 precedent applied); "Triage EVERY finding into exactly one of the three labels" + the `## Triage and the final answer` section defining fix/expected/reported. Pinned by `tests/opencode/test_skill_structurizr_validate_loop.py` (24 tests, green in the final 6384-pass suite). |
 | ACC-003 — REQ-006 MCP limits stated in every dependent skill, in full in `structurizr-dsl-authoring` + `structurizr-validate-loop` | VERIFIED | `## The MCP limits` section in all five `SKILL.md` files (read 2026-11-20, re-verified 2026-11-23): the full set (DSL text only, single file; `!include`/`!docs`/`!adrs` refused; no image rendering) in `structurizr-dsl-authoring/SKILL.md` and `structurizr-validate-loop/SKILL.md` (incl. the "at most one attempt" multi-file fallback); the two limits each depends on in `c4-modeling`, `c4-view-design`, `c4-model-review`. REQ-011 no-MCP sections present in all five (`## When the MCP is absent`). |
-| ACC-004 — `c4-model-review` does not edit any file or model | VERIFIED | `.opencode/skill/c4-model-review/SKILL.md`: "This skill is read-only: it reports findings and never edits the model — no file is changed, created, deleted, or renamed" (repeated in the trigger `description`); the harness enforces it behaviorally via the `file_untouched` gate in both review cases (the cumulative run: `file_untouched` passed on all 30 `skill` review-trial occurrences across `review-model` + the held-out run). Pinned by `tests/opencode/test_skill_c4_model_review.py` (30 tests, green in the final suite). |
+| ACC-004 — `c4-model-review` does not edit any file or model | VERIFIED | `.opencode/skill/c4-model-review/SKILL.md`: "This skill is read-only: it reports findings and never edits the model — no file is changed, created, deleted, or renamed" (repeated in the trigger `description`); the harness enforces it behaviorally via the `file_untouched` gate in both review cases (`file_untouched` passed on all 30 review-trial occurrences (all conditions) across `review-model` + the held-out run — 15/15 in each of the two runs, including 10/10 of the `skill`-condition trials). Pinned by `tests/opencode/test_skill_c4_model_review.py` (30 tests, green in the final suite). |
 | ACC-005 — `specmgr harness-bundle` regenerated at the end of every stop-rule-passed phase; bundle carries every markdown file next to each `SKILL.md`; drift check passes | VERIFIED | Bundle history (entry counts verified from the committed `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` at each commit): 30 at `b2076f31` (Phase 110 stop-rule PASS) → 36 at `5d854d10` (Phase 120 PASS) → 41 at `9f42794e` (Phase 130 PASS) → 43 at the 2026-11-13 origin/dev merge regeneration → 49 at `e160b692` (Phase 140 complete) → 55 at `ad555af4` (Phase 150 bookkeeping) — every regeneration after a passed stop rule. The Phase 160 final drift check (Task 160.120): `specmgr harness-bundle` regenerated 2026-11-23 with ZERO diff (55 entries unchanged, per_dir agent 7 / command 11 / skill 37; the 28 c4/structurizr skill files = 6+5+6+6+5 across the five folders); `tests/commands/test_harness_bundle.py` pins 55 / per_dir and the committed-bundle byte-identity (green in the final suite). |
 | ACC-006 — graders split known-good from known-bad, proven by unit tests needing no model call; pre-exported JSON fixtures; CLI tests skipped when Docker missing | VERIFIED | `tests/evals/test_graders.py` (180 tests) over the pre-exported fixtures in `tests/evals/fixtures/` (15 workspace fixture dirs + 4 report-text fixtures + `events/`/`cli-inspect/` fixtures) — no model call, no Docker; `tests/evals/test_cli_gates.py` (16 tests) is the live-CLI half, `@unittest.skipUnless(shutil.which("docker") is not None, ...)` + `_skip_if_no_docker`. Green in the final 6384-pass / 18-skip suite. |
 | ACC-007 — results for `none`/`upstream`/`skill` committed under `evals/c4-skills/results/` with the recorded versions | VERIFIED | `evals/c4-skills/results/` carries every run dir (smoke, prove, iteration, held-out per phase, plus the Phase 150 held-out `p150-heldout-2026-11-22T064104Z/` and the Phase 160 cumulative `p160-cumulative-2026-11-22T094832Z/` — committed with this phase's final commit; the sys0 abort-cycle partials never existed on sys1 and their forensics live in the feature folder's `work/`). Every `run.json`/`report.json` records the full `version_tuple` + `version_tuple_hash f22635f6…103662` (both machines) and the per-run grader hash in the cache keys (`b4ae81af…` sys0, `b3864185…` sys1); the skill condition records `skill_variant_hash` per run. Upstream commit SHA + license provenance: `evals/c4-skills/results/provenance.md`. |

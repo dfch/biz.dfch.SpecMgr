@@ -19,7 +19,7 @@ evals/c4-skills/
 │   ├── pins.py             # every version pin, the version tuple, the hashes
 │   ├── preflight.py        # Task 100.180: record the environment, check the pins, idle check
 │   ├── occonfig.py         # Task 100.110: the injected OpenCode configuration
-│   ├── sidecar.py          # Task 100.120: the pinned structurizr/mcp sidecar (ephemeral host port)
+│   ├── sidecar.py          # Task 100.120: the pinned structurizr/mcp sidecar (fixed container port, no host port)
 │   ├── upstream.py         # Task 100.110: run-time fetch of jrjsmrtn/c4-skills at the pinned SHA
 │   ├── events.py           # Task 100.140: parser for `opencode run --format json` NDJSON
 │   ├── metrics.py          # Task 100.140: validated_before_return, call counts, triage, ...
@@ -94,15 +94,17 @@ convention (a probe that did not verify the chain is not a pin failure).
 - One fresh work dir + one fresh container per trial; the container gets no
   host OpenCode config, no `AGENTS.md`, no skills except the condition's,
   and the injected config denies `webfetch`/`websearch`/`question`.
-- The trial container uses `--network host` (vLLM and the sidecar are bound
-  to `127.0.0.1` on the host; there is no bridge route to them). "Isolation"
-  is filesystem/config isolation, not network isolation.
-- The harness starts its own pinned `structurizr/mcp` sidecar on a free
-  ephemeral host port and tears it down after the run; the development MCP
-  on port 3000 is never used. Port selection is racy (bind/close ->
-  container bind): a sidecar whose logs show a bind/port-in-use failure is
-  retried with a fresh port (up to 3 attempts), any other failure aborts
-  with the port and the log evidence named.
+- Every run owns a private `docker network create --internal
+  c4eval-<run_id>` (Docker enforces no egress from it): the trial reaches
+  only the sidecar and the vLLM access path, so "isolation" is
+  filesystem/config isolation AND network isolation.
+- The harness starts its own pinned `structurizr/mcp` sidecar on that
+  network at fixed container port 8181 (one attempt, no host port, no port
+  retry) and tears it down after the run; the development MCP on port 3000
+  is never used. vLLM access goes via the option-C stdlib TCP forwarder
+  bound to the network gateway IP (the preferred path; on EADDRINUSE the
+  strictly-verified direct-bind fallback is used instead). The grader-CLI
+  containers run on `--network none`.
 - The vLLM server is shared (2 sequence slots). The runner refuses to start
   a trial while `vllm:num_requests_running > 0` (it waits, then re-checks
   between trials) and **flags** -- never fails -- a trial that ran while
@@ -128,7 +130,7 @@ metrics over pinned fixtures (a verbatim probe capture + a synthetic
 tool stream), the graders over pre-exported CLI JSON fixtures (the
 known-good/known-bad/known-weak split, ACC-006), the Wilson/pass^k/margin
 machinery, the pins/cache/report machinery, and the runner/sidecar/CLI
-robustness logic (pure Python, the container layer mocked). The four
+robustness logic (pure Python, the container layer mocked). The sixteen
 Docker-dependent CLI tests skip when Docker is missing. The pre-commit
 `pytest` hook is scoped to `src/`+`tests/`+`evals/` changes (a harness-code
 change alone also triggers the local suite; CI's full matrix covers it
