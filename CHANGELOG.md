@@ -187,9 +187,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   call; the live-CLI tests skip when Docker is missing) and the
   repository housekeeping (`.gitignore` for the trial work dirs and
   cache, ruff/pylint/pytest treatment of `evals/` and `tests/evals/`)
-  round it out. Each skill phase passed its fixed stop rule (not
+  round it out. Each skill phase ended under its fixed stop rule (not
   worse than `none`, within the locked margin of the comparison
-  condition, ≤3 iterations, one held-out case at the end); the
+  condition, ≤3 iterations, one held-out case at the end); Phase 140
+  (`c4-view-design`) passed it only under the user's Option A clause
+  revision (2026-11-15: "clears its own gates" operationalized over
+  the nine skill-owned `design-views` gates, the locked 12-gate set
+  re-demanded in the Phase 160 cumulative run); the
   harness bundle grows to 55 entries (the 28 skill markdown files)
   with the count pin in `tests/commands/test_harness_bundle.py`
   updated accordingly.

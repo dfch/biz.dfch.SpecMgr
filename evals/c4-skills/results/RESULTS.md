@@ -17,12 +17,19 @@ items"); the ACC traceability list (Task 160.120) is the final section.
 Version tuple hash `f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662`
 in every run's `run.json`/`report.json` (verified in all canonical runs cited
 below, on both machines). Grader hash: `b4ae81afcc4ae8e5c0484e480a6dc18ea1c9bf0b75e458c5a3c5d90a4ee8f81b`
-on sys0 (recorded in the result-cache keys, e.g.
-`evals/c4-skills/cache/heldout-review.none.json`; re-verified unchanged by
-the 2026-11-20 origin/dev merge) and `b3864185b5744420d911ced32f69791355495b13c78075ffd262fdc3885f5e11`
-on sys1 (path-dependent — absolute source paths fold in; recomputed on sys1
-per the locked one-liner before the Phase 150 held-out and the Phase 160
-cumulative run, both of which ran under it). OpenCode
+on sys0 and `b3864185b5744420d911ced32f69791355495b13c78075ffd262fdc3885f5e11`
+on sys1 (path-dependent until Task 190.120 — absolute source paths folded
+in; recomputed on sys1 per the locked one-liner before the Phase 150
+held-out and the Phase 160 cumulative run, both of which ran under it).
+Neither value is in a committed run record (the runs predate the
+`grader_hash` field; the result cache that keys on it is gitignored).
+Verification (Task 190.160, D6, 2026-11-24): the sys0 value is
+reproducible from the repository — the pre-G3 `pins.source_hash` over the
+six grader sources at commit `30a0b99e` (unchanged since Phase 150), with
+the sys0 checkout path `~/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills`,
+gives exactly `b4ae81af…f81b`; the sys1 value is NOT verifiable from the
+repository (the sys1 checkout path is not recorded) and stands as recorded
+in the feature README's Phase 150/160 entries. OpenCode
 `ghcr.io/anomalyco/opencode:2.2.5`, Structurizr MCP
 `structurizr/mcp:2026.04.20`, Structurizr CLI
 `structurizr/structurizr:2026.10.26-noble` (matching pair), Python 3.13.13,
@@ -176,6 +183,21 @@ held-out run below (2/5); `no-trigger` stands on its home-phase data per
 the byte-unchanged reused-case adjudication (reused byte-unchanged; Phase
 130 prove `none` 2/5; here `none` 0/5 with every trial failing ONLY the
 known `mcp_limit_stated` matcher deviation).
+
+**Deviation from ACC-013 (recorded by Task 190.160, D3).** ACC-013 requires
+a case that does not discriminate to be "hardened or replaced before the
+skill is written". The `review-model`/`heldout-review` seed went through
+three revisions (S1→S2→S2.5→S3, see the feature README's Phase 150 entries),
+and the last one, S2.5→S3, came AFTER the skill was written: it was driven
+by the measured near-misses of skill v1 on the S2.5 seed
+(`p150-iter1-2026-11-17T085713Z`, aborted at 24/30 — four of five
+`review-model` trials failing only `no_false_findings`), it removed the
+latent clean-region magnets those trials named, and it shipped together
+with the v2 report rule. The gate set, gate semantics, prompt and k/timeout
+stayed unchanged, and the canonical prove (`p150-prove-2026-11-17T165125Z`)
+and iteration (`p150-iter1-2026-11-17T202412Z`) both ran on S3, so the
+stop-rule figures are internally consistent — but the S3 seed is not
+independent of the skill's own measured behavior.
 
 Held-out — `p150-heldout-2026-11-22T064104Z` (seed 329664, k=5, 1200 s,
 the full locked 9-gate set, `--cases heldout-review --conditions

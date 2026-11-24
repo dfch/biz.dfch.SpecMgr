@@ -164,7 +164,8 @@ policy — the shared vLLM never offered a second idle slot:
 ## Bookkeeping done this session (Task 150.150)
 
 - Pinning test: drafted in
-  `.specmgr/feat/feat-250-c4-structurizr-skills/draft_test_skill_c4_model_review.py`,
+  `.specmgr/feat/feat-250-c4-structurizr-skills/draft_test_skill_c4_model_review.py`
+  (deleted 2026-11-24 by Task 190.170, S1: a byte-identical copy),
   installed at `tests/opencode/test_skill_c4_model_review.py` (30 tests,
   green against the on-disk folder; no network/Docker/model calls).
 - Attribution/source-map re-verification against the cached upstream

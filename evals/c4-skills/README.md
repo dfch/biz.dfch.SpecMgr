@@ -1,10 +1,13 @@
-# c4-skills measurement harness (feat-250, Phase 100)
+# c4-skills measurement harness (feat-250)
 
 Reproducible container harness that measures OpenCode agent skills for C4
 modeling with Structurizr DSL. It runs an OpenCode agent **in an isolated
 container** against the local model `qwen3.8-27b-bf16-896k` on the shared
 sys0 vLLM server, one trial at a time, and grades the produced workspace
-with the **real Structurizr CLI** (never by grepping the DSL).
+with the **real Structurizr CLI** (never by grepping the DSL). The Phases
+110–150 runs ran on sys0; the Phase 150 held-out and the Phase 160
+cumulative run ran on the dedicated sys1 instance under the unchanged
+provider id `vllm-sys0` (same model and build, same version tuple).
 
 Development-only: standard library only, not part of the wheel, not part of
 the packaged harness bundle, and never imported from `src/`.
@@ -29,8 +32,8 @@ evals/c4-skills/
 │   ├── cache.py            # Task 100.130: result cache for `none`/`upstream`
 │   ├── runner.py           # Task 100.130: sequential trials, seed, timeout, contention, cache
 │   ├── cli.py              # the subcommands (preflight / probe / run / report)
-│   └── cases/__init__.py   # the case definitions (Phase 100: the smoke case)
-├── results/                # committed, reproducible run records (small)
+│   └── cases/__init__.py   # the case definitions
+├── results/                # committed, reproducible run records
 │   ├── smoke-*/            # preflight.json, run.json, report.{md,json}, trials/
 │   └── provenance.md       # Task 100.190: license/provenance table
 ├── work/                   # gitignored: fresh trial work dirs + the captured
