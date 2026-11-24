@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-01T14:10:53.141+01:00'
 id: feat-250-c4-structurizr-skills
-status: review
+status: done
 type: feat
-updated: '2026-11-24T12:27:04.687Z'
+updated: '2026-11-24T15:43:26.841Z'
 version: 1.0.0
 ---
 
@@ -221,6 +221,8 @@ One held-out case is never used while tuning and runs once at the end. Its resul
 
 ### Current Status
 
+**As of 2026-11-24**: Feature COMPLETE — the capped review-fix loop closed clean on its third (final) cycle: the cycle-3 review found no Errors, no Gaps, and no Discrepancies (two advisory Improvements, both judged not findings against this feature and recorded as such: the P150 `crowded_view_found` "6 of 10" narrative denominator, and the pre-existing-on-the-PR-base AGENTS.md pytest-hook scope line the PR does not touch); status set to `done`; PR #257 remains open vs `dev` for merge (never merged by this feature's sessions).
+
 **As of 2026-11-24**: Phase 180 (review cycle 2) is COMPLETE — the cycle-2 review (no Errors, no Gaps; 2 low record discrepancies + 2 advisory wording items) is fully remediated: the Phase 160 per-case timeout enumeration corrected (`no-trigger` 2 → 3; both copies now sum to the stated 27), the third residual "committed cache" phrase annotated "worktree-local (gitignored)" in `phase-140-handoff.md` (user-ruled option (a)), the Phase 150 parenthetical ambiguity and the "still appending" watcher phrase closed. All gates green (6402 pass). The review-fix loop continues with the cycle-3 reviewer pass.
 
 **As of 2026-11-24**: Phase 170 (review cycle 1) is COMPLETE — the feat-reviewer's post-implementation review (no Errors, no Gaps; 7 low record discrepancies D1–D7 + 2 improvements I1–I2) is fully remediated: the validate-loop variant-hash chain is recorded in full (measured `927d6c3fc039…` → E1 citation fix `48c9b87bdee8…` → committed `5ecf5b07…`, re-verified from disk), the harness README's networking section is brought to the Phase 110 egress-blocking design, the stale counts/labels/derivations in RESULTS.md are corrected (the ACC-004 evidence cell, the Phase 160 22-gate derivation, the three per-skill gate-delta sections), the two "committed cache entries" phrases are annotated "worktree-local (gitignored)", the Phase 150 held-out status file carries the supersession header note, and the Phase 150 window watcher is stopped (SIGTERM from this session, verified gone — its last on-disk sample 2026-11-23T10:51:12Z stands as the close of the record). All 6402-pass gates green; PR #257 CI green. The feature awaits the review-fix loop's clean exit before `status: done`.
@@ -245,6 +247,30 @@ One held-out case is never used while tuning and runs once at the end. Its resul
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-24 15:41:56.000Z - Review-fix loop closed clean (cycle 3); feature done
+
+The capped review-fix loop has exited CLEAN within its 3-cycle cap. All record-only: **no measured run dir, gate, case, pin, or shipped skill byte changed** — the measured run directories under `evals/c4-skills/results/<run>/` and the result cache are cited but untouched; `pins.py` is byte-unchanged. The only working-tree change this session is this README: the orchestrator's frontmatter `status` `review` → `done` bump plus the two record prepends (the Current Status paragraph above and this entry).
+
+**Loop record (all three cycles, each remediation record-only):**
+
+- **Cycle 1** — report: no Errors, no Gaps; 7 low record discrepancies D1–D7 + 2 improvements I1–I2 → Phase 170, commit `17c9f1a5`.
+- **Cycle 2** — report: no Errors, no Gaps; 2 low discrepancies D1/D2 + 2 advisory wording items I1/I3 (D2 resolved by user ruling option (a), 2026-11-24) → Phase 180, commit `b130218e`.
+- **Cycle 3 (FINAL, capped)** — report CLEAN: no Errors, no Gaps, no Discrepancies. Two advisory Improvements, both judged **not findings against this feature** and recorded as such:
+  - **I1** — the Phase 150 parenthetical's "6 of 10" `crowded_view_found` denominator in `evals/c4-skills/results/RESULTS.md` is the arithmetic complement of `report.json`'s 4-of-10 failure count; strictly the gate is only evaluated on the five `review-model` upstream trials (one real pass, `k0`) — the five `no-trigger` upstream trials carry no such gate. The reviewer judged the wording deliberately chosen, verified in Phase 180 I1 against the per-trial records, and internally consistent with the cited artifact; not a discrepancy.
+  - **I2** — `AGENTS.md`'s pytest-hook scope sentence ("scoped to `src/**/*.py`/`tests/**/*.py` changes") understates the hook's actual `files` pattern (`^(src|tests|evals)/.*\.py$` since this feature's own already-merged `061c34be`, 2026-11-03); pre-existing on the PR base, untouched by the PR, acceptable as separate repo housekeeping; not a finding.
+
+**Outcome:** the loop exited clean within the 3-cycle cap; `status` `review` → `done` (frontmatter `updated` 2026-11-24T15:19:30.808Z via the `set_status` tool — the frontmatter change is already in the working tree). Full feature record: Phases 100–160 implemented and measured (five skills, the container harness, the per-phase stop rules, the Phase 160 cumulative run `p160-cumulative-2026-11-22T094832Z` — skill 21/45 vs upstream 0/45 vs none 0/45, ACC-008 margin ok, both locked rechecks met), Phases 170/180 record remediation; ACC-001…ACC-014 all VERIFIED in `evals/c4-skills/results/RESULTS.md`.
+
+**PR state at this writing:** #257 open vs `dev`, MERGEABLE, CI green at `b130218e` (verified 2026-11-24: `gh pr view 257` → OPEN / MERGEABLE / head `b130218e`, all checks pass; the done commit lands on top; the PR is NOT merged by this session).
+
+Quality gates (final pass, worktree root; the record edits in this entry and the Current Status prepend above only touch this README, which the `specmgr lint` gate covers in its final re-pass after them): `uv run --frozen ruff format --check` green (2443 files already formatted); `uv run --frozen ruff check` green (all checks passed); `uv run --frozen vulture src/ whitelist.py --min-confidence 60` green (no findings); `uv run --frozen pytest -n auto --cov=src --cov-report=` → **6402 passed / 18 skipped / 0 failed** (103.9 s — the Phase 170/180 baseline; this session adds no test files); `uv run --frozen specmgr lint .specmgr/feat/feat-250-c4-structurizr-skills/README.md` → linted=1 failed=0; `uv run --frozen specmgr harness-bundle` + `git diff --exit-code src/biz/dfch/specmgr/general/data/general_harness_bundle.json` → NO diff (55 entries unchanged — no `.opencode/` change); `uv run --frozen specmgr docs` + `git diff --exit-code docs/` → NO diff (555 modules unchanged — no module/test-file change). Tree state (this session's final `git status --short`):
+
+```
+ M .specmgr/feat/feat-250-c4-structurizr-skills/README.md
+```
+
+(the single README modification — the frontmatter `status`/`updated` bump plus this entry's two record prepends).
 
 #### 2026-11-24 12:22:38.000Z - Phase 180 (review cycle 2) complete — D1/D2 + I1/I3 record fixes, record-only
 
