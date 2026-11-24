@@ -352,7 +352,7 @@ trials + the no-file `heldout-views/skill-k2` cascade).
 at launch. 27 of 135 trials hit the 1200 s timeout — ALL in the baselines
 (`none` 12, `upstream` 15; `skill` 0), concentrated on the
 view-creation cases (`heldout-views` 8, `design-views` 6,
-`modeling-decisions` 5, `mcp-limits` 3, `no-trigger` 2,
+`modeling-decisions` 5, `mcp-limits` 3, `no-trigger` 3,
 `heldout-modeling` 2 — every timeout on a 1201.2–1201.7 s wall kill).
 25 trials flagged contended (`none` 14, `upstream` 8, `skill` 3).
 Pre-trial idle waits ≥1 s: `fix-dsl/none-k2` **1630.8 s** (the runner
@@ -365,7 +365,9 @@ event streams** — no vLLM interruption in this run (unlike the Phase 150
 held-out's two). The window record is the continuous watcher log
 `work/p150-window-rerun.log` (the Phase 150 watcher, started
 2026-11-22 07:31:47Z, still appending — it covers this run's span
-09:48:34Z → 05:39:36Z in full).
+09:48:34Z → 05:39:36Z in full). (closed 2026-11-24 — the stop is
+recorded in the feature README's Phase 170 entry; the log's last
+committed line, 2026-11-23T10:51:12Z, is the close of the record)
 
 **Cost.** 135 fresh trials, span 09:48:34Z → 05:39:36Z = 19 h 51 min wall
 (sum of trial walls 19.18 h: `none` 7.42 h, `upstream` 7.62 h, `skill`
@@ -497,9 +499,9 @@ loads on 5/5 no-trigger prompts). Tie: `mcp_limit_stated` 5→5. Worse vs
 `vague_label_found` 0→3 (all five confined to the same 3 timed-out
 `review-model` skill trials — they report nothing; the delta is the
 window artifact, not a teaching gap). (`upstream` passed five of the six
-detection gates on every trial and `crowded_view_found` on 6 of 10 — its
-`c4-review` skill does produce findings — but failed the clean control
-5/5.)
+detection gates on all five `review-model` trials, and the sixth —
+`crowded_view_found` — on 6 of 10; its `c4-review` skill does produce
+findings, but it failed the clean control 5/5.)
 
 ## Provenance
 
