@@ -374,25 +374,40 @@ def skill_variant_hash(skill_files: list[tuple[str, bytes]]) -> str:
     return result
 
 
-def source_hash(paths: list[str]) -> str:
+def source_hash(paths: list[str], root: Path = HARNESS_ROOT) -> str:
     """Return the sha256 over the sorted bytes of the given source files.
 
     This is the ``grader_hash`` component of the result cache key
     (Task 100.130): a change to the graders or the case definitions
     invalidates the cached ``none``/``upstream`` results.
 
+    Each file contributes its path RELATIVE to `root` (POSIX form) plus
+    its bytes, so the digest does not depend on where the checkout lives
+    (Task 190.120, G3: until then the absolute paths folded in, and sys0
+    and sys1 recorded different grader hashes for identical sources).
+
     Args:
         paths: Absolute paths of the files that define the gates being
-            run (grader module + case module + fixture files).
+            run (grader module + case module + fixture files), each
+            inside `root`.
+        root: The directory the paths are made relative to (default: the
+            harness root `evals/c4-skills/`).
 
     Returns:
         A 64-character lowercase hex digest.
     """
     assert paths, "source_hash requires at least one path"
-    h = hashlib.sha256()
-    for path in sorted(paths):
+    assert isinstance(root, Path)
+    resolved_root = root.resolve()
+    entries: list[tuple[str, str]] = []
+    for path in paths:
         assert isinstance(path, str) and path
-        h.update(path.encode("utf-8"))
+        resolved = Path(path).resolve()
+        assert resolved.is_relative_to(resolved_root), f"{path} is not inside {resolved_root}"
+        entries.append((resolved.relative_to(resolved_root).as_posix(), path))
+    h = hashlib.sha256()
+    for rel_path, path in sorted(entries):
+        h.update(rel_path.encode("utf-8"))
         h.update(b"\x00")
         with open(path, "rb") as f:
             h.update(f.read())

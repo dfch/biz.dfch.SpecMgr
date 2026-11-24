@@ -1247,6 +1247,10 @@ def run(config: RunConfig) -> dict:
             # has no skill condition) -- Phases 110-150 record each measured
             # variant by this hash
             "skill_variant_hash": pins.skill_variant_hash(skill_source.files) if skill_source is not None else None,
+            # the checkout-path-independent graders + cases + pins source
+            # hash (Task 190.120, G3) -- the result-cache key component,
+            # recorded with the run so a run states which graders graded it
+            "grader_hash": grader_hash,
             "order": [
                 {"case": p.case_id, "condition": p.condition, "k": p.k_index, "cached": r.cached}
                 for p, r in zip(plans, records)

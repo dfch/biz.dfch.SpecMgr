@@ -26,6 +26,13 @@ estimate against the Measurement budget.
 
 The report is pure: it reads the run record (`run.json` + the per-trial
 records) and writes `report.md` + `report.json`.
+
+Task 190.130 adds two figures: the per-case skill trigger table of the
+`skill` condition (G1: for every mounted skill, the trials of each case in
+which it loaded) and the optional cross-run baseline check (G2: every case
+whose `skill` pass count is at least
+`stats.ACC008_CASE_CLEARLY_WORSE_TRIALS` trials lower than in a baseline
+run -- the "bundle versus own phase" regression check).
 """
 
 from __future__ import annotations
@@ -125,7 +132,100 @@ def _wall_times(run: dict) -> list[float]:
     return times
 
 
-def build_report_input(run: dict, preflight: dict | None, phase_cases: list[str] | None, comparison: str) -> dict:
+def skill_trigger_table(run: dict, cases: list[str] | None) -> dict | None:
+    """Return the per-case trigger table of the `skill` condition (Task 190.130, G1).
+
+    For every case and every skill mounted in that case's `skill` trials
+    (`skills_installed`), the number of trials in which the skill loaded
+    (`metrics.skills_loaded`). A skill that loaded without being mounted
+    is not counted (it cannot be one of the condition's skills).
+
+    Args:
+        run: The `run.json` payload.
+        cases: The case filter (None = every case).
+
+    Returns:
+        None when the run has no `skill` trials, else
+        `{"skills": [...], "per_case": {case: {"trials": n, "loaded": {skill: count}}}}`.
+    """
+    trials = _trials_by_condition(run).get(pins.CONDITION_SKILL, [])
+    per_case: dict[str, dict] = {}
+    skills: set[str] = set()
+    for trial in trials:
+        plan = trial.get("plan") or {}
+        case_id = str(plan.get("case_id", ""))
+        if cases is not None and case_id not in cases:
+            continue
+        installed = [str(name) for name in (trial.get("skills_installed") or [])]
+        loaded = {str(name) for name in ((trial.get("metrics") or {}).get("skills_loaded") or [])}
+        entry = per_case.setdefault(case_id, {"trials": 0, "loaded": {}})
+        entry["trials"] += 1
+        for skill in installed:
+            skills.add(skill)
+            entry["loaded"][skill] = entry["loaded"].get(skill, 0) + (1 if skill in loaded else 0)
+    if not per_case:
+        return None
+    for entry in per_case.values():
+        for skill in skills:
+            entry["loaded"].setdefault(skill, 0)
+        entry["loaded"] = dict(sorted(entry["loaded"].items()))
+    result = {"skills": sorted(skills), "per_case": dict(sorted(per_case.items()))}
+    return result
+
+
+def baseline_regression(run: dict, baseline_run: dict, cases: list[str] | None) -> dict:
+    """Compare the `skill` pass counts per case against a baseline run (Task 190.130, G2).
+
+    A case is flagged when its `skill` pass count in `run` is at least
+    `stats.ACC008_CASE_CLEARLY_WORSE_TRIALS` trials lower than in
+    `baseline_run` (the ACC-008 "clearly worse" rule, applied across runs).
+    Only cases with `skill` trials in both runs are compared.
+
+    Args:
+        run: The current `run.json` payload.
+        baseline_run: The baseline `run.json` payload.
+        cases: The case filter (None = every case).
+
+    Returns:
+        `{"baseline_run_id", "threshold_trials", "per_case": {case: {...}}, "flagged_cases": [...]}`.
+    """
+    assert isinstance(baseline_run, dict)
+    current = _outcomes(run, pins.CONDITION_SKILL, cases)
+    baseline = _outcomes(baseline_run, pins.CONDITION_SKILL, cases)
+    per_case: dict[str, dict] = {}
+    flagged: list[str] = []
+    for case_id in sorted(set(current) & set(baseline)):
+        current_passes = sum(1 for ok in current[case_id] if ok)
+        baseline_passes = sum(1 for ok in baseline[case_id] if ok)
+        delta = current_passes - baseline_passes
+        is_flagged = -delta >= stats.ACC008_CASE_CLEARLY_WORSE_TRIALS
+        per_case[case_id] = {
+            "baseline_passes": baseline_passes,
+            "baseline_trials": len(baseline[case_id]),
+            "passes": current_passes,
+            "trials": len(current[case_id]),
+            "delta": delta,
+            "flagged": is_flagged,
+        }
+        if is_flagged:
+            flagged.append(case_id)
+    result = {
+        "baseline_run_id": baseline_run.get("run_id"),
+        "baseline_skill_variant_hash": baseline_run.get("skill_variant_hash"),
+        "threshold_trials": stats.ACC008_CASE_CLEARLY_WORSE_TRIALS,
+        "per_case": per_case,
+        "flagged_cases": flagged,
+    }
+    return result
+
+
+def build_report_input(
+    run: dict,
+    preflight: dict | None,
+    phase_cases: list[str] | None,
+    comparison: str,
+    baseline_run: dict | None = None,
+) -> dict:
     """Compute every report figure (pure; the JSON payload).
 
     Args:
@@ -133,6 +233,8 @@ def build_report_input(run: dict, preflight: dict | None, phase_cases: list[str]
         preflight: The `preflight.json` payload.
         phase_cases: The phase's case filter (None = every run case).
         comparison: The phase's comparison condition.
+        baseline_run: An optional baseline `run.json` payload for the
+            cross-run `skill` regression check (Task 190.130, G2).
 
     Returns:
         The report.json payload.
@@ -206,10 +308,19 @@ def build_report_input(run: dict, preflight: dict | None, phase_cases: list[str]
         "k": run.get("k"),
         "seed": run.get("seed"),
         "version_tuple_hash": run.get("version_tuple_hash"),
+        # Task 190.120 (G3): the grader and skill-variant hashes the run
+        # recorded (None for a run that predates the field -- old runs keep
+        # their recorded values and are never rewritten)
+        "grader_hash": run.get("grader_hash"),
+        "skill_variant_hash": run.get("skill_variant_hash"),
         "comparison": comparison,
         "per_condition": per_condition,
         "skill_margins": skill_entry,
         "cost_estimate": cost,
+        "skill_trigger_table": skill_trigger_table(run, case_filter),
+        "baseline_regression": (
+            baseline_regression(run, baseline_run, case_filter) if baseline_run is not None else None
+        ),
         "preflight_ok": (preflight or {}).get("ok"),
         "preflight_problems": (preflight or {}).get("problems", []),
     }
@@ -251,6 +362,10 @@ def render_report_md(report: dict) -> str:
     )
     lines.append(
         f"Version tuple hash: `{report.get('version_tuple_hash')}`; preflight ok: {report.get('preflight_ok')}."
+    )
+    lines.append(
+        f"Grader hash: `{_fmt_hash(report.get('grader_hash'))}`; "
+        f"skill variant hash: `{_fmt_hash(report.get('skill_variant_hash'))}`."
     )
     lines.append("")
     lines.append("## Pass rates")
@@ -296,6 +411,8 @@ def render_report_md(report: dict) -> str:
             f"none rate {_fmt_rate(margin.get('none_rate'))}; "
             f"skill Wilson {_fmt_wilson(skill.get('wilson'))}."
         )
+    lines.extend(_render_trigger_table(report.get("skill_trigger_table")))
+    lines.extend(_render_baseline_regression(report.get("baseline_regression")))
     lines.append("")
     lines.append("## Per-gate failures")
     lines.append("")
@@ -344,6 +461,57 @@ def render_report_md(report: dict) -> str:
         )
     lines.append("")
     result = "\n".join(lines) + "\n"
+    return result
+
+
+def _fmt_hash(value: object) -> str:
+    """Format a recorded hash; `null` when the run predates the field."""
+    result = "null" if value is None else str(value)
+    return result
+
+
+def _render_trigger_table(table: dict | None) -> list[str]:
+    """Render the `skill` trigger table section (Task 190.130, G1)."""
+    lines: list[str] = ["", "## Skill trigger table (`skill` condition)", ""]
+    if table is None:
+        lines.append("No `skill` trials in this run.")
+        return lines
+    skills = list(table.get("skills", []))
+    lines.append(
+        "Trials of each case in which each mounted skill loaded (`metrics.skills_loaded`), out of the case's "
+        "`skill` trials."
+    )
+    lines.append("")
+    lines.append("| Case | Trials | " + " | ".join(f"`{s}`" for s in skills) + " |")
+    lines.append("|---|---|" + "---|" * len(skills))
+    for case_id, entry in table.get("per_case", {}).items():
+        trials = entry.get("trials", 0)
+        cells = " | ".join(f"{entry.get('loaded', {}).get(s, 0)}/{trials}" for s in skills)
+        lines.append(f"| {case_id} | {trials} | {cells} |")
+    result = lines
+    return result
+
+
+def _render_baseline_regression(regression: dict | None) -> list[str]:
+    """Render the cross-run baseline check section (Task 190.130, G2)."""
+    if regression is None:
+        return []
+    lines: list[str] = ["", "## Baseline regression check (`skill` condition)", ""]
+    lines.append(
+        f"Baseline run `{regression.get('baseline_run_id')}` (skill variant "
+        f"`{regression.get('baseline_skill_variant_hash')}`); a case is flagged when its `skill` pass count is "
+        f">= {regression.get('threshold_trials')} trials lower than in the baseline. "
+        f"Flagged: {', '.join(regression.get('flagged_cases') or []) or 'none'}."
+    )
+    lines.append("")
+    lines.append("| Case | Baseline | This run | Delta | Flagged |")
+    lines.append("|---|---|---|---|---|")
+    for case_id, entry in regression.get("per_case", {}).items():
+        lines.append(
+            f"| {case_id} | {entry['baseline_passes']}/{entry['baseline_trials']} | "
+            f"{entry['passes']}/{entry['trials']} | {entry['delta']:+d} | {'yes' if entry['flagged'] else 'no'} |"
+        )
+    result = lines
     return result
 
 
@@ -398,8 +566,20 @@ def write_report(results_dir: Path, report: dict) -> tuple[Path, Path]:
     return result
 
 
+def _read_run(results_dir: Path) -> dict:
+    """Read one results dir's `run.json` (a caller precondition when absent)."""
+    run_path = results_dir / "run.json"
+    assert run_path.is_file(), f"no run.json in {results_dir}"
+    result = json.loads(run_path.read_text(encoding="utf-8"))
+    return result
+
+
 def build_and_write(
-    results_dir: Path, phase_cases: list[str] | None = None, comparison: str = pins.CONDITION_UPSTREAM
+    results_dir: Path,
+    phase_cases: list[str] | None = None,
+    comparison: str = pins.CONDITION_UPSTREAM,
+    baseline_dir: Path | None = None,
+    out_dir: Path | None = None,
 ) -> dict:
     """Read `run.json`/`preflight.json`, build the report, write it.
 
@@ -407,16 +587,22 @@ def build_and_write(
         results_dir: The run results dir.
         phase_cases: The phase's case filter (None = every run case).
         comparison: The phase's comparison condition.
+        baseline_dir: An optional baseline run's results dir for the
+            cross-run `skill` regression check (Task 190.130, G2).
+        out_dir: Where `report.json`/`report.md` go (default:
+            `results_dir`); lets a committed run be re-reported without
+            writing into its directory.
 
     Returns:
         The report payload.
     """
     assert isinstance(results_dir, Path)
-    run_path = results_dir / "run.json"
-    assert run_path.is_file(), f"no run.json in {results_dir}"
-    run = json.loads(run_path.read_text(encoding="utf-8"))
+    assert baseline_dir is None or isinstance(baseline_dir, Path)
+    assert out_dir is None or isinstance(out_dir, Path)
+    run = _read_run(results_dir)
     preflight_path = results_dir / "preflight.json"
     preflight = json.loads(preflight_path.read_text(encoding="utf-8")) if preflight_path.is_file() else None
-    report = build_report_input(run, preflight, phase_cases, comparison)
-    write_report(results_dir, report)
+    baseline_run = _read_run(baseline_dir) if baseline_dir is not None else None
+    report = build_report_input(run, preflight, phase_cases, comparison, baseline_run=baseline_run)
+    write_report(out_dir if out_dir is not None else results_dir, report)
     return report

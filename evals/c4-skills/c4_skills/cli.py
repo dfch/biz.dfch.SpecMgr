@@ -257,8 +257,15 @@ def cmd_report(args: argparse.Namespace) -> int:
     """Rebuild the report from an existing results dir (the `report` subcommand)."""
     results_dir = Path(args.results_dir)
     phase_cases = [c.strip() for c in args.cases.split(",") if c.strip()] if args.cases else None
-    rep = report.build_and_write(results_dir, phase_cases=phase_cases, comparison=args.comparison)
-    print(f"report written to {results_dir / 'report.md'}")
+    out_dir = Path(args.out_dir) if args.out_dir else results_dir
+    rep = report.build_and_write(
+        results_dir,
+        phase_cases=phase_cases,
+        comparison=args.comparison,
+        baseline_dir=Path(args.baseline_results) if args.baseline_results else None,
+        out_dir=out_dir,
+    )
+    print(f"report written to {out_dir / 'report.md'}")
     print(json.dumps(rep, indent=2, sort_keys=True)[:2000])
     return 0
 
@@ -307,6 +314,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--results-dir", required=True)
     p.add_argument("--cases", default=None, help="comma-separated phase case filter (default: all run cases)")
     p.add_argument("--comparison", default=pins.CONDITION_UPSTREAM)
+    p.add_argument(
+        "--baseline-results",
+        default=None,
+        help="a baseline run's results dir: flag every case whose skill pass count is >= 2 trials lower",
+    )
+    p.add_argument("--out-dir", default=None, help="where report.json/report.md go (default: the results dir itself)")
     p.set_defaults(func=cmd_report)
 
     return parser
