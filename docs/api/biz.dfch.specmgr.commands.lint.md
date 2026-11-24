@@ -52,14 +52,23 @@ the size of the corpus (REQ-004):
   a usage error (exit 2) unless ``--skip-unrecognized`` is given, in
   which case the path is skipped and counted.
 * **Type sweep** -- ``--type T`` with no paths sweeps every document of
-  that type from its base directory: the explicit ``--dir`` argument
-  (valid with ``--type`` ONLY, and without explicit paths) if given, otherwise the domain's
-  registered base-dir resolver (REQ-006). ``--type T`` against an empty
+  that type: for the thirteen sharded UUID domains, the domain-wide
+  union of every language directory's sharded listing (``en/`` plus
+  every variant ``{language}/`` directory under the domain's base --
+  Task 150.155: a variant document is linted exactly like its EN file);
+  for ``feat``, its registered base directory's folder-per-document
+  listing (unchanged -- the single-language domain). The explicit
+  ``--dir`` argument (valid with ``--type`` ONLY, and without explicit
+  paths) narrows the sweep to exactly that one directory's sharded (or
+  ``feat`` folder) listing (REQ-006). ``--type T`` against an empty
   or missing base directory exits 0 with a 0-document summary: a
   registered-but-empty domain is not a misconfiguration.
-* **All sweep** -- ``--all`` sweeps every registered type. Explicit
-  paths combined with ``--all`` is a usage error; ``--all`` that
-  discovers no document at all is a probable misconfiguration (exit 2).
+* **All sweep** -- ``--all`` sweeps every registered type, each with
+  the same default enumeration as its ``--type`` sweep (the all-
+  languages union for the thirteen sharded UUID domains, the folder
+  listing for ``feat``). Explicit paths combined with ``--all`` is a
+  usage error; ``--all`` that discovers no document at all is a
+  probable misconfiguration (exit 2).
 
 Import safety (REQ-002): this module has NO module-level import of the
 domain registry (``general.tools._domains``) or of any ``tools`` package.
@@ -186,6 +195,16 @@ Attributes:
         tools._domains.whole_body_domain``) -- the source of each
         whole-body domain's ``base_dir``/``iter_paths``/``parse_text``
         adapters.
+    domain_base_dir:
+        The sharded domains' domain-base resolver (``general.tools.
+        _doc_paths.doc_domain_base_dir``): the ``docs/<type>/``
+        parent of every per-language directory -- the base the
+        all-languages default sweep enumerates over (Task 150.155).
+    iter_all_languages:
+        The sharded domains' all-languages listing (``general.tools.
+        _doc_paths.iter_doc_paths_all_languages``): the union of the
+        sharded listings of ``en/`` plus every shape-valid language
+        directory under the domain base (Task 150.155).
     caught_exceptions:
         The whole-body parse-failure channels (``general.models.
         validate_result._CAUGHT_EXCEPTIONS``: ``AssertionError``,
@@ -213,12 +232,47 @@ Attributes:
 
 ## Functions
 
-### `_base_dir_for(doc_type: 'str', reg: '_RegistryBacked') -> 'Path'`
+### `_all_languages_paths_for(doc_type: 'str', reg: '_RegistryBacked') -> 'Iterator[Path]'`
 
-The sweep base directory for one type (REQ-006: the registered resolver).
+The all-languages default sweep enumeration for one sharded type (Task 150.155).
+
+The domain-wide union: ``iter_doc_paths_all_languages`` over the
+domain's own base directory (``doc_domain_base_dir`` -- the
+``docs/<type>/`` parent of every per-language directory), i.e. the
+sharded listing of ``en/`` plus the sharded listing of every other
+shape-valid ``{language}/`` directory under it. A variant document
+in any language directory is therefore linted by the ``--type T``/
+``--all`` sweep exactly like its EN file, and the union's own
+dedup semantics keep a single EN document counted exactly once
+(``en/`` is listed once, explicitly). Shard-only at the language
+level, like every other scan: a flat file directly inside a
+language directory is not part of the live listing (the placement
+gate remains path mode's job). ``feat`` (folder-per-document,
+single-language) never takes this path.
 
 Args:
-    doc_type: The document type to sweep.
+    doc_type: The sharded document type to enumerate (one of the
+        thirteen UUID domains).
+    reg: The registry-backed names.
+
+Returns:
+    The iterator over the type's document paths across every
+    language directory (sorted by path; empty for a missing base
+    directory).
+
+
+### `_base_dir_for(doc_type: 'str', reg: '_RegistryBacked') -> 'Path'`
+
+The sweep base directory for the ``feat`` type (REQ-006: the registered resolver).
+
+Since Task 150.155, only ``feat``'s default sweep takes this path:
+the thirteen sharded domains' default sweep is the all-languages
+union of :func:`_all_languages_paths_for` instead (their registered
+``base_dir`` adapter resolves the ``en/`` directory only, which
+would make the sweep language-blind again).
+
+Args:
+    doc_type: The document type to sweep (``feat``).
     reg: The registry-backed names (the whole-body registry lookup).
 
 Returns:
@@ -362,11 +416,18 @@ Returns:
 
 ### `_iter_paths_for(doc_type: 'str', base_dir: 'Path', reg: '_RegistryBacked') -> 'Iterator[Path]'`
 
-The sweep path iterator for one type under a given base directory.
+The single-directory sweep path iterator for one type (Task 150.155).
 
-The whole-body domains' registered ``iter_paths`` adapter (the shared
-flat-file ``*.md`` enumeration, the ``feat/<id>/README.md`` folder
-enumeration for ``feat``).
+The whole-body domains' registered ``iter_paths`` adapter: the
+shared sharded ``*.md`` enumeration (``<base>/*/*.md`` under a
+language directory) for every domain other than ``feat``, the
+``feat/<id>/README.md`` folder enumeration for ``feat``. Since
+Task 150.155 this is the sweep's enumeration for the ``--dir``
+override (which narrows a sharded domain's sweep to exactly that
+one directory's sharded listing) and for ``feat``'s default sweep
+(its registered base directory); the thirteen sharded domains'
+default sweep (no ``--dir``) is the all-languages union of
+:func:`_all_languages_paths_for` instead.
 
 Args:
     doc_type: The document type to enumerate.
@@ -504,7 +565,7 @@ Returns:
     The pointer line (indented to follow its failure line).
 
 
-### `lint(paths: 'Annotated[list[str] | None, typer.Argument(help="Document paths to lint (path mode). Each path\'s type is inferred from its layout unless --type is given (which overrides the parse); a docs/<type>/ file missing the sharded placement is a layout violation (exit 2, the correct path named); docs/<non-domain>/ files are skipped and counted; other unrecognized layouts are a usage error unless --skip-unrecognized is given. Linted regardless of any SPECMGR_*_DIR variable.")]' = None, type: 'Annotated[str | None, typer.Option(\'--type\', help="The document type (one of the registered domains -- a plain value validated at run time, not a fixed choice list). With paths: overrides the per-path layout inference. Without paths: sweeps every document of that type (from --dir if given, else the domain\'s registered base directory).")]' = None, all: "Annotated[bool, typer.Option('--all', help='Sweep every registered document type. Cannot be combined with explicit paths; exits 2 when nothing at all is discovered (a probable misconfiguration).')]" = False, dir: 'Annotated[Path | None, typer.Option(\'--dir\', help="The base directory to sweep instead of the domain\'s registered one (valid only with --type and without explicit paths: it applies to the --type sweep only).")]' = None, skip_unrecognized: "Annotated[bool, typer.Option('--skip-unrecognized', help='Skip (and count in the summary) paths whose layout matches no type, instead of a usage error.')]" = False) -> 'None'`
+### `lint(paths: 'Annotated[list[str] | None, typer.Argument(help="Document paths to lint (path mode). Each path\'s type is inferred from its layout unless --type is given (which overrides the parse); a docs/<type>/ file missing the sharded placement is a layout violation (exit 2, the correct path named); docs/<non-domain>/ files are skipped and counted; other unrecognized layouts are a usage error unless --skip-unrecognized is given. Linted regardless of any SPECMGR_*_DIR variable.")]' = None, type: 'Annotated[str | None, typer.Option(\'--type\', help="The document type (one of the registered domains -- a plain value validated at run time, not a fixed choice list). With paths: overrides the per-path layout inference. Without paths: sweeps every document of that type -- for the sharded domains, every language directory (EN + every variant); --dir narrows the sweep to that one directory\'s sharded listing (feat: its registered base directory\'s folder listing).")]' = None, all: "Annotated[bool, typer.Option('--all', help='Sweep every registered document type (for the sharded domains, every language directory -- EN + every variant). Cannot be combined with explicit paths; exits 2 when nothing at all is discovered (a probable misconfiguration).')]" = False, dir: 'Annotated[Path | None, typer.Option(\'--dir\', help="The directory to sweep instead of the default: narrows the sweep to exactly that one directory\'s sharded listing (for sharded domains, whose default sweep is the all-language directories; feat keeps its folder listing). Valid only with --type and without explicit paths: it applies to the --type sweep only.")]' = None, skip_unrecognized: "Annotated[bool, typer.Option('--skip-unrecognized', help='Skip (and count in the summary) paths whose layout matches no type, instead of a usage error.')]" = False) -> 'None'`
 
 Lint specmgr artifacts: the model-level full parse, every failure reported.
 

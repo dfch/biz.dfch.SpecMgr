@@ -60,21 +60,31 @@ static and drift pins that keep the command import-safe and derived:
   read/peek use cannot affect the command) and REQ-011 (no sweep
   invocation of the command in the hook, the CI workflow, or the
   test suite).
-* feat-245 Phase 120 (Tasks 120.100-120.120) -- the sharded layout
-  gate (REQ-006/ACC-005): the valid sharded shape lints clean (EN and
-  a table-closed variant), the four misplaced depths are layout
-  violations (exit 2, the correct path named -- concrete for a uuid-
-  carrying file name, shape-level otherwise -- the summary's own
-  ``layout`` counter, never parsed, the ``--type`` override does not
-  rescue, the violation outranks a parse failure), the no-table
-  language dir is placement-valid (the existing no-table content
-  error, exit 1), the non-domain-dir skip at every depth (pinned
-  against the repo's real ``docs/archive/`` tree), and the
-  ``_derive_id``/repair-pointer pins on sharded paths; the anchored
-  artifact pattern constant is the open-depth form (every misplaced
-  depth and the non-domain dirs selected, the identity pins against
-  the pre-commit hook and the CI step unchanged); the three
-  flat-seeded sweep tests are re-seeded to the sharded layout.
+ * feat-245 Phase 120 (Tasks 120.100-120.120) -- the sharded layout
+   gate (REQ-006/ACC-005): the valid sharded shape lints clean (EN and
+   a table-closed variant), the four misplaced depths are layout
+   violations (exit 2, the correct path named -- concrete for a uuid-
+   carrying file name, shape-level otherwise -- the summary's own
+   ``layout`` counter, never parsed, the ``--type`` override does not
+   rescue, the violation outranks a parse failure), the no-table
+   language dir is placement-valid (the existing no-table content
+   error, exit 1), the non-domain-dir skip at every depth (pinned
+   against the repo's real ``docs/archive/`` tree), and the
+   ``_derive_id``/repair-pointer pins on sharded paths; the anchored
+   artifact pattern constant is the open-depth form (every misplaced
+   depth and the non-domain dirs selected, the identity pins against
+   the pre-commit hook and the CI step unchanged); the three
+   flat-seeded sweep tests are re-seeded to the sharded layout.
+ * feat-245 Phase 150 (Task 150.155, user decision I1=B) -- the
+   type/all sweep's all-language coverage for the thirteen sharded
+   domains: a healthy EN doc + a healthy table-closed ``de/`` variant
+   both lint (count 2, exit 0), a broken ``de/`` variant is a sweep
+   parse failure (exit 1 -- the sweep is not language-blind), a
+   single EN doc is counted exactly once (the union's dedup
+   semantics, the 6e90d3de double-count defect class), and a
+   misplaced flat variant directly inside a language dir stays
+   invisible to the sweep (shard-only; the placement gate remains
+   path mode's job).
 """
 
 from __future__ import annotations
@@ -1216,6 +1226,98 @@ class TestLintNoSweepOnCommitPath(unittest.TestCase):
         self.assertEqual([number for number, _ in folded], [1, 3])
         self.assertTrue(_line_carries_sweep_flag(folded[0][1]))
         self.assertFalse(_line_carries_sweep_flag(folded[1][1]))
+
+
+class TestLintSweepAllLanguages(_LintTestBase):
+    """feat-245 Phase 150 (Task 150.155) / user decision I1=B: the type/all sweep covers
+    every language directory for the thirteen sharded domains (the domain-wide union of
+    the sharded listings, ``en/`` + every variant) -- a variant document is linted
+    exactly like its EN file, and the sweep is not language-blind (a broken variant is
+    a parse failure, exit 1). The seeds sit under a docs root literally named ``docs``
+    so the path's own docs anchor derives the parse language from the sharded
+    placement, exactly as on the repo's real tree. A mis-PLACED (flat) variant file
+    directly inside a language dir stays invisible to the sweep (shard-only listing --
+    the placement gate remains path mode's job), and the union's dedup semantics keep
+    a single EN document counted exactly once (the 6e90d3de double-count defect
+    class)."""
+
+    DOC_TYPE = "dec"
+
+    def _doc_id(self) -> str:
+        return whole_body_domain(self.DOC_TYPE).parse_text(read_packaged_text(self.DOC_TYPE, "example")).frontmatter.id
+
+    def _docs_root(self) -> Path:
+        # The SPECMGR_DOCS_DIR root (the directory that CONTAINS the domain
+        # dirs -- the default is literally "docs"): named "docs" so the
+        # swept paths carry a docs anchor and the parse language is derived
+        # from the sharded placement, exactly as on the repo's real tree.
+        return self.tmp / "docs"
+
+    def _sweep(self) -> Result:
+        with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(self._docs_root())}):
+            return self._invoke("--type", self.DOC_TYPE)
+
+    def _seed_sharded(self, language: str, text: str) -> Path:
+        doc_id = self._doc_id()
+        path = self._docs_root() / self.DOC_TYPE / language / doc_id[:2] / f"{doc_id}-sweep.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def test_type_sweep_lints_a_variant_exactly_like_its_en_file(self):
+        """(a) a healthy EN doc + a healthy ``de/`` variant: both linted (count 2),
+        exit 0 -- the variant parses through its own heading table (the
+        path-derived language) and passes."""
+        self._seed_sharded("en", _healthy_whole_body_text(self.DOC_TYPE))
+        self._seed_sharded("de", _de_variant_text(self.DOC_TYPE))
+
+        result = self._sweep()
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("summary: linted=2 failed=0 skipped=0 layout=0", result.stdout)
+
+    def test_type_sweep_reports_a_broken_variant_as_a_parse_failure(self):
+        """(b) a BROKEN ``de/`` variant (corrupt frontmatter, correct placement):
+        the sweep reports it as a parse failure, exit 1 -- the sweep is not
+        language-blind."""
+        self._seed_sharded("en", _healthy_whole_body_text(self.DOC_TYPE))
+        broken_variant = self._seed_sharded(
+            "de", _de_variant_text(self.DOC_TYPE).replace("status: accepted", "status: [broken", 1)
+        )
+
+        result = self._sweep()
+
+        self.assertEqual(result.exit_code, 1, result.output)
+        self.assertIn(str(broken_variant), result.stdout)
+        self.assertIn(f"repair via: /repair {self.DOC_TYPE} {self._doc_id()}", result.stdout)
+        self.assertIn("summary: linted=2 failed=1 skipped=0 layout=0", result.stdout)
+
+    def test_type_sweep_counts_a_single_en_document_exactly_once(self):
+        """(c) the EN-only regression pin: with only an EN doc, the sweep count
+        is 1 -- the union's dedup semantics keep the ``en/`` directory counted
+        exactly once (the 6e90d3de double-count defect class)."""
+        self._seed_sharded("en", _healthy_whole_body_text(self.DOC_TYPE))
+
+        result = self._sweep()
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
+
+    def test_misplaced_flat_variant_is_invisible_to_the_type_sweep(self):
+        """(d) a misplaced flat variant file directly under ``docs/<d>/de/``
+        (missing the shard dir): still NOT swept (shard-only listing), exit 0
+        with count 1 -- the placement gate remains path mode's job, not the
+        sweep's."""
+        self._seed_sharded("en", _healthy_whole_body_text(self.DOC_TYPE))
+        doc_id = self._doc_id()
+        misplaced = self.tmp / "docs" / self.DOC_TYPE / "de" / f"{doc_id}-sweep.md"
+        misplaced.parent.mkdir(parents=True, exist_ok=True)
+        misplaced.write_text(_de_variant_text(self.DOC_TYPE), encoding="utf-8")
+
+        result = self._sweep()
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
 
 
 if __name__ == "__main__":

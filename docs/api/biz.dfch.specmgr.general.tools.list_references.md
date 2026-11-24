@@ -82,7 +82,7 @@ first-occurrence order preserved (REQ-005).
 Each unique reference is resolved to the referenced document in its own
 target domain (``_references.resolve_reference``: every target domain
 reads through its own cache-backed ``load_by_id`` (``feat`` is
-folder-per-document rather than flat-file)). The
+folder-per-document rather than one-`.md`-per-document)). The
 row's ``title`` is the referenced document's own ``# {title}`` H1 (the
 feature's H1 with the ``Feature: `` prefix stripped, for ``feat``) and
 its ``path`` the referenced document's resolved absolute file path; a

@@ -1745,9 +1745,11 @@ extras onto every consumer of the base library.
   shape — with the `--type` override and `--skip-unrecognized`; used by
   the `specmgr-lint` pre-commit hook over the staged in-tree artifacts and
   by the CI pull-request step over the artifacts changed against the base
-  branch), and the `--type T` sweep (from `--dir` if given, else the
-  domain's registered base directory) and the `--all` sweep — both
-   CLI-only, never on the commit path or in the test suite. Exit codes:
+   branch), and the `--type T` sweep (from `--dir` if given, else the
+   domain-wide union of every language directory — EN + every variant
+   language dir — for the sharded domains, the registered base directory
+   for `feat`) and the `--all` sweep (the same per-type enumeration) —
+   both CLI-only, never on the commit path or in the test suite. Exit codes:
    **0** every document parsed (incl. a run where every path was skipped),
   **1** at least one document failed to parse or the `mcp` extra is
   missing (required, like `specmgr diagram`; the decoupling is tracked as

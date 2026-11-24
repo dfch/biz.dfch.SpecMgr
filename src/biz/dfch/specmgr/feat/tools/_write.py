@@ -22,7 +22,8 @@ Mirrors ``dec.tools._write.write_dec_file``'s shape and "content embedded
 verbatim, never reformatted/re-rendered" contract, with one feat-only
 addition: :func:`write_feat_file` also creates the document's own
 ``<base>/<id>/`` parent folder if it does not exist yet, since ``feat`` is
-folder-per-document (unlike ``dec``'s flat ``<base>/<filename>.md``) --
+folder-per-document (unlike the sharded single-file domains'
+``docs/<type>/<lang>/<id[:2]>/<uuid>-<slug>.md``) --
 ``create_feat`` writes into a brand new folder on every call, and the
 generic ``update``/``set_status`` tools (``type="feat"``) always target an
 already-existing folder, so this is a no-op for them (``exist_ok=True``).

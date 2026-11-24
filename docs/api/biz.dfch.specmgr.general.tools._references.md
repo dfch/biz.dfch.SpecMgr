@@ -142,7 +142,8 @@ Resolve one ``txt`` reference to ``(title, path)`` (feat-229-txt Phase 140).
 
 Same as :func:`_load_gol`, for the ``txt`` domain: the free-form
 catch-all document type reads through its own cache-backed
-``load_by_id`` like every other flat target domain, and ``title`` is
+``load_by_id`` like every other one-`.md`-per-document target domain,
+and ``title`` is
 the referenced document's own ``# {title}`` H1 (``doc.body.text``).
 ``TxtNotFoundError`` propagates unchanged (caught by
 :func:`resolve_reference`).
