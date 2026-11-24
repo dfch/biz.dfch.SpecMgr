@@ -1235,7 +1235,7 @@ class TestLintSweepAllLanguages(_LintTestBase):
     exactly like its EN file, and the sweep is not language-blind (a broken variant is
     a parse failure, exit 1). The sweep derives each item's parse language
     POSITION-RELATIVE to the configured domain base -- the root's NAME is irrelevant
-    (Phase 160, D9: the same healthy EN + ``de/`` variant seeds lint clean under a
+    (feat-245 Phase 160, D9: the same healthy EN + ``de/`` variant seeds lint clean under a
     root NOT named ``docs``, the unnamed-root pin -- before the fix the variant was
     canonical-parsed and spurious failed the sweep, exit 1). A mis-PLACED (flat)
     variant file directly inside a language dir stays invisible to the sweep
@@ -1323,7 +1323,7 @@ class TestLintSweepAllLanguages(_LintTestBase):
         self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
 
     def test_type_sweep_lints_a_variant_under_an_unnamed_docs_root(self):
-        """(e) Phase 160, D9 (user decision Option A): the sweep's parse-language
+        """(e) feat-245 Phase 160, D9 (user decision Option A): the sweep's parse-language
         derivation is POSITION-RELATIVE to the configured domain base -- a
         ``SPECMGR_DOCS_DIR`` root NOT named ``docs`` (``specdocs``) still
         lints a healthy EN doc + a healthy table-closed ``de/`` variant

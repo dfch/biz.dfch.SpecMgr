@@ -815,7 +815,8 @@ def _parse_document(doc_type: str, text: str, language: str | None, reg: _Regist
         doc_type: The document's resolved type.
         text: The complete file content, frontmatter and body together.
         language: The item's parse language (see
-            :func:`_parse_language`); ``None`` = canonical.
+            :func:`_item_parse_language` -- the mode dispatch over the
+            path-mode and sweep derivations); ``None`` = canonical.
         reg: The registry-backed names (the whole-body registry lookup).
 
     Raises:
