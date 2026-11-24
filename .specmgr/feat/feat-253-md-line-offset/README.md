@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: review
 type: feat
-updated: '2026-11-23T18:54:47.578+01:00'
+updated: '2026-11-24T07:12:11.193+01:00'
 version: 1.0.0
 ---
 
@@ -136,7 +136,7 @@ Verification environment: run every check with the worktree code (`uv run --froz
 
 #### Phase 140: Second Review Fixes
 
-- [x] Task 140.100: G1: run the ACC-009 oracle also over the packaged guidance documents of the non-whole-body `models/md` consumers that REQ-004 names (`rsk_tara.md`, `rsk_risk_matrix.md`, `general_dtais.md`, `general_ears.md`, `general_iso29148.md`, `general_rasci.md`, `general_iso25010.md`).
+- [x] Task 140.100: G1: run the ACC-009 oracle also over the packaged guidance documents of the non-whole-body `models/md` consumers -- the six REQ-004 names (`rsk_tara.md`, `rsk_risk_matrix.md`, `general_dtais.md`, `general_ears.md`, `general_iso29148.md`, `general_rasci.md`) plus `general_iso25010.md` as added coverage (its model `models/iso25010.py` is not in REQ-004's consumer list).
 - [x] Task 140.110: D1: reword the `AGENTS.md` `consume_leading_lines` rule so that the list branch's equivalent before/after line-count delta is allowed.
 - [x] Task 140.120: I1: state the REQ-003 empty-remainder meaning of `offset + 1` in the `offset` Args entry of `_no_match_message`.
 - [x] Task 140.130: I2: describe `tests/models/md/test_line_offset.py` as the feat-253 regression suite, not as the Phase 100 deficit pin.
@@ -151,15 +151,38 @@ Verification environment: run every check with the worktree code (`uv run --froz
 - [x] Task 160.100: Rewrite the S1 bullet of the Phase 130 update entry (mangled: dangling backticks and lost fragments in its middle clauses) so it states only verifiable facts, keeping its file/paragraph enumeration and closing sentences (corrected per verification).
 - [x] Task 160.110: Add one sentence to the "Rebased onto dev after PR #272" update entry accounting for the pass-count delta (Phase 140 entry: 6136 passed, 2 failed; rebased run: 6156 passed, 0 failed) with the added-test count verified against `880144c8`.
 
+#### Phase 170: User-requested fixes (D1, I1, I2)
+
+- [x] Task 170.100: D1: correct the "consumers that REQ-004 names" attribution for the seven guidance documents in the Task 140.100 item, the oracle module docstring, and the `_GUIDANCE_DOCUMENTS` comment (REQ-004 names six; `general_iso25010.md`/`models/iso25010.py` is added coverage).
+- [x] Task 170.110: I1: make the capture group in `_ORDERED_MARKER_NUMBER`'s lookahead non-capturing (`(\s|$)` to `(?:\s|$)`).
+- [x] Task 170.120: I2: replace the four `mdformat.text()` docstring mentions in `markdown_str.py` (lines 388, 397, 445, 502) with `format_text`, leaving the `mdformat`-compliance mentions untouched.
+- [x] Task 170.130: Regenerate `docs/api/` via `specmgr docs` for the changed `markdown_str` docstring; confirm `specmgr mcp-docs`, `specmgr schema`, and `specmgr harness-bundle` give no diff.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-23**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), 150 (third review fix D1: corrected test-file count in the Phase 120 entry), and 160 (user-requested bookkeeping fixes: rewrote the mangled Phase 130 S1 bullet and accounted for the rebase pass-count delta) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. The Phase 160 fixes are log-text only and change no behavior. Next: re-review and merge.
+**As of 2026-11-23**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), 150 (third review fix D1: corrected test-file count in the Phase 120 entry), 160 (user-requested bookkeeping fixes: rewrote the mangled Phase 130 S1 bullet and accounted for the rebase pass-count delta), and 170 (user-requested fixes: the REQ-004 attribution wording, the dead regex capture group, and the `mdformat.text()` docstring mentions) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. The Phase 160 fixes are log-text only and change no behavior. The Phase 170 fixes change no behavior. Next: re-review and merge.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-24T06:12:11.192Z - Phase 170 user-requested fixes (D1, I1, I2)
+
+Added Phase 170 (Tasks 170.100 to 170.130) to the Task List from the fourth review pass (the loop-exit check) at the user's request, to close the remaining findings so the feature merges with zero open ones, and implemented it. No behavior changed.
+
+- D1 (Task 170.100): the "consumers that REQ-004 names" wording for the seven guidance documents is corrected in all three places: the Task 140.100 item (a living task description, reworded in place rather than logged), the module docstring of `tests/models/md/test_example_line_oracle.py`, and the `_GUIDANCE_DOCUMENTS` comment. REQ-004 names six of the seven documents' models; `general_iso25010.md` is added coverage because its model, the top-level `models/iso25010.py`, is not in REQ-004's consumer list (verified against the plan's REQ-004 line, line 33, and the test's `parse_iso25010` import).
+- I1 (Task 170.110): the lookahead capture group of `_ORDERED_MARKER_NUMBER` is now non-capturing (`(\s|$)` to `(?:\s|$)`); the pattern is only used with an empty `sub`, so behavior is identical.
+- I2 (Task 170.120): the four `mdformat.text()` docstring mentions in `markdown_str.py` (lines 388, 397, 445, 502) now read `format_text`, the function the code calls; every other `mdformat` mention (the library-compliance references) is untouched.
+- Regenerated (Task 170.130): `specmgr docs` updated 42 `docs/api/*.md` pages -- the four changed lines sit in the inherited `MarkdownStr.from_text`/`process_list_field` docstrings, which every page documenting a `MarkdownStr` subclass renders (the Phase 130 inheritance blast radius; the whole `docs/api/` diff is exactly those four line pairs, 1798 line changes, nothing else). `docs/GENERATED.md`, `specmgr mcp-docs`, `specmgr schema`, and `specmgr harness-bundle` give no diff; a second `specmgr docs` run gives no further diff.
+- Gate:
+  - `uv run --frozen ruff format --check`: pass (2391 files already formatted).
+  - `uv run --frozen ruff check`: pass.
+  - `uv run --frozen vulture src/ whitelist.py --min-confidence 60`: pass.
+  - `uv run --frozen pytest -n auto -q`: 6156 passed, 18 skipped, 0 failed.
+  - `uv run --frozen specmgr lint .specmgr/feat/feat-253-md-line-offset/README.md`: `linted=1 failed=0 skipped=0`.
+  - `git status --short` / `git diff --stat`: the plan's README, `tests/models/md/test_example_line_oracle.py`, `src/biz/dfch/specmgr/models/md/markdown_str.py`, and the 42 regenerated `docs/api/*.md` pages changed.
 
 #### 2026-11-23T17:54:47.575Z - Phase 160 bookkeeping fixes (user-requested)
 

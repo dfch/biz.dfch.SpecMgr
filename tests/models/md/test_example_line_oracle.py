@@ -23,9 +23,11 @@ child at every nesting level, that line `child._line` of the mdformat-
 normalized body is the first line of that child's own text (`str(child)`).
 
 The same oracle also runs over the packaged guidance documents of the
-non-whole-body `models/md` consumers that REQ-004 names (`rsk`'s TARA and
-risk-matrix documents, and `general`'s DTAIS, EARS, ISO/IEC/IEEE 29148, RASCI
-and ISO/IEC 25010 documents), parsed by each model's own `parse_*` function.
+non-whole-body `models/md` consumers -- the six REQ-004 names (`rsk`'s TARA
+and risk-matrix documents, and `general`'s DTAIS, EARS, ISO/IEC/IEEE 29148
+and RASCI documents) plus `general`'s ISO/IEC 25010 document as added
+coverage (its model `models/iso25010.py` is not in REQ-004's consumer
+list), parsed by each model's own `parse_*` function.
 
 The oracle needs no hand-computed line numbers. Two renderings of the same
 line count as equal: leading/trailing whitespace is ignored (a nested child is
@@ -54,7 +56,7 @@ from biz.dfch.specmgr.models.md import MarkdownStr
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.rsk.models.v1 import parse_risk_matrix, parse_tara
 
-#: The packaged guidance documents of the non-whole-body `models/md` consumers (REQ-004):
+#: The packaged guidance documents of the non-whole-body `models/md` consumers (see the module docstring):
 #: `{file name: (data package, parse function)}`. None of them has YAML frontmatter.
 _GUIDANCE_DOCUMENTS: dict[str, tuple[str, Callable[[str], MarkdownStr]]] = {
     "rsk_tara.md": ("biz.dfch.specmgr.rsk.data", parse_tara),
@@ -67,7 +69,7 @@ _GUIDANCE_DOCUMENTS: dict[str, tuple[str, Callable[[str], MarkdownStr]]] = {
 }
 
 #: The leading number of an ordered-list marker (`1.`, `01)`), ignored by `_comparable`.
-_ORDERED_MARKER_NUMBER = re.compile(r"^\d+(?=[.)](\s|$))")
+_ORDERED_MARKER_NUMBER = re.compile(r"^\d+(?=[.)](?:\s|$))")
 
 
 def _comparable(line: str) -> str:
