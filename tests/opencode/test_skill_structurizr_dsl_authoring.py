@@ -41,6 +41,15 @@ the REQ-011 no-MCP wording; the adapted reference files' content; and the
 ``NOTICE.md`` + ``source-map.md`` pair with its three-file adapted-text
 invariant and the ideas-only marks (ACC-010).
 
+Phase 190, Task 190.140 (I2, the trigger collision on ``fix-dsl``: the
+cumulative bundle loaded only the validate-loop skill on the fix request):
+the description gains the fix-request phrasings "fails to validate", "fix
+this workspace" and "repair a broken workspace.dsl". ``validate`` therefore
+leaves the forbidden-vocabulary list; instead, every ``validat…`` in the
+description must be the fix-request phrase "fails to validate" (the
+validate-loop skill's own vocabulary -- "inspect", "triage" -- stays
+absent), and the no-trigger render prompt's vocabulary stays forbidden.
+
 Phrase pins are matched against whitespace-normalized text (every run of
 whitespace collapsed to one space) so they survive the committed files'
 hard line-wrapping; the description pins are matched case-insensitively on
@@ -77,6 +86,10 @@ _TRIGGER_PHRASES: tuple[str, ...] = (
     "author or edit workspace.dsl",
     "DSL syntax",
     "fix a DSL parse error",
+    # Phase 190, Task 190.140 (I2): the fix-request phrasings
+    "fails to validate",
+    "fix this workspace",
+    "repair a broken workspace.dsl",
 )
 _NEGATIVE_CLAUSE = "It describes how to write DSL text only and does not itself produce any files."
 # Vocabulary of the other four feature skills (and image rendering
@@ -90,7 +103,6 @@ _FORBIDDEN_DESCRIPTION_WORDS: tuple[str, ...] = (
     "png",
     "svg",
     "view",
-    "validate",
     "inspect",
     "triage",
     "review",
@@ -392,6 +404,26 @@ class TestDescriptionTriggerSurface(unittest.TestCase):
 
         for word in _FORBIDDEN_DESCRIPTION_WORDS:
             self.assertNotIn(word, description, f"no-trigger trap broken by description word: {word}")
+
+    def test_validate_appears_only_in_the_fix_request_phrase(self):
+        # Task 190.140 (I2): "validate" is allowed only as "fails to
+        # validate" (a fix request), never as the validate-loop skill's own
+        # task ("validate a Structurizr workspace", "validation loop")
+        description = self._description_lower()
+
+        occurrences = [m.start() for m in re.finditer(r"validat", description)]
+
+        self.assertTrue(occurrences)
+        for start in occurrences:
+            self.assertEqual(description[start - len("fails to ") : start + len("validate")], "fails to validate")
+
+    def test_description_shares_no_word_with_the_no_trigger_prompt_vocabulary(self):
+        # the no-trigger prompt asks to "Render it to image files: one PNG
+        # (or SVG) per view"; none of its task words may reach the description
+        description = self._description_lower()
+
+        for word in ("render", "image", "png", "svg", "view"):
+            self.assertNotIn(word, description, word)
 
 
 class TestAuthoringRules(unittest.TestCase):

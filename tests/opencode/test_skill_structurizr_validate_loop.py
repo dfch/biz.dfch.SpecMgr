@@ -55,6 +55,13 @@ Phrase pins are matched against whitespace-normalized text (every run of
 whitespace collapsed to one space) so they survive the committed files'
 hard line-wrapping; the description pins are matched case-insensitively on
  the raw description, since opencode surfaces it verbatim to agents.
+
+Phase 190, Task 190.140 (I2, the trigger collision on ``fix-dsl``): the
+description and the new "Fixing a broken workspace" body section route the
+repair of the DSL text to the ``structurizr-dsl-authoring`` skill and state
+that both skills are loaded when a workspace must be fixed and validated;
+this moves the committed variant hash again (recorded in the feature
+README's Phase 190 Updates entry).
 """
 
 from __future__ import annotations
@@ -341,6 +348,27 @@ class TestDescriptionTriggerSurface(unittest.TestCase):
 
         for word in _FORBIDDEN_DESCRIPTION_WORDS:
             self.assertNotIn(word, description, f"no-trigger trap broken by description word: {word}")
+
+    def test_description_routes_the_repair_to_the_authoring_skill(self):
+        # Task 190.140 (I2)
+        description = self._description_lower()
+
+        self.assertIn("repairing the dsl text itself is the structurizr-dsl-authoring skill's task", description)
+        self.assertIn("when a workspace must be fixed and validated, both skills are loaded", description)
+
+
+class TestFixingABrokenWorkspace(unittest.TestCase):
+    """Task 190.140 (I2): the body routes the repair to the authoring skill."""
+
+    def test_section_phrases_present(self):
+        body = _skill_body()
+
+        for phrase in (
+            "## Fixing a broken workspace",
+            "is the `structurizr-dsl-authoring` skill's task, not this skill's",
+            "both skills are loaded: the authoring skill for the repair, this skill for the loop",
+        ):
+            self.assertIn(phrase, body, phrase)
 
 
 class TestMandatoryLoopWording(unittest.TestCase):

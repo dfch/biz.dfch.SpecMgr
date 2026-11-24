@@ -1,6 +1,6 @@
 ---
 name: structurizr-dsl-authoring
-description: Use when the task is authoring or fixing Structurizr DSL workspace text -- writing a new workspace.dsl, editing or repairing existing DSL, looking up DSL syntax, or fixing DSL parse errors -- for example when asked to "write a Structurizr DSL workspace", "author or edit workspace.dsl", "DSL syntax", or "fix a DSL parse error". It describes how to write DSL text only and does not itself produce any files.
+description: Use when the task is authoring or fixing Structurizr DSL workspace text -- writing a new workspace.dsl, editing or repairing existing DSL, looking up DSL syntax, fixing DSL parse errors, or fixing a workspace that fails to validate -- for example when asked to "write a Structurizr DSL workspace", "author or edit workspace.dsl", "DSL syntax", "fix a DSL parse error", "my workspace fails to validate", "fix this workspace", or "repair a broken workspace.dsl". It describes how to write DSL text only and does not itself produce any files.
 ---
 
 # Structurizr DSL Authoring

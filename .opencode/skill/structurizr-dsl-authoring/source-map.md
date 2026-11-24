@@ -24,6 +24,7 @@ ideas only.
 
 | Passage | Source | Notes |
 |---|---|---|
+| The trigger `description` (incl. the fix-request phrasings "fails to validate", "fix this workspace", "repair a broken workspace.dsl", added in Phase 190, Task 190.140) | — | Ideas only: this repo's wording (the I2 trigger-collision fix). |
 | The seven authoring rules | upstream `Syntax Fundamentals`, `Relationships`, `Uniqueness`, `Identifiers` + docs `03-basics.md`, `05-identifiers.md`, `07-implied-relationships.md` | Ideas only: one line per rule in this repo's wording; the error strings (`Too many tokens`, `The identifier "x" is already in use`, `The destination element "x" does not exist`) are observed pinned-CLI output, not upstream text (the upstream Troubleshooting table phrases them differently). |
 | "Where the syntax lives" section | — | Ideas only: this repo's file layout. |
 | "Checking the result" section | — | Ideas only: the light validate pointer is this repo's (REQ-006/REQ-011); the routing to the `structurizr-validate-loop` skill is this repo's split (REQ-002 vs REQ-003). The upstream Docker-CLI "Validation" section is dropped wholesale. |
