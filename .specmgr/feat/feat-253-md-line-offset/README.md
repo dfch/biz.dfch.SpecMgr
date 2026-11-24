@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
-status: review
+status: done
 type: feat
-updated: '2026-11-24T14:07:03.501+01:00'
+updated: '2026-11-24T16:16:35.763+01:00'
 version: 1.0.0
 ---
 
@@ -166,11 +166,15 @@ Verification environment: run every check with the worktree code (`uv run --froz
 
 ### Current Status
 
-**As of 2026-11-24**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), 150 (third review fix D1: corrected test-file count in the Phase 120 entry), 160 (user-requested bookkeeping fixes: rewrote the mangled Phase 130 S1 bullet and accounted for the rebase pass-count delta), and 170 (user-requested fixes: the REQ-004 attribution wording, the dead regex capture group, and the `mdformat.text()` docstring mentions) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. The Phase 160 fixes are log-text only and change no behavior. The Phase 170 fixes change no behavior. Next: re-review and merge.
+**As of 2026-11-24**: The implementation is complete and done. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), 150 (third review fix D1: corrected test-file count in the Phase 120 entry), 160 (user-requested bookkeeping fixes: rewrote the mangled Phase 130 S1 bullet and accounted for the rebase pass-count delta), 170 (user-requested fixes: the REQ-004 attribution wording, the dead regex capture group, and the `mdformat.text()` docstring mentions), and 180 (user-requested marker fix: bumped this paragraph's date to 2026-11-24) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. The Phase 160 fixes are log-text only and change no behavior. The Phase 170 fixes change no behavior. The Phase 180 fix is plan-text only and changes no behavior. Closed out to done on 2026-11-24: the sixth review pass (the loop-exit check) reports no Errors, Gaps, Discrepancies, or Improvements, and independently reproduced every update-log figure against git and the live toolchain. Next: merge to `dev`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-24T15:01:18.378Z - Closed out to done
+
+Closed out to done after the sixth review pass (the final loop-exit check): the report carries no Errors, Gaps, Discrepancies, or Improvements, and the pass independently reproduced every figure in this update log against git and the live toolchain (the 6156/18/0 gate, the 61-file diff scope, the 6127 to 6134 to 6136 to 6156 pass timeline, the 504 to 508 test-file count, the 42-page Phase 170 regeneration, and the ACC-004 line-38 repro). The Phase 120 ACC walk-through (ACC-001 to ACC-009) stands, re-verified by the fourth to sixth passes. Frontmatter `status` set to done via the generic set_status tool. No code, no tests, no regeneration. Next: merge to `dev` (the post-merge bookkeeping per SOP 1e6d965c runs on `dev`, not on this branch).
 
 #### 2026-11-24T13:07:03.500Z - Phase 180 marker fix (user-requested)
 
