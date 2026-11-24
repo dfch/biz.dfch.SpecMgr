@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: review
 type: feat
-updated: '2026-11-24T07:12:11.193+01:00'
+updated: '2026-11-24T14:07:03.501+01:00'
 version: 1.0.0
 ---
 
@@ -158,15 +158,31 @@ Verification environment: run every check with the worktree code (`uv run --froz
 - [x] Task 170.120: I2: replace the four `mdformat.text()` docstring mentions in `markdown_str.py` (lines 388, 397, 445, 502) with `format_text`, leaving the `mdformat`-compliance mentions untouched.
 - [x] Task 170.130: Regenerate `docs/api/` via `specmgr docs` for the changed `markdown_str` docstring; confirm `specmgr mcp-docs`, `specmgr schema`, and `specmgr harness-bundle` give no diff.
 
+#### Phase 180: Marker fix (user-requested)
+
+- [x] Task 180.100: Fix D1 of the fifth review pass -- bump the Current Status marker from "**As of 2026-11-23**" to "**As of 2026-11-24**" (the paragraph's latest content, Phase 170, ran on 2026-11-24 per its entry and the frontmatter; the eab00038 precedent updates the marker whenever the paragraph is extended).
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-23**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), 150 (third review fix D1: corrected test-file count in the Phase 120 entry), 160 (user-requested bookkeeping fixes: rewrote the mangled Phase 130 S1 bullet and accounted for the rebase pass-count delta), and 170 (user-requested fixes: the REQ-004 attribution wording, the dead regex capture group, and the `mdformat.text()` docstring mentions) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. The Phase 160 fixes are log-text only and change no behavior. The Phase 170 fixes change no behavior. Next: re-review and merge.
+**As of 2026-11-24**: The implementation is complete and in review. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), 150 (third review fix D1: corrected test-file count in the Phase 120 entry), 160 (user-requested bookkeeping fixes: rewrote the mangled Phase 130 S1 bullet and accounted for the rebase pass-count delta), and 170 (user-requested fixes: the REQ-004 attribution wording, the dead regex capture group, and the `mdformat.text()` docstring mentions) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. The Phase 160 fixes are log-text only and change no behavior. The Phase 170 fixes change no behavior. Next: re-review and merge.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-24T13:07:03.500Z - Phase 180 marker fix (user-requested)
+
+Added Phase 180 (Task 180.100) to the Task List at the user's request from the single D1 finding of the fifth review pass and implemented it. The Current Status marker now reads `**As of 2026-11-24**`, matching the date of the paragraph's latest content (Phase 170, entry `2026-11-24T06:12:11.192Z`). No code, no tests, no regeneration.
+
+- Gate:
+  - `uv run --frozen ruff format --check`: pass (2391 files already formatted).
+  - `uv run --frozen ruff check`: pass.
+  - `uv run --frozen vulture src/ whitelist.py --min-confidence 60`: pass.
+  - `uv run --frozen pytest -n auto -q`: 6156 passed, 18 skipped, 0 failed.
+  - `uv run --frozen specmgr lint .specmgr/feat/feat-253-md-line-offset/README.md`: `linted=1 failed=0 skipped=0`.
+  - `git status --short` / `git diff --stat`: only this plan's README changed.
 
 #### 2026-11-24T06:12:11.192Z - Phase 170 user-requested fixes (D1, I1, I2)
 
