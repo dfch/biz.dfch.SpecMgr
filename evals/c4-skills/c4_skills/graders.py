@@ -656,11 +656,30 @@ def gate_external_system_tagged(inputs: GraderInputs) -> GateResult:
     `model.externalSystems` section is never populated by it and is never
     consulted here: a container of the owned system, or a top-level
     element without the tag, fails the gate.
+
+    Task 190.110 (S3): a software system that HAS containers is an owned
+    system (the team models its inside), so tagging it `External` is a
+    modeling error and fails the gate even when another, real external
+    element is tagged correctly. The pass condition stays "at least one
+    tagged external element".
     """
-    top_level = iter_systems(inputs.export_json) + iter_custom_elements(inputs.export_json)
-    tagged = [
-        str(e.get("name") or e.get("id")) for e in top_level if any(t.lower() == "external" for t in _element_tags(e))
+
+    def is_tagged(element: dict) -> bool:
+        return any(t.lower() == "external" for t in _element_tags(element))
+
+    owned_tagged = [
+        str(s.get("name") or s.get("id"))
+        for s in iter_systems(inputs.export_json)
+        if s.get("containers") and is_tagged(s)
     ]
+    if owned_tagged:
+        return GateResult(
+            "external_system_tagged",
+            False,
+            f"owned software system(s) with containers carry the External tag: {owned_tagged}",
+        )
+    top_level = iter_systems(inputs.export_json) + iter_custom_elements(inputs.export_json)
+    tagged = [str(e.get("name") or e.get("id")) for e in top_level if is_tagged(e)]
     if not tagged:
         return GateResult(
             "external_system_tagged",
@@ -1245,6 +1264,16 @@ def gate_file_untouched(context: GateContext) -> GateResult:
 #: emit PlantUML/C4-PlantUML/Mermaid *source*). Any one pattern matching is
 #: enough, and additional sentences (e.g. offering the diagram source)
 #: never break a match.
+#:
+#: The last three patterns are the Task 190.100 (E1) post-hoc hardening:
+#: the agents state the limit in renderer-availability language ("no
+#: renderer", "no local rendering stack", "couldn't run the PlantUML
+#: renderer", "no Java/PlantUML/Graphviz ... to install a renderer" --
+#: the phrasings recorded verbatim in RESULTS.md's Phase 160
+#: `mcp_limit_stated` paragraph), which the first five patterns never
+#: matched. They still need a negation or an inability before the
+#: renderer word, so a final text that only claims the images are ready,
+#: or only offers the diagram source "for any PlantUML renderer", fails.
 _IMAGE_LIMIT_PATTERNS: tuple[re.Pattern[str], ...] = (
     # "cannot / can't / ... render/produce/generate/create/export ... image/png/svg"
     re.compile(
@@ -1273,6 +1302,27 @@ _IMAGE_LIMIT_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(
         r"\b(render\w+|produc\w+|generat\w+|creat\w+|export\w+)\b[^.\n]{0,40}?\b(image\w*|png|svg)\b"
         r"[^.\n]{0,40}?\b(is|are)\s+(not|no|impossible|unsupported)\b",
+        re.IGNORECASE,
+    ),
+    # E1: "no / without / missing ... renderer / rendering stack / rasterizer"
+    # (not "no rendering errors/issues", which is no limitation; the gap
+    # never crosses a clause break -- `;`, `:`, a parenthesis or an em
+    # dash -- so "appear on no view) -- none block rendering" is no match)
+    re.compile(
+        r"\b(no|without|missing|lacks?|lacking)\b[^.\n;:()\u2014]{0,40}?\b(render(?:er|ers|ing)|rasteri[sz]er\w*)\b"
+        r"(?!\s+(?:error|issue|problem|warning|failure)s?\b)",
+        re.IGNORECASE,
+    ),
+    # E1: "could not / couldn't / unable to ... run/use/reach ... the renderer / the PlantUML server"
+    re.compile(
+        r"\b(can(?:not|['\u2019]t)|could(?:\s+not|n['\u2019]t)|unable\s+to)\b"
+        r"[^.\n]{0,40}?\b(run|use|reach|invoke|start|install|access)\b"
+        r"[^.\n]{0,40}?\b(render\w*|plantuml\s+server)\b",
+        re.IGNORECASE,
+    ),
+    # E1: "no Java/PlantUML/Graphviz ... to render with / to install a renderer"
+    re.compile(
+        r"\bno\s+(?:local\s+)?(?:java|jvm|plantuml|graphviz)\b[^.\n]{0,60}?\brender\w*",
         re.IGNORECASE,
     ),
 )

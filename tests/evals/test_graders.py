@@ -1076,6 +1076,69 @@ class TestMcpLimitStatedGate(unittest.TestCase):
         self.assertFalse(result.passed)
 
 
+class TestMcpLimitStatedRendererPhrasings(unittest.TestCase):
+    """Task 190.100 (E1): the renderer-availability phrasings the agents
+    actually use (quoted verbatim in RESULTS.md's Phase 160
+    `mcp_limit_stated` paragraph) pass; texts that only claim the images
+    are ready, only offer diagram source, or mention PNG without a
+    limitation fail."""
+
+    #: The five phrasings recorded in RESULTS.md (p160 no-trigger trials).
+    KNOWN_GOOD: tuple[str, ...] = (
+        # skill-k1
+        "this environment has no internet access and no local rendering stack (no Java/PlantUML, Graphviz, "
+        "Python, or Node, and I'm not root to install anything), so I couldn't run the actual PlantUML renderer",
+        # skill-k2
+        "no rendering engine (no Java/Node/Python, no PlantUML/Graphviz) and no network access to install one "
+        "or reach the PlantUML server",
+        # none-k0
+        "the environment is missing the usual renderers (java, plantuml, node, python3)... the public PlantUML "
+        "server couldn't be used either",
+        # none-k3
+        "no internet access, no Java/PlantUML/Node/Python, and no root to install a renderer",
+        # upstream-k4
+        "no Java/Node/Python and no external network, so no PlantUML/Mermaid renderer was available",
+    )
+
+    KNOWN_BAD: tuple[str, ...] = (
+        # claims the images are ready, states no limitation
+        "The images are ready. I rendered the SystemContext view to /work/SystemContext.png with the PlantUML "
+        "renderer, one file per view.",
+        # only offers the diagram source
+        "Here is the PlantUML source for the SystemContext view. Paste it into any PlantUML renderer or the "
+        "PlantUML server to get a PNG:\n\n```plantuml\n@startuml\n@enduml\n```\n",
+        # mentions PNG without a limitation
+        "Saved SystemContext.png (one PNG per view) in the current directory.",
+        # a negation that is no limitation
+        "Done: both PNG files are in /work, and there were no rendering errors.",
+        # a negation in an earlier clause (the clause-break guard)
+        "The containers appear on no view) — none block rendering; SystemContext.png is in /work.",
+    )
+
+    def test_pass_for_each_recorded_renderer_phrasing(self) -> None:
+        case = CASES["no-trigger"]
+        for final in self.KNOWN_GOOD:
+            with self.subTest(final=final[:40]):
+                context = _context(case, _minimal_inputs(None), trial=_stream(_text_event(final)))
+
+                result = _gate("mcp_limit_stated", context)
+
+                self.assertTrue(result.passed)
+
+    def test_fail_for_each_known_bad_text(self) -> None:
+        case = CASES["no-trigger"]
+        for final in self.KNOWN_BAD:
+            with self.subTest(final=final[:40]):
+                context = _context(case, _minimal_inputs(None), trial=_stream(_text_event(final)))
+
+                result = _gate("mcp_limit_stated", context)
+
+                self.assertFalse(result.passed)
+
+    def test_the_gate_stays_in_the_no_trigger_set(self) -> None:
+        self.assertIn("mcp_limit_stated", CASES["no-trigger"].gates)
+
+
 class TestPhase120CaseRegistry(unittest.TestCase):
     """The Phase 120 cases (Task 120.100): the locked ids, prompts, gate set
     and seed facts, and the seeds' defect spread."""
@@ -1728,6 +1791,20 @@ class TestExternalSystemTaggedGate(unittest.TestCase):
         result = gate_external_system_tagged(_modeling_inputs_from(export))
 
         self.assertFalse(result.passed)
+
+    def test_fail_when_an_owned_system_with_containers_is_tagged_external(self) -> None:
+        # Task 190.110 (S3): the owned system (it has containers) tagged
+        # External is a modeling error -- the gate fails even though the
+        # real external provider is still tagged correctly
+        export = _mutated_export("modeling-good")
+        owned = next(s for s in export["model"]["softwareSystems"] if s.get("containers"))
+        owned["tags"] = owned["tags"] + ",External"
+
+        result = gate_external_system_tagged(_modeling_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("owned software system(s) with containers carry the External tag", result.detail)
+        self.assertIn(repr(owned["name"]), result.detail)
 
     def test_the_external_systems_section_is_never_consulted(self) -> None:
         # the pinned DSL has no `externalSystem` keyword, so
