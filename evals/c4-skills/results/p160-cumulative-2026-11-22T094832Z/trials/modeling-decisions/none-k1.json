@@ -1,0 +1,197 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": true,
+  "event_file": "trials/modeling-decisions/none-k1.events.ndjson",
+  "event_file_bytes": 127688,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-22T13:32:52Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (1135 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "2/ 2 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "4 container(s), expected 3: ['Web Portal', 'Dispatch Service', 'Pricing Rules Library', 'Parcel Tracker Database']",
+      "name": "container_count",
+      "passed": false
+    },
+    {
+      "detail": "technology on 0% of 6 relationship(s); missing: ['Looks up the status of their parcels', 'Uses', 'Stores and retrieves shipments', 'Uses', 'Sends customer notification emails', 'Stores dispatch records']",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "description on all 7 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "no validate call answered the OK marker (6 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "forbidden element(s) modeled as a container or component: container 'Pricing Rules Library'",
+      "name": "no_library_container",
+      "passed": false
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "2 vague relationship label(s): ['Uses', 'Uses']",
+      "name": "no_vague_labels",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.004793691001395928,
+  "metrics": {
+    "contended": true,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 5,
+    "inspect_findings": [
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: !docs, !decisions, group, container, description, tags, url, properties, perspectives, ->) at line 10: database = database \"Parcel Tracker Database\" \"Stores shipments and dispatch records\"'}",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: !docs, !decisions, group, container, description, tags, url, properties, perspectives, ->) at line 10: database = database \"Parcel Tracker Database\" \"Stores shipments and dispatch records\"'}",
+      "{'call': 'inspect', 'status': 'rejected', 'value': {'name': 'Error', 'message': 'Error invoking method: inspect\\nUnexpected tokens (expected: !docs, !decisions, group, container, description, tags, url, properties, perspectives, ->) at line 10: database = database \"Parcel Tracker Database\" \"Stores shipments and dispatch records\"'}}",
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: archetypes, !identifiers, group, person, softwareSystem, deploymentEnvironment, element, ->) at line 13: emailProvider = externalSoftwareSystem \"Email Delivery Provider\" \"Operated by a different organization\"'}",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: archetypes, !identifiers, group, person, softwareSystem, deploymentEnvironment, element, ->) at line 13: emailProvider = externalSoftwareSystem \"Email Delivery Provider\" \"Operated by a different organization\"'}",
+      "{'call': 'inspect', 'status': 'rejected', 'value': {'name': 'Error', 'message': 'Error invoking method: inspect\\nUnexpected tokens (expected: archetypes, !identifiers, group, person, softwareSystem, deploymentEnvironment, element, ->) at line 13: emailProvider = externalSoftwareSystem \"Email Delivery Provider\" \"Operated by a different organization\"'}}",
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: name, description, properties, !docs, !decisions, !identifiers, !impliedRelationships, model, views, configuration) at line 16: relationships {'}",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: name, description, properties, !docs, !decisions, !identifiers, !impliedRelationships, model, views, configuration) at line 16: relationships {'}",
+      "{'call': 'inspect', 'status': 'rejected', 'value': {'name': 'Error', 'message': 'Error invoking method: inspect\\nUnexpected tokens (expected: name, description, properties, !docs, !decisions, !identifiers, !impliedRelationships, model, views, configuration) at line 16: relationships {'}}",
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'Relationships cannot be added between parents and children at line 19: parcelTracker -> database \"Stores shipments and dispatch records\"'}",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': 'Relationships cannot be added between parents and children at line 19: parcelTracker -> database \"Stores shipments and dispatch records\"'}",
+      "{'call': 'inspect', 'status': 'rejected', 'value': {'name': 'Error', 'message': 'Error invoking method: inspect\\nRelationships cannot be added between parents and children at line 19: parcelTracker -> database \"Stores shipments and dispatch records\"'}}",
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'OK'}",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': {'configuration': {}, 'description': 'C4 model of the parcel delivery tracking platform', 'documentation': {}, 'id': 0, 'model': {'people': [{'description': 'Looks up the status of their parcels', 'id': '1', 'name': 'Customer', 'properties': {'structurizr.dsl.identifier': 'customer'}, 'relationships': [{'description': 'Looks up the status of their parcels', 'destinationId': '3', 'id': '8', 'sourceId': '1', 'tags': 'Relationship'}, {'description': 'Looks up the status of their parcels', 'destinationId': '2', 'id': '9', 'linkedRelationshipId': '8', 'sourceId': '1'}], 'tags': 'Element,Person'}], 'softwareSystems': [{'containers': [{'description': 'Where customers look up shipments', 'documentation': {}, 'id': '3', 'name': 'Web Portal', 'properties': {'structurizr.dsl.identifier': 'webPortal'}, 'relationships': [{'description': 'Uses', 'destinationId': '5', 'id': '10', 'sourceId': '3', 'tags': 'Relationship'}, {'description': 'Stores and retrieves shipments', 'destinationId': '6', 'id': '14', 'sourceId': '3', 'tags': 'Relationship'}], 'tags': 'Element,Container'}, {'description': 'Assigns parcels to couriers', 'documentation': {}, 'id': '4', 'name': 'Dispatch Service', 'properties': {'structurizr.dsl.identifier': 'dispatchService'}, 'relationships': [{'description': 'Uses', 'destinationId': '5', 'id': '11', 'sourceId': '4', 'tags': 'Relationship'}, {'description': 'Sends customer notification emails', 'destinationId': '7', 'id': '12', 'sourceId': '4', 'tags': 'Relationship'}, {'description': 'Stores dispatch records', 'destinationId': '6', 'id': '15', 'sourceId': '4', 'tags': 'Relationship'}], 'tags': 'Element,Container'}, {'description': 'Computes delivery prices from weight and zone', 'documentation': {}, 'id': '5', 'name': 'Pricing Rules Library', 'properties': {'structurizr.dsl.identifier': 'pricingLibrary'}, 'tags': 'Element,Container'}, {'description': 'Stores shipments and dispatch records', 'documentation': {}, 'id': '6', 'name': 'Parcel Tracker Database', 'properties': {'structurizr.dsl.identifier': 'database'}, 'tags': 'Element,Container'}], 'description': 'Owned and operated by our company', 'documentation': {}, 'id': '2', 'name': 'Parcel Tracker', 'properties': {'structurizr.dsl.identifier': 'parcelTracker'}, 'relationships': [{'description': 'Sends customer notification emails', 'destinationId': '7', 'id': '13', 'linkedRelationshipId': '12', 'sourceId': '2'}], 'tags': 'Element,Software System'}, {'description': 'Operated by a different organization', 'documentation': {}, 'id': '7', 'name': 'Email Delivery Provider', 'properties': {'structurizr.dsl.identifier': 'emailProvider'}, 'tags': 'Element,Software System'}]}, 'name': 'Parcel Tracker', 'properties': {'structurizr.dsl': 'd29ya3NwYWNlICJQYXJjZWwgVHJhY2tlciIgIkM0IG1vZGVsIG9mIHRoZSBwYXJjZWwgZGVsaXZlcnkgdHJhY2tpbmcgcGxhdGZvcm0iIHsKCiAgICBtb2RlbCB7CiAgICAgICAgY3VzdG9tZXIgPSBwZXJzb24gIkN1c3RvbWVyIiAiTG9va3MgdXAgdGhlIHN0YXR1cyBvZiB0aGVpciBwYXJjZWxzIgoKICAgICAgICBwYXJjZWxUcmFja2VyID0gc29mdHdhcmVTeXN0ZW0gIlBhcmNlbCBUcmFja2VyIiAiT3duZWQgYW5kIG9wZXJhdGVkIGJ5IG91ciBjb21wYW55IiB7CiAgICAgICAgICAgIHdlYlBvcnRhbCA9IGNvbnRhaW5lciAiV2ViIFBvcnRhbCIgIldoZXJlIGN1c3RvbWVycyBsb29rIHVwIHNoaXBtZW50cyIKICAgICAgICAgICAgZGlzcGF0Y2hTZXJ2aWNlID0gY29udGFpbmVyICJEaXNwYXRjaCBTZXJ2aWNlIiAiQXNzaWducyBwYXJjZWxzIHRvIGNvdXJpZXJzIgogICAgICAgICAgICBwcmljaW5nTGlicmFyeSA9IGNvbnRhaW5lciAiUHJpY2luZyBSdWxlcyBMaWJyYXJ5IiAiQ29tcHV0ZXMgZGVsaXZlcnkgcHJpY2VzIGZyb20gd2VpZ2h0IGFuZCB6b25lIgogICAgICAgICAgICBkYXRhYmFzZSA9IGNvbnRhaW5lciAiUGFyY2VsIFRyYWNrZXIgRGF0YWJhc2UiICJTdG9yZXMgc2hpcG1lbnRzIGFuZCBkaXNwYXRjaCByZWNvcmRzIgogICAgICAgIH0KCiAgICAgICAgZW1haWxQcm92aWRlciA9IHNvZnR3YXJlU3lzdGVtICJFbWFpbCBEZWxpdmVyeSBQcm92aWRlciIgIk9wZXJhdGVkIGJ5IGEgZGlmZmVyZW50IG9yZ2FuaXphdGlvbiIKCiAgICAgICAgY3VzdG9tZXIgLT4gd2ViUG9ydGFsICJMb29rcyB1cCB0aGUgc3RhdHVzIG9mIHRoZWlyIHBhcmNlbHMiCiAgICAgICAgd2ViUG9ydGFsIC0+IHByaWNpbmdMaWJyYXJ5ICJVc2VzIgogICAgICAgIGRpc3BhdGNoU2VydmljZSAtPiBwcmljaW5nTGlicmFyeSAiVXNlcyIKICAgICAgICBkaXNwYXRjaFNlcnZpY2UgLT4gZW1haWxQcm92aWRlciAiU2VuZHMgY3VzdG9tZXIgbm90aWZpY2F0aW9uIGVtYWlscyIKICAgICAgICB3ZWJQb3J0YWwgLT4gZGF0YWJhc2UgIlN0b3JlcyBhbmQgcmV0cmlldmVzIHNoaXBtZW50cyIKICAgICAgICBkaXNwYXRjaFNlcnZpY2UgLT4gZGF0YWJhc2UgIlN0b3JlcyBkaXNwYXRjaCByZWNvcmRzIgogICAgfQp9'}, 'views': {'configuration': {'styles': {}, 'terminology': {}}}}}",
+      "{'call': 'inspect', 'status': 'fulfilled', 'value': ['ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".', 'ERROR: The person named \"Customer\" is not included on any views - add it to a view.', 'ERROR: The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.', 'ERROR: The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.', 'ERROR: The software system \"Parcel Tracker\" has containers, but is missing documentation.', 'ERROR: The software system \"Parcel Tracker\" has containers, but is missing decisions.', 'ERROR: The software system named \"Parcel Tracker\" is not included on any views - add it to a view.', 'ERROR: The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.', 'ERROR: The container \"Parcel Tracker.Web Portal\" is missing a technology.', 'ERROR: The container named \"Web Portal\" is not included on any views - add it to a view.', 'ERROR: The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.', 'ERROR: The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.', 'ERROR: The container \"Parcel Tracker.Dispatch Service\" is missing a technology.', 'ERROR: The container named \"Dispatch Service\" is not included on any views - add it to a view.', 'ERROR: The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.', 'ERROR: The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.', 'ERROR: The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.', 'ERROR: The container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.', 'ERROR: The container named \"Pricing Rules Library\" is not included on any views - add it to a view.', 'ERROR: The container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.', 'ERROR: The container named \"Parcel Tracker Database\" is not included on any views - add it to a view.', 'ERROR: The software system named \"Email Delivery Provider\" is not included on any views - add it to a view.', 'ERROR: This workspace has no views.']}",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.",
+      "The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.",
+      "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+      "The software system \"Parcel Tracker\" has containers, but is missing decisions.",
+      "The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.",
+      "The container \"Parcel Tracker.Web Portal\" is missing a technology.",
+      "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.",
+      "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.",
+      "The container \"Parcel Tracker.Dispatch Service\" is missing a technology.",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.",
+      "The container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.",
+      "The container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "System context views exist for 2 software systems. It is recommended that a workspace includes system context views for a single software system only.",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time."
+    ],
+    "inspect_triage": {
+      "System context views exist for 2 software systems. It is recommended that a workspace includes system context views for a single software system only.": "untriaged",
+      "The container \"Parcel Tracker.Dispatch Service\" is missing a technology.": "untriaged",
+      "The container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.": "untriaged",
+      "The container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.": "untriaged",
+      "The container \"Parcel Tracker.Web Portal\" is missing a technology.": "untriaged",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.": "untriaged",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.": "untriaged",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.": "untriaged",
+      "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.": "untriaged",
+      "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.": "untriaged",
+      "The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.": "untriaged",
+      "The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.": "untriaged",
+      "The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.": "untriaged",
+      "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+      "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged",
+      "{'call': 'inspect', 'status': 'fulfilled', 'value': ['ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".', 'ERROR: The person named \"Customer\" is not included on any views - add it to a view.', 'ERROR: The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.', 'ERROR: The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.', 'ERROR: The software system \"Parcel Tracker\" has containers, but is missing documentation.', 'ERROR: The software system \"Parcel Tracker\" has containers, but is missing decisions.', 'ERROR: The software system named \"Parcel Tracker\" is not included on any views - add it to a view.', 'ERROR: The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.', 'ERROR: The container \"Parcel Tracker.Web Portal\" is missing a technology.', 'ERROR: The container named \"Web Portal\" is not included on any views - add it to a view.', 'ERROR: The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.', 'ERROR: The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.', 'ERROR: The container \"Parcel Tracker.Dispatch Service\" is missing a technology.', 'ERROR: The container named \"Dispatch Service\" is not included on any views - add it to a view.', 'ERROR: The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.', 'ERROR: The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.', 'ERROR: The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.', 'ERROR: The container \"Parcel Tracker.Pricing Rules Library\" is missing a technology.', 'ERROR: The container named \"Pricing Rules Library\" is not included on any views - add it to a view.', 'ERROR: The container \"Parcel Tracker.Parcel Tracker Database\" is missing a technology.', 'ERROR: The container named \"Parcel Tracker Database\" is not included on any views - add it to a view.', 'ERROR: The software system named \"Email Delivery Provider\" is not included on any views - add it to a view.', 'ERROR: This workspace has no views.']}": "expected",
+      "{'call': 'inspect', 'status': 'rejected', 'value': {'name': 'Error', 'message': 'Error invoking method: inspect\\nRelationships cannot be added between parents and children at line 19: parcelTracker -> database \"Stores shipments and dispatch records\"'}}": "fix",
+      "{'call': 'inspect', 'status': 'rejected', 'value': {'name': 'Error', 'message': 'Error invoking method: inspect\\nUnexpected tokens (expected: !docs, !decisions, group, container, description, tags, url, properties, perspectives, ->) at line 10: database = database \"Parcel Tracker Database\" \"Stores shipments and dispatch records\"'}}": "fix",
+      "{'call': 'inspect', 'status': 'rejected', 'value': {'name': 'Error', 'message': 'Error invoking method: inspect\\nUnexpected tokens (expected: archetypes, !identifiers, group, person, softwareSystem, deploymentEnvironment, element, ->) at line 13: emailProvider = externalSoftwareSystem \"Email Delivery Provider\" \"Operated by a different organization\"'}}": "fix",
+      "{'call': 'inspect', 'status': 'rejected', 'value': {'name': 'Error', 'message': 'Error invoking method: inspect\\nUnexpected tokens (expected: name, description, properties, !docs, !decisions, !identifiers, !impliedRelationships, model, views, configuration) at line 16: relationships {'}}": "fix",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': 'Relationships cannot be added between parents and children at line 19: parcelTracker -> database \"Stores shipments and dispatch records\"'}": "fix",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: !docs, !decisions, group, container, description, tags, url, properties, perspectives, ->) at line 10: database = database \"Parcel Tracker Database\" \"Stores shipments and dispatch records\"'}": "fix",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: archetypes, !identifiers, group, person, softwareSystem, deploymentEnvironment, element, ->) at line 13: emailProvider = externalSoftwareSystem \"Email Delivery Provider\" \"Operated by a different organization\"'}": "fix",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: name, description, properties, !docs, !decisions, !identifiers, !impliedRelationships, model, views, configuration) at line 16: relationships {'}": "fix",
+      "{'call': 'parse', 'status': 'fulfilled', 'value': {'configuration': {}, 'description': 'C4 model of the parcel delivery tracking platform', 'documentation': {}, 'id': 0, 'model': {'people': [{'description': 'Looks up the status of their parcels', 'id': '1', 'name': 'Customer', 'properties': {'structurizr.dsl.identifier': 'customer'}, 'relationships': [{'description': 'Looks up the status of their parcels', 'destinationId': '3', 'id': '8', 'sourceId': '1', 'tags': 'Relationship'}, {'description': 'Looks up the status of their parcels', 'destinationId': '2', 'id': '9', 'linkedRelationshipId': '8', 'sourceId': '1'}], 'tags': 'Element,Person'}], 'softwareSystems': [{'containers': [{'description': 'Where customers look up shipments', 'documentation': {}, 'id': '3', 'name': 'Web Portal', 'properties': {'structurizr.dsl.identifier': 'webPortal'}, 'relationships': [{'description': 'Uses', 'destinationId': '5', 'id': '10', 'sourceId': '3', 'tags': 'Relationship'}, {'description': 'Stores and retrieves shipments', 'destinationId': '6', 'id': '14', 'sourceId': '3', 'tags': 'Relationship'}], 'tags': 'Element,Container'}, {'description': 'Assigns parcels to couriers', 'documentation': {}, 'id': '4', 'name': 'Dispatch Service', 'properties': {'structurizr.dsl.identifier': 'dispatchService'}, 'relationships': [{'description': 'Uses', 'destinationId': '5', 'id': '11', 'sourceId': '4', 'tags': 'Relationship'}, {'description': 'Sends customer notification emails', 'destinationId': '7', 'id': '12', 'sourceId': '4', 'tags': 'Relationship'}, {'description': 'Stores dispatch records', 'destinationId': '6', 'id': '15', 'sourceId': '4', 'tags': 'Relationship'}], 'tags': 'Element,Container'}, {'description': 'Computes delivery prices from weight and zone', 'documentation': {}, 'id': '5', 'name': 'Pricing Rules Library', 'properties': {'structurizr.dsl.identifier': 'pricingLibrary'}, 'tags': 'Element,Container'}, {'description': 'Stores shipments and dispatch records', 'documentation': {}, 'id': '6', 'name': 'Parcel Tracker Database', 'properties': {'structurizr.dsl.identifier': 'database'}, 'tags': 'Element,Container'}], 'description': 'Owned and operated by our company', 'documentation': {}, 'id': '2', 'name': 'Parcel Tracker', 'properties': {'structurizr.dsl.identifier': 'parcelTracker'}, 'relationships': [{'description': 'Sends customer notification emails', 'destinationId': '7', 'id': '13', 'linkedRelationshipId': '12', 'sourceId': '2'}], 'tags': 'Element,Software System'}, {'description': 'Operated by a different organization', 'documentation': {}, 'id': '7', 'name': 'Email Delivery Provider', 'properties': {'structurizr.dsl.identifier': 'emailProvider'}, 'tags': 'Element,Software System'}]}, 'name': 'Parcel Tracker', 'properties': {'structurizr.dsl': 'd29ya3NwYWNlICJQYXJjZWwgVHJhY2tlciIgIkM0IG1vZGVsIG9mIHRoZSBwYXJjZWwgZGVsaXZlcnkgdHJhY2tpbmcgcGxhdGZvcm0iIHsKCiAgICBtb2RlbCB7CiAgICAgICAgY3VzdG9tZXIgPSBwZXJzb24gIkN1c3RvbWVyIiAiTG9va3MgdXAgdGhlIHN0YXR1cyBvZiB0aGVpciBwYXJjZWxzIgoKICAgICAgICBwYXJjZWxUcmFja2VyID0gc29mdHdhcmVTeXN0ZW0gIlBhcmNlbCBUcmFja2VyIiAiT3duZWQgYW5kIG9wZXJhdGVkIGJ5IG91ciBjb21wYW55IiB7CiAgICAgICAgICAgIHdlYlBvcnRhbCA9IGNvbnRhaW5lciAiV2ViIFBvcnRhbCIgIldoZXJlIGN1c3RvbWVycyBsb29rIHVwIHNoaXBtZW50cyIKICAgICAgICAgICAgZGlzcGF0Y2hTZXJ2aWNlID0gY29udGFpbmVyICJEaXNwYXRjaCBTZXJ2aWNlIiAiQXNzaWducyBwYXJjZWxzIHRvIGNvdXJpZXJzIgogICAgICAgICAgICBwcmljaW5nTGlicmFyeSA9IGNvbnRhaW5lciAiUHJpY2luZyBSdWxlcyBMaWJyYXJ5IiAiQ29tcHV0ZXMgZGVsaXZlcnkgcHJpY2VzIGZyb20gd2VpZ2h0IGFuZCB6b25lIgogICAgICAgICAgICBkYXRhYmFzZSA9IGNvbnRhaW5lciAiUGFyY2VsIFRyYWNrZXIgRGF0YWJhc2UiICJTdG9yZXMgc2hpcG1lbnRzIGFuZCBkaXNwYXRjaCByZWNvcmRzIgogICAgICAgIH0KCiAgICAgICAgZW1haWxQcm92aWRlciA9IHNvZnR3YXJlU3lzdGVtICJFbWFpbCBEZWxpdmVyeSBQcm92aWRlciIgIk9wZXJhdGVkIGJ5IGEgZGlmZmVyZW50IG9yZ2FuaXphdGlvbiIKCiAgICAgICAgY3VzdG9tZXIgLT4gd2ViUG9ydGFsICJMb29rcyB1cCB0aGUgc3RhdHVzIG9mIHRoZWlyIHBhcmNlbHMiCiAgICAgICAgd2ViUG9ydGFsIC0+IHByaWNpbmdMaWJyYXJ5ICJVc2VzIgogICAgICAgIGRpc3BhdGNoU2VydmljZSAtPiBwcmljaW5nTGlicmFyeSAiVXNlcyIKICAgICAgICBkaXNwYXRjaFNlcnZpY2UgLT4gZW1haWxQcm92aWRlciAiU2VuZHMgY3VzdG9tZXIgbm90aWZpY2F0aW9uIGVtYWlscyIKICAgICAgICB3ZWJQb3J0YWwgLT4gZGF0YWJhc2UgIlN0b3JlcyBhbmQgcmV0cmlldmVzIHNoaXBtZW50cyIKICAgICAgICBkaXNwYXRjaFNlcnZpY2UgLT4gZGF0YWJhc2UgIlN0b3JlcyBkaXNwYXRjaCByZWNvcmRzIgogICAgfQp9'}, 'views': {'configuration': {'styles': {}, 'terminology': {}}}}}": "fix",
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'OK'}": "fix",
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'Relationships cannot be added between parents and children at line 19: parcelTracker -> database \"Stores shipments and dispatch records\"'}": "fix",
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: !docs, !decisions, group, container, description, tags, url, properties, perspectives, ->) at line 10: database = database \"Parcel Tracker Database\" \"Stores shipments and dispatch records\"'}": "fix",
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: archetypes, !identifiers, group, person, softwareSystem, deploymentEnvironment, element, ->) at line 13: emailProvider = externalSoftwareSystem \"Email Delivery Provider\" \"Operated by a different organization\"'}": "fix",
+      "{'call': 'validate', 'status': 'fulfilled', 'value': 'Unexpected tokens (expected: name, description, properties, !docs, !decisions, !identifiers, !impliedRelationships, model, views, configuration) at line 16: relationships {'}": "fix"
+    },
+    "parse_calls": 6,
+    "relationship_technology_coverage": 0.0,
+    "skills_loaded": [],
+    "steps": 19,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 434941,
+      "output": 30976,
+      "reasoning": 0
+    },
+    "tool_calls": 19,
+    "validate_calls": 6,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 378.166,
+    "workdir_dsl": "workspace \"Parcel Tracker\" \"C4 model of the parcel delivery tracking platform\" {\n\n    model {\n        customer = person \"Customer\" \"Looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"Owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\"\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\"\n            pricingLibrary = container \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\"\n            database = container \"Parcel Tracker Database\" \"Stores shipments and dispatch records\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"Operated by a different organization\"\n\n        customer -> webPortal \"Looks up the status of their parcels\"\n        webPortal -> pricingLibrary \"Uses\"\n        dispatchService -> pricingLibrary \"Uses\"\n        dispatchService -> emailProvider \"Sends customer notification emails\"\n        webPortal -> database \"Stores and retrieves shipments\"\n        dispatchService -> database \"Stores dispatch records\"\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "modeling-decisions",
+    "condition": "none",
+    "k_index": 1
+  },
+  "run_id": "p160-cumulative-2026-11-22T094832Z",
+  "skills_installed": [],
+  "started_at": "2026-11-22T13:26:31Z",
+  "timeout": false,
+  "wall_time_s": 380.3423253220026,
+  "workdir": "/home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k1.p160-cumulative-2026-11-22T094832Z"
+}

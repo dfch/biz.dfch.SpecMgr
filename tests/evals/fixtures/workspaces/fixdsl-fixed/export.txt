@@ -1,0 +1,4 @@
+17:21:12.113 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from fixed-parking.dsl
+17:21:12.190 [main] INFO com.structurizr.command.ExportCommand -- Exporting with JsonWorkspaceExporter
+17:21:12.456 [main] INFO com.structurizr.command.ExportCommand -- Writing /w/out/fixed-parking.json
+17:21:12.456 [main] INFO com.structurizr.command.ExportCommand -- Finished

@@ -1,0 +1,159 @@
+{
+  "configuration" : { },
+  "description" : "Balances a household's energy use and costs.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "people" : [ {
+      "description" : "Manages the household's energy use and costs.",
+      "id" : "1",
+      "name" : "Homeowner",
+      "properties" : {
+        "structurizr.dsl.identifier" : "homeowner"
+      },
+      "relationships" : [ {
+        "description" : "manages household energy through",
+        "destinationId" : "3",
+        "id" : "7",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/JSON"
+      }, {
+        "description" : "manages household energy through",
+        "destinationId" : "2",
+        "id" : "8",
+        "linkedRelationshipId" : "7",
+        "sourceId" : "1",
+        "technology" : "HTTPS/JSON"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "Shows consumption and costs; embeds the shared rates library.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "Dashboard Web App",
+        "properties" : {
+          "structurizr.dsl.identifier" : "dashboard"
+        },
+        "relationships" : [ {
+          "description" : "reads meter data from",
+          "destinationId" : "5",
+          "id" : "9",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "JDBC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python/FastAPI"
+      }, {
+        "description" : "Plans charging and heating; embeds the shared rates library.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Scheduling Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "scheduler"
+        },
+        "relationships" : [ {
+          "description" : "writes schedules to",
+          "destinationId" : "5",
+          "id" : "10",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "JDBC"
+        }, {
+          "description" : "fetches live meter readings from",
+          "destinationId" : "6",
+          "id" : "11",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "REST/JSON"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Stores meter readings and schedules.",
+        "documentation" : { },
+        "id" : "5",
+        "name" : "Readings Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "readings"
+        },
+        "tags" : "Element,Container",
+        "technology" : "PostgreSQL"
+      } ],
+      "description" : "Balances a household's energy use and costs.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Energy Manager",
+      "properties" : {
+        "structurizr.dsl.identifier" : "manager"
+      },
+      "relationships" : [ {
+        "description" : "fetches live meter readings from",
+        "destinationId" : "6",
+        "id" : "12",
+        "linkedRelationshipId" : "11",
+        "sourceId" : "2",
+        "technology" : "REST/JSON"
+      } ],
+      "tags" : "Element,Software System"
+    }, {
+      "description" : "Publishes live meter readings for the home.",
+      "documentation" : { },
+      "id" : "6",
+      "name" : "Smart Meter Provider",
+      "properties" : {
+        "structurizr.dsl.identifier" : "meterProvider"
+      },
+      "tags" : "Element,Software System,External"
+    } ]
+  },
+  "name" : "Energy Manager",
+  "properties" : {
+    "structurizr.inspection.error" : "6",
+    "structurizr.dsl" : "d29ya3NwYWNlICJFbmVyZ3kgTWFuYWdlciIgIkJhbGFuY2VzIGEgaG91c2Vob2xkJ3MgZW5lcmd5IHVzZSBhbmQgY29zdHMuIiB7CiAgICBtb2RlbCB7CiAgICAgICAgaG9tZW93bmVyID0gcGVyc29uICJIb21lb3duZXIiICJNYW5hZ2VzIHRoZSBob3VzZWhvbGQncyBlbmVyZ3kgdXNlIGFuZCBjb3N0cy4iCiAgICAgICAgbWFuYWdlciA9IHNvZnR3YXJlU3lzdGVtICJFbmVyZ3kgTWFuYWdlciIgIkJhbGFuY2VzIGEgaG91c2Vob2xkJ3MgZW5lcmd5IHVzZSBhbmQgY29zdHMuIiB7CiAgICAgICAgICAgIGRhc2hib2FyZCA9IGNvbnRhaW5lciAiRGFzaGJvYXJkIFdlYiBBcHAiICJTaG93cyBjb25zdW1wdGlvbiBhbmQgY29zdHM7IGVtYmVkcyB0aGUgc2hhcmVkIHJhdGVzIGxpYnJhcnkuIiAiUHl0aG9uL0Zhc3RBUEkiCiAgICAgICAgICAgIHNjaGVkdWxlciA9IGNvbnRhaW5lciAiU2NoZWR1bGluZyBTZXJ2aWNlIiAiUGxhbnMgY2hhcmdpbmcgYW5kIGhlYXRpbmc7IGVtYmVkcyB0aGUgc2hhcmVkIHJhdGVzIGxpYnJhcnkuIiAiSmF2YSIKICAgICAgICAgICAgcmVhZGluZ3MgPSBjb250YWluZXIgIlJlYWRpbmdzIERhdGFiYXNlIiAiU3RvcmVzIG1ldGVyIHJlYWRpbmdzIGFuZCBzY2hlZHVsZXMuIiAiUG9zdGdyZVNRTCIKICAgICAgICB9CiAgICAgICAgbWV0ZXJQcm92aWRlciA9IHNvZnR3YXJlU3lzdGVtICJTbWFydCBNZXRlciBQcm92aWRlciIgIlB1Ymxpc2hlcyBsaXZlIG1ldGVyIHJlYWRpbmdzIGZvciB0aGUgaG9tZS4iICJFeHRlcm5hbCIKICAgICAgICBob21lb3duZXIgLT4gZGFzaGJvYXJkICJtYW5hZ2VzIGhvdXNlaG9sZCBlbmVyZ3kgdGhyb3VnaCIgIkhUVFBTL0pTT04iCiAgICAgICAgZGFzaGJvYXJkIC0+IHJlYWRpbmdzICJyZWFkcyBtZXRlciBkYXRhIGZyb20iICJKREJDIgogICAgICAgIHNjaGVkdWxlciAtPiByZWFkaW5ncyAid3JpdGVzIHNjaGVkdWxlcyB0byIgIkpEQkMiCiAgICAgICAgc2NoZWR1bGVyIC0+IG1ldGVyUHJvdmlkZXIgImZldGNoZXMgbGl2ZSBtZXRlciByZWFkaW5ncyBmcm9tIiAiUkVTVC9KU09OIgogICAgfQogICAgdmlld3MgewogICAgICAgIHN5c3RlbUNvbnRleHQgbWFuYWdlciAiTWFuYWdlckNvbnRleHQiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICB9Cn0=",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "6",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "ManagerContext",
+      "name" : "System Context View: Energy Manager",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "12"
+      }, {
+        "id" : "8"
+      } ],
+      "softwareSystemId" : "2"
+    } ]
+  }
+}

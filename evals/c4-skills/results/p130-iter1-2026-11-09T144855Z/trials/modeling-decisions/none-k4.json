@@ -1,0 +1,167 @@
+{
+  "cache_reason": "hit",
+  "cached": true,
+  "contended": false,
+  "event_file": "trials/modeling-decisions/none-k4.events.ndjson",
+  "event_file_bytes": 218310,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-09T07:58:31Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (1327 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "2/ 2 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "exactly 3 container(s)",
+      "name": "container_count",
+      "passed": true
+    },
+    {
+      "detail": "technology on 0% of 4 relationship(s); missing: ['looks up the status of their parcels', 'stores shipments in', 'stores dispatch records in', 'sends customer notification emails through']",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "description on all 6 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "no validate call answered the OK marker (14 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "forbidden element(s) modeled as a container or component: component 'Pricing Rules Library', component 'Pricing Rules Library'",
+      "name": "no_library_container",
+      "passed": false
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "no vague label on any of the 4 relationship(s)",
+      "name": "no_vague_labels",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.009282741928473115,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 14,
+    "inspect_findings": [
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.",
+      "The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.",
+      "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+      "The software system \"Parcel Tracker\" has containers, but is missing decisions.",
+      "The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.",
+      "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Database\" is missing a technology.",
+      "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Database\" is missing a technology.",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.",
+      "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "System context views exist for 2 software systems. It is recommended that a workspace includes system context views for a single software system only.",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"Component-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"Component-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "The view with key \"Component-002\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"Component-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future."
+    ],
+    "inspect_triage": {
+      "System context views exist for 2 software systems. It is recommended that a workspace includes system context views for a single software system only.": "untriaged",
+      "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Database\" is missing a technology.": "untriaged",
+      "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.": "untriaged",
+      "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Database\" is missing a technology.": "untriaged",
+      "The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.": "untriaged",
+      "The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.": "untriaged",
+      "The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.": "untriaged",
+      "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+      "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected",
+      "The view with key \"Component-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"Component-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "The view with key \"Component-002\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"Component-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+    },
+    "parse_calls": 6,
+    "relationship_technology_coverage": 0.0,
+    "skills_loaded": [],
+    "steps": 24,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 724328,
+      "output": 72687,
+      "reasoning": 0
+    },
+    "tool_calls": 24,
+    "validate_calls": 14,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 1170.103,
+    "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n    model {\n        customer = person \"Customer\" \"A customer who looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"The parcel delivery tracking platform, owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\" \"Web Application\" {\n                webPricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\" {\n                dispatchPricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization\"\n\n        customer -> webPortal \"looks up the status of their parcels\"\n        webPortal -> database \"stores shipments in\"\n        dispatchService -> database \"stores dispatch records in\"\n        dispatchService -> emailProvider \"sends customer notification emails through\"\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "modeling-decisions",
+    "condition": "none",
+    "k_index": 4
+  },
+  "run_id": "p130-prove-2026-11-09T063128Z",
+  "skills_installed": [],
+  "started_at": "2026-11-09T07:38:30Z",
+  "timeout": true,
+  "wall_time_s": 1201.051762011135,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k4.p130-prove-2026-11-09T063128Z"
+}

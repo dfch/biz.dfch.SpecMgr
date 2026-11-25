@@ -45,8 +45,8 @@ def _skip_if_no_docker(testcase: unittest.TestCase) -> None:
 
 def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
     # Mirrors c4_skills.graders._run_cli, including the Phase 110
-    # `--network none` (the CLI image needs no network: these four tests
-    # are the live proof that it works).
+    # `--network none` (the CLI image needs no network: these sixteen
+    # tests are the live proof that it works).
     from c4_skills.preflight import host_user_flags
 
     cmd = [
@@ -114,6 +114,179 @@ class TestCliOverFixtures(unittest.TestCase):
         self.assertNotEqual(validate_rc, 0)
         self.assertNotEqual(export_rc, 0)
         self.assertIn("ERROR", validate_out)
+
+    def test_fixdsl_seed_workspace_cli_rejects(self) -> None:
+        # the Phase 120 fix-dsl seed must fail the pinned CLI's `validate`
+        # (the known-bad half of ACC-006 for the fix-dsl case; verified at
+        # case creation, Task 120.100)
+        workdir = self._stage("fixdsl-seed")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertNotEqual(validate_rc, 0)
+        self.assertNotEqual(export_rc, 0)
+        self.assertIn("ERROR", validate_out)
+
+    def test_heldout_dsl_seed_workspace_cli_rejects(self) -> None:
+        workdir = self._stage("heldout-dsl-seed")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertNotEqual(validate_rc, 0)
+        self.assertNotEqual(export_rc, 0)
+        self.assertIn("ERROR", validate_out)
+
+    def test_fixdsl_fixed_workspace_cli_matches_preexported_fixture(self) -> None:
+        # the Phase 120 known-good fixed reference: valid, and its live
+        # export is JSON-equivalent to the committed pre-exported fixture
+        workdir = self._stage("fixdsl-fixed")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "fixdsl-fixed" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_heldout_dsl_fixed_workspace_cli_matches_preexported_fixture(self) -> None:
+        workdir = self._stage("heldout-dsl-fixed")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "heldout-dsl-fixed" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_modeling_good_workspace_cli_matches_preexported_fixture(self) -> None:
+        # the Phase 130 known-good reference: CLI-valid, and its live
+        # export is JSON-equivalent to the committed pre-exported fixture
+        workdir = self._stage("modeling-good")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "modeling-good" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_modeling_bad_workspace_cli_is_valid_and_matches_fixture(self) -> None:
+        # the Phase 130 known-bad reference: its defects are SEMANTIC (the
+        # wrong modeling decisions), so the pinned CLI validates it
+        # cleanly (rc=0) and its live export matches the committed fixture
+        workdir = self._stage("modeling-bad")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0, validate_out)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "modeling-bad" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_heldout_modeling_good_workspace_cli_matches_preexported_fixture(self) -> None:
+        workdir = self._stage("heldout-modeling-good")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "heldout-modeling-good" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_views_good_workspace_cli_matches_preexported_fixture(self) -> None:
+        # the Phase 140 known-good reference: CLI-valid, and its live
+        # export is JSON-equivalent to the committed pre-exported fixture
+        workdir = self._stage("views-good")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "views-good" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_views_bad_workspace_cli_is_valid_and_matches_fixture(self) -> None:
+        # the Phase 140 known-bad reference: its defects are SEMANTIC (the
+        # wrong view design -- a crowded `include *` view, an omitted view
+        # key), so the pinned CLI validates it cleanly (rc=0) and its live
+        # export matches the committed fixture
+        workdir = self._stage("views-bad")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0, validate_out)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "views-bad" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_heldout_views_good_workspace_cli_matches_preexported_fixture(self) -> None:
+        workdir = self._stage("heldout-views-good")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "heldout-views-good" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_review_model_seed_workspace_cli_is_valid_and_matches_fixture(self) -> None:
+        # the Phase 150 review seed: CLI-valid (the defects are SEMANTIC,
+        # not syntactic), its live export is JSON-equivalent to the
+        # committed pre-exported fixture, and the live `inspect` is
+        # rc=1 with the pinned finding lines
+        workdir = self._stage("review-model-seed")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+        inspect_rc, inspect_out = _run_cli(workdir, ["inspect", "-w", "workspace.dsl"])
+
+        self.assertEqual(validate_rc, 0, validate_out)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "review-model-seed" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+        self.assertEqual(inspect_rc, 1)
+        self.assertEqual(
+            inspect_out.strip(), (WORKSPACES / "review-model-seed" / "inspect.txt").read_text(encoding="utf-8").strip()
+        )
+
+    def test_heldout_review_seed_workspace_cli_is_valid_and_matches_fixture(self) -> None:
+        # the Phase 150 held-out review seed: same shape, the held-out
+        # domain (hotel booking)
+        workdir = self._stage("heldout-review-seed")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+        inspect_rc, inspect_out = _run_cli(workdir, ["inspect", "-w", "workspace.dsl"])
+
+        self.assertEqual(validate_rc, 0, validate_out)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "heldout-review-seed" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+        self.assertEqual(inspect_rc, 1)
+        self.assertEqual(
+            inspect_out.strip(),
+            (WORKSPACES / "heldout-review-seed" / "inspect.txt").read_text(encoding="utf-8").strip(),
+        )
 
     def test_cli_image_matches_the_pin(self) -> None:
         proc = subprocess.run(  # noqa: S603 -- pinned image

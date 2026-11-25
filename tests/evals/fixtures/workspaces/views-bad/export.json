@@ -1,0 +1,838 @@
+{
+  "configuration" : { },
+  "description" : "Online banking for customers.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "people" : [ {
+      "description" : "Manages accounts, moves money, and tracks activity.",
+      "id" : "1",
+      "name" : "Bank Customer",
+      "properties" : {
+        "structurizr.dsl.identifier" : "customer"
+      },
+      "relationships" : [ {
+        "description" : "Manages accounts through",
+        "destinationId" : "3",
+        "id" : "24",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/JSON"
+      }, {
+        "description" : "Manages accounts through",
+        "destinationId" : "2",
+        "id" : "25",
+        "linkedRelationshipId" : "24",
+        "sourceId" : "1",
+        "technology" : "HTTPS/JSON"
+      }, {
+        "description" : "Manages accounts through",
+        "destinationId" : "4",
+        "id" : "26",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/JSON"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "Where customers log in and manage their accounts.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "Web Portal",
+        "properties" : {
+          "structurizr.dsl.identifier" : "web"
+        },
+        "relationships" : [ {
+          "description" : "Queries and updates accounts in",
+          "destinationId" : "5",
+          "id" : "27",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Initiates deposits and transfers in",
+          "destinationId" : "6",
+          "id" : "28",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Initiates card and bank transfers in",
+          "destinationId" : "7",
+          "id" : "29",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Requests statements from",
+          "destinationId" : "12",
+          "id" : "30",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Manages standing orders in",
+          "destinationId" : "13",
+          "id" : "31",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Reads and writes sessions in",
+          "destinationId" : "20",
+          "id" : "32",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "RESP"
+        } ],
+        "tags" : "Element,Container,Web",
+        "technology" : "Python/FastAPI"
+      }, {
+        "description" : "Serves the bank's mobile app.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Mobile App Backend",
+        "properties" : {
+          "structurizr.dsl.identifier" : "mobile"
+        },
+        "relationships" : [ {
+          "description" : "Queries and updates accounts in",
+          "destinationId" : "5",
+          "id" : "33",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Initiates deposits and transfers in",
+          "destinationId" : "6",
+          "id" : "34",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Initiates card and bank transfers in",
+          "destinationId" : "7",
+          "id" : "35",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container,Web",
+        "technology" : "Go"
+      }, {
+        "description" : "Holds the customer account records.",
+        "documentation" : { },
+        "id" : "5",
+        "name" : "Account Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "accounts"
+        },
+        "relationships" : [ {
+          "description" : "Reads and writes account records in",
+          "destinationId" : "18",
+          "id" : "54",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Processes deposits, withdrawals, and transfers.",
+        "documentation" : { },
+        "id" : "6",
+        "name" : "Transaction Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "transactions"
+        },
+        "relationships" : [ {
+          "description" : "Records every movement in",
+          "destinationId" : "17",
+          "id" : "36",
+          "sourceId" : "6",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        }, {
+          "description" : "Scores each transaction with",
+          "destinationId" : "9",
+          "id" : "37",
+          "sourceId" : "6",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Publishes transaction events to",
+          "destinationId" : "16",
+          "id" : "38",
+          "sourceId" : "6",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        }, {
+          "description" : "Writes audit entries to",
+          "destinationId" : "19",
+          "id" : "39",
+          "sourceId" : "6",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Executes card payments and bank transfers.",
+        "documentation" : { },
+        "id" : "7",
+        "name" : "Payment Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "payments"
+        },
+        "relationships" : [ {
+          "description" : "Routes card authorisations through",
+          "destinationId" : "22",
+          "id" : "40",
+          "sourceId" : "7",
+          "tags" : "Relationship",
+          "technology" : "ISO 8583"
+        }, {
+          "description" : "Fetches conversion rates from",
+          "destinationId" : "14",
+          "id" : "42",
+          "sourceId" : "7",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Checks card status in",
+          "destinationId" : "8",
+          "id" : "43",
+          "sourceId" : "7",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Manages debit and credit cards.",
+        "documentation" : { },
+        "id" : "8",
+        "name" : "Card Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "cards"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Kotlin"
+      }, {
+        "description" : "Scores transactions for fraud.",
+        "documentation" : { },
+        "id" : "9",
+        "name" : "Fraud Detection Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "fraud"
+        },
+        "relationships" : [ {
+          "description" : "Publishes fraud alerts to",
+          "destinationId" : "16",
+          "id" : "47",
+          "sourceId" : "9",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Sends email and SMS alerts.",
+        "documentation" : { },
+        "id" : "10",
+        "name" : "Notification Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "notifications"
+        },
+        "relationships" : [ {
+          "description" : "Consumes events from",
+          "destinationId" : "16",
+          "id" : "48",
+          "sourceId" : "10",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Node.js"
+      }, {
+        "description" : "Verifies new customers.",
+        "documentation" : { },
+        "id" : "11",
+        "name" : "Onboarding Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "onboarding"
+        },
+        "relationships" : [ {
+          "description" : "Requests credit checks from",
+          "destinationId" : "23",
+          "id" : "44",
+          "sourceId" : "11",
+          "tags" : "Relationship",
+          "technology" : "HTTPS/JSON"
+        }, {
+          "description" : "Stores verified profiles in",
+          "destinationId" : "18",
+          "id" : "46",
+          "sourceId" : "11",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Generates monthly statements.",
+        "documentation" : { },
+        "id" : "12",
+        "name" : "Statements Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "statements"
+        },
+        "relationships" : [ {
+          "description" : "Reads account movements from",
+          "destinationId" : "17",
+          "id" : "49",
+          "sourceId" : "12",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        }, {
+          "description" : "Writes statement PDFs to",
+          "destinationId" : "21",
+          "id" : "50",
+          "sourceId" : "12",
+          "tags" : "Relationship",
+          "technology" : "HTTPS/JSON"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Processes standing orders and direct debits.",
+        "documentation" : { },
+        "id" : "13",
+        "name" : "Direct Debit Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "directDebit"
+        },
+        "relationships" : [ {
+          "description" : "Creates standing-order transfers in",
+          "destinationId" : "6",
+          "id" : "53",
+          "sourceId" : "13",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Provides currency conversion rates.",
+        "documentation" : { },
+        "id" : "14",
+        "name" : "Exchange Rates Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "exchangeRates"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Go"
+      }, {
+        "description" : "Runs the nightly interest calculation and reconciliation.",
+        "documentation" : { },
+        "id" : "15",
+        "name" : "Batch Scheduler",
+        "properties" : {
+          "structurizr.dsl.identifier" : "batch"
+        },
+        "relationships" : [ {
+          "description" : "Recalculates interest in",
+          "destinationId" : "17",
+          "id" : "51",
+          "sourceId" : "15",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        }, {
+          "description" : "Reconciles profiles in",
+          "destinationId" : "18",
+          "id" : "52",
+          "sourceId" : "15",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Carries internal events between the application parts.",
+        "documentation" : { },
+        "id" : "16",
+        "name" : "Event Queue",
+        "properties" : {
+          "structurizr.dsl.identifier" : "queue"
+        },
+        "tags" : "Element,Container,Queue",
+        "technology" : "RabbitMQ"
+      }, {
+        "description" : "Stores every account movement.",
+        "documentation" : { },
+        "id" : "17",
+        "name" : "Ledger Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "ledger"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Stores account and profile records.",
+        "documentation" : { },
+        "id" : "18",
+        "name" : "Customer Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "customersDb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Stores the compliance audit trail.",
+        "documentation" : { },
+        "id" : "19",
+        "name" : "Audit Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "auditDb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Stores sessions and frequently read account data.",
+        "documentation" : { },
+        "id" : "20",
+        "name" : "Cache",
+        "properties" : {
+          "structurizr.dsl.identifier" : "cache"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Redis"
+      }, {
+        "description" : "Holds the generated statement PDFs.",
+        "documentation" : { },
+        "id" : "21",
+        "name" : "Document Store",
+        "properties" : {
+          "structurizr.dsl.identifier" : "documents"
+        },
+        "tags" : "Element,Container",
+        "technology" : "S3"
+      } ],
+      "description" : "The company's online banking platform.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Bank Portal",
+      "properties" : {
+        "structurizr.dsl.identifier" : "bank"
+      },
+      "relationships" : [ {
+        "description" : "Routes card authorisations through",
+        "destinationId" : "22",
+        "id" : "41",
+        "linkedRelationshipId" : "40",
+        "sourceId" : "2",
+        "technology" : "ISO 8583"
+      }, {
+        "description" : "Requests credit checks from",
+        "destinationId" : "23",
+        "id" : "45",
+        "linkedRelationshipId" : "44",
+        "sourceId" : "2",
+        "technology" : "HTTPS/JSON"
+      } ],
+      "tags" : "Element,Software System"
+    }, {
+      "description" : "Authorises card payments.",
+      "documentation" : { },
+      "id" : "22",
+      "name" : "Card Payment Network",
+      "properties" : {
+        "structurizr.dsl.identifier" : "cardNetwork"
+      },
+      "tags" : "Element,Software System,External"
+    }, {
+      "description" : "Provides credit checks for onboarding.",
+      "documentation" : { },
+      "id" : "23",
+      "name" : "Credit Reference Agency",
+      "properties" : {
+        "structurizr.dsl.identifier" : "creditAgency"
+      },
+      "tags" : "Element,Software System,External"
+    } ]
+  },
+  "name" : "Bank Portal",
+  "properties" : {
+    "structurizr.inspection.error" : "4",
+    "structurizr.dsl" : "d29ya3NwYWNlICJCYW5rIFBvcnRhbCIgIk9ubGluZSBiYW5raW5nIGZvciBjdXN0b21lcnMuIiB7CiAgICBtb2RlbCB7CiAgICAgICAgY3VzdG9tZXIgPSBwZXJzb24gIkJhbmsgQ3VzdG9tZXIiICJNYW5hZ2VzIGFjY291bnRzLCBtb3ZlcyBtb25leSwgYW5kIHRyYWNrcyBhY3Rpdml0eS4iCiAgICAgICAgYmFuayA9IHNvZnR3YXJlU3lzdGVtICJCYW5rIFBvcnRhbCIgIlRoZSBjb21wYW55J3Mgb25saW5lIGJhbmtpbmcgcGxhdGZvcm0uIiB7CiAgICAgICAgICAgIHdlYiA9IGNvbnRhaW5lciAiV2ViIFBvcnRhbCIgIldoZXJlIGN1c3RvbWVycyBsb2cgaW4gYW5kIG1hbmFnZSB0aGVpciBhY2NvdW50cy4iICJQeXRob24vRmFzdEFQSSIgIldlYiIKICAgICAgICAgICAgbW9iaWxlID0gY29udGFpbmVyICJNb2JpbGUgQXBwIEJhY2tlbmQiICJTZXJ2ZXMgdGhlIGJhbmsncyBtb2JpbGUgYXBwLiIgIkdvIiAiV2ViIgogICAgICAgICAgICBhY2NvdW50cyA9IGNvbnRhaW5lciAiQWNjb3VudCBTZXJ2aWNlIiAiSG9sZHMgdGhlIGN1c3RvbWVyIGFjY291bnQgcmVjb3Jkcy4iICJKYXZhL1NwcmluZyIKICAgICAgICAgICAgdHJhbnNhY3Rpb25zID0gY29udGFpbmVyICJUcmFuc2FjdGlvbiBTZXJ2aWNlIiAiUHJvY2Vzc2VzIGRlcG9zaXRzLCB3aXRoZHJhd2FscywgYW5kIHRyYW5zZmVycy4iICJKYXZhL1NwcmluZyIKICAgICAgICAgICAgcGF5bWVudHMgPSBjb250YWluZXIgIlBheW1lbnQgU2VydmljZSIgIkV4ZWN1dGVzIGNhcmQgcGF5bWVudHMgYW5kIGJhbmsgdHJhbnNmZXJzLiIgIkphdmEvU3ByaW5nIgogICAgICAgICAgICBjYXJkcyA9IGNvbnRhaW5lciAiQ2FyZCBTZXJ2aWNlIiAiTWFuYWdlcyBkZWJpdCBhbmQgY3JlZGl0IGNhcmRzLiIgIktvdGxpbiIKICAgICAgICAgICAgZnJhdWQgPSBjb250YWluZXIgIkZyYXVkIERldGVjdGlvbiBTZXJ2aWNlIiAiU2NvcmVzIHRyYW5zYWN0aW9ucyBmb3IgZnJhdWQuIiAiUHl0aG9uIgogICAgICAgICAgICBub3RpZmljYXRpb25zID0gY29udGFpbmVyICJOb3RpZmljYXRpb24gU2VydmljZSIgIlNlbmRzIGVtYWlsIGFuZCBTTVMgYWxlcnRzLiIgIk5vZGUuanMiCiAgICAgICAgICAgIG9uYm9hcmRpbmcgPSBjb250YWluZXIgIk9uYm9hcmRpbmcgU2VydmljZSIgIlZlcmlmaWVzIG5ldyBjdXN0b21lcnMuIiAiUHl0aG9uIgogICAgICAgICAgICBzdGF0ZW1lbnRzID0gY29udGFpbmVyICJTdGF0ZW1lbnRzIFNlcnZpY2UiICJHZW5lcmF0ZXMgbW9udGhseSBzdGF0ZW1lbnRzLiIgIkphdmEvU3ByaW5nIgogICAgICAgICAgICBkaXJlY3REZWJpdCA9IGNvbnRhaW5lciAiRGlyZWN0IERlYml0IFNlcnZpY2UiICJQcm9jZXNzZXMgc3RhbmRpbmcgb3JkZXJzIGFuZCBkaXJlY3QgZGViaXRzLiIgIkphdmEvU3ByaW5nIgogICAgICAgICAgICBleGNoYW5nZVJhdGVzID0gY29udGFpbmVyICJFeGNoYW5nZSBSYXRlcyBTZXJ2aWNlIiAiUHJvdmlkZXMgY3VycmVuY3kgY29udmVyc2lvbiByYXRlcy4iICJHbyIKICAgICAgICAgICAgYmF0Y2ggPSBjb250YWluZXIgIkJhdGNoIFNjaGVkdWxlciIgIlJ1bnMgdGhlIG5pZ2h0bHkgaW50ZXJlc3QgY2FsY3VsYXRpb24gYW5kIHJlY29uY2lsaWF0aW9uLiIgIkphdmEiCiAgICAgICAgICAgIHF1ZXVlID0gY29udGFpbmVyICJFdmVudCBRdWV1ZSIgIkNhcnJpZXMgaW50ZXJuYWwgZXZlbnRzIGJldHdlZW4gdGhlIGFwcGxpY2F0aW9uIHBhcnRzLiIgIlJhYmJpdE1RIiAiUXVldWUiCiAgICAgICAgICAgIGxlZGdlciA9IGNvbnRhaW5lciAiTGVkZ2VyIERhdGFiYXNlIiAiU3RvcmVzIGV2ZXJ5IGFjY291bnQgbW92ZW1lbnQuIiAiUG9zdGdyZVNRTCIgIkRhdGFiYXNlIgogICAgICAgICAgICBjdXN0b21lcnNEYiA9IGNvbnRhaW5lciAiQ3VzdG9tZXIgRGF0YWJhc2UiICJTdG9yZXMgYWNjb3VudCBhbmQgcHJvZmlsZSByZWNvcmRzLiIgIlBvc3RncmVTUUwiICJEYXRhYmFzZSIKICAgICAgICAgICAgYXVkaXREYiA9IGNvbnRhaW5lciAiQXVkaXQgRGF0YWJhc2UiICJTdG9yZXMgdGhlIGNvbXBsaWFuY2UgYXVkaXQgdHJhaWwuIiAiUG9zdGdyZVNRTCIgIkRhdGFiYXNlIgogICAgICAgICAgICBjYWNoZSA9IGNvbnRhaW5lciAiQ2FjaGUiICJTdG9yZXMgc2Vzc2lvbnMgYW5kIGZyZXF1ZW50bHkgcmVhZCBhY2NvdW50IGRhdGEuIiAiUmVkaXMiCiAgICAgICAgICAgIGRvY3VtZW50cyA9IGNvbnRhaW5lciAiRG9jdW1lbnQgU3RvcmUiICJIb2xkcyB0aGUgZ2VuZXJhdGVkIHN0YXRlbWVudCBQREZzLiIgIlMzIgogICAgICAgIH0KICAgICAgICBjYXJkTmV0d29yayA9IHNvZnR3YXJlU3lzdGVtICJDYXJkIFBheW1lbnQgTmV0d29yayIgIkF1dGhvcmlzZXMgY2FyZCBwYXltZW50cy4iICJFeHRlcm5hbCIKICAgICAgICBjcmVkaXRBZ2VuY3kgPSBzb2Z0d2FyZVN5c3RlbSAiQ3JlZGl0IFJlZmVyZW5jZSBBZ2VuY3kiICJQcm92aWRlcyBjcmVkaXQgY2hlY2tzIGZvciBvbmJvYXJkaW5nLiIgIkV4dGVybmFsIgoKICAgICAgICBjdXN0b21lciAtPiB3ZWIgIk1hbmFnZXMgYWNjb3VudHMgdGhyb3VnaCIgIkhUVFBTL0pTT04iCiAgICAgICAgY3VzdG9tZXIgLT4gbW9iaWxlICJNYW5hZ2VzIGFjY291bnRzIHRocm91Z2giICJIVFRQUy9KU09OIgogICAgICAgIHdlYiAtPiBhY2NvdW50cyAiUXVlcmllcyBhbmQgdXBkYXRlcyBhY2NvdW50cyBpbiIgImdSUEMiCiAgICAgICAgd2ViIC0+IHRyYW5zYWN0aW9ucyAiSW5pdGlhdGVzIGRlcG9zaXRzIGFuZCB0cmFuc2ZlcnMgaW4iICJnUlBDIgogICAgICAgIHdlYiAtPiBwYXltZW50cyAiSW5pdGlhdGVzIGNhcmQgYW5kIGJhbmsgdHJhbnNmZXJzIGluIiAiZ1JQQyIKICAgICAgICB3ZWIgLT4gc3RhdGVtZW50cyAiUmVxdWVzdHMgc3RhdGVtZW50cyBmcm9tIiAiZ1JQQyIKICAgICAgICB3ZWIgLT4gZGlyZWN0RGViaXQgIk1hbmFnZXMgc3RhbmRpbmcgb3JkZXJzIGluIiAiZ1JQQyIKICAgICAgICB3ZWIgLT4gY2FjaGUgIlJlYWRzIGFuZCB3cml0ZXMgc2Vzc2lvbnMgaW4iICJSRVNQIgogICAgICAgIG1vYmlsZSAtPiBhY2NvdW50cyAiUXVlcmllcyBhbmQgdXBkYXRlcyBhY2NvdW50cyBpbiIgImdSUEMiCiAgICAgICAgbW9iaWxlIC0+IHRyYW5zYWN0aW9ucyAiSW5pdGlhdGVzIGRlcG9zaXRzIGFuZCB0cmFuc2ZlcnMgaW4iICJnUlBDIgogICAgICAgIG1vYmlsZSAtPiBwYXltZW50cyAiSW5pdGlhdGVzIGNhcmQgYW5kIGJhbmsgdHJhbnNmZXJzIGluIiAiZ1JQQyIKICAgICAgICB0cmFuc2FjdGlvbnMgLT4gbGVkZ2VyICJSZWNvcmRzIGV2ZXJ5IG1vdmVtZW50IGluIiAiU1FMIgogICAgICAgIHRyYW5zYWN0aW9ucyAtPiBmcmF1ZCAiU2NvcmVzIGVhY2ggdHJhbnNhY3Rpb24gd2l0aCIgImdSUEMiCiAgICAgICAgdHJhbnNhY3Rpb25zIC0+IHF1ZXVlICJQdWJsaXNoZXMgdHJhbnNhY3Rpb24gZXZlbnRzIHRvIiAiQU1RUCIKICAgICAgICB0cmFuc2FjdGlvbnMgLT4gYXVkaXREYiAiV3JpdGVzIGF1ZGl0IGVudHJpZXMgdG8iICJTUUwiCiAgICAgICAgcGF5bWVudHMgLT4gY2FyZE5ldHdvcmsgIlJvdXRlcyBjYXJkIGF1dGhvcmlzYXRpb25zIHRocm91Z2giICJJU08gODU4MyIKICAgICAgICBwYXltZW50cyAtPiBleGNoYW5nZVJhdGVzICJGZXRjaGVzIGNvbnZlcnNpb24gcmF0ZXMgZnJvbSIgImdSUEMiCiAgICAgICAgcGF5bWVudHMgLT4gY2FyZHMgIkNoZWNrcyBjYXJkIHN0YXR1cyBpbiIgImdSUEMiCiAgICAgICAgb25ib2FyZGluZyAtPiBjcmVkaXRBZ2VuY3kgIlJlcXVlc3RzIGNyZWRpdCBjaGVja3MgZnJvbSIgIkhUVFBTL0pTT04iCiAgICAgICAgb25ib2FyZGluZyAtPiBjdXN0b21lcnNEYiAiU3RvcmVzIHZlcmlmaWVkIHByb2ZpbGVzIGluIiAiU1FMIgogICAgICAgIGZyYXVkIC0+IHF1ZXVlICJQdWJsaXNoZXMgZnJhdWQgYWxlcnRzIHRvIiAiQU1RUCIKICAgICAgICBub3RpZmljYXRpb25zIC0+IHF1ZXVlICJDb25zdW1lcyBldmVudHMgZnJvbSIgIkFNUVAiCiAgICAgICAgc3RhdGVtZW50cyAtPiBsZWRnZXIgIlJlYWRzIGFjY291bnQgbW92ZW1lbnRzIGZyb20iICJTUUwiCiAgICAgICAgc3RhdGVtZW50cyAtPiBkb2N1bWVudHMgIldyaXRlcyBzdGF0ZW1lbnQgUERGcyB0byIgIkhUVFBTL0pTT04iCiAgICAgICAgYmF0Y2ggLT4gbGVkZ2VyICJSZWNhbGN1bGF0ZXMgaW50ZXJlc3QgaW4iICJTUUwiCiAgICAgICAgYmF0Y2ggLT4gY3VzdG9tZXJzRGIgIlJlY29uY2lsZXMgcHJvZmlsZXMgaW4iICJTUUwiCiAgICAgICAgZGlyZWN0RGViaXQgLT4gdHJhbnNhY3Rpb25zICJDcmVhdGVzIHN0YW5kaW5nLW9yZGVyIHRyYW5zZmVycyBpbiIgImdSUEMiCiAgICAgICAgYWNjb3VudHMgLT4gY3VzdG9tZXJzRGIgIlJlYWRzIGFuZCB3cml0ZXMgYWNjb3VudCByZWNvcmRzIGluIiAiU1FMIgogICAgfQogICAgdmlld3MgewogICAgICAgIHN5c3RlbUNvbnRleHQgYmFuayAiQmFua0NvbnRleHQiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICAgICAgY29udGFpbmVyIGJhbmsgIkFsbENvbnRhaW5lcnMiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICAgICAgY29udGFpbmVyIGJhbmsgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KICAgIH0KfQ==",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "containerViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "4",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "6",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "7",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "8",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "9",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "10",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "11",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "12",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "13",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "14",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "15",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "16",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "17",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "18",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "19",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "20",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "21",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "23",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "AllContainers",
+      "name" : "Container View: Bank Portal",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "24"
+      }, {
+        "id" : "26"
+      }, {
+        "id" : "27"
+      }, {
+        "id" : "28"
+      }, {
+        "id" : "29"
+      }, {
+        "id" : "30"
+      }, {
+        "id" : "31"
+      }, {
+        "id" : "32"
+      }, {
+        "id" : "33"
+      }, {
+        "id" : "34"
+      }, {
+        "id" : "35"
+      }, {
+        "id" : "36"
+      }, {
+        "id" : "37"
+      }, {
+        "id" : "38"
+      }, {
+        "id" : "39"
+      }, {
+        "id" : "40"
+      }, {
+        "id" : "42"
+      }, {
+        "id" : "43"
+      }, {
+        "id" : "44"
+      }, {
+        "id" : "46"
+      }, {
+        "id" : "47"
+      }, {
+        "id" : "48"
+      }, {
+        "id" : "49"
+      }, {
+        "id" : "50"
+      }, {
+        "id" : "51"
+      }, {
+        "id" : "52"
+      }, {
+        "id" : "53"
+      }, {
+        "id" : "54"
+      } ],
+      "softwareSystemId" : "2"
+    }, {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "4",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "6",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "7",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "8",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "9",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "10",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "11",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "12",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "13",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "14",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "15",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "16",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "17",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "18",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "19",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "20",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "21",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "23",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "generatedKey" : true,
+      "key" : "Container-001",
+      "name" : "Container View: Bank Portal",
+      "order" : 3,
+      "relationships" : [ {
+        "id" : "24"
+      }, {
+        "id" : "26"
+      }, {
+        "id" : "27"
+      }, {
+        "id" : "28"
+      }, {
+        "id" : "29"
+      }, {
+        "id" : "30"
+      }, {
+        "id" : "31"
+      }, {
+        "id" : "32"
+      }, {
+        "id" : "33"
+      }, {
+        "id" : "34"
+      }, {
+        "id" : "35"
+      }, {
+        "id" : "36"
+      }, {
+        "id" : "37"
+      }, {
+        "id" : "38"
+      }, {
+        "id" : "39"
+      }, {
+        "id" : "40"
+      }, {
+        "id" : "42"
+      }, {
+        "id" : "43"
+      }, {
+        "id" : "44"
+      }, {
+        "id" : "46"
+      }, {
+        "id" : "47"
+      }, {
+        "id" : "48"
+      }, {
+        "id" : "49"
+      }, {
+        "id" : "50"
+      }, {
+        "id" : "51"
+      }, {
+        "id" : "52"
+      }, {
+        "id" : "53"
+      }, {
+        "id" : "54"
+      } ],
+      "softwareSystemId" : "2"
+    } ],
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "23",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "BankContext",
+      "name" : "System Context View: Bank Portal",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "25"
+      }, {
+        "id" : "41"
+      }, {
+        "id" : "45"
+      } ],
+      "softwareSystemId" : "2"
+    } ]
+  }
+}

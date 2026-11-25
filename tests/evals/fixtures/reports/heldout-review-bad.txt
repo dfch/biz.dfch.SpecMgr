@@ -1,0 +1,9 @@
+Quick look at the model in `workspace.dsl` — it is mostly fine.
+
+- The Mobile App Backend description could mention which clients it serves.
+- Consider tagging the Stay Database and the Guest Database so styles can target them.
+- The GuestStay view could use a more descriptive title.
+- The Batch Scheduler and the Event Queue descriptions read a bit thin.
+- The workspace should probably define a scope; documentation and decisions are missing too.
+
+Nothing else stands out.

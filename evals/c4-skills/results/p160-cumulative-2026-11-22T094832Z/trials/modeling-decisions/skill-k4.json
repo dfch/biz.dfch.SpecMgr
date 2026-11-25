@@ -1,0 +1,135 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/modeling-decisions/skill-k4.events.ndjson",
+  "event_file_bytes": 198742,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-23T01:46:31Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (2365 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "2/ 2 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "exactly 3 container(s)",
+      "name": "container_count",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 4 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "description on all 6 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "2 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "1 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+      "name": "no_library_container",
+      "passed": true
+    },
+    {
+      "detail": "top-level element(s) with the External tag: ['Email Delivery Provider']",
+      "name": "external_system_tagged",
+      "passed": true
+    },
+    {
+      "detail": "no vague label on any of the 4 relationship(s)",
+      "name": "no_vague_labels",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.0045106499892426655,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 1,
+    "inspect_findings": [
+      "ERROR: The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Parcel Tracker\" has containers, but is missing decisions."
+    ],
+    "inspect_triage": {
+      "ERROR: The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected"
+    },
+    "parse_calls": 1,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "c4-modeling",
+      "structurizr-validate-loop",
+      "structurizr-dsl-authoring"
+    ],
+    "steps": 10,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 305599,
+      "output": 16814,
+      "reasoning": 0
+    },
+    "tool_calls": 16,
+    "validate_calls": 1,
+    "validate_ok_calls": 1,
+    "validated_before_return": true,
+    "validated_by_file": true,
+    "validated_by_final_text": false,
+    "wall_time_s": 217.631,
+    "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n    model {\n        customer = person \"Customer\" \"Looks up the status of their parcels on the platform.\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"The parcel delivery tracking platform, owned and operated by our company.\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments. Embeds the shared pricing rules library, which computes delivery prices from weight and zone.\" \"Web application\"\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers. Embeds the shared pricing rules library, which computes delivery prices from weight and zone.\" \"Service\"\n            database = container \"Database\" \"Stores shipments and dispatch records.\" \"Database\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"Sends customer notification emails on behalf of the platform. Operated by a different organization.\" \"External\"\n\n        customer -> webPortal \"Looks up the status of their parcels\" \"HTTPS/JSON\"\n        webPortal -> database \"Stores and retrieves shipments\" \"SQL\"\n        dispatchService -> database \"Stores and retrieves dispatch records\" \"SQL\"\n        dispatchService -> emailProvider \"Sends customer notification emails\" \"SMTP\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" {\n            include *\n            autoLayout\n            title \"System Context for Parcel Tracker\"\n        }\n\n        container parcelTracker \"Containers\" {\n            include *\n            autoLayout\n            title \"Containers for Parcel Tracker\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Database\" {\n                shape Cylinder\n                background #438DD5\n                color #ffffff\n            }\n        }\n    }\n\n    configuration {\n        scope softwaresystem\n    }\n}\n"
+  },
+  "passed": true,
+  "plan": {
+    "case_id": "modeling-decisions",
+    "condition": "skill",
+    "k_index": 4
+  },
+  "run_id": "p160-cumulative-2026-11-22T094832Z",
+  "skills_installed": [
+    "c4-model-review",
+    "c4-modeling",
+    "c4-view-design",
+    "structurizr-dsl-authoring",
+    "structurizr-validate-loop"
+  ],
+  "started_at": "2026-11-23T01:42:51Z",
+  "timeout": false,
+  "wall_time_s": 219.3645466690068,
+  "workdir": "/home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.skill-k4.p160-cumulative-2026-11-22T094832Z"
+}

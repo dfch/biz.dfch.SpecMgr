@@ -155,6 +155,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   change; the file count stays 32, the count pin unchanged)
   (feat-263-delegation-prompts Phase 110, GitHub issue #263).
 
+- The five C4/Structurizr OpenCode skills under `.opencode/skill/`
+  (`c4-modeling`, `structurizr-dsl-authoring`, `structurizr-validate-loop`,
+  `c4-view-design`, `c4-model-review` — feat-250-c4-structurizr-skills,
+  GitHub issue #250): thin `SKILL.md` files (one single-task trigger
+  description each, the Structurizr-MCP limits stated per-skill, the
+  no-MCP behavior) with markdown reference files, a per-skill
+  `NOTICE.md` + `source-map.md` for the adapted MIT text
+  (`jrjsmrtn/c4-skills` @ `e86d8a91…`, `passionsplay/structurizr-skill` @
+  `5e45154e…`, the Structurizr docs @ `530a9645…` — the root `NOTICE`
+  gains the adapted-text sections, `evals/c4-skills/results/
+  provenance.md` the commit/license/check-date record), and a pinning
+  test each (`tests/opencode/test_skill_<name>.py`, 24/27/27/26/30
+  tests). `structurizr-validate-loop` mandates parse → validate →
+  inspect with a never-return-unvalidated-to-`OK` rule and fix/
+  expected/reported triage of every `inspect` finding;
+  `c4-model-review` is read-only (it reports findings and never edits
+  the model). The reproducible measurement harness under the new
+  top-level, development-only `evals/` directory (`evals/c4-skills/`,
+  Python standard library only — never in the wheel, never in the
+  harness bundle): one isolated OpenCode container per trial against
+  the pinned local model (`qwen3.8-27b-bf16-896k`, the recorded version
+  tuple), the `none`/`upstream`/`skill` conditions (the upstream
+  `jrjsmrtn/c4-skills` fetched at the pinned SHA, deliberately
+  unpatched), gates from the real Structurizr CLI export JSON,
+  per-case result caching, the shared-vLLM busy-window refusal, and
+  the committed results under `evals/c4-skills/results/` (per-phase
+  prove/iteration/held-out runs with seeds, variant hashes and
+  margins). Its unit tests under `tests/evals/` (the graders'
+  known-good/known-bad split over pre-exported JSON fixtures, no model
+  call; the live-CLI tests skip when Docker is missing) and the
+  repository housekeeping (`.gitignore` for the trial work dirs and
+  cache, ruff/pylint/pytest treatment of `evals/` and `tests/evals/`)
+  round it out. Each skill phase ended under its fixed stop rule (not
+  worse than `none`, within the locked margin of the comparison
+  condition, ≤3 iterations, one held-out case at the end); Phase 140
+  (`c4-view-design`) passed it only under the user's Option A clause
+  revision (2026-11-15: "clears its own gates" operationalized over
+  the nine skill-owned `design-views` gates, the locked 12-gate set
+  re-demanded in the Phase 160 cumulative run); the
+  harness bundle grows to 55 entries (the 28 skill markdown files)
+  with the count pin in `tests/commands/test_harness_bundle.py`
+  updated accordingly.
+
 ### Changed
 
 - The `specmgr harness-bundle` generator and its install protocol, refined

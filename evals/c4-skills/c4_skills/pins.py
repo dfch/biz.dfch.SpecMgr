@@ -29,12 +29,23 @@ The version tuple (REQ-008 reproducibility) is the canonical JSON of
 ``version_tuple_hash`` recorded with every run and used as a result-cache
 key component (a changed pin invalidates every cached ``none``/
 ``upstream`` result).
+
+Task 190.150 (I4): the four model/endpoint pins -- :data:`VLLM_ENDPOINT`,
+:data:`VLLM_METRICS_URL`, :data:`MODEL_ID` and :data:`PROVIDER_ID` -- can
+be overridden by the environment variables of :data:`PIN_OVERRIDE_ENV`,
+read once at import time. An override is recorded in the preflight and in
+the version tuple (``pin_overrides``), so cached results never mix
+models or endpoints; with none of the variables set, every pin and the
+version tuple hash are exactly the pinned defaults.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
+from collections.abc import Mapping
 from pathlib import Path
 
 #: The harness root (evals/c4-skills), the parent of this package. Both the
@@ -66,11 +77,71 @@ CONDITIONS: tuple[str, ...] = (CONDITION_NONE, CONDITION_UPSTREAM, CONDITION_SKI
 CACHEABLE_CONDITIONS: frozenset[str] = frozenset({CONDITION_NONE, CONDITION_UPSTREAM})
 
 # ---------------------------------------------------------------------------
+# the environment overrides of the model/endpoint pins (Task 190.150, I4)
+# ---------------------------------------------------------------------------
+
+#: The environment variable that overrides each overridable pin.
+PIN_OVERRIDE_ENV: dict[str, str] = {
+    "VLLM_ENDPOINT": "C4EVAL_VLLM_ENDPOINT",
+    "VLLM_METRICS_URL": "C4EVAL_VLLM_METRICS_URL",
+    "MODEL_ID": "C4EVAL_MODEL_ID",
+    "PROVIDER_ID": "C4EVAL_PROVIDER_ID",
+}
+
+#: The accepted shape of each override (fullmatch). The endpoint keeps the
+#: `http://<host>:<port>/v1` shape the forwarder and the gateway URL derive
+#: their host and port from; a provider id is a JSON key and the first half
+#: of OpenCode's `<provider>/<model>` id, so it carries no `/`.
+_PIN_OVERRIDE_PATTERNS: dict[str, re.Pattern[str]] = {
+    "VLLM_ENDPOINT": re.compile(r"http://[A-Za-z0-9.\-]+:[0-9]{1,5}/v1"),
+    "VLLM_METRICS_URL": re.compile(r"http://[A-Za-z0-9.\-]+:[0-9]{1,5}(/\S*)?"),
+    "MODEL_ID": re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/\-]*"),
+    "PROVIDER_ID": re.compile(r"[A-Za-z0-9][A-Za-z0-9._\-]*"),
+}
+
+
+def parse_pin_overrides(environ: Mapping[str, str]) -> tuple[dict[str, str], list[str]]:
+    """Parse the pin overrides from an environment mapping (pure).
+
+    A variable that is absent, empty or whitespace-only is unset. A set
+    value is stripped and must fullmatch its pin's shape; an invalid value
+    is not applied and is reported instead (the CLI refuses to start with
+    a usage error, and the preflight lists it as a problem).
+
+    Args:
+        environ: The environment (e.g. `os.environ`).
+
+    Returns:
+        `(overrides, errors)`: the applied overrides keyed by pin name
+        (sorted), and one message per invalid variable.
+    """
+    assert isinstance(environ, Mapping)
+    overrides: dict[str, str] = {}
+    errors: list[str] = []
+    for pin, variable in PIN_OVERRIDE_ENV.items():
+        raw = environ.get(variable)
+        if raw is None or not raw.strip():
+            continue
+        value = raw.strip()
+        if not _PIN_OVERRIDE_PATTERNS[pin].fullmatch(value):
+            errors.append(f"{variable}={raw!r} is not a valid {pin} override")
+            continue
+        overrides[pin] = value
+    result = (dict(sorted(overrides.items())), errors)
+    return result
+
+
+#: The overrides in effect for this process and the invalid variables
+#: (both empty when no `C4EVAL_*` pin variable is set).
+PIN_OVERRIDES, PIN_OVERRIDE_ERRORS = parse_pin_overrides(os.environ)
+
+# ---------------------------------------------------------------------------
 # model and provider (the shared sys0 vLLM server)
 # ---------------------------------------------------------------------------
 
-#: The OpenCode provider id the harness injects (REQ-008).
-PROVIDER_ID = "vllm-sys0"
+#: The OpenCode provider id the harness injects (REQ-008); overridable by
+#: `C4EVAL_PROVIDER_ID`.
+PROVIDER_ID = PIN_OVERRIDES.get("PROVIDER_ID", "vllm-sys0")
 
 #: The vLLM OpenAI-compatible endpoint the harness PROBES from the host.
 #: The shared vLLM server actually answers on `0.0.0.0:8081` (verified via
@@ -82,7 +153,8 @@ PROVIDER_ID = "vllm-sys0"
 #: when the 0.0.0.0 bind already owns the gateway address:port -- the
 #: option-C conditional in `runner.establish_vllm_access` (strictly
 #: verified in that case). The trial's vLLM URL is mode-invariant.
-VLLM_ENDPOINT = "http://127.0.0.1:8081/v1"
+#: Overridable by `C4EVAL_VLLM_ENDPOINT` (same `http://host:port/v1` shape).
+VLLM_ENDPOINT = PIN_OVERRIDES.get("VLLM_ENDPOINT", "http://127.0.0.1:8081/v1")
 
 
 def vllm_host() -> str:
@@ -113,12 +185,14 @@ def vllm_host_port() -> int:
 
 
 #: The Prometheus metrics endpoint the runner uses for the idle/contention
-#: checks (`vllm:num_requests_running`).
-VLLM_METRICS_URL = "http://127.0.0.1:8081/metrics"
+#: checks (`vllm:num_requests_running`); overridable by
+#: `C4EVAL_VLLM_METRICS_URL`.
+VLLM_METRICS_URL = PIN_OVERRIDES.get("VLLM_METRICS_URL", "http://127.0.0.1:8081/metrics")
 
 #: The model id served at :data:`VLLM_ENDPOINT` (verified via
-#: ``GET /v1/models``: `max_model_len` 917504).
-MODEL_ID = "qwen3.8-27b-bf16-896k"
+#: ``GET /v1/models``: `max_model_len` 917504); overridable by
+#: `C4EVAL_MODEL_ID`.
+MODEL_ID = PIN_OVERRIDES.get("MODEL_ID", "qwen3.8-27b-bf16-896k")
 
 #: The model's context limit as reported by the server (`max_model_len`).
 MODEL_MAX_CONTEXT = 917504
@@ -243,10 +317,13 @@ K_FULL = 5
 K_SMOKE = 2
 
 #: The case set of the full run (Measurement); Phase 100 only exercises the
-#: smoke case of it.
+#: smoke case of it. Phase 120 added `fix-dsl` (its home phase's case),
+#: Phase 130 adds `modeling-decisions` (its home phase's case) in canonical
+#: phase order between the Phase 120 and Phase 140 cases.
 FULL_CASES: tuple[str, ...] = (
     "create-system",
     "fix-dsl",
+    "modeling-decisions",
     "mcp-limits",
     "design-views",
     "review-model",
@@ -263,6 +340,34 @@ SMOKE_CASE = "smoke-create-system"
 #: once, at the end of its phase (Stop Rule).
 HELDOUT_VALIDATE_CASE = "heldout-validate"
 
+#: The Phase 120 held-out case (Task 120.100/120.140): the same task shape
+#: as `fix-dsl` (a seeded broken workspace to repair) in a different
+#: domain. Deliberately NOT part of `FULL_CASES` -- held out exactly like
+#: `HELDOUT_VALIDATE_CASE`.
+HELDOUT_DSL_CASE = "heldout-dsl"
+
+#: The Phase 130 held-out case (Task 130.100/130.140): the same task shape
+#: as `modeling-decisions` (a fresh workspace from a business scenario
+#: whose modeling decisions are the test) in a different domain.
+#: Deliberately NOT part of `FULL_CASES` -- held out exactly like
+#: `HELDOUT_DSL_CASE`.
+HELDOUT_MODELING_CASE = "heldout-modeling"
+
+#: The Phase 140 held-out case (Task 140.100/140.140): the same task shape
+#: as `design-views` (a fresh workspace from a business scenario whose
+#: view design is the test -- more than 20 elements, so a single
+#: `include *` container view necessarily exceeds the element bound) in a
+#: different domain. Deliberately NOT part of `FULL_CASES` -- held out
+#: exactly like `HELDOUT_MODELING_CASE`.
+HELDOUT_VIEWS_CASE = "heldout-views"
+
+#: The Phase 150 held-out case (Task 150.100/150.140): the same task shape
+#: as `review-model` (a read-only quality review of a pre-seeded, valid
+#: workspace carrying locked defect classes -- the agent reports findings,
+#: never edits) in a different domain. Deliberately NOT part of
+#: `FULL_CASES` -- held out exactly like `HELDOUT_VIEWS_CASE`.
+HELDOUT_REVIEW_CASE = "heldout-review"
+
 
 def version_tuple() -> dict[str, object]:
     """Return the version tuple as a plain dict (REQ-008 reproducibility).
@@ -272,7 +377,9 @@ def version_tuple() -> dict[str, object]:
     the vLLM version pin, the host Python and jq versions, the upstream
     commit, the sampling parameters, the runner timeout and the trial
     network topology (Phase 110: `internal-bridge`, the per-run egress-
-    blocking private network).
+    blocking private network). Task 190.150 (I4): when any pin override is
+    in effect, the tuple also carries `pin_overrides` (absent otherwise, so
+    the default tuple and its hash are unchanged).
 
     Returns:
         A JSON-serialisable dict, sorted for stable hashing.
@@ -297,6 +404,8 @@ def version_tuple() -> dict[str, object]:
         "vllm_endpoint": VLLM_ENDPOINT,
         "vllm_version": VLLM_VERSION_PIN,
     }
+    if PIN_OVERRIDES:
+        result["pin_overrides"] = dict(PIN_OVERRIDES)
     result = dict(sorted(result.items()))
     return result
 
@@ -343,25 +452,40 @@ def skill_variant_hash(skill_files: list[tuple[str, bytes]]) -> str:
     return result
 
 
-def source_hash(paths: list[str]) -> str:
+def source_hash(paths: list[str], root: Path = HARNESS_ROOT) -> str:
     """Return the sha256 over the sorted bytes of the given source files.
 
     This is the ``grader_hash`` component of the result cache key
     (Task 100.130): a change to the graders or the case definitions
     invalidates the cached ``none``/``upstream`` results.
 
+    Each file contributes its path RELATIVE to `root` (POSIX form) plus
+    its bytes, so the digest does not depend on where the checkout lives
+    (Task 190.120, G3: until then the absolute paths folded in, and sys0
+    and sys1 recorded different grader hashes for identical sources).
+
     Args:
         paths: Absolute paths of the files that define the gates being
-            run (grader module + case module + fixture files).
+            run (grader module + case module + fixture files), each
+            inside `root`.
+        root: The directory the paths are made relative to (default: the
+            harness root `evals/c4-skills/`).
 
     Returns:
         A 64-character lowercase hex digest.
     """
     assert paths, "source_hash requires at least one path"
-    h = hashlib.sha256()
-    for path in sorted(paths):
+    assert isinstance(root, Path)
+    resolved_root = root.resolve()
+    entries: list[tuple[str, str]] = []
+    for path in paths:
         assert isinstance(path, str) and path
-        h.update(path.encode("utf-8"))
+        resolved = Path(path).resolve()
+        assert resolved.is_relative_to(resolved_root), f"{path} is not inside {resolved_root}"
+        entries.append((resolved.relative_to(resolved_root).as_posix(), path))
+    h = hashlib.sha256()
+    for rel_path, path in sorted(entries):
+        h.update(rel_path.encode("utf-8"))
         h.update(b"\x00")
         with open(path, "rb") as f:
             h.update(f.read())

@@ -1,0 +1,146 @@
+{
+  "cases": [
+    "review-model",
+    "no-trigger"
+  ],
+  "comparison": "upstream",
+  "conditions": [
+    "none",
+    "upstream",
+    "skill"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 30.0,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1200.9,
+    "mean_wall_time_s": 1168.4,
+    "measured_trials": 10,
+    "median_wall_time_s": 1200.8,
+    "within_budget_at_median": false
+  },
+  "k": 5,
+  "label": "p150-iter1",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 10,
+        "contended": 3,
+        "timeout": 3
+      },
+      "gate_failures": {
+        "crowded_view_found": 5,
+        "external_tag_found": 3,
+        "keyless_view_found": 3,
+        "library_container_found": 3,
+        "mcp_limit_stated": 5,
+        "no_false_findings": 2,
+        "orphan_found": 3,
+        "vague_label_found": 4
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        },
+        "review-model": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 10,
+      "wilson": [
+        0.0,
+        0.2775328030260577
+      ]
+    },
+    "skill": {
+      "flags": {
+        "cached": 0,
+        "contended": 5,
+        "timeout": 8
+      },
+      "gate_failures": {
+        "crowded_view_found": 3,
+        "external_tag_found": 3,
+        "keyless_view_found": 3,
+        "library_container_found": 3,
+        "mcp_limit_stated": 5,
+        "orphan_found": 3,
+        "vague_label_found": 3
+      },
+      "pass_power_k": 1.0240000000000006e-07,
+      "pass_rate": 0.2,
+      "passes": 2,
+      "per_case": {
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        },
+        "review-model": {
+          "passes": 2,
+          "trials": 5
+        }
+      },
+      "trials": 10,
+      "wilson": [
+        0.05668215093776688,
+        0.5098375308778678
+      ]
+    },
+    "upstream": {
+      "flags": {
+        "cached": 10,
+        "contended": 3,
+        "timeout": 2
+      },
+      "gate_failures": {
+        "crowded_view_found": 4,
+        "mcp_limit_stated": 5,
+        "no_false_findings": 5,
+        "no_mounted_skill_loaded": 5
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        },
+        "review-model": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 10,
+      "wilson": [
+        0.0,
+        0.2775328030260577
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p150-iter1-2026-11-17T202412Z",
+  "seed": 947052,
+  "skill_margins": {
+    "margin": {
+      "better_than_none": true,
+      "clearly_worse_cases": [],
+      "none_rate": 0.0,
+      "ok": true,
+      "rate_margin_pp": -20.0,
+      "within_rate_margin": true
+    },
+    "wilson": [
+      0.05668215093776688,
+      0.5098375308778678
+    ]
+  },
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

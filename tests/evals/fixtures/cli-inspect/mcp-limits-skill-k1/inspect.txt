@@ -1,0 +1,2 @@
+ERROR  | model.softwaresystem.documentation | The software system "Bookshop" has containers, but is missing documentation.
+ERROR  | model.softwaresystem.decisions     | The software system "Bookshop" has containers, but is missing decisions.

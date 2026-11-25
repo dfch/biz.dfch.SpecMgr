@@ -1,0 +1,118 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/design-views/skill-k3.events.ndjson",
+  "event_file_bytes": 35119,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-10T22:52:12Z",
+  "gates": [
+    {
+      "detail": "no .dsl file in the work dir",
+      "name": "dsl_written",
+      "passed": false
+    },
+    {
+      "detail": "CLI validate could not run (no DSL file)",
+      "name": "cli_valid",
+      "passed": false
+    },
+    {
+      "detail": "CLI export could not run (no DSL file)",
+      "name": "cli_export",
+      "passed": false
+    },
+    {
+      "detail": "no softwareSystem in the export JSON",
+      "name": "has_system",
+      "passed": false
+    },
+    {
+      "detail": "no person in the export JSON",
+      "name": "has_person",
+      "passed": false
+    },
+    {
+      "detail": "no elements in the export JSON",
+      "name": "elements_described",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "no validate call answered the OK marker (0 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views to check (vacuously within the bound)",
+      "name": "views_within_element_bound",
+      "passed": true
+    },
+    {
+      "detail": "no views at all in the export JSON",
+      "name": "explicit_view_keys",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.010652363067492843,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 0,
+    "inspect_findings": [],
+    "inspect_triage": {},
+    "parse_calls": 0,
+    "relationship_technology_coverage": null,
+    "skills_loaded": [
+      "c4-view-design"
+    ],
+    "steps": 5,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 58616,
+      "output": 11925,
+      "reasoning": 0
+    },
+    "tool_calls": 6,
+    "validate_calls": 0,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 124.098,
+    "workdir_dsl": null
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "design-views",
+    "condition": "skill",
+    "k_index": 3
+  },
+  "run_id": "p140-iter2-2026-11-10T221407Z",
+  "skills_installed": [
+    "c4-view-design"
+  ],
+  "started_at": "2026-11-10T22:32:11Z",
+  "timeout": true,
+  "wall_time_s": 1201.1162819098681,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/design-views.skill-k3.p140-iter2-2026-11-10T221407Z"
+}

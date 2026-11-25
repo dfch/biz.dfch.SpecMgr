@@ -1,0 +1,4 @@
+17:21:14.687 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from fixed-museum.dsl
+17:21:14.764 [main] INFO com.structurizr.command.ExportCommand -- Exporting with JsonWorkspaceExporter
+17:21:15.020 [main] INFO com.structurizr.command.ExportCommand -- Writing /w/out/fixed-museum.json
+17:21:15.020 [main] INFO com.structurizr.command.ExportCommand -- Finished

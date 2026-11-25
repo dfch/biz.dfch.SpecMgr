@@ -1,0 +1,116 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/heldout-views/skill-k2.events.ndjson",
+  "event_file_bytes": 412406,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-15T14:06:37Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (4899 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=1: 14:06:37.881 [main] ERROR com.structurizr.command.ValidateCommand -- Too many tokens, expected: systemContext <software system identifier> [key] [description] { at line 70 of /w/workspace.dsl: systemContext claimsCenter \"SystemContext\" \"System Context\" \"The system context diagram for Claims Center\" {",
+      "name": "cli_valid",
+      "passed": false
+    },
+    {
+      "detail": "CLI export rc=1: 14:06:38.691 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+      "name": "cli_export",
+      "passed": false
+    },
+    {
+      "detail": "no softwareSystem in the export JSON",
+      "name": "has_system",
+      "passed": false
+    },
+    {
+      "detail": "no person in the export JSON",
+      "name": "has_person",
+      "passed": false
+    },
+    {
+      "detail": "no elements in the export JSON",
+      "name": "elements_described",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "no validate call answered the OK marker (10 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views to check (vacuously within the bound)",
+      "name": "views_within_element_bound",
+      "passed": true
+    },
+    {
+      "detail": "no views at all in the export JSON",
+      "name": "explicit_view_keys",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.01028589199995622,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 10,
+    "inspect_findings": [],
+    "inspect_triage": {},
+    "parse_calls": 1,
+    "relationship_technology_coverage": null,
+    "skills_loaded": [],
+    "steps": 26,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 1620676,
+      "output": 79375,
+      "reasoning": 0
+    },
+    "tool_calls": 26,
+    "validate_calls": 10,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 1178.718,
+    "workdir_dsl": "workspace \"Claims Center\" \"A C4 model of the insurance claims platform\" {\n    configuration {\n        scope \"Landscape\"\n    }\n    model {\n        policyholder = person \"Policyholder\" \"Reports claims and tracks their progress\"\n        staff = person \"Staff\" \"Processes assigned claims\"\n\n        claimsCenter = softwareSystem \"Claims Center\" \"Owned and operated by the insurance company\" {\n            webPortal = container \"Web Portal\" \"Where policyholders report claims and track their progress\" \"Web\"\n            mobileAppBackend = container \"Mobile App Backend\" \"Serves the insurer's mobile app\" \"API\"\n            claimsIntakeService = container \"Claims Intake Service\" \"Registers new claims\" \"Service\"\n            triageService = container \"Triage Service\" \"Classifies and prioritizes claims\" \"Service\"\n            assessmentService = container \"Assessment Service\" \"Calculates settlement amounts\" \"Service\"\n            payoutService = container \"Payout Service\" \"Executes claim settlements\" \"Service\"\n            fraudScreeningService = container \"Fraud Screening Service\" \"Flags suspicious claims\" \"Service\"\n            documentService = container \"Document Service\" \"Accepts claim photos and reports\" \"Service\"\n            notificationService = container \"Notification Service\" \"Emails and messages policyholders\" \"Service\"\n            assignmentService = container \"Assignment Service\" \"Routes claims to adjusters\" \"Service\"\n            adjusterWorkbench = container \"Adjuster Workbench\" \"Where staff process their assigned claims\" \"Web\"\n            policyVerificationService = container \"Policy Verification Service\" \"Checks that a claim is covered by the policy\" \"Service\"\n            reinsuranceAllocationService = container \"Reinsurance Allocation Service\" \"Apportions large losses across reinsurance partners\" \"Service\"\n            batchScheduler = container \"Batch Scheduler\" \"Runs the nightly reserves calculation\" \"Batch\"\n            eventQueue = container \"Event Queue\" \"Carries claim events between the application parts\" \"Queue\"\n            claimsDatabase = container \"Claims Database\" \"Stores claim records\" \"Database\"\n            policyDatabase = container \"Policy Database\" \"Stores policy and cover records\" \"Database\"\n            auditDatabase = container \"Audit Database\" \"Stores the compliance audit trail\" \"Database\"\n            documentStore = container \"Document Store\" \"Holds claim photos, reports, and correspondence\" \"File Store\"\n        }\n\n        nationalClaimsDataBureau = softwareSystem \"National Claims Data Bureau\" \"Operated by a different organization\"\n        clearingHouse = softwareSystem \"Clearing House\" \"Operated by a different organization\"\n\n        policyholder -> webPortal \"Reports claims and tracks progress\" \"HTTPS\"\n        policyholder -> mobileAppBackend \"Reports claims and tracks progress\" \"HTTPS\"\n        staff -> adjusterWorkbench \"Processes assigned claims\" \"HTTPS\"\n\n        webPortal -> claimsIntakeService \"Uses\" \"HTTPS\"\n        webPortal -> assessmentService \"Uses\" \"HTTPS\"\n        webPortal -> payoutService \"Uses\" \"HTTPS\"\n        webPortal -> documentService \"Uses\" \"HTTPS\"\n        webPortal -> notificationService \"Uses\" \"HTTPS\"\n\n        mobileAppBackend -> claimsIntakeService \"Uses\" \"HTTPS\"\n        mobileAppBackend -> assessmentService \"Uses\" \"HTTPS\"\n        mobileAppBackend -> payoutService \"Uses\" \"HTTPS\"\n        mobileAppBackend -> documentService \"Uses\" \"HTTPS\"\n        mobileAppBackend -> notificationService \"Uses\" \"HTTPS\"\n\n        claimsIntakeService -> triageService \"Hands accepted claims\" \"Event\"\n        triageService -> assessmentService \"Routes claims\" \"Event\"\n        assessmentService -> payoutService \"Requests settlements\" \"Event\"\n\n        fraudScreeningService -> nationalClaimsDataBureau \"Consults\" \"HTTPS\"\n        payoutService -> clearingHouse \"Executes settlements through\" \"HTTPS\"\n\n        assignmentService -> adjusterWorkbench \"Routes the claim\" \"Event\"\n\n        documentService -> documentStore \"Reads from\" \"S3\"\n        batchScheduler -> claimsDatabase \"Reads and writes\" \"SQL\"\n        batchScheduler -> policyDatabase \"Reads and writes\" \"SQL\"\n        notificationService -> policyholder \"Reports claim status changes\" \"Email/SMS\"\n\n        policyVerificationService -> policyDatabase \"Reads policy and cover records\" \"SQL\"\n        reinsuranceAllocationService -> claimsDatabase \"Reads large losses\" \"SQL\"\n        claimsIntakeService -> eventQueue \"Publishes claim events\" \"Event\"\n        claimsIntakeService -> auditDatabase \"Writes audit trail\" \"SQL\"\n    }\n    views {\n        systemContext claimsCenter \"SystemContext\" \"System Context\" \"The system context diagram for Claims Center\" {\n            include *\n            autoLayout\n        }\n        container claimsCenter \"Containers\" \"Containers\" \"The container diagram for Claims Center\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "heldout-views",
+    "condition": "skill",
+    "k_index": 2
+  },
+  "run_id": "p140r-heldout-2026-11-15T131822Z",
+  "skills_installed": [
+    "c4-view-design"
+  ],
+  "started_at": "2026-11-15T13:46:36Z",
+  "timeout": true,
+  "wall_time_s": 1200.7644600710046,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-views.skill-k2.p140r-heldout-2026-11-15T131822Z"
+}

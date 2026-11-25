@@ -23,13 +23,22 @@ runtime-shaped (exit 1), any other exception type propagates as a raw
 traceback (a harness bug, not a documented failure shape). These tests
 need no Docker: the usage paths fail before any container call, and the
 runtime/propagation paths mock `runner.run` at the CLI boundary.
+
+Phase 125 (Task 125.130/I3) adds the grader-CLI timeout path: a hung
+Structurizr CLI (`subprocess.TimeoutExpired` at the 300 s bound) is
+mapped to `RuntimeError` by `graders._run_cli`, and the documented entry
+point carries it as exit 1 with the runtime-shaped message.
 """
 
+import contextlib
+import io
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
+from c4_skills import graders
 from c4_skills.cli import main
 
 
@@ -69,6 +78,68 @@ class TestUsageErrorsReturnTwo(unittest.TestCase):
         )
 
         self.assertEqual(result, 2)
+
+
+class TestPinOverrideAndSkillsUsage(unittest.TestCase):
+    """Task 190.150 (I4): an invalid override and a misplaced --skills are usage errors."""
+
+    def test_an_invalid_pin_override_returns_2_before_any_command(self) -> None:
+        with mock.patch(
+            "c4_skills.pins.PIN_OVERRIDE_ERRORS", ["C4EVAL_MODEL_ID='a b' is not a valid MODEL_ID override"]
+        ):
+            with mock.patch("c4_skills.runner.run") as run_mock:
+                result = main(["run", "--cases", "smoke-create-system", "--conditions", "none", "--k", "1"])
+
+        self.assertEqual(result, 2)
+        self.assertFalse(run_mock.called)
+
+    def test_skills_without_skills_dir_returns_2(self) -> None:
+        result = main(["run", "--cases", "smoke-create-system", "--conditions", "skill", "--skills", "a"])
+
+        self.assertEqual(result, 2)
+
+    def test_skills_naming_a_missing_folder_returns_2(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="c4eval-cli-") as tmp:
+            root = Path(tmp)
+            (root / "skills" / "present").mkdir(parents=True)
+            (root / "skills" / "present" / "SKILL.md").write_text("# p\n", encoding="utf-8")
+            argv = ["run", "--cases", "smoke-create-system", "--conditions", "skill", "--k", "1"]
+            argv += ["--skills-dir", str(root / "skills"), "--skills", "present,absent"]
+            argv += ["--workroot", str(root / "work"), "--results-dir", str(root / "results")]
+            with mock.patch("c4_skills.runner.run") as run_mock:
+                result = main(argv)
+
+        self.assertEqual(result, 2)
+        self.assertFalse(run_mock.called)
+
+
+class TestSkillsStagingWiring(unittest.TestCase):
+    def test_skills_stage_a_run_local_root_that_reaches_the_run_config(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="c4eval-cli-") as tmp:
+            root = Path(tmp)
+            for name in ("one", "two", "three"):
+                (root / "skills" / name).mkdir(parents=True)
+                (root / "skills" / name / "SKILL.md").write_text(f"# {name}\n", encoding="utf-8")
+            captured: dict = {}
+
+            def fake_run(config) -> dict:
+                captured["config"] = config
+                captured["staged"] = sorted(p.name for p in config.skills_dir.iterdir())
+                return {}
+
+            argv = ["run", "--cases", "smoke-create-system", "--conditions", "none,skill", "--k", "1"]
+            argv += ["--run-id", "rid", "--skills-dir", str(root / "skills"), "--skills", "three,one"]
+            argv += ["--workroot", str(root / "work"), "--results-dir", str(root / "results")]
+            argv += ["--cache", str(root / "cache")]
+            with (
+                mock.patch("c4_skills.runner.run", side_effect=fake_run),
+                mock.patch("c4_skills.report.build_and_write", return_value={"per_condition": {}}),
+            ):
+                result = main(argv)
+
+        self.assertEqual(result, 0)
+        self.assertEqual(captured["config"].skills_dir, root / "work" / "skills.rid")
+        self.assertEqual(captured["staged"], ["one", "three"])
 
 
 class TestRuntimeErrorsReturnOne(unittest.TestCase):
@@ -136,6 +207,93 @@ class TestSkillsDirWiring(unittest.TestCase):
         # Phase 110: the additive network_name field defaults to empty
         # (the run derives c4eval-<run_id> -- no CLI flag)
         self.assertEqual(config.network_name, "")
+
+
+class TestGraderCliTimeoutContract(unittest.TestCase):
+    """Task 125.130/I3: a hung Structurizr CLI is a runtime-shaped failure.
+
+    `graders._run_cli` maps its 300 s `subprocess.TimeoutExpired` to
+    `RuntimeError`, so the documented CLI exit-code contract (`cli.py`'s
+    module docstring, the harness README) carries it as exit 1 with the
+    runtime-shaped message (naming the command and the bound) instead of
+    a raw traceback mid-run; the non-timeout path (rc + combined
+    output) is unchanged. No Docker: the subprocess layer is mocked.
+    """
+
+    def _workdir(self, root: Path) -> Path:
+        workdir = root / "work"
+        workdir.mkdir(parents=True)
+        (workdir / "workspace.dsl").write_text('workspace "X" "y" { model { } }\n', encoding="utf-8")
+        return workdir
+
+    def test_timeout_bound_is_300_seconds(self) -> None:
+        self.assertEqual(graders.CLI_TIMEOUT_S, 300)
+
+    def test_run_cli_timeout_raises_runtime_error_naming_command_and_bound(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="c4eval-cli-") as tmp:
+            workdir = self._workdir(Path(tmp))
+            with mock.patch(
+                "c4_skills.graders.subprocess.run",
+                side_effect=subprocess.TimeoutExpired("docker", graders.CLI_TIMEOUT_S),
+            ):
+                with self.assertRaises(RuntimeError) as cm:
+                    graders._run_cli(workdir, [*graders.CLI_INSPECT_CMD, "-w", "workspace.dsl"])
+
+        message = str(cm.exception)
+        self.assertIn(f"timed out after {graders.CLI_TIMEOUT_S} s", message)
+        self.assertIn("docker run", message)
+        self.assertIn("inspect", message)
+        self.assertIn("structurizr", message)
+
+    def test_run_cli_non_timeout_path_is_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="c4eval-cli-") as tmp:
+            workdir = self._workdir(Path(tmp))
+            proc = subprocess.CompletedProcess(args=["docker"], returncode=1, stdout="OUT\n", stderr="ERR\n")
+            with mock.patch("c4_skills.graders.subprocess.run", return_value=proc) as run_mock:
+                result = graders._run_cli(workdir, [*graders.CLI_INSPECT_CMD, "-w", "workspace.dsl"])
+
+        self.assertEqual(result, (1, "ERR\nOUT\n"))
+        self.assertEqual(run_mock.call_args.kwargs["timeout"], graders.CLI_TIMEOUT_S)
+
+    def test_main_returns_1_when_the_grader_cli_hangs(self) -> None:
+        # the documented entry point over the real mapping: main ->
+        # cmd_run -> runner.run (mocked to grade a real work dir) ->
+        # collect_inputs -> _run_cli -> subprocess.run (mocked to hang)
+        with tempfile.TemporaryDirectory(prefix="c4eval-cli-") as tmp:
+            root = Path(tmp)
+            workdir = self._workdir(root / "workroot")
+            argv = [
+                "run",
+                "--cases",
+                "smoke-create-system",
+                "--conditions",
+                "none",
+                "--k",
+                "1",
+                "--results-dir",
+                str(root / "results"),
+                "--workroot",
+                str(root / "workroot"),
+                "--cache",
+                str(root / "cache"),
+            ]
+
+            def fake_run(config):
+                graders.collect_inputs(workdir)
+
+            with (
+                mock.patch("c4_skills.runner.run", side_effect=fake_run),
+                mock.patch(
+                    "c4_skills.graders.subprocess.run",
+                    side_effect=subprocess.TimeoutExpired("docker", graders.CLI_TIMEOUT_S),
+                ),
+                contextlib.redirect_stdout(io.StringIO()) as out,
+            ):
+                result = main(argv)
+
+        self.assertEqual(result, 1)
+        self.assertIn(f"error: the Structurizr CLI run timed out after {graders.CLI_TIMEOUT_S} s", out.getvalue())
+        self.assertIn("docker run", out.getvalue())
 
 
 if __name__ == "__main__":

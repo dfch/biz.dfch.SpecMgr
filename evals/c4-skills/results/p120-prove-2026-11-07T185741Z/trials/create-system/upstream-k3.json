@@ -1,0 +1,149 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/create-system/upstream-k3.events.ndjson",
+  "event_file_bytes": 141864,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-07T21:56:51Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (914 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "1/ 1 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "2 container(s)",
+      "name": "two_containers",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 2 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "1 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "no terminal parse call in the event stream",
+      "name": "parse_called",
+      "passed": false
+    },
+    {
+      "detail": "1 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "1 terminal inspect call(s)",
+      "name": "inspect_called",
+      "passed": true
+    },
+    {
+      "detail": "no validate call answered the OK marker with a dsl input",
+      "name": "validated_before_return",
+      "passed": false
+    },
+    {
+      "detail": "all 10 finding(s) labeled fix/expected/reported",
+      "name": "triage_complete",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.01228044810704887,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 1,
+    "inspect_findings": [
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "ERROR: The software system \"Bookshop\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Bookshop\" has containers, but is missing decisions.",
+      "ERROR: The container named \"Web Store\" is not included on any views - add it to a view.",
+      "ERROR: The container named \"Order Processor\" is not included on any views - add it to a view.",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The software system \"Bookshop\" has containers, but is missing documentation.",
+      "The software system \"Bookshop\" has containers, but is missing decisions.",
+      "The container named \"Web Store\" is not included on any views - add it to a view.",
+      "The container named \"Order Processor\" is not included on any views - add it to a view."
+    ],
+    "inspect_triage": {
+      "ERROR: The container named \"Order Processor\" is not included on any views - add it to a view.": "fix",
+      "ERROR: The container named \"Web Store\" is not included on any views - add it to a view.": "fix",
+      "ERROR: The software system \"Bookshop\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Bookshop\" has containers, but is missing documentation.": "expected",
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "fix",
+      "The container named \"Order Processor\" is not included on any views - add it to a view.": "fix",
+      "The container named \"Web Store\" is not included on any views - add it to a view.": "fix",
+      "The software system \"Bookshop\" has containers, but is missing decisions.": "expected",
+      "The software system \"Bookshop\" has containers, but is missing documentation.": "expected",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "fix"
+    },
+    "parse_calls": 0,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "c4-model",
+      "structurizr-dsl"
+    ],
+    "steps": 11,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 275579,
+      "output": 19502,
+      "reasoning": 0
+    },
+    "tool_calls": 12,
+    "validate_calls": 2,
+    "validate_ok_calls": 1,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 238.067,
+    "workdir_dsl": "workspace \"Bookshop\" \"A simple online bookshop\" {\n\n    !identifiers hierarchical\n\n    model {\n        customer = person \"Customer\" \"A customer who browses the catalogue and orders books\"\n\n        bookshop = softwareSystem \"Bookshop\" \"An online bookshop where customers browse books and place orders\" {\n            webStore = container \"Web Store\" \"The web application customers use to browse books and place orders\" \"Java/Spring Boot\"\n            orderProcessor = container \"Order Processor\" \"Validates and fulfils customer orders\" \"Java/Spring Boot\"\n        }\n\n        customer -> bookshop.webStore \"browses books and places orders via\" \"HTTPS\"\n        bookshop.webStore -> bookshop.orderProcessor \"sends new orders to\" \"JSON/HTTP\"\n    }\n\n    views {\n        systemContext bookshop \"BookshopContext\" {\n            include *\n            autoLayout\n            title \"System Context for Bookshop\"\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "create-system",
+    "condition": "upstream",
+    "k_index": 3
+  },
+  "run_id": "p120-prove-2026-11-07T185741Z",
+  "skills_installed": [
+    "c4-deployment",
+    "c4-model",
+    "c4-review",
+    "structurizr-dsl"
+  ],
+  "started_at": "2026-11-07T21:52:50Z",
+  "timeout": false,
+  "wall_time_s": 240.73620740696788,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/create-system.upstream-k3.p120-prove-2026-11-07T185741Z"
+}

@@ -18,9 +18,16 @@
 """feat-250-c4-structurizr-skills Phase 110, Task 110.150 (ACC-011): pin the structurizr-validate-loop skill.
 
 The first of the feature's five skills, ``.opencode/skill/structurizr-validate-loop/``
-— the mandatory loop over the Structurizr MCP's ``parse``, ``validate`` and
-``inspect`` tools (REQ-003) — as measured to its stop rule in iteration 2
-(variant ``927d6c3f…``, the committed winner). These tests pin, read-only from
+ — the mandatory loop over the Structurizr MCP's ``parse``, ``validate`` and
+ ``inspect`` tools (REQ-003) — as measured to its stop rule in iteration 2
+ (variant chain: the measured winner was ``927d6c3fc039…``; the 2026-11-07
+ review remediation's one-character DEC-citation typo fix moved it to
+ ``48c9b87bdee8…`` (commit f7cfa86d); the 2026-11-13 origin/dev merge
+ ed4b4ad9's ADR→DEC wording (dev commit 80d883f2) moved it to the committed
+ ``5ecf5b0760762d7f13401f19f70c6f61dc461bc82102a2190c69cdd27aad79e9`` —
+ both post-measurement moves are citation-only editorial changes, the
+ trigger description and instructions are byte-identical, so the measured
+ behavioral identity is preserved). These tests pin, read-only from
 the committed files (no network, no Docker, no model): the file location (the
 project skill path ``.opencode/skill/`` — singular ``skill/`` dir, the plural
 ``skills/`` no longer exists — with exactly the five markdown files:
@@ -47,13 +54,14 @@ ideas-only marks (ACC-010).
 Phrase pins are matched against whitespace-normalized text (every run of
 whitespace collapsed to one space) so they survive the committed files'
 hard line-wrapping; the description pins are matched case-insensitively on
-the raw description, since opencode surfaces it verbatim to agents.
+ the raw description, since opencode surfaces it verbatim to agents.
 
-Known deviation pinned as a prefix: the body's DEC precedent reference
-currently reads ``7a626b12-…-ffb2e9e133b4``, one character off the real DEC id
-``7a626b12-b189-4561-a51d-ffb2e9e193b4``; the pin covers the stable prefix
-plus the surrounding sentence, so fixing the typo (or not) keeps this test
-green while dropping the reference entirely fails it.
+Phase 190, Task 190.140 (I2, the trigger collision on ``fix-dsl``): the
+description and the new "Fixing a broken workspace" body section route the
+repair of the DSL text to the ``structurizr-dsl-authoring`` skill and state
+that both skills are loaded when a workspace must be fixed and validated;
+this moves the committed variant hash again (recorded in the feature
+README's Phase 190 Updates entry).
 """
 
 from __future__ import annotations
@@ -106,9 +114,9 @@ _LOOP_PHRASES: tuple[str, ...] = (
     "Any edit after the final validate requires re-validating",
     "if anything is edited after the final validate, re-run `validate`",
     "a parsed-only or reported-only result is not a pass",
-    # DEC 7a626b12 precedent: prefix pin (the body's full id currently carries
-    # a one-character typo, see the module docstring).
-    "the repo's own PlantUML validation chain (DEC 7a626b12",
+    # DEC 7a626b12 precedent: the full id (the body carried a one-character
+    # typo, fixed by the 2026-11-07 review remediation).
+    "the repo's own PlantUML validation chain (DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4)",
     "a structure-only check is not a pass",
 )
 
@@ -340,6 +348,27 @@ class TestDescriptionTriggerSurface(unittest.TestCase):
 
         for word in _FORBIDDEN_DESCRIPTION_WORDS:
             self.assertNotIn(word, description, f"no-trigger trap broken by description word: {word}")
+
+    def test_description_routes_the_repair_to_the_authoring_skill(self):
+        # Task 190.140 (I2)
+        description = self._description_lower()
+
+        self.assertIn("repairing the dsl text itself is the structurizr-dsl-authoring skill's task", description)
+        self.assertIn("when a workspace must be fixed and validated, both skills are loaded", description)
+
+
+class TestFixingABrokenWorkspace(unittest.TestCase):
+    """Task 190.140 (I2): the body routes the repair to the authoring skill."""
+
+    def test_section_phrases_present(self):
+        body = _skill_body()
+
+        for phrase in (
+            "## Fixing a broken workspace",
+            "is the `structurizr-dsl-authoring` skill's task, not this skill's",
+            "both skills are loaded: the authoring skill for the repair, this skill for the loop",
+        ):
+            self.assertIn(phrase, body, phrase)
 
 
 class TestMandatoryLoopWording(unittest.TestCase):

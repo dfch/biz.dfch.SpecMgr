@@ -1,0 +1,59 @@
+{
+  "cases": [
+    "modeling-decisions",
+    "no-trigger"
+  ],
+  "checked_at": "2026-11-09T17:26:23Z",
+  "conditions": [
+    "none",
+    "upstream",
+    "skill"
+  ],
+  "docker": "29.1.3",
+  "host_addr": "192.168.1.89",
+  "jq": "1.6",
+  "k": 5,
+  "label": "p130-iter2",
+  "mcp_port": 8181,
+  "model_id": "qwen3.8-27b-bf16-896k",
+  "network_mode": "internal-bridge",
+  "network_name": "c4eval-p130-iter2-2026-11-09T172621Z",
+  "ok": true,
+  "opencode_image": "ghcr.io/anomalyco/opencode:2.2.5",
+  "opencode_image_digest": "sha256:1690aad69864d2f6714772d1e040918feebc6df5286d2bd7e181fbb35d12d4a9",
+  "problems": [],
+  "provider_id": "vllm-sys0",
+  "python": "3.13.13",
+  "run_id": "p130-iter2-2026-11-09T172621Z",
+  "sampling_parameters": {
+    "seed": 1337,
+    "temperature": 0.0,
+    "topP": 1.0
+  },
+  "seed": 31001,
+  "sidecar_ip": "172.21.0.2",
+  "speculative_config": {
+    "externally_verifiable": false,
+    "method": "mtp",
+    "num_speculative_tokens": 5
+  },
+  "structurizr_cli_image": "structurizr/structurizr:2026.10.26-noble",
+  "structurizr_cli_image_digest": "sha256:1081d615e7a539aee8b8360e36a58f42ff6412dd8f0e1b053134cb2c76ab2303",
+  "structurizr_mcp_image": "structurizr/mcp:2026.04.20",
+  "structurizr_mcp_image_digest": "sha256:fc4ef98b7da925d62b08c71a90eb995a527fae30e2c04b39e3041f253c135539",
+  "trial_timeout_s": 1200,
+  "upstream_repo": "jrjsmrtn/c4-skills",
+  "upstream_sha": "e86d8a91d3ed793cdf6c035f01d19f1b18cc8b6b",
+  "upstream_skills": 4,
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662",
+  "vllm_access": "direct-0.0.0.0-bind",
+  "vllm_base_url": "http://172.21.0.1:8081/v1",
+  "vllm_endpoint": "http://127.0.0.1:8081/v1",
+  "vllm_idle": true,
+  "vllm_max_model_len": 917504,
+  "vllm_model_ids": [
+    "qwen3.8-27b-bf16-896k"
+  ],
+  "vllm_num_requests_running": 0,
+  "vllm_version": "0.26.0"
+}

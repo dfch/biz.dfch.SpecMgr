@@ -1,0 +1,6 @@
+run p160-cumulative-2026-11-22T094832Z: cases=['create-system', 'fix-dsl', 'modeling-decisions', 'mcp-limits', 'design-views', 'review-model', 'no-trigger', 'heldout-modeling', 'heldout-views'] conditions=['none', 'upstream', 'skill'] k=5 seed=340912
+done: /home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/results/p160-cumulative-2026-11-22T094832Z
+  none: 0/45 passed (0%)
+  upstream: 0/45 passed (0%)
+  skill: 21/45 passed (47%)
+  cost: median 360.3 s/trial -> full run 9.0 h (budget 30.0 h)

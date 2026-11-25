@@ -1,0 +1,144 @@
+{
+  "cases": [
+    "create-system",
+    "mcp-limits",
+    "fix-dsl",
+    "no-trigger",
+    "heldout-dsl"
+  ],
+  "comparison": "none",
+  "conditions": [
+    "none",
+    "upstream"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 2.9,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1201.5,
+    "mean_wall_time_s": 281.0,
+    "measured_trials": 50,
+    "median_wall_time_s": 114.4,
+    "within_budget_at_median": true
+  },
+  "k": 5,
+  "label": "p120-prove",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 0,
+        "contended": 0,
+        "timeout": 1
+      },
+      "gate_failures": {
+        "cli_export": 5,
+        "cli_valid": 5,
+        "elements_described": 10,
+        "has_person": 5,
+        "has_system": 5,
+        "has_view": 5,
+        "inspect_called": 5,
+        "mcp_limit_stated": 4,
+        "parse_called": 5,
+        "relationship_technology": 15,
+        "triage_complete": 7,
+        "two_containers": 5,
+        "validate_ok_called": 8,
+        "validated_before_return": 10
+      },
+      "pass_power_k": 1.1258999068426245e-35,
+      "pass_rate": 0.04,
+      "passes": 1,
+      "per_case": {
+        "create-system": {
+          "passes": 0,
+          "trials": 5
+        },
+        "fix-dsl": {
+          "passes": 0,
+          "trials": 5
+        },
+        "heldout-dsl": {
+          "passes": 0,
+          "trials": 5
+        },
+        "mcp-limits": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 1,
+          "trials": 5
+        }
+      },
+      "trials": 25,
+      "wilson": [
+        0.007096233423382087,
+        0.1954406391161776
+      ]
+    },
+    "upstream": {
+      "flags": {
+        "cached": 0,
+        "contended": 0,
+        "timeout": 1
+      },
+      "gate_failures": {
+        "cli_export": 2,
+        "cli_valid": 2,
+        "elements_described": 8,
+        "has_person": 2,
+        "has_system": 2,
+        "has_view": 2,
+        "inspect_called": 3,
+        "limits_acknowledged": 1,
+        "mcp_limit_stated": 5,
+        "no_deletions": 5,
+        "no_mounted_skill_loaded": 5,
+        "parse_called": 5,
+        "relationship_technology": 12,
+        "triage_complete": 5,
+        "two_containers": 2,
+        "validate_ok_called": 5,
+        "validated_before_return": 10
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "create-system": {
+          "passes": 0,
+          "trials": 5
+        },
+        "fix-dsl": {
+          "passes": 0,
+          "trials": 5
+        },
+        "heldout-dsl": {
+          "passes": 0,
+          "trials": 5
+        },
+        "mcp-limits": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 25,
+      "wilson": [
+        0.0,
+        0.13319225276039096
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p120-prove-2026-11-07T185741Z",
+  "seed": 77027,
+  "skill_margins": null,
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

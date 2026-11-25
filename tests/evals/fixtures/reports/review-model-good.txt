@@ -1,0 +1,13 @@
+I reviewed the model in `workspace.dsl` read-only: I changed nothing, and the file on disk is exactly as I found it.
+
+Findings:
+
+- The relationship from the Booking Web App to the Pricing Service is labelled "uses" — a vague label that states no intent about what is communicated; it should say what the web app does with the pricing service (for example "requests quotes from").
+- The container "Pricing Rules Library" is a library, not a container: it is code-level rules embedded in the Pricing Service, so it should not be modeled as an element of its own.
+- The "Payment Provider" is operated by a different organization but carries no External tag: third-party things must be top-level and tagged External.
+- The "Legacy Billing System" is disconnected: it has no relationships and is not included on any views, so it is an orphan in the model.
+- The container view of Fleet Manager has no explicit key: the model gave it the auto-generated key "Container-001", which is not guaranteed to be stable over time.
+- The container view of Fleet Manager carries 21 elements (`include *` over the whole system) — that is over the ~20-element readability bound; split it into smaller views with explicit include lists.
+- The workspace has no defined scope, and the Fleet Manager system is missing documentation and decisions; the MCP cannot fix the last two because it refuses `!docs` and `!adrs` — expected under the MCP limits, reported so they are on the record.
+
+Everything else I walked (the remaining containers, the context view, and the other relationships) is described, connected, and labelled with intent.

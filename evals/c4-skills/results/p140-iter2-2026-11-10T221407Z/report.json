@@ -1,0 +1,124 @@
+{
+  "cases": [
+    "design-views",
+    "no-trigger"
+  ],
+  "comparison": "none",
+  "conditions": [
+    "none",
+    "skill"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 30.0,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1201.3,
+    "mean_wall_time_s": 967.6,
+    "measured_trials": 10,
+    "median_wall_time_s": 1201.1,
+    "within_budget_at_median": false
+  },
+  "k": 5,
+  "label": "p140-iter2",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 10,
+        "contended": 3,
+        "timeout": 6
+      },
+      "gate_failures": {
+        "cli_export": 4,
+        "cli_valid": 4,
+        "dsl_written": 3,
+        "elements_described": 4,
+        "explicit_view_keys": 4,
+        "external_system_tagged": 5,
+        "has_person": 4,
+        "has_system": 4,
+        "has_view": 4,
+        "mcp_limit_stated": 4,
+        "relationship_technology": 5,
+        "validate_ok_called": 3,
+        "views_within_element_bound": 1
+      },
+      "pass_power_k": 1.0000000000000006e-10,
+      "pass_rate": 0.1,
+      "passes": 1,
+      "per_case": {
+        "design-views": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 1,
+          "trials": 5
+        }
+      },
+      "trials": 10,
+      "wilson": [
+        0.017876212896074023,
+        0.4041500295247722
+      ]
+    },
+    "skill": {
+      "flags": {
+        "cached": 0,
+        "contended": 0,
+        "timeout": 6
+      },
+      "gate_failures": {
+        "cli_export": 3,
+        "cli_valid": 3,
+        "dsl_written": 3,
+        "elements_described": 3,
+        "explicit_view_keys": 3,
+        "external_system_tagged": 4,
+        "has_person": 3,
+        "has_system": 3,
+        "has_view": 3,
+        "mcp_limit_stated": 5,
+        "relationship_technology": 5,
+        "validate_ok_called": 3
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "design-views": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 10,
+      "wilson": [
+        0.0,
+        0.2775328030260577
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p140-iter2-2026-11-10T221407Z",
+  "seed": 93144,
+  "skill_margins": {
+    "margin": {
+      "better_than_none": false,
+      "clearly_worse_cases": [],
+      "none_rate": 0.1,
+      "ok": false,
+      "rate_margin_pp": 10.0,
+      "within_rate_margin": true
+    },
+    "wilson": [
+      0.0,
+      0.2775328030260577
+    ]
+  },
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

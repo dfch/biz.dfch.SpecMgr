@@ -1,0 +1,1903 @@
+{
+  "cases": [
+    "design-views",
+    "no-trigger",
+    "heldout-views"
+  ],
+  "conditions": [
+    "none"
+  ],
+  "finished_at": "2026-11-10T18:47:42Z",
+  "k": 5,
+  "label": "p140-prove",
+  "order": [
+    {
+      "cached": false,
+      "case": "heldout-views",
+      "condition": "none",
+      "k": 3
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "design-views",
+      "condition": "none",
+      "k": 4
+    },
+    {
+      "cached": false,
+      "case": "design-views",
+      "condition": "none",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "heldout-views",
+      "condition": "none",
+      "k": 4
+    },
+    {
+      "cached": false,
+      "case": "design-views",
+      "condition": "none",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "heldout-views",
+      "condition": "none",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "heldout-views",
+      "condition": "none",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 3
+    },
+    {
+      "cached": false,
+      "case": "design-views",
+      "condition": "none",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "design-views",
+      "condition": "none",
+      "k": 3
+    },
+    {
+      "cached": false,
+      "case": "heldout-views",
+      "condition": "none",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 4
+    }
+  ],
+  "run_id": "p140-prove-2026-11-10T133052Z",
+  "seed": 41733,
+  "skill_variant_hash": null,
+  "trial_timeout_s": 1200,
+  "trials": [
+    {
+      "cache_reason": "miss:file-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/heldout-views/none-k3.events.ndjson",
+      "event_file_bytes": 410464,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T13:50:57Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (4963 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "3/ 3 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "2/2 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "description on all 24 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 28 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (18 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "1 of 2 user-defined view(s) over 20 element(s): 'Containers' with 23 element(s)",
+          "name": "views_within_element_bound",
+          "passed": false
+        },
+        {
+          "detail": "every one of 2 view(s) has an explicit key",
+          "name": "explicit_view_keys",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.010553847067058086,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 9,
+        "inspect_findings": [
+          "The software system \"Claims Center\" has containers, but is missing documentation.",
+          "The software system \"Claims Center\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "The software system \"Claims Center\" has containers, but is missing decisions.": "expected",
+          "The software system \"Claims Center\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 5,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 27,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 1264332,
+          "output": 66131,
+          "reasoning": 0
+        },
+        "tool_calls": 26,
+        "validate_calls": 18,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1183.105,
+        "workdir_dsl": "workspace \"Claims Center\" \"C4 model of the insurance claims platform\" {\n\n    model {\n\n        claimsCenter = softwareSystem \"Claims Center\" \"The insurance company's claims platform for reporting and tracking claims, owned and operated by the insurance company\" {\n\n            webPortal = container \"Web portal\" \"Where policyholders report claims and track their progress\" \"HTML/JavaScript\"\n            mobileAppBackend = container \"Mobile app backend\" \"Serves the insurer's mobile app\" \"REST API\"\n            claimsIntake = container \"Claims intake service\" \"Registers new claims\" \"REST API\"\n            triage = container \"Triage service\" \"Classifies and prioritizes claims\" \"REST API\"\n            assessment = container \"Assessment service\" \"Calculates settlement amounts\" \"REST API\"\n            payout = container \"Payout service\" \"Executes claim settlements\" \"REST API\"\n            fraudScreening = container \"Fraud screening service\" \"Flags suspicious claims\" \"REST API\"\n            documentService = container \"Document service\" \"Accepts claim photos and reports\" \"REST API\"\n            notification = container \"Notification service\" \"Emails and messages policyholders\" \"REST API\"\n            assignment = container \"Assignment service\" \"Routes claims to adjusters\" \"REST API\"\n            adjusterWorkbench = container \"Adjuster workbench\" \"Where staff process their assigned claims\" \"HTML/JavaScript\"\n            policyVerification = container \"Policy verification service\" \"Checks that a claim is covered by the policy\" \"REST API\"\n            reinsuranceAllocation = container \"Reinsurance allocation service\" \"Apportions large losses across reinsurance partners\" \"REST API\"\n            batchScheduler = container \"Batch scheduler\" \"Runs the nightly reserves calculation\" \"scheduled job\"\n            eventQueue = container \"Event queue\" \"Carries claim events between the application parts\" \"message queue\"\n            claimsDatabase = container \"Claims database\" \"Stores claim records\" \"SQL database\"\n            policyDatabase = container \"Policy database\" \"Stores policy and cover records\" \"SQL database\"\n            auditDatabase = container \"Audit database\" \"Stores the compliance audit trail\" \"SQL database\"\n            documentStore = container \"Document store\" \"Holds claim photos, reports, and correspondence\" \"object store\"\n        }\n\n        policyholder = person \"Policyholder\" \"Reports claims and tracks their progress\"\n        adjuster = person \"Adjuster\" \"Staff member who processes assigned claims\"\n\n        claimsDataBureau = softwareSystem \"National claims data bureau\" \"Operated by a different organization\"\n        clearingHouse = softwareSystem \"Clearing house\" \"Operated by a different organization\"\n\n        policyholder -> webPortal \"reports claims and tracks their progress\" \"HTTPS\"\n        policyholder -> mobileAppBackend \"reports claims and tracks their progress via the mobile app\" \"HTTPS\"\n        adjuster -> adjusterWorkbench \"processes assigned claims\" \"HTTPS\"\n\n        webPortal -> claimsIntake \"uses\" \"REST\"\n        webPortal -> assessment \"uses\" \"REST\"\n        webPortal -> payout \"uses\" \"REST\"\n        webPortal -> documentService \"uses\" \"REST\"\n        webPortal -> notification \"uses\" \"REST\"\n\n        mobileAppBackend -> claimsIntake \"uses\" \"REST\"\n        mobileAppBackend -> assessment \"uses\" \"REST\"\n        mobileAppBackend -> payout \"uses\" \"REST\"\n        mobileAppBackend -> documentService \"uses\" \"REST\"\n        mobileAppBackend -> notification \"uses\" \"REST\"\n\n        claimsIntake -> triage \"hands accepted claims to\" \"REST\"\n        triage -> assessment \"routes claims to\" \"REST\"\n        assessment -> payout \"requests settlements from\" \"REST\"\n\n        claimsIntake -> fraudScreening \"sends each incoming claim for screening\" \"REST\"\n        claimsIntake -> policyVerification \"requests cover checks for each incoming claim\" \"REST\"\n        assignment -> adjusterWorkbench \"routes claims to\" \"REST\"\n\n        fraudScreening -> claimsDataBureau \"consults\" \"REST\"\n        payout -> clearingHouse \"executes settlements through\" \"REST\"\n\n        documentService -> documentStore \"reads from\" \"object store API\"\n        batchScheduler -> claimsDatabase \"reads and writes\" \"SQL\"\n        batchScheduler -> policyDatabase \"reads and writes\" \"SQL\"\n        notification -> policyholder \"reports claim status changes\" \"email/SMS\"\n\n        claimsIntake -> eventQueue \"publishes new claim events\" \"events\"\n        payout -> reinsuranceAllocation \"apportions large losses\" \"REST\"\n        payout -> auditDatabase \"records settlement audit trail\" \"SQL\"\n    }\n\n    views {\n        systemContext claimsCenter \"SystemContext\" \"System context diagram of the Claims Center\" {\n            include *\n            autoLayout\n        }\n        container claimsCenter \"Containers\" \"Container diagram of the Claims Center\" {\n            include *\n            autoLayout\n        }\n    }\n\n    configuration {\n        scope \"SoftwareSystem\"\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-views",
+        "condition": "none",
+        "k_index": 3
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T13:30:55Z",
+      "timeout": true,
+      "wall_time_s": 1201.3515912010334,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-views.none-k3.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:key-mismatch",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k2.events.ndjson",
+      "event_file_bytes": 82844,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-10T13:53:04Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009427750017493963,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 18,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 218311,
+          "output": 11619,
+          "reasoning": 0
+        },
+        "tool_calls": 17,
+        "validate_calls": 1,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 119.913,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 2
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T13:51:00Z",
+      "timeout": false,
+      "wall_time_s": 123.47763758804649,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k2.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:file-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/design-views/none-k4.events.ndjson",
+      "event_file_bytes": 107673,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-10T14:12:14Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (4853 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "3/ 3 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "description on all 23 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "technology on 7% of 30 relationship(s); missing: ['manages accounts, moves money, and tracks activity', 'routes card authorisations', 'performs credit checks', 'uses', 'uses', 'uses', 'uses', 'uses', 'uses', 'uses', 'uses', 'uses', 'uses', 'uses', 'uses', 'updates the ledger', 'scores transactions', 'publishes events', 'uses', 'uses', 'routes card authorisations', 'consumes events', 'reads customer records', 'performs credit checks', 'reads the ledger', 'writes statement PDFs', 'reads and writes', 'reads and writes']",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "1 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "1 of 2 user-defined view(s) over 20 element(s): 'Containers' with 22 element(s)",
+          "name": "views_within_element_bound",
+          "passed": false
+        },
+        {
+          "detail": "every one of 2 view(s) has an explicit key",
+          "name": "explicit_view_keys",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.007867933949455619,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The relationship between the person \"Bank Customer\" and the software system \"Bank Portal\" is missing a technology.",
+          "The software system \"Bank Portal\" has containers, but is missing documentation.",
+          "The software system \"Bank Portal\" has containers, but is missing decisions.",
+          "The relationship between the software system \"Bank Portal\" and the software system \"Card Payment Network\" is missing a technology.",
+          "The relationship between the software system \"Bank Portal\" and the software system \"Credit Reference Agency\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Account Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Transaction Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Payment Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Card Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Statements Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Direct Debit Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Account Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Transaction Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Payment Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Card Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Statements Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Direct Debit Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Transaction Service\" and the container \"Bank Portal.Ledger Database\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Transaction Service\" and the container \"Bank Portal.Fraud Detection Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Transaction Service\" and the container \"Bank Portal.Event Queue\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Payment Service\" and the container \"Bank Portal.Card Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Payment Service\" and the container \"Bank Portal.Exchange Rates Service\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Payment Service\" and the software system \"Card Payment Network\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Notification Service\" and the container \"Bank Portal.Event Queue\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Onboarding Service\" and the container \"Bank Portal.Customer Database\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Onboarding Service\" and the software system \"Credit Reference Agency\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Statements Service\" and the container \"Bank Portal.Ledger Database\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Statements Service\" and the container \"Bank Portal.Document Store\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Batch Scheduler\" and the container \"Bank Portal.Ledger Database\" is missing a technology.",
+          "The relationship between the container \"Bank Portal.Batch Scheduler\" and the container \"Bank Portal.Customer Database\" is missing a technology.",
+          "The container \"Bank Portal.Audit Database\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The container \"Bank Portal.Cache\" is disconnected - add a relationship to/from it, or consider removing it from the model."
+        ],
+        "inspect_triage": {
+          "The container \"Bank Portal.Audit Database\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The container \"Bank Portal.Cache\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The relationship between the container \"Bank Portal.Batch Scheduler\" and the container \"Bank Portal.Customer Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Batch Scheduler\" and the container \"Bank Portal.Ledger Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Account Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Card Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Direct Debit Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Payment Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Statements Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Mobile App Backend\" and the container \"Bank Portal.Transaction Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Notification Service\" and the container \"Bank Portal.Event Queue\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Onboarding Service\" and the container \"Bank Portal.Customer Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Onboarding Service\" and the software system \"Credit Reference Agency\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Payment Service\" and the container \"Bank Portal.Card Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Payment Service\" and the container \"Bank Portal.Exchange Rates Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Payment Service\" and the software system \"Card Payment Network\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Statements Service\" and the container \"Bank Portal.Document Store\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Statements Service\" and the container \"Bank Portal.Ledger Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Transaction Service\" and the container \"Bank Portal.Event Queue\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Transaction Service\" and the container \"Bank Portal.Fraud Detection Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Transaction Service\" and the container \"Bank Portal.Ledger Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Account Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Card Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Direct Debit Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Payment Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Statements Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Bank Portal.Web Portal\" and the container \"Bank Portal.Transaction Service\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Bank Customer\" and the software system \"Bank Portal\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Bank Portal\" and the software system \"Card Payment Network\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Bank Portal\" and the software system \"Credit Reference Agency\" is missing a technology.": "untriaged",
+          "The software system \"Bank Portal\" has containers, but is missing decisions.": "expected",
+          "The software system \"Bank Portal\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 0.06666666666666667,
+        "skills_loaded": [],
+        "steps": 10,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 196639,
+          "output": 21246,
+          "reasoning": 0
+        },
+        "tool_calls": 11,
+        "validate_calls": 3,
+        "validate_ok_calls": 1,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1143.803,
+        "workdir_dsl": "workspace \"Bank Portal\" \"C4 model of the online banking platform\" {\n\n    model {\n\n        customer = person \"Bank Customer\" \"A customer of the bank who manages accounts, moves money, and tracks activity.\"\n\n        bankPortal = softwareSystem \"Bank Portal\" \"The online banking platform, owned and operated by our company.\" {\n\n            webPortal = container \"Web Portal\" \"Where customers log in and manage their accounts.\" \"Web Application\"\n            mobileAppBackend = container \"Mobile App Backend\" \"Serves the bank's mobile app.\" \"API\"\n            accountService = container \"Account Service\" \"Holds the customer account records.\" \"Service\"\n            transactionService = container \"Transaction Service\" \"Processes deposits, withdrawals, and transfers.\" \"Service\"\n            paymentService = container \"Payment Service\" \"Executes card payments and bank transfers.\" \"Service\"\n            cardService = container \"Card Service\" \"Manages debit and credit cards.\" \"Service\"\n            fraudDetectionService = container \"Fraud Detection Service\" \"Scores transactions for fraud.\" \"Service\"\n            notificationService = container \"Notification Service\" \"Sends email and SMS alerts.\" \"Service\"\n            onboardingService = container \"Onboarding Service\" \"Verifies new customers.\" \"Service\"\n            statementsService = container \"Statements Service\" \"Generates monthly statements.\" \"Service\"\n            directDebitService = container \"Direct Debit Service\" \"Processes standing orders and direct debits.\" \"Service\"\n            exchangeRatesService = container \"Exchange Rates Service\" \"Provides currency conversion rates.\" \"Service\"\n            batchScheduler = container \"Batch Scheduler\" \"Runs the nightly interest calculation and reconciliation.\" \"Batch\"\n            eventQueue = container \"Event Queue\" \"Carries internal events between the application parts.\" \"Queue\"\n            ledgerDatabase = container \"Ledger Database\" \"Stores every account movement.\" \"Database\"\n            customerDatabase = container \"Customer Database\" \"Stores account and profile records.\" \"Database\"\n            auditDatabase = container \"Audit Database\" \"Stores the compliance audit trail.\" \"Database\"\n            cache = container \"Cache\" \"Stores sessions and frequently read account data.\" \"In-memory Data Store\"\n            documentStore = container \"Document Store\" \"Holds the generated statement PDFs.\" \"File Store\"\n        }\n\n        cardPaymentNetwork = softwareSystem \"Card Payment Network\" \"A card payment network operated by a different organization.\"\n        creditReferenceAgency = softwareSystem \"Credit Reference Agency\" \"A credit reference agency operated by a different organization.\"\n\n        customer -> bankPortal \"manages accounts, moves money, and tracks activity\"\n        bankPortal -> cardPaymentNetwork \"routes card authorisations\"\n        bankPortal -> creditReferenceAgency \"performs credit checks\"\n\n        customer -> webPortal \"manages accounts, moves money, and tracks activity\" \"Web browser\"\n        customer -> mobileAppBackend \"manages accounts, moves money, and tracks activity\" \"Mobile app\"\n\n        webPortal -> accountService \"uses\"\n        webPortal -> transactionService \"uses\"\n        webPortal -> paymentService \"uses\"\n        webPortal -> cardService \"uses\"\n        webPortal -> statementsService \"uses\"\n        webPortal -> directDebitService \"uses\"\n\n        mobileAppBackend -> accountService \"uses\"\n        mobileAppBackend -> transactionService \"uses\"\n        mobileAppBackend -> paymentService \"uses\"\n        mobileAppBackend -> cardService \"uses\"\n        mobileAppBackend -> statementsService \"uses\"\n        mobileAppBackend -> directDebitService \"uses\"\n\n        transactionService -> ledgerDatabase \"updates the ledger\"\n        transactionService -> fraudDetectionService \"scores transactions\"\n        transactionService -> eventQueue \"publishes events\"\n\n        notificationService -> eventQueue \"consumes events\"\n        statementsService -> ledgerDatabase \"reads the ledger\"\n        statementsService -> documentStore \"writes statement PDFs\"\n        batchScheduler -> ledgerDatabase \"reads and writes\"\n        batchScheduler -> customerDatabase \"reads and writes\"\n\n        paymentService -> cardService \"uses\"\n        paymentService -> exchangeRatesService \"uses\"\n        onboardingService -> customerDatabase \"reads customer records\"\n\n        paymentService -> cardPaymentNetwork \"routes card authorisations\"\n        onboardingService -> creditReferenceAgency \"performs credit checks\"\n    }\n\n    views {\n        systemContext bankPortal \"SystemContext\" \"System context diagram of the Bank Portal.\" {\n            include *\n            autoLayout\n        }\n\n        container bankPortal \"Containers\" \"Container diagram of the Bank Portal.\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "design-views",
+        "condition": "none",
+        "k_index": 4
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T13:53:07Z",
+      "timeout": false,
+      "wall_time_s": 1146.5376922648866,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/design-views.none-k4.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/design-views/none-k1.events.ndjson",
+      "event_file_bytes": 2228,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T14:48:30Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (0 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views to check (vacuously within the bound)",
+          "name": "views_within_element_bound",
+          "passed": true
+        },
+        {
+          "detail": "no views at all in the export JSON",
+          "name": "explicit_view_keys",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 971.0693133878522,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 0,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 2,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 5488,
+          "output": 3510,
+          "reasoning": 0
+        },
+        "tool_calls": 1,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 757.891,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "design-views",
+        "condition": "none",
+        "k_index": 1
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T14:28:28Z",
+      "timeout": true,
+      "wall_time_s": 1201.2248669730034,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/design-views.none-k1.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/heldout-views/none-k4.events.ndjson",
+      "event_file_bytes": 250,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T15:24:32Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (0 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views to check (vacuously within the bound)",
+          "name": "views_within_element_bound",
+          "passed": true
+        },
+        {
+          "detail": "no views at all in the export JSON",
+          "name": "explicit_view_keys",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 961.0715485110413,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 0,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 1,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 0,
+          "output": 0,
+          "reasoning": 0
+        },
+        "tool_calls": 0,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": null,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-views",
+        "condition": "none",
+        "k_index": 4
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T15:04:31Z",
+      "timeout": true,
+      "wall_time_s": 1201.2436968700495,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-views.none-k4.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/design-views/none-k0.events.ndjson",
+      "event_file_bytes": 1782,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T16:14:36Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (0 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views to check (vacuously within the bound)",
+          "name": "views_within_element_bound",
+          "passed": true
+        },
+        {
+          "detail": "no views at all in the export JSON",
+          "name": "explicit_view_keys",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 1802.0540340871084,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 0,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 2,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 5488,
+          "output": 2683,
+          "reasoning": 0
+        },
+        "tool_calls": 1,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 747.52,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "design-views",
+        "condition": "none",
+        "k_index": 0
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T15:54:34Z",
+      "timeout": true,
+      "wall_time_s": 1201.0798578918912,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/design-views.none-k0.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k1.events.ndjson",
+      "event_file_bytes": 47103,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T16:34:37Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.012114300159737468,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 16,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 122891,
+          "output": 3227,
+          "reasoning": 0
+        },
+        "tool_calls": 15,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 989.234,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 1
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T16:14:36Z",
+      "timeout": true,
+      "wall_time_s": 1200.9959219000302,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k1.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-views/none-k0.events.ndjson",
+      "event_file_bytes": 250,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T16:54:41Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (0 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views to check (vacuously within the bound)",
+          "name": "views_within_element_bound",
+          "passed": true
+        },
+        {
+          "detail": "no views at all in the export JSON",
+          "name": "explicit_view_keys",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009311018977314234,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 0,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 1,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 0,
+          "output": 0,
+          "reasoning": 0
+        },
+        "tool_calls": 0,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": null,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-views",
+        "condition": "none",
+        "k_index": 0
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T16:34:40Z",
+      "timeout": true,
+      "wall_time_s": 1201.1615390740335,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-views.none-k0.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-views/none-k1.events.ndjson",
+      "event_file_bytes": 250,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T17:15:53Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (0 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views to check (vacuously within the bound)",
+          "name": "views_within_element_bound",
+          "passed": true
+        },
+        {
+          "detail": "no views at all in the export JSON",
+          "name": "explicit_view_keys",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 70.09053355990909,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 0,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 1,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 0,
+          "output": 0,
+          "reasoning": 0
+        },
+        "tool_calls": 0,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": null,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-views",
+        "condition": "none",
+        "k_index": 1
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T16:55:52Z",
+      "timeout": true,
+      "wall_time_s": 1201.1086736549623,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-views.none-k1.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k0.events.ndjson",
+      "event_file_bytes": 55500,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-10T17:19:36Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.010200695134699345,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 15,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 141787,
+          "output": 8377,
+          "reasoning": 0
+        },
+        "tool_calls": 14,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 219.269,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 0
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T17:15:53Z",
+      "timeout": false,
+      "wall_time_s": 222.5169409259688,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k0.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k3.events.ndjson",
+      "event_file_bytes": 25847,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T17:39:40Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.007449259981513023,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "ERROR: The software system \"Library\" has containers, but is missing documentation.",
+          "ERROR: The software system \"Library\" has containers, but is missing decisions.",
+          "ERROR: The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "ERROR: The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "ERROR: The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "ERROR: The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "ERROR: The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "ERROR: The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 7,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 38829,
+          "output": 1308,
+          "reasoning": 0
+        },
+        "tool_calls": 6,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 419.233,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 3
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T17:19:39Z",
+      "timeout": true,
+      "wall_time_s": 1200.9535483769141,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k3.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/design-views/none-k2.events.ndjson",
+      "event_file_bytes": 290645,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T17:59:45Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (5801 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=1: 17:59:46.138 [main] ERROR com.structurizr.command.ValidateCommand -- Unexpected tokens (expected: name, description, properties, !docs, !decisions, !identifiers, !impliedRelationships, model, views, configuration) at line 2 of /w/workspace.dsl: scope \"SoftwareSystem\"",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export rc=1: 17:59:46.910 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "1 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views to check (vacuously within the bound)",
+          "name": "views_within_element_bound",
+          "passed": true
+        },
+        {
+          "detail": "no views at all in the export JSON",
+          "name": "explicit_view_keys",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.010952727869153023,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 9,
+        "inspect_findings": [
+          "ReferenceError: Unknown identifier 'require'. (line 1, col 13)",
+          "ReferenceError: Unknown identifier 'sysExtra'. (line 8, col 3)"
+        ],
+        "inspect_triage": {
+          "ReferenceError: Unknown identifier 'require'. (line 1, col 13)": "untriaged",
+          "ReferenceError: Unknown identifier 'sysExtra'. (line 8, col 3)": "untriaged"
+        },
+        "parse_calls": 2,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 28,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 1102557,
+          "output": 63751,
+          "reasoning": 0
+        },
+        "tool_calls": 29,
+        "validate_calls": 19,
+        "validate_ok_calls": 1,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1173.484,
+        "workdir_dsl": "workspace \"Bank Portal\" \"C4 model of the online banking platform\" {\n    scope \"SoftwareSystem\"\n\n    model {\n\n        customer = person \"Bank Customer\" \"A customer of the bank who manages accounts, moves money, and tracks activity.\"\n\n        bankPortal = softwareSystem \"Bank Portal\" \"The online banking platform, owned and operated by our company.\" {\n            documentation \"Overview\" \"The Bank Portal is the online banking platform, owned and operated by our company. Bank customers use it to manage their accounts, move money, and track their activity.\"\n            decisions {\n                decision \"Use an event queue for internal communication\" \"The application parts communicate by publishing and consuming internal events on the event queue.\"\n            }\n\n            webPortal = container \"Web Portal\" \"Where customers log in and manage their accounts.\" \"Web Application\"\n            mobileAppBackend = container \"Mobile App Backend\" \"Serves the bank's mobile app.\" \"API\"\n            accountService = container \"Account Service\" \"Holds the customer account records.\" \"Service\"\n            transactionService = container \"Transaction Service\" \"Processes deposits, withdrawals, and transfers.\" \"Service\"\n            paymentService = container \"Payment Service\" \"Executes card payments and bank transfers.\" \"Service\"\n            cardService = container \"Card Service\" \"Manages debit and credit cards.\" \"Service\"\n            fraudDetectionService = container \"Fraud Detection Service\" \"Scores transactions for fraud.\" \"Service\"\n            notificationService = container \"Notification Service\" \"Sends email and SMS alerts.\" \"Service\"\n            onboardingService = container \"Onboarding Service\" \"Verifies new customers.\" \"Service\"\n            statementsService = container \"Statements Service\" \"Generates monthly statements.\" \"Service\"\n            directDebitService = container \"Direct Debit Service\" \"Processes standing orders and direct debits.\" \"Service\"\n            exchangeRatesService = container \"Exchange Rates Service\" \"Provides currency conversion rates.\" \"Service\"\n            batchScheduler = container \"Batch Scheduler\" \"Runs the nightly interest calculation and reconciliation.\" \"Batch\"\n            eventQueue = container \"Event Queue\" \"Carries internal events between the application parts.\" \"Queue\"\n            ledgerDatabase = container \"Ledger Database\" \"Stores every account movement.\" \"Database\"\n            customerDatabase = container \"Customer Database\" \"Stores account and profile records.\" \"Database\"\n            auditDatabase = container \"Audit Database\" \"Stores the compliance audit trail.\" \"Database\"\n            cache = container \"Cache\" \"Stores sessions and frequently read account data.\" \"In-memory Data Store\"\n            documentStore = container \"Document Store\" \"Holds the generated statement PDFs.\" \"File Store\"\n        }\n\n        cardPaymentNetwork = softwareSystem \"Card Payment Network\" \"A card payment network operated by a different organization.\"\n        creditReferenceAgency = softwareSystem \"Credit Reference Agency\" \"A credit reference agency operated by a different organization.\"\n\n        customer -> bankPortal \"manages accounts, moves money, and tracks activity\" \"Web browser / Mobile app\"\n        bankPortal -> cardPaymentNetwork \"routes card authorisations\" \"HTTPS\"\n        bankPortal -> creditReferenceAgency \"performs credit checks\" \"HTTPS\"\n\n        customer -> webPortal \"manages accounts, moves money, and tracks activity\" \"Web browser\"\n        customer -> mobileAppBackend \"manages accounts, moves money, and tracks activity\" \"Mobile app\"\n\n        webPortal -> accountService \"uses\" \"REST API\"\n        webPortal -> transactionService \"uses\" \"REST API\"\n        webPortal -> paymentService \"uses\" \"REST API\"\n        webPortal -> cardService \"uses\" \"REST API\"\n        webPortal -> statementsService \"uses\" \"REST API\"\n        webPortal -> directDebitService \"uses\" \"REST API\"\n        webPortal -> cache \"stores sessions\" \"REST API\"\n\n        mobileAppBackend -> accountService \"uses\" \"REST API\"\n        mobileAppBackend -> transactionService \"uses\" \"REST API\"\n        mobileAppBackend -> paymentService \"uses\" \"REST API\"\n        mobileAppBackend -> cardService \"uses\" \"REST API\"\n        mobileAppBackend -> statementsService \"uses\" \"REST API\"\n        mobileAppBackend -> directDebitService \"uses\" \"REST API\"\n\n        accountService -> cache \"caches frequently read account data\" \"REST API\"\n\n        transactionService -> ledgerDatabase \"updates the ledger\" \"SQL\"\n        transactionService -> fraudDetectionService \"scores transactions\" \"REST API\"\n        transactionService -> eventQueue \"publishes events\" \"AMQP\"\n        transactionService -> auditDatabase \"writes the compliance audit trail\" \"SQL\"\n\n        notificationService -> eventQueue \"consumes events\" \"AMQP\"\n        statementsService -> ledgerDatabase \"reads the ledger\" \"SQL\"\n        statementsService -> documentStore \"writes statement PDFs\" \"REST API\"\n        batchScheduler -> ledgerDatabase \"reads and writes\" \"SQL\"\n        batchScheduler -> customerDatabase \"reads and writes\" \"SQL\"\n\n        paymentService -> cardService \"uses\" \"REST API\"\n        paymentService -> exchangeRatesService \"uses\" \"REST API\"\n        paymentService -> cardPaymentNetwork \"routes card authorisations\" \"HTTPS\"\n        onboardingService -> customerDatabase \"reads customer records\" \"SQL\"\n        onboardingService -> creditReferenceAgency \"performs credit checks\" \"HTTPS\"\n    }\n\n    views {\n        systemContext bankPortal \"SystemContext\" \"System context diagram of the Bank Portal.\" {\n            include *\n            autoLayout\n        }\n\n        container bankPortal \"Containers\" \"Container diagram of the Bank Portal.\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "design-views",
+        "condition": "none",
+        "k_index": 2
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T17:39:43Z",
+      "timeout": true,
+      "wall_time_s": 1201.2628210410476,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/design-views.none-k2.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/design-views/none-k3.events.ndjson",
+      "event_file_bytes": 250,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T18:19:49Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (0 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views to check (vacuously within the bound)",
+          "name": "views_within_element_bound",
+          "passed": true
+        },
+        {
+          "detail": "no views at all in the export JSON",
+          "name": "explicit_view_keys",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.013243939960375428,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 0,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 1,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 0,
+          "output": 0,
+          "reasoning": 0
+        },
+        "tool_calls": 0,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": null,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "design-views",
+        "condition": "none",
+        "k_index": 3
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T17:59:47Z",
+      "timeout": true,
+      "wall_time_s": 1201.018380942056,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/design-views.none-k3.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-views/none-k2.events.ndjson",
+      "event_file_bytes": 211790,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-10T18:40:40Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (4285 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "4/ 4 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "description on all 24 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "technology on 0% of 23 relationship(s); missing: ['reports claims and tracks progress', 'reports claims and tracks progress', 'sends requests to', 'submits new claims to', 'requests settlement amounts from', 'requests settlements from', 'sends claim photos and reports to', 'requests status updates from', 'submits new claims to', 'requests settlement amounts from', 'requests settlements from', 'sends claim photos and reports to', 'requests status updates from', 'hands accepted claims to', 'routes claims to', 'requests settlements from', 'executes settlements through', 'consults', 'reads from', 'reports claim status changes to', 'routes the claim to', 'reads and writes', 'reads and writes']",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (10 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "1 of 2 user-defined view(s) over 20 element(s): 'Containers' with 23 element(s)",
+          "name": "views_within_element_bound",
+          "passed": false
+        },
+        {
+          "detail": "every one of 2 view(s) has an explicit key",
+          "name": "explicit_view_keys",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 50.06838014512323,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 6,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The relationship between the person \"Policyholder\" and the container \"Claims Center.Web Portal\" is missing a technology.",
+          "The relationship between the person \"Policyholder\" and the software system \"Claims Center\" is missing a technology.",
+          "The relationship between the person \"Policyholder\" and the software system \"Mobile App\" is missing a technology.",
+          "The relationship between the software system \"Mobile App\" and the container \"Claims Center.Mobile App Backend\" is missing a technology.",
+          "The relationship between the software system \"Mobile App\" and the software system \"Claims Center\" is missing a technology.",
+          "The software system \"Claims Center\" has containers, but is missing documentation.",
+          "The software system \"Claims Center\" has containers, but is missing decisions.",
+          "The relationship between the software system \"Claims Center\" and the software system \"National Claims Data Bureau\" is missing a technology.",
+          "The relationship between the software system \"Claims Center\" and the software system \"Clearing House\" is missing a technology.",
+          "The relationship between the software system \"Claims Center\" and the person \"Policyholder\" is missing a technology.",
+          "The container \"Claims Center.Web Portal\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Claims Intake Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Assessment Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Payout Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Document Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Notification Service\" is missing a technology.",
+          "The container \"Claims Center.Mobile App Backend\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Claims Intake Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Assessment Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Payout Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Document Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Notification Service\" is missing a technology.",
+          "The container \"Claims Center.Claims Intake Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Claims Intake Service\" and the container \"Claims Center.Triage Service\" is missing a technology.",
+          "The container \"Claims Center.Triage Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Triage Service\" and the container \"Claims Center.Assessment Service\" is missing a technology.",
+          "The container \"Claims Center.Assessment Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Assessment Service\" and the container \"Claims Center.Payout Service\" is missing a technology.",
+          "The container \"Claims Center.Payout Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Payout Service\" and the software system \"Clearing House\" is missing a technology.",
+          "The container \"Claims Center.Fraud Screening Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Fraud Screening Service\" and the software system \"National Claims Data Bureau\" is missing a technology.",
+          "The container \"Claims Center.Document Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Document Service\" and the container \"Claims Center.Document Store\" is missing a technology.",
+          "The container \"Claims Center.Notification Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Notification Service\" and the person \"Policyholder\" is missing a technology.",
+          "The container \"Claims Center.Assignment Service\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Assignment Service\" and the container \"Claims Center.Adjuster Workbench\" is missing a technology.",
+          "The container \"Claims Center.Adjuster Workbench\" is missing a technology.",
+          "The container \"Claims Center.Policy Verification Service\" is missing a technology.",
+          "The container \"Claims Center.Policy Verification Service\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The container \"Claims Center.Reinsurance Allocation Service\" is missing a technology.",
+          "The container \"Claims Center.Reinsurance Allocation Service\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The container \"Claims Center.Batch Scheduler\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Batch Scheduler\" and the container \"Claims Center.Claims Database\" is missing a technology.",
+          "The relationship between the container \"Claims Center.Batch Scheduler\" and the container \"Claims Center.Policy Database\" is missing a technology.",
+          "The container \"Claims Center.Event Queue\" is missing a technology.",
+          "The container \"Claims Center.Event Queue\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The container \"Claims Center.Claims Database\" is missing a technology.",
+          "The container \"Claims Center.Policy Database\" is missing a technology.",
+          "The container \"Claims Center.Audit Database\" is missing a technology.",
+          "The container \"Claims Center.Audit Database\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The container \"Claims Center.Document Store\" is missing a technology."
+        ],
+        "inspect_triage": {
+          "The container \"Claims Center.Adjuster Workbench\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Assessment Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Assignment Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Audit Database\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The container \"Claims Center.Audit Database\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Batch Scheduler\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Claims Database\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Claims Intake Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Document Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Document Store\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Event Queue\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The container \"Claims Center.Event Queue\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Fraud Screening Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Mobile App Backend\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Notification Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Payout Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Policy Database\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Policy Verification Service\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The container \"Claims Center.Policy Verification Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Reinsurance Allocation Service\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The container \"Claims Center.Reinsurance Allocation Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Triage Service\" is missing a technology.": "untriaged",
+          "The container \"Claims Center.Web Portal\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Assessment Service\" and the container \"Claims Center.Payout Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Assignment Service\" and the container \"Claims Center.Adjuster Workbench\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Batch Scheduler\" and the container \"Claims Center.Claims Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Batch Scheduler\" and the container \"Claims Center.Policy Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Claims Intake Service\" and the container \"Claims Center.Triage Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Document Service\" and the container \"Claims Center.Document Store\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Fraud Screening Service\" and the software system \"National Claims Data Bureau\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Assessment Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Claims Intake Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Document Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Notification Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Payout Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Notification Service\" and the person \"Policyholder\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Payout Service\" and the software system \"Clearing House\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Triage Service\" and the container \"Claims Center.Assessment Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Assessment Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Claims Intake Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Document Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Notification Service\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Payout Service\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Policyholder\" and the container \"Claims Center.Web Portal\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Policyholder\" and the software system \"Claims Center\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Policyholder\" and the software system \"Mobile App\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Claims Center\" and the person \"Policyholder\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Claims Center\" and the software system \"Clearing House\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Claims Center\" and the software system \"National Claims Data Bureau\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Mobile App\" and the container \"Claims Center.Mobile App Backend\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Mobile App\" and the software system \"Claims Center\" is missing a technology.": "untriaged",
+          "The software system \"Claims Center\" has containers, but is missing decisions.": "expected",
+          "The software system \"Claims Center\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 6,
+        "relationship_technology_coverage": 0.0,
+        "skills_loaded": [],
+        "steps": 14,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 604271,
+          "output": 66215,
+          "reasoning": 0
+        },
+        "tool_calls": 14,
+        "validate_calls": 10,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1076.401,
+        "workdir_dsl": "workspace \"Claims Center\" \"C4 model of the insurance claims platform\" {\n\n    model {\n\n        policyholder = person \"Policyholder\" \"Reports claims and tracks their progress\"\n\n        mobileApp = softwareSystem \"Mobile App\" \"The insurer's mobile app\"\n\n        claimsCenter = softwareSystem \"Claims Center\" \"The insurance company's claims platform\" {\n            webPortal = container \"Web Portal\" \"Policyholders report claims and track their progress\"\n            mobileAppBackend = container \"Mobile App Backend\" \"Serves the insurer's mobile app\"\n            claimsIntake = container \"Claims Intake Service\" \"Registers new claims\"\n            triage = container \"Triage Service\" \"Classifies and prioritizes claims\"\n            assessment = container \"Assessment Service\" \"Calculates settlement amounts\"\n            payout = container \"Payout Service\" \"Executes claim settlements\"\n            fraudScreening = container \"Fraud Screening Service\" \"Screens each incoming claim and flags suspicious claims\"\n            documentService = container \"Document Service\" \"Accepts claim photos and reports\"\n            notificationService = container \"Notification Service\" \"Emails and messages policyholders\"\n            assignmentService = container \"Assignment Service\" \"Routes claims to adjusters\"\n            adjusterWorkbench = container \"Adjuster Workbench\" \"Staff process their assigned claims\"\n            policyVerification = container \"Policy Verification Service\" \"Checks that a claim is covered by the policy\"\n            reinsuranceAllocation = container \"Reinsurance Allocation Service\" \"Apportions large losses across reinsurance partners\"\n            batchScheduler = container \"Batch Scheduler\" \"Runs the nightly reserves calculation\"\n            eventQueue = container \"Event Queue\" \"Carries claim events between the application parts\"\n            claimsDatabase = container \"Claims Database\" \"Stores claim records\"\n            policyDatabase = container \"Policy Database\" \"Stores policy and cover records\"\n            auditDatabase = container \"Audit Database\" \"Stores the compliance audit trail\"\n            documentStore = container \"Document Store\" \"Holds claim photos, reports, and correspondence\"\n        }\n\n        dataBureau = softwareSystem \"National Claims Data Bureau\" \"A national claims data bureau operated by a different organization\"\n        clearingHouse = softwareSystem \"Clearing House\" \"A clearing house operated by a different organization\"\n\n        policyholder -> webPortal \"reports claims and tracks progress\"\n        policyholder -> mobileApp \"reports claims and tracks progress\"\n        mobileApp -> mobileAppBackend \"sends requests to\"\n\n        webPortal -> claimsIntake \"submits new claims to\"\n        webPortal -> assessment \"requests settlement amounts from\"\n        webPortal -> payout \"requests settlements from\"\n        webPortal -> documentService \"sends claim photos and reports to\"\n        webPortal -> notificationService \"requests status updates from\"\n\n        mobileAppBackend -> claimsIntake \"submits new claims to\"\n        mobileAppBackend -> assessment \"requests settlement amounts from\"\n        mobileAppBackend -> payout \"requests settlements from\"\n        mobileAppBackend -> documentService \"sends claim photos and reports to\"\n        mobileAppBackend -> notificationService \"requests status updates from\"\n\n        claimsIntake -> triage \"hands accepted claims to\"\n        triage -> assessment \"routes claims to\"\n        assessment -> payout \"requests settlements from\"\n\n        assignmentService -> adjusterWorkbench \"routes the claim to\"\n\n        fraudScreening -> dataBureau \"consults\"\n        payout -> clearingHouse \"executes settlements through\"\n\n        documentService -> documentStore \"reads from\"\n        batchScheduler -> claimsDatabase \"reads and writes\"\n        batchScheduler -> policyDatabase \"reads and writes\"\n        notificationService -> policyholder \"reports claim status changes to\"\n    }\n\n    views {\n        systemContext claimsCenter \"SystemContext\" \"The system context view of the Claims Center\" {\n            include *\n            autoLayout\n        }\n\n        container claimsCenter \"Containers\" \"The container view of the Claims Center\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-views",
+        "condition": "none",
+        "k_index": 2
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T18:20:39Z",
+      "timeout": true,
+      "wall_time_s": 1201.2823323030025,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-views.none-k2.p140-prove-2026-11-10T133052Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k4.events.ndjson",
+      "event_file_bytes": 55134,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-10T18:47:39Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text states that images cannot be produced",
+          "name": "mcp_limit_stated",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.010733224917203188,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 16,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 160691,
+          "output": 9629,
+          "reasoning": 0
+        },
+        "tool_calls": 15,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 411.642,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": true,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 4
+      },
+      "run_id": "p140-prove-2026-11-10T133052Z",
+      "skills_installed": [],
+      "started_at": "2026-11-10T18:40:44Z",
+      "timeout": false,
+      "wall_time_s": 414.56512709497474,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k4.p140-prove-2026-11-10T133052Z"
+    }
+  ],
+  "version_tuple": {
+    "conditions_cacheable": [
+      "none",
+      "upstream"
+    ],
+    "jq": "1.6",
+    "model_id": "qwen3.8-27b-bf16-896k",
+    "network_mode": "internal-bridge",
+    "opencode_image": "ghcr.io/anomalyco/opencode:2.2.5",
+    "opencode_image_digest": "sha256:1690aad69864d2f6714772d1e040918feebc6df5286d2bd7e181fbb35d12d4a9",
+    "provider_id": "vllm-sys0",
+    "python": "3.13.13",
+    "sampling_parameters": {
+      "seed": 1337,
+      "temperature": 0.0,
+      "topP": 1.0
+    },
+    "speculative_config": {
+      "externally_verifiable": false,
+      "method": "mtp",
+      "num_speculative_tokens": 5
+    },
+    "structurizr_cli_image": "structurizr/structurizr:2026.10.26-noble",
+    "structurizr_cli_image_digest": "sha256:1081d615e7a539aee8b8360e36a58f42ff6412dd8f0e1b053134cb2c76ab2303",
+    "structurizr_mcp_image": "structurizr/mcp:2026.04.20",
+    "structurizr_mcp_image_digest": "sha256:fc4ef98b7da925d62b08c71a90eb995a527fae30e2c04b39e3041f253c135539",
+    "trial_timeout_s": 1200,
+    "upstream_sha": "e86d8a91d3ed793cdf6c035f01d19f1b18cc8b6b",
+    "vllm_endpoint": "http://127.0.0.1:8081/v1",
+    "vllm_version": "0.26.0"
+  },
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

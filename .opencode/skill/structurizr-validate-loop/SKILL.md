@@ -1,6 +1,6 @@
 ---
 name: structurizr-validate-loop
-description: Use when the task is checking or validating a Structurizr DSL model with the Structurizr MCP tools -- running the loop of the parse, validate, and inspect tools until validate answers OK and every inspect finding is triaged (fix, expected under the MCP limits, or reported in the final answer) -- for example when asked to "validate a Structurizr workspace", "check the DSL", "inspect findings", or to answer "is my model valid". It checks DSL text only and does not itself produce any files.
+description: Use when the task is checking or validating a Structurizr DSL model with the Structurizr MCP tools -- running the loop of the parse, validate, and inspect tools until validate answers OK and every inspect finding is triaged (fix, expected under the MCP limits, or reported in the final answer) -- for example when asked to "validate a Structurizr workspace", "check the DSL", "inspect findings", or to answer "is my model valid". Repairing the DSL text itself is the structurizr-dsl-authoring skill's task; when a workspace must be fixed and validated, both skills are loaded. It checks DSL text only and does not itself produce any files.
 ---
 
 # Structurizr Validate Loop
@@ -11,6 +11,15 @@ the in-harness server name is `structurizr`), so refer to the tools by
 their own names — the `parse`, `validate`, and `inspect` tools of the
 Structurizr MCP server — and call whichever prefixed variant your host
 exposes.
+
+## Fixing a broken workspace
+
+Repairing the DSL text itself — the syntax, the declaration order, the
+quoting, a missing description or technology — is the
+`structurizr-dsl-authoring` skill's task, not this skill's. When a
+workspace must be fixed and validated (for example "this workspace fails
+to validate, fix it"), both skills are loaded: the authoring skill for the
+repair, this skill for the loop that proves the repaired text validates.
 
 ## The mandatory loop
 
@@ -43,7 +52,7 @@ Every DSL result runs through this loop before it is returned:
 A DSL result that was only parsed, and not validated to `OK`, is NOT a
 pass — a parsed-only or reported-only result is not a pass. This is the
 same rule as the repo's own PlantUML validation chain (DEC
-7a626b12-b189-4561-a51d-ffb2e9e133b4): a structure-only check is not a
+7a626b12-b189-4561-a51d-ffb2e9e193b4): a structure-only check is not a
 pass.
 
 ## How to call the tools

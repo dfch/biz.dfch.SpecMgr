@@ -1,0 +1,133 @@
+{
+  "cache_reason": "hit",
+  "cached": true,
+  "contended": false,
+  "event_file": "trials/heldout-dsl/none-k1.events.ndjson",
+  "event_file_bytes": 36260,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-07T19:53:03Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (830 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "1/ 1 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "3 container(s)",
+      "name": "two_containers",
+      "passed": true
+    },
+    {
+      "detail": "1 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "technology on 67% of 3 relationship(s); missing: ['Buys tickets through']",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "description on all 3 relationship(s)",
+      "name": "relationships_described",
+      "passed": true
+    },
+    {
+      "detail": "1 of 6 element(s) lack a description: [\"container 'Ticket Kiosk'\"]",
+      "name": "elements_described",
+      "passed": false
+    },
+    {
+      "detail": "all 6 seeded element(s) and 3 seeded relationship(s) still present",
+      "name": "no_deletions",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.01046389783732593,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 0,
+    "inspect_findings": [
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The relationship between the person \"Museum Visitor\" and the container \"Museum Ticketing.Ticket Shop\" is missing a technology.",
+      "The relationship between the person \"Museum Visitor\" and the software system \"Museum Ticketing\" is missing a technology.",
+      "The software system \"Museum Ticketing\" has containers, but is missing documentation.",
+      "The software system \"Museum Ticketing\" has containers, but is missing decisions.",
+      "The container named \"Ticket Shop\" is not included on any views - add it to a view.",
+      "The container \"Museum Ticketing.Ticket Kiosk\" is missing a description.",
+      "The container \"Museum Ticketing.Ticket Kiosk\" is missing a technology.",
+      "The container \"Museum Ticketing.Ticket Kiosk\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "The container named \"Ticket Kiosk\" is not included on any views - add it to a view.",
+      "The container named \"Entry Scanner\" is not included on any views - add it to a view."
+    ],
+    "inspect_triage": {
+      "The container \"Museum Ticketing.Ticket Kiosk\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "The container \"Museum Ticketing.Ticket Kiosk\" is missing a description.": "untriaged",
+      "The container \"Museum Ticketing.Ticket Kiosk\" is missing a technology.": "untriaged",
+      "The container named \"Entry Scanner\" is not included on any views - add it to a view.": "untriaged",
+      "The container named \"Ticket Kiosk\" is not included on any views - add it to a view.": "untriaged",
+      "The container named \"Ticket Shop\" is not included on any views - add it to a view.": "untriaged",
+      "The relationship between the person \"Museum Visitor\" and the container \"Museum Ticketing.Ticket Shop\" is missing a technology.": "untriaged",
+      "The relationship between the person \"Museum Visitor\" and the software system \"Museum Ticketing\" is missing a technology.": "untriaged",
+      "The software system \"Museum Ticketing\" has containers, but is missing decisions.": "expected",
+      "The software system \"Museum Ticketing\" has containers, but is missing documentation.": "expected",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+    },
+    "parse_calls": 0,
+    "relationship_technology_coverage": 0.6666666666666666,
+    "skills_loaded": [],
+    "steps": 10,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 70623,
+      "output": 2887,
+      "reasoning": 0
+    },
+    "tool_calls": 9,
+    "validate_calls": 4,
+    "validate_ok_calls": 1,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 24.35,
+    "workdir_dsl": "workspace \"Museum Ticketing\" \"Sells and validates museum entry.\" {\n    model {\n        visitor = person \"Museum Visitor\" \"Buys tickets and plans visits\"\n        ticketing = softwareSystem \"Museum Ticketing\" \"Sells tickets and manages entry.\" {\n            shop = container \"Ticket Shop\" \"Online ticket sales.\" \"Python\"\n            kiosk = container \"Ticket Kiosk\"\n            scanner = container \"Entry Scanner\" \"Validates tickets at the door.\" \"C/C++\"\n        }\n        payment = element \"Payment Provider\" \"Processes card payments.\"\n        scanner -> shop \"Validates tickets in\" \"gRPC\"\n        shop -> payment \"Authorises charges to\" \"REST/JSON\"\n        visitor -> shop \"Buys tickets through\"\n    }\n    views {\n        systemContext ticketing \"TicketingContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "heldout-dsl",
+    "condition": "none",
+    "k_index": 1
+  },
+  "run_id": "p120-prove-2026-11-07T185741Z",
+  "skills_installed": [],
+  "started_at": "2026-11-07T19:52:37Z",
+  "timeout": false,
+  "wall_time_s": 26.400068873073906,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-dsl.none-k1.p120-prove-2026-11-07T185741Z"
+}

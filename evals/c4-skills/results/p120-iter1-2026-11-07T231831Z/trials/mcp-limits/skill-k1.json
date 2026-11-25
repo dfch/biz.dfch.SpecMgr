@@ -1,0 +1,154 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/mcp-limits/skill-k1.events.ndjson",
+  "event_file_bytes": 303453,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-08T00:21:34Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (411 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "3/ 3 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "2/2 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "5 container(s)",
+      "name": "two_containers",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 8 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "5 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "no terminal parse call in the event stream",
+      "name": "parse_called",
+      "passed": false
+    },
+    {
+      "detail": "1 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "2 terminal inspect call(s)",
+      "name": "inspect_called",
+      "passed": true
+    },
+    {
+      "detail": "no validate call answered the OK marker with a dsl input",
+      "name": "validated_before_return",
+      "passed": false
+    },
+    {
+      "detail": "all 12 finding(s) labeled fix/expected/reported",
+      "name": "triage_complete",
+      "passed": true
+    },
+    {
+      "detail": "final text names: !docs, !include",
+      "name": "limits_acknowledged",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.010275461943820119,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": "workspace.dsl              # entry point: !include + !docs + configuration\nmodel/\n  people.dsl               # customer, warehouseStaff\n  order-management.dsl     # OMS system + its containers + components (nested)\n  external-systems.dsl     # Payment Gateway, Inventory System\n  relationships.dsl        # all relationships\nviews/\n  views.dsl                # landscape, context, container, component, dynamic\n  styles.dsl               # C4 style recipe\ndocs/\n  architecture.md          # the !docs Markdown page\n",
+    "inspect_calls": 2,
+    "inspect_findings": [
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "ERROR: The software system \"Order Management System\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Order Management System\" has containers, but is missing decisions.",
+      "{",
+      "\"validate\": \"OK\",",
+      "\"inspect\": [",
+      "\"ERROR: The software system \\\"Order Management System\\\" has containers, but is missing documentation.\",",
+      "\"ERROR: The software system \\\"Order Management System\\\" has containers, but is missing decisions.\"",
+      "]",
+      "}",
+      "The software system \"Order Management System\" has containers, but is missing documentation.",
+      "The software system \"Order Management System\" has containers, but is missing decisions."
+    ],
+    "inspect_triage": {
+      "\"ERROR: The software system \\\"Order Management System\\\" has containers, but is missing decisions.\"": "expected",
+      "\"ERROR: The software system \\\"Order Management System\\\" has containers, but is missing documentation.\",": "expected",
+      "\"inspect\": [": "fix",
+      "\"validate\": \"OK\",": "fix",
+      "ERROR: The software system \"Order Management System\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Order Management System\" has containers, but is missing documentation.": "expected",
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "fix",
+      "The software system \"Order Management System\" has containers, but is missing decisions.": "expected",
+      "The software system \"Order Management System\" has containers, but is missing documentation.": "expected",
+      "]": "fix",
+      "{": "fix",
+      "}": "fix"
+    },
+    "parse_calls": 0,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "structurizr-dsl-authoring"
+    ],
+    "steps": 23,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 1174139,
+      "output": 61077,
+      "reasoning": 0
+    },
+    "tool_calls": 45,
+    "validate_calls": 4,
+    "validate_ok_calls": 1,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 995.269,
+    "workdir_dsl": "workspace \"Order Management\" \"C4 model of the Order Management System\" {\n    model {\n        !include model/people.dsl\n        !include model/order-management.dsl\n        !include model/external-systems.dsl\n        !include model/relationships.dsl\n    }\n    views {\n        !include views/views.dsl\n        !include views/styles.dsl\n    }\n    configuration {\n        scope softwareSystem\n    }\n    !docs docs\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "mcp-limits",
+    "condition": "skill",
+    "k_index": 1
+  },
+  "run_id": "p120-iter1-2026-11-07T231831Z",
+  "skills_installed": [
+    "structurizr-dsl-authoring"
+  ],
+  "started_at": "2026-11-08T00:04:57Z",
+  "timeout": false,
+  "wall_time_s": 996.8288230220787,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/mcp-limits.skill-k1.p120-iter1-2026-11-07T231831Z"
+}

@@ -42,16 +42,49 @@ message) -- still no Docker and no model call.
 
 from __future__ import annotations
 
+import copy
 import json
+import re
 import unittest
 
 from c4_skills import pins
 from c4_skills.cases import (
     CASES,
     CREATE_SYSTEM_GATES,
+    DESIGN_VIEWS_CASE_DEF,
+    DESIGN_VIEWS_GATES,
+    DESIGN_VIEWS_PROMPT,
+    FIX_DSL_CASE_DEF,
+    FIX_DSL_GATES,
+    FIX_DSL_PROMPT,
+    FIX_DSL_SEED_ELEMENTS,
+    FIX_DSL_SEED_RELATIONSHIPS,
+    FIX_DSL_SEED_WORKSPACE,
+    HELDOUT_DSL_CASE_DEF,
+    HELDOUT_DSL_SEED_ELEMENTS,
+    HELDOUT_DSL_SEED_RELATIONSHIPS,
+    HELDOUT_DSL_SEED_WORKSPACE,
+    HELDOUT_MODELING_CASE_DEF,
+    HELDOUT_MODELING_FORBIDDEN_NAMES,
+    HELDOUT_MODELING_PROMPT,
+    HELDOUT_REVIEW_CASE_DEF,
+    HELDOUT_REVIEW_REVIEW_FACTS,
+    HELDOUT_REVIEW_SEED_WORKSPACE,
+    HELDOUT_VIEWS_CASE_DEF,
+    HELDOUT_VIEWS_PROMPT,
     MCP_LIMITS_GATES,
+    MODELING_DECISIONS_CASE_DEF,
+    MODELING_DECISIONS_EXPECTED_CONTAINERS,
+    MODELING_DECISIONS_FORBIDDEN_NAMES,
+    MODELING_DECISIONS_GATES,
+    MODELING_DECISIONS_PROMPT,
     NO_TRIGGER_GATES,
     MIN_DSL_BYTES,
+    REVIEW_MODEL_CASE_DEF,
+    REVIEW_MODEL_GATES,
+    REVIEW_MODEL_PROMPT,
+    REVIEW_MODEL_REVIEW_FACTS,
+    REVIEW_MODEL_SEED_WORKSPACE,
     SMOKE_CREATE_SYSTEM_PROMPT,
     Case,
 )
@@ -61,9 +94,28 @@ from c4_skills.graders import (
     GateContext,
     GateResult,
     GraderInputs,
+    VAGUE_RELATIONSHIP_LABELS,
+    VIEW_ELEMENT_BOUND,
     case_passed,
     grade_case,
+    gate_container_count,
+    gate_crowded_view_found,
+    gate_elements_described,
+    gate_explicit_view_keys,
+    gate_external_system_tagged,
+    gate_keyless_view_found,
+    gate_no_deletions,
+    gate_no_false_findings,
+    gate_no_library_container,
+    gate_no_vague_labels,
+    gate_relationships_described,
+    gate_vague_label_found,
+    gate_views_within_element_bound,
+    parse_inspect_findings,
+    _finding_lines,
+    iter_components,
     iter_containers,
+    iter_custom_elements,
     iter_people,
     iter_relationships,
     iter_systems,
@@ -88,7 +140,33 @@ def _load_export(name: str) -> dict | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _inputs(name: str, validate_rc: int, export_rc: int) -> GraderInputs:
+#: The Phase 110 loop fixture's final-inspect facts (the Task 125.100/G2
+#: truth anchor): the agent's post-inspect edit clears the container-view
+#: findings, the MCP-limits findings remain (the MCP refuses `!docs`/
+#: `!adrs`). The bare form is the CLI's parsed form (the pipe lines are
+#: split in `collect_inputs`); rc=1 is the pinned CLI's exit code when it
+#: reports findings on a workspace it inspected.
+LOOP_FINAL_INSPECT_RC = 1
+LOOP_FINAL_INSPECT_FINDINGS = [
+    'The software system "Bookshop" has containers, but is missing documentation.',
+    'The software system "Bookshop" has containers, but is missing decisions.',
+]
+
+#: The Phase 110 codemode fixture's final-inspect facts: only the
+#: missing-documentation finding remains (the web-store view finding was
+#: fixed by the post-inspect edit).
+CODEMODE_FINAL_INSPECT_FINDINGS = [
+    'The software system "Bookshop" has containers, but is missing documentation.',
+]
+
+
+def _inputs(
+    name: str,
+    validate_rc: int,
+    export_rc: int,
+    inspect_rc: int | None = None,
+    inspect_findings: list[str] | None = None,
+) -> GraderInputs:
     dsl_path = WORKSPACES / name / "workspace.dsl"
     dsl_text = dsl_path.read_text(encoding="utf-8")
     export_json = _load_export(name)
@@ -101,8 +179,8 @@ def _inputs(name: str, validate_rc: int, export_rc: int) -> GraderInputs:
         export_json=export_json,
         export_rc=export_rc,
         export_stderr="" if export_rc == 0 else "export failed",
-        inspect_rc=None,
-        inspect_findings=[],
+        inspect_rc=inspect_rc,
+        inspect_findings=list(inspect_findings or []),
     )
 
 
@@ -110,8 +188,16 @@ def _minimal_inputs(
     dsl_text: str | None,
     export_json: dict | None = None,
     inspect_findings: list[str] | None = None,
+    inspect_rc: int | None = None,
 ) -> GraderInputs:
-    """Build a GraderInputs from plain text (no fixture file, no CLI)."""
+    """Build a GraderInputs from plain text (no fixture file, no CLI).
+
+    An omitted `inspect_rc` derives the pre-Phase 125 shape: 0 when the
+    dsl text exists (the CLI ran, finding-free), None otherwise (no file,
+    the CLI could not run).
+    """
+    if inspect_rc is None and dsl_text is not None:
+        inspect_rc = 0
     return GraderInputs(
         dsl_path="workspace.dsl" if dsl_text is not None else None,
         dsl_text=dsl_text,
@@ -120,7 +206,7 @@ def _minimal_inputs(
         export_json=export_json,
         export_rc=0 if export_json is not None else None,
         export_stderr="",
-        inspect_rc=0 if dsl_text is not None else None,
+        inspect_rc=inspect_rc,
         inspect_findings=list(inspect_findings or []),
     )
 
@@ -418,7 +504,13 @@ class TestPhase110EndToEnd(unittest.TestCase):
 
     def test_create_system_passes_all_13_gates(self) -> None:
         case = CASES["create-system"]
-        inputs = _inputs("good", validate_rc=0, export_rc=0)
+        inputs = _inputs(
+            "good",
+            validate_rc=0,
+            export_rc=0,
+            inspect_rc=LOOP_FINAL_INSPECT_RC,
+            inspect_findings=LOOP_FINAL_INSPECT_FINDINGS,
+        )
         context = _context(case, inputs, trial=_loop_parsed())
 
         results = grade_case(context)
@@ -428,7 +520,13 @@ class TestPhase110EndToEnd(unittest.TestCase):
 
     def test_mcp_limits_passes_all_14_gates(self) -> None:
         case = CASES["mcp-limits"]
-        inputs = _inputs("good", validate_rc=0, export_rc=0)
+        inputs = _inputs(
+            "good",
+            validate_rc=0,
+            export_rc=0,
+            inspect_rc=LOOP_FINAL_INSPECT_RC,
+            inspect_findings=LOOP_FINAL_INSPECT_FINDINGS,
+        )
         context = _context(case, inputs, trial=_loop_parsed())
 
         results = grade_case(context)
@@ -617,11 +715,18 @@ class TestInspectCalledGate(unittest.TestCase):
 class TestTriageCompleteGate(unittest.TestCase):
     def test_pass_when_every_finding_is_labeled(self) -> None:
         case = CASES["create-system"]
-        context = _context(case, _minimal_inputs(None), trial=_loop_parsed())
+        context = _context(
+            case,
+            _minimal_inputs(None, inspect_rc=LOOP_FINAL_INSPECT_RC, inspect_findings=LOOP_FINAL_INSPECT_FINDINGS),
+            trial=_loop_parsed(),
+        )
 
         result = _gate("triage_complete", context)
 
-        # the fixture: 2 expected (MCP limits) + 2 fix (post-inspect edit)
+        # the fixture: 2 expected (MCP limits) + 2 fix (post-inspect edit
+        # corroborated by the final CLI inspect, Task 125.100/G2); the
+        # CLI's bare forms merge onto the stream's `ERROR:`-prefixed forms
+        # (Task 125.120/I2), so 4 findings, not 6
         self.assertTrue(result.passed)
         self.assertIn("all 4 finding(s)", result.detail)
 
@@ -844,11 +949,18 @@ class TestCodeModeGates(unittest.TestCase):
         self.assertIn("1 terminal inspect call(s)", result.detail)
 
     def test_triage_complete_over_codemode_findings(self) -> None:
-        context = _context(self.case, _minimal_inputs(None), trial=parse_events_file(self.CODEMODE_STREAM))
+        context = _context(
+            self.case,
+            _minimal_inputs(None, inspect_rc=LOOP_FINAL_INSPECT_RC, inspect_findings=CODEMODE_FINAL_INSPECT_FINDINGS),
+            trial=parse_events_file(self.CODEMODE_STREAM),
+        )
 
         result = _gate("triage_complete", context)
 
-        # the fixture: 1 expected (MCP limits) + 1 fix (post-inspect edit)
+        # the fixture: 1 expected (MCP limits) + 1 fix (post-inspect edit
+        # corroborated by the final CLI inspect, Task 125.100/G2); the CLI's
+        # bare docs finding merges onto the stream's `ERROR:`-prefixed form
+        # (Task 125.120/I2), so 2 findings, not 3
         self.assertTrue(result.passed)
         self.assertIn("all 2 finding(s)", result.detail)
 
@@ -957,11 +1069,1851 @@ class TestMcpLimitStatedGate(unittest.TestCase):
 
     def test_fail_when_the_final_text_does_not_mention_images(self) -> None:
         case = CASES["no-trigger"]
-        context = _context(case, _minimal_inputs(None), trial=_stream(_text_event("Done.")))
+        context = _context(case, _minimal_inputs(None))
 
         result = _gate("mcp_limit_stated", context)
 
         self.assertFalse(result.passed)
+
+
+class TestMcpLimitStatedRendererPhrasings(unittest.TestCase):
+    """Task 190.100 (E1): the renderer-availability phrasings the agents
+    actually use (quoted verbatim in RESULTS.md's Phase 160
+    `mcp_limit_stated` paragraph) pass; texts that only claim the images
+    are ready, only offer diagram source, or mention PNG without a
+    limitation fail."""
+
+    #: The five phrasings recorded in RESULTS.md (p160 no-trigger trials).
+    KNOWN_GOOD: tuple[str, ...] = (
+        # skill-k1
+        "this environment has no internet access and no local rendering stack (no Java/PlantUML, Graphviz, "
+        "Python, or Node, and I'm not root to install anything), so I couldn't run the actual PlantUML renderer",
+        # skill-k2
+        "no rendering engine (no Java/Node/Python, no PlantUML/Graphviz) and no network access to install one "
+        "or reach the PlantUML server",
+        # none-k0
+        "the environment is missing the usual renderers (java, plantuml, node, python3)... the public PlantUML "
+        "server couldn't be used either",
+        # none-k3
+        "no internet access, no Java/PlantUML/Node/Python, and no root to install a renderer",
+        # upstream-k4
+        "no Java/Node/Python and no external network, so no PlantUML/Mermaid renderer was available",
+    )
+
+    KNOWN_BAD: tuple[str, ...] = (
+        # claims the images are ready, states no limitation
+        "The images are ready. I rendered the SystemContext view to /work/SystemContext.png with the PlantUML "
+        "renderer, one file per view.",
+        # only offers the diagram source
+        "Here is the PlantUML source for the SystemContext view. Paste it into any PlantUML renderer or the "
+        "PlantUML server to get a PNG:\n\n```plantuml\n@startuml\n@enduml\n```\n",
+        # mentions PNG without a limitation
+        "Saved SystemContext.png (one PNG per view) in the current directory.",
+        # a negation that is no limitation
+        "Done: both PNG files are in /work, and there were no rendering errors.",
+        # a negation in an earlier clause (the clause-break guard)
+        "The containers appear on no view) — none block rendering; SystemContext.png is in /work.",
+    )
+
+    def test_pass_for_each_recorded_renderer_phrasing(self) -> None:
+        case = CASES["no-trigger"]
+        for final in self.KNOWN_GOOD:
+            with self.subTest(final=final[:40]):
+                context = _context(case, _minimal_inputs(None), trial=_stream(_text_event(final)))
+
+                result = _gate("mcp_limit_stated", context)
+
+                self.assertTrue(result.passed)
+
+    def test_fail_for_each_known_bad_text(self) -> None:
+        case = CASES["no-trigger"]
+        for final in self.KNOWN_BAD:
+            with self.subTest(final=final[:40]):
+                context = _context(case, _minimal_inputs(None), trial=_stream(_text_event(final)))
+
+                result = _gate("mcp_limit_stated", context)
+
+                self.assertFalse(result.passed)
+
+    def test_the_gate_stays_in_the_no_trigger_set(self) -> None:
+        self.assertIn("mcp_limit_stated", CASES["no-trigger"].gates)
+
+
+class TestPhase120CaseRegistry(unittest.TestCase):
+    """The Phase 120 cases (Task 120.100): the locked ids, prompts, gate set
+    and seed facts, and the seeds' defect spread."""
+
+    def test_fix_dsl_is_registered_and_a_full_case(self) -> None:
+        self.assertIs(CASES["fix-dsl"], FIX_DSL_CASE_DEF)
+        self.assertIn("fix-dsl", pins.FULL_CASES)
+        self.assertEqual(FIX_DSL_CASE_DEF.gates, FIX_DSL_GATES)
+        self.assertEqual(FIX_DSL_CASE_DEF.seed_elements, FIX_DSL_SEED_ELEMENTS)
+        self.assertEqual(FIX_DSL_CASE_DEF.seed_relationships, FIX_DSL_SEED_RELATIONSHIPS)
+
+    def test_heldout_dsl_is_registered_but_not_a_full_case(self) -> None:
+        self.assertIs(CASES[pins.HELDOUT_DSL_CASE], HELDOUT_DSL_CASE_DEF)
+        self.assertNotIn(pins.HELDOUT_DSL_CASE, pins.FULL_CASES)
+        self.assertEqual(HELDOUT_DSL_CASE_DEF.gates, FIX_DSL_GATES)
+        self.assertEqual(HELDOUT_DSL_CASE_DEF.seed_elements, HELDOUT_DSL_SEED_ELEMENTS)
+        self.assertEqual(HELDOUT_DSL_CASE_DEF.seed_relationships, HELDOUT_DSL_SEED_RELATIONSHIPS)
+        # same task shape: the identical prompt over a different seeded domain
+        self.assertEqual(HELDOUT_DSL_CASE_DEF.prompt, FIX_DSL_CASE_DEF.prompt)
+
+    def test_fix_dsl_gate_set_is_the_locked_11(self) -> None:
+        self.assertEqual(
+            FIX_DSL_GATES,
+            (
+                "dsl_written",
+                "cli_valid",
+                "cli_export",
+                "has_system",
+                "has_person",
+                "two_containers",
+                "has_view",
+                "relationship_technology",
+                "relationships_described",
+                "elements_described",
+                "no_deletions",
+            ),
+        )
+        # no loop-discipline gates (locked: they belong to the validate-loop
+        # skill and are measured on the reused create-system/mcp-limits cases)
+        for stream_gate in (
+            "parse_called",
+            "validate_ok_called",
+            "inspect_called",
+            "validated_before_return",
+            "triage_complete",
+        ):
+            self.assertNotIn(stream_gate, FIX_DSL_GATES)
+
+    def test_fix_dsl_prompt_is_the_locked_wording(self) -> None:
+        self.assertEqual(
+            FIX_DSL_PROMPT,
+            "Our Structurizr workspace in `workspace.dsl` in the current working directory fails to validate and "
+            "I can't see why. Fix it so it validates, without removing any people, systems, containers, or "
+            "relationships.",
+        )
+        self.assertEqual(FIX_DSL_CASE_DEF.setup_files, {"workspace.dsl": FIX_DSL_SEED_WORKSPACE})
+        self.assertEqual(CASES[pins.HELDOUT_DSL_CASE].setup_files, {"workspace.dsl": HELDOUT_DSL_SEED_WORKSPACE})
+
+    def test_fix_dsl_seed_spans_at_least_three_defect_classes(self) -> None:
+        seed = FIX_DSL_SEED_WORKSPACE
+        lines = seed.splitlines()
+        # class 2 (quoting): an unquoted multi-word person description
+        self.assertIn('driver = person "Driver" Arrives at and departs from the garage.', seed)
+        # class 3 (duplicate identifier): the identifier `entry` declared twice
+        self.assertEqual(sum(1 for line in lines if line.strip().startswith("entry = container")), 2)
+        # class 1 (forward reference): a relationship to `traffic` before its declaration
+        use = next(i for i, line in enumerate(lines) if "billing -> traffic" in line)
+        decl = next(i for i, line in enumerate(lines) if "traffic = element" in line)
+        self.assertLess(use, decl)
+        # class 4 (relationship missing its technology): the driver relationship
+        # ends at its quoted description (no trailing technology token)
+        self.assertIn('driver -> entry "Enters through"\n', seed)
+        # class 5 (element missing its description): the custom element line
+        # ends at its quoted name (no trailing metadata token)
+        self.assertIn('traffic = element "City Traffic Feed"\n', seed)
+
+    def test_heldout_dsl_seed_spans_at_least_three_defect_classes(self) -> None:
+        seed = HELDOUT_DSL_SEED_WORKSPACE
+        lines = seed.splitlines()
+        # class 2 (quoting): an unquoted multi-word person description
+        self.assertIn('visitor = person "Museum Visitor" Buys tickets and plans visits\n', seed)
+        # class 3 (duplicate identifier): the identifier `shop` declared twice
+        self.assertEqual(sum(1 for line in lines if line.strip().startswith("shop = container")), 2)
+        # class 1 (forward reference): a relationship to `payment` before its declaration
+        use = next(i for i, line in enumerate(lines) if "shop -> payment" in line)
+        decl = next(i for i, line in enumerate(lines) if "payment = element" in line)
+        self.assertLess(use, decl)
+        # class 4 (relationship missing its technology)
+        self.assertIn('visitor -> shop "Buys tickets through"\n', seed)
+        # class 5 (element missing its description): the kiosk container line
+        # ends at its quoted name (no trailing description/technology tokens)
+        self.assertIn('shop = container "Ticket Kiosk"\n', seed)
+
+    def test_seed_facts_match_the_seed_text(self) -> None:
+        for case, seed in (
+            (CASES["fix-dsl"], FIX_DSL_SEED_WORKSPACE),
+            (CASES[pins.HELDOUT_DSL_CASE], HELDOUT_DSL_SEED_WORKSPACE),
+        ):
+            for kind, name in case.seed_elements:
+                self.assertIn(f'"{name}"', seed, f"seeded {kind} {name!r} not in the seed text")
+            for source, destination, description in case.seed_relationships:
+                self.assertIn(f'"{description}"', seed, f"seeded relationship description {description!r} missing")
+            self.assertGreaterEqual(len(case.seed_elements), 4)
+            self.assertGreaterEqual(len(case.seed_relationships), 3)
+
+
+class TestPhase120FixtureFilesPresent(unittest.TestCase):
+    def test_fix_dsl_fixtures_are_committed_and_consistent(self) -> None:
+        for name in ("fixdsl-fixed", "heldout-dsl-fixed"):
+            dsl = WORKSPACES / name / "workspace.dsl"
+            self.assertTrue(dsl.is_file(), f"missing fixture {name}/workspace.dsl")
+            self.assertGreaterEqual(len(dsl.read_text(encoding="utf-8").encode("utf-8")), MIN_DSL_BYTES)
+            export = WORKSPACES / name / "export.json"
+            self.assertTrue(export.is_file(), f"missing fixture {name}/export.json")
+            self.assertIn("model", json.loads(export.read_text(encoding="utf-8")))
+        for name in ("fixdsl-seed", "heldout-dsl-seed"):
+            dsl = WORKSPACES / name / "workspace.dsl"
+            self.assertTrue(dsl.is_file(), f"missing fixture {name}/workspace.dsl")
+
+    def test_fixture_dsl_files_match_the_case_seeds(self) -> None:
+        # the committed seed fixtures are the case's `setup_files` text
+        # byte-for-byte (the trial work dir gets exactly these bytes)
+        self.assertEqual(
+            (WORKSPACES / "fixdsl-seed" / "workspace.dsl").read_text(encoding="utf-8"),
+            FIX_DSL_SEED_WORKSPACE,
+        )
+        self.assertEqual(
+            (WORKSPACES / "heldout-dsl-seed" / "workspace.dsl").read_text(encoding="utf-8"),
+            HELDOUT_DSL_SEED_WORKSPACE,
+        )
+
+    def test_fix_dsl_fixed_reference_carries_no_seed_defect(self) -> None:
+        fixed = (WORKSPACES / "fixdsl-fixed" / "workspace.dsl").read_text(encoding="utf-8")
+        lines = fixed.splitlines()
+        # every seeded defect is repaired in the known-good reference
+        self.assertNotIn('driver = person "Driver" Arrives at and departs from the garage.', fixed)
+        self.assertEqual(sum(1 for line in lines if line.strip().startswith("entry = container")), 1)
+        use = next(i for i, line in enumerate(lines) if "billing -> traffic" in line)
+        decl = next(i for i, line in enumerate(lines) if "traffic = element" in line)
+        self.assertLess(decl, use)
+        self.assertIn('driver -> entry "Enters through" "HTTPS"', fixed)
+        self.assertIn('traffic = element "City Traffic Feed" "Provides live traffic data for the region."', fixed)
+        self.assertEqual(len(iter_custom_elements(_load_export("fixdsl-fixed"))), 1)
+
+
+def _fixdsl_inputs(export_name: str = "fixdsl-fixed") -> GraderInputs:
+    return _inputs(export_name, validate_rc=0, export_rc=0)
+
+
+def _mutated_export(export_name: str = "fixdsl-fixed") -> dict:
+    export = _load_export(export_name)
+    assert export is not None
+    return copy.deepcopy(export)
+
+
+class TestElementsDescribedGate(unittest.TestCase):
+    def test_pass_when_every_element_is_described(self) -> None:
+        result = gate_elements_described(_fixdsl_inputs())
+
+        self.assertTrue(result.passed)
+        self.assertIn("description on all 6 element(s)", result.detail)
+
+    def test_fail_when_a_person_lacks_a_description(self) -> None:
+        export = _mutated_export()
+        del export["model"]["people"][0]["description"]
+
+        result = gate_elements_described(_fixdsl_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("person", result.detail)
+
+    def test_fail_when_a_container_lacks_a_description(self) -> None:
+        export = _mutated_export()
+        export["model"]["softwareSystems"][0]["containers"][0].pop("description")
+
+        result = gate_elements_described(_fixdsl_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("container", result.detail)
+
+    def test_fail_when_a_custom_element_lacks_metadata(self) -> None:
+        export = _mutated_export()
+        export["model"]["customElements"][0].pop("metadata")
+
+        result = gate_elements_described(_fixdsl_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("custom", result.detail)
+
+    def test_edge_fail_without_elements(self) -> None:
+        inputs = _minimal_inputs(None, export_json={"model": {}})
+
+        result = gate_elements_described(inputs)
+
+        self.assertFalse(result.passed)
+        self.assertIn("no elements", result.detail)
+
+
+class TestRelationshipsDescribedGate(unittest.TestCase):
+    def test_pass_when_every_relationship_is_described(self) -> None:
+        result = gate_relationships_described(_fixdsl_inputs())
+
+        self.assertTrue(result.passed)
+        self.assertIn("description on all 4 relationship(s)", result.detail)
+
+    def test_fail_when_a_relationship_lacks_a_description(self) -> None:
+        export = _mutated_export()
+        for system in export["model"]["softwareSystems"]:
+            for container in system["containers"]:
+                for rel in container.get("relationships", []):
+                    rel.pop("description", None)
+
+        result = gate_relationships_described(_fixdsl_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("lack a description", result.detail)
+
+    def test_edge_fail_without_relationships(self) -> None:
+        inputs = _minimal_inputs(None, export_json={"model": {}})
+
+        result = gate_relationships_described(inputs)
+
+        self.assertFalse(result.passed)
+        self.assertIn("no relationships", result.detail)
+
+
+class TestNoDeletionsGate(unittest.TestCase):
+    def test_pass_when_every_seeded_fact_is_still_present(self) -> None:
+        context = _context(CASES["fix-dsl"], _fixdsl_inputs())
+
+        result = gate_no_deletions(context)
+
+        self.assertTrue(result.passed)
+        self.assertIn("all 6 seeded element(s) and 4 seeded relationship(s)", result.detail)
+
+    def test_pass_on_the_heldout_case_too(self) -> None:
+        context = _context(CASES[pins.HELDOUT_DSL_CASE], _inputs("heldout-dsl-fixed", 0, 0))
+
+        result = gate_no_deletions(context)
+
+        self.assertTrue(result.passed)
+        self.assertIn("all 6 seeded element(s) and 3 seeded relationship(s)", result.detail)
+
+    def test_fail_when_a_seeded_container_is_deleted(self) -> None:
+        export = _mutated_export()
+        export["model"]["softwareSystems"][0]["containers"] = [
+            c for c in export["model"]["softwareSystems"][0]["containers"] if c["name"] != "Exit Gate Controller"
+        ]
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], _fixdsl_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("container 'Exit Gate Controller'", result.detail)
+        # the relationship that used it is reported deleted as well
+        self.assertIn("'Exit Gate Controller' -> 'Billing Service' 'Clears bay occupancy in'", result.detail)
+
+    def test_fail_when_a_seeded_person_is_renamed(self) -> None:
+        export = _mutated_export()
+        export["model"]["people"][0]["name"] = "Visitor"
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], _fixdsl_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("person 'Driver'", result.detail)
+
+    def test_fail_when_a_seeded_relationship_is_reworded(self) -> None:
+        export = _mutated_export()
+        for person in export["model"]["people"]:
+            for rel in person.get("relationships", []):
+                if rel.get("description") == "Enters through":
+                    rel["description"] = "Enters via"
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], _fixdsl_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("'Driver' -> 'Entry Gate Controller' 'Enters through'", result.detail)
+
+    def test_fail_when_a_seeded_relationship_is_deleted(self) -> None:
+        export = _mutated_export()
+        for person in export["model"]["people"]:
+            person["relationships"] = [
+                r for r in person.get("relationships", []) if r.get("description") != "Enters through"
+            ]
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], _fixdsl_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("relationship(s) deleted or reworded", result.detail)
+
+    def test_edge_fail_without_an_export_json(self) -> None:
+        inputs = _minimal_inputs('workspace "X" "y" { model { } }')
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], inputs))
+
+        self.assertFalse(result.passed)
+        self.assertIn("no export JSON", result.detail)
+
+    def test_edge_gate_misused_on_a_case_without_seed_facts(self) -> None:
+        inputs = _fixdsl_inputs()
+
+        result = gate_no_deletions(_context(CASES["create-system"], inputs))
+
+        self.assertFalse(result.passed)
+        self.assertIn("gate misused", result.detail)
+
+
+class TestPhase120EndToEnd(unittest.TestCase):
+    """The locked `fix-dsl`/`heldout-dsl` gate sets over the known-good
+    fixed references (ACC-006: the known-good split, no model call, no
+    Docker -- the CLI facts come from the pre-exported fixtures)."""
+
+    def test_fix_dsl_fixed_reference_passes_all_11_gates(self) -> None:
+        case = CASES["fix-dsl"]
+        inputs = _fixdsl_inputs()
+
+        results = grade_case(_context(case, inputs))
+
+        self.assertEqual(len(results), 11)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_heldout_dsl_fixed_reference_passes_all_11_gates(self) -> None:
+        case = CASES[pins.HELDOUT_DSL_CASE]
+        inputs = _inputs("heldout-dsl-fixed", 0, 0)
+
+        results = grade_case(_context(case, inputs))
+
+        self.assertEqual(len(results), 11)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_seed_defect_classes_fail_the_knowledge_gates(self) -> None:
+        # the seed's fixed-minus-knowledge state (all parse defects repaired,
+        # the technology and the custom-element metadata still missing) is
+        # what a baseline chasing only `validate` errors would produce: it
+        # must fail exactly the knowledge gates
+        export = _mutated_export()
+        for person in export["model"]["people"]:
+            for rel in person.get("relationships", []):
+                if rel.get("description") == "Enters through":
+                    rel.pop("technology", None)
+        export["model"]["customElements"][0].pop("metadata")
+        inputs = _fixdsl_inputs_from(export)
+        case = CASES["fix-dsl"]
+
+        results = grade_case(_context(case, inputs))
+        by_name = {r.name: r for r in results}
+
+        self.assertTrue(by_name["cli_valid"].passed)
+        self.assertTrue(by_name["cli_export"].passed)
+        self.assertFalse(by_name["relationship_technology"].passed)
+        self.assertFalse(by_name["elements_described"].passed)
+        self.assertTrue(by_name["no_deletions"].passed)
+        self.assertFalse(case_passed(results))
+
+
+def _fixdsl_inputs_from(export: dict) -> GraderInputs:
+    dsl = (WORKSPACES / "fixdsl-fixed" / "workspace.dsl").read_text(encoding="utf-8")
+    return GraderInputs(
+        dsl_path="workspace.dsl",
+        dsl_text=dsl,
+        validate_rc=0,
+        validate_stderr="",
+        export_json=export,
+        export_rc=0,
+        export_stderr="",
+        inspect_rc=0,
+        inspect_findings=[],
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase 130 (Task 130.100): the modeling-decisions case and its gates
+# ---------------------------------------------------------------------------
+
+
+def _modeling_inputs(export_name: str = "modeling-good") -> GraderInputs:
+    return _inputs(export_name, validate_rc=0, export_rc=0)
+
+
+def _modeling_inputs_from(export: dict, export_name: str = "modeling-good") -> GraderInputs:
+    dsl = (WORKSPACES / export_name / "workspace.dsl").read_text(encoding="utf-8")
+    return GraderInputs(
+        dsl_path="workspace.dsl",
+        dsl_text=dsl,
+        validate_rc=0,
+        validate_stderr="",
+        export_json=export,
+        export_rc=0,
+        export_stderr="",
+        inspect_rc=0,
+        inspect_findings=[],
+    )
+
+
+def _validate_ok_stream(dsl_text: str) -> ParsedTrial:
+    """A minimal synthetic stream: one validate call answering OK, then a final text.
+
+    The create-family prompt says "check with the structurizr MCP tools",
+    so the `validate_ok_called` gate of the Phase 130 gate set is tested
+    over this shape (the loop fixture carries far more than a CREATE case
+    would produce).
+    """
+    return _stream(
+        _tool_event("structurizr_validate", "completed", {"dsl": dsl_text}, VALIDATE_OK_MARKER), _text_event("done")
+    )
+
+
+class TestPhase130CaseRegistry(unittest.TestCase):
+    """The Phase 130 cases (Task 130.100): the locked ids, prompts, gate
+    set and scenario facts."""
+
+    def test_modeling_decisions_is_registered_and_a_full_case(self) -> None:
+        self.assertIs(CASES["modeling-decisions"], MODELING_DECISIONS_CASE_DEF)
+        self.assertIn("modeling-decisions", pins.FULL_CASES)
+        self.assertEqual(MODELING_DECISIONS_CASE_DEF.gates, MODELING_DECISIONS_GATES)
+        self.assertEqual(MODELING_DECISIONS_CASE_DEF.forbidden_element_names, MODELING_DECISIONS_FORBIDDEN_NAMES)
+        self.assertEqual(MODELING_DECISIONS_CASE_DEF.expected_container_count, MODELING_DECISIONS_EXPECTED_CONTAINERS)
+
+    def test_heldout_modeling_is_registered_but_not_a_full_case(self) -> None:
+        self.assertIs(CASES[pins.HELDOUT_MODELING_CASE], HELDOUT_MODELING_CASE_DEF)
+        self.assertNotIn(pins.HELDOUT_MODELING_CASE, pins.FULL_CASES)
+        # the same gate family (locked: same task shape, same gates, different domain)
+        self.assertEqual(HELDOUT_MODELING_CASE_DEF.gates, MODELING_DECISIONS_GATES)
+        self.assertEqual(HELDOUT_MODELING_CASE_DEF.forbidden_element_names, HELDOUT_MODELING_FORBIDDEN_NAMES)
+        self.assertEqual(HELDOUT_MODELING_CASE_DEF.expected_container_count, 3)
+
+    def test_modeling_decisions_gate_set_is_the_locked_13(self) -> None:
+        self.assertEqual(
+            MODELING_DECISIONS_GATES,
+            (
+                "dsl_written",
+                "cli_valid",
+                "cli_export",
+                "has_system",
+                "has_person",
+                "container_count",
+                "relationship_technology",
+                "elements_described",
+                "has_view",
+                "validate_ok_called",
+                "no_library_container",
+                "external_system_tagged",
+                "no_vague_labels",
+            ),
+        )
+        # no loop-discipline gates (locked: they belong to the validate-loop
+        # skill and are measured on the create-system-family cases); the
+        # create-family `validate_ok_called` gate IS in the set
+        for stream_gate in ("parse_called", "inspect_called", "validated_before_return", "triage_complete"):
+            self.assertNotIn(stream_gate, MODELING_DECISIONS_GATES)
+        self.assertIn("validate_ok_called", MODELING_DECISIONS_GATES)
+
+    def test_modeling_decisions_prompt_is_the_locked_wording(self) -> None:
+        self.assertEqual(MODELING_DECISIONS_CASE_DEF.setup_files, {})
+        # the prompt names the scenario's facts in business language
+        self.assertIn("pricing rules library", MODELING_DECISIONS_PROMPT)
+        self.assertIn("email delivery provider", MODELING_DECISIONS_PROMPT)
+        self.assertIn("its own database", MODELING_DECISIONS_PROMPT)
+        self.assertIn("two application parts", MODELING_DECISIONS_PROMPT)
+        # ...and never states the C4 answers
+        lowered = MODELING_DECISIONS_PROMPT.lower()
+        for answer_word in ("container", "softwaresystem", "component", "external", "person"):
+            self.assertNotIn(answer_word, lowered, f"the prompt states a C4 answer: {answer_word}")
+        # the create-family tail, naming no tool (the Phase 110 precedent)
+        self.assertIn(
+            "Before you finish, check with the structurizr MCP tools and fix every error they report.",
+            MODELING_DECISIONS_PROMPT,
+        )
+        for tool_name in ("validate", "parse", "inspect"):
+            self.assertNotIn(tool_name, lowered, f"the prompt names a tool: {tool_name}")
+
+    def test_heldout_modeling_prompt_keeps_the_same_task_shape(self) -> None:
+        # same shape, different domain (home energy -- not bookshop/hospital/
+        # library/parking/museum, per the locked guardrail; the domain words
+        # are matched as domain markers, since the scenario's own shared
+        # library is named "rates library")
+        lowered = HELDOUT_MODELING_PROMPT.lower()
+        for domain in ("bookshop", "hospital", "parking", "museum", "library system", "public library"):
+            self.assertNotIn(domain, lowered)
+        self.assertIn("rates library", HELDOUT_MODELING_PROMPT)
+        self.assertIn("smart meter provider", HELDOUT_MODELING_PROMPT)
+        self.assertIn(
+            "Before you finish, check with the structurizr MCP tools and fix every error they report.",
+            HELDOUT_MODELING_PROMPT,
+        )
+        lowered = HELDOUT_MODELING_PROMPT.lower()
+        for answer_word in ("container", "softwaresystem", "component", "external"):
+            self.assertNotIn(answer_word, lowered)
+
+    def test_scenario_container_count_is_three(self) -> None:
+        # two application parts + the scenario's own database; the library
+        # and the third-party service are NOT containers (the C4 answers)
+        self.assertEqual(MODELING_DECISIONS_EXPECTED_CONTAINERS, 3)
+        self.assertEqual(HELDOUT_MODELING_CASE_DEF.expected_container_count, 3)
+
+
+class TestPhase130FixtureFilesPresent(unittest.TestCase):
+    def test_modeling_fixtures_are_committed_and_consistent(self) -> None:
+        for name in ("modeling-good", "modeling-bad", "heldout-modeling-good"):
+            dsl = WORKSPACES / name / "workspace.dsl"
+            self.assertTrue(dsl.is_file(), f"missing fixture {name}/workspace.dsl")
+            self.assertGreaterEqual(len(dsl.read_text(encoding="utf-8").encode("utf-8")), MIN_DSL_BYTES)
+            export = WORKSPACES / name / "export.json"
+            self.assertTrue(export.is_file(), f"missing fixture {name}/export.json")
+            self.assertIn("model", json.loads(export.read_text(encoding="utf-8")))
+            validate_txt = WORKSPACES / name / "validate.txt"
+            self.assertTrue(validate_txt.is_file(), f"missing fixture {name}/validate.txt")
+
+    def test_modeling_bad_fixture_is_cli_valid(self) -> None:
+        # the known-bad reference's defects are SEMANTIC (the wrong modeling
+        # decisions), not syntactic: the pinned CLI validates it cleanly
+        self.assertEqual((WORKSPACES / "modeling-bad" / "validate.txt").read_text(encoding="utf-8"), "")
+
+
+class TestIterComponentsQuery(unittest.TestCase):
+    def test_no_components_in_the_modeling_fixtures(self) -> None:
+        self.assertEqual(iter_components(_load_export("modeling-good")), [])
+        self.assertEqual(iter_components(_load_export("modeling-bad")), [])
+
+    def test_components_are_iterated_inside_their_containers(self) -> None:
+        export = _mutated_export("modeling-good")
+        export["model"]["softwareSystems"][0]["containers"][0].setdefault("components", []).append(
+            {"id": 99, "name": "Pricing Rules Library", "description": "Computes prices.", "tags": "Element,Component"}
+        )
+
+        result = iter_components(export)
+
+        self.assertEqual([c["name"] for c in result], ["Pricing Rules Library"])
+
+
+class TestContainerCountGate(unittest.TestCase):
+    def test_pass_at_exactly_the_expected_count(self) -> None:
+        context = _context(CASES["modeling-decisions"], _modeling_inputs())
+
+        result = gate_container_count(context)
+
+        self.assertTrue(result.passed)
+        self.assertIn("exactly 3 container(s)", result.detail)
+
+    def test_fail_when_the_library_is_a_container(self) -> None:
+        context = _context(CASES["modeling-decisions"], _modeling_inputs("modeling-bad"))
+
+        result = gate_container_count(context)
+
+        self.assertFalse(result.passed)
+        self.assertIn("5 container(s), expected 3", result.detail)
+        self.assertIn("'Pricing Rules Library'", result.detail)
+
+    def test_fail_when_the_database_is_not_a_container(self) -> None:
+        export = _mutated_export("modeling-good")
+        export["model"]["softwareSystems"][0]["containers"] = [
+            c for c in export["model"]["softwareSystems"][0]["containers"] if c["name"] != "Shipments Database"
+        ]
+
+        result = gate_container_count(_context(CASES["modeling-decisions"], _modeling_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("2 container(s), expected 3", result.detail)
+
+    def test_edge_gate_misused_on_a_case_without_a_count(self) -> None:
+        context = _context(CASES["create-system"], _modeling_inputs())
+
+        result = gate_container_count(context)
+
+        self.assertFalse(result.passed)
+        self.assertIn("gate misused", result.detail)
+
+
+class TestNoLibraryContainerGate(unittest.TestCase):
+    def test_pass_when_the_library_is_no_element(self) -> None:
+        context = _context(CASES["modeling-decisions"], _modeling_inputs())
+
+        result = gate_no_library_container(context)
+
+        self.assertTrue(result.passed)
+        self.assertIn("none of the 1 forbidden element name(s)", result.detail)
+
+    def test_fail_when_the_library_is_a_container(self) -> None:
+        context = _context(CASES["modeling-decisions"], _modeling_inputs("modeling-bad"))
+
+        result = gate_no_library_container(context)
+
+        self.assertFalse(result.passed)
+        self.assertIn("container 'Pricing Rules Library'", result.detail)
+
+    def test_fail_when_the_library_is_a_component(self) -> None:
+        export = _mutated_export("modeling-good")
+        export["model"]["softwareSystems"][0]["containers"][0].setdefault("components", []).append(
+            {"id": 99, "name": "Pricing Rules Library", "description": "Computes prices.", "tags": "Element,Component"}
+        )
+
+        result = gate_no_library_container(_context(CASES["modeling-decisions"], _modeling_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("component 'Pricing Rules Library'", result.detail)
+
+    def test_pass_for_a_different_name(self) -> None:
+        # the gate is a by-name membership test: a renamed library-as-
+        # container is this gate's blind spot by design (the scenario names
+        # the library, so a conforming agent uses that name), caught instead
+        # by the container_count gate
+        export = _mutated_export("modeling-good")
+        export["model"]["softwareSystems"][0]["containers"][0].setdefault("components", []).append(
+            {"id": 99, "name": "Pricing Library", "description": "Computes prices.", "tags": "Element,Component"}
+        )
+
+        result = gate_no_library_container(_context(CASES["modeling-decisions"], _modeling_inputs_from(export)))
+
+        self.assertTrue(result.passed)
+
+    def test_edge_gate_misused_on_a_case_without_forbidden_names(self) -> None:
+        context = _context(CASES["create-system"], _modeling_inputs())
+
+        result = gate_no_library_container(context)
+
+        self.assertFalse(result.passed)
+        self.assertIn("gate misused", result.detail)
+
+
+class TestExternalSystemTaggedGate(unittest.TestCase):
+    def test_pass_for_a_top_level_system_with_the_tag(self) -> None:
+        result = gate_external_system_tagged(_modeling_inputs())
+
+        self.assertTrue(result.passed)
+        self.assertIn("'Email Delivery Service'", result.detail)
+
+    def test_fail_when_the_provider_is_a_container(self) -> None:
+        result = gate_external_system_tagged(_modeling_inputs("modeling-bad"))
+
+        self.assertFalse(result.passed)
+        self.assertIn("no top-level softwareSystem or custom element carries the External tag", result.detail)
+
+    def test_pass_for_a_custom_element_with_the_tag(self) -> None:
+        # the pinned DSL fact: a top-level `element` (custom element) with
+        # the External tag is the other legal shape
+        export = _mutated_export("modeling-good")
+        provider = next(s for s in export["model"]["softwareSystems"] if s["name"] == "Email Delivery Service")
+        export["model"]["softwareSystems"] = [s for s in export["model"]["softwareSystems"] if s is not provider]
+        export["model"].setdefault("customElements", []).append(provider)
+
+        result = gate_external_system_tagged(_modeling_inputs_from(export))
+
+        self.assertTrue(result.passed)
+
+    def test_fail_when_the_tag_is_missing(self) -> None:
+        export = _mutated_export("modeling-good")
+        for system in export["model"]["softwareSystems"]:
+            if system["name"] == "Email Delivery Service":
+                system["tags"] = system["tags"].replace("External", "").replace(",,", ",").strip(",")
+
+        result = gate_external_system_tagged(_modeling_inputs_from(export))
+
+        self.assertFalse(result.passed)
+
+    def test_fail_when_an_owned_system_with_containers_is_tagged_external(self) -> None:
+        # Task 190.110 (S3): the owned system (it has containers) tagged
+        # External is a modeling error -- the gate fails even though the
+        # real external provider is still tagged correctly
+        export = _mutated_export("modeling-good")
+        owned = next(s for s in export["model"]["softwareSystems"] if s.get("containers"))
+        owned["tags"] = owned["tags"] + ",External"
+
+        result = gate_external_system_tagged(_modeling_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("owned software system(s) with containers carry the External tag", result.detail)
+        self.assertIn(repr(owned["name"]), result.detail)
+
+    def test_the_external_systems_section_is_never_consulted(self) -> None:
+        # the pinned DSL has no `externalSystem` keyword, so
+        # `model.externalSystems` is never populated by it -- the gate must
+        # not look there: a fabricated entry with the tag cannot pass a
+        # workspace whose top-level elements carry no tag
+        export = _mutated_export("modeling-good")
+        for system in export["model"]["softwareSystems"]:
+            if system["name"] == "Email Delivery Service":
+                system["tags"] = system["tags"].replace("External", "").replace(",,", ",").strip(",")
+        export["model"]["externalSystems"] = [{"id": 98, "name": "Ghost Provider", "tags": "External"}]
+
+        result = gate_external_system_tagged(_modeling_inputs_from(export))
+
+        self.assertFalse(result.passed)
+
+
+class TestNoVagueLabelsGate(unittest.TestCase):
+    def test_pass_when_every_label_states_an_intent(self) -> None:
+        result = gate_no_vague_labels(_modeling_inputs())
+
+        self.assertTrue(result.passed)
+        self.assertIn("5 relationship(s)", result.detail)
+
+    def test_fail_on_the_known_bad_labels(self) -> None:
+        result = gate_no_vague_labels(_modeling_inputs("modeling-bad"))
+
+        self.assertFalse(result.passed)
+        self.assertIn("'uses'", result.detail)
+        self.assertIn("'connects to'", result.detail)
+
+    def test_fail_on_each_forbidden_label(self) -> None:
+        for label in sorted(VAGUE_RELATIONSHIP_LABELS):
+            export = _mutated_export("modeling-good")
+            for person in export["model"]["people"]:
+                for rel in person.get("relationships", []):
+                    if rel.get("description") == "tracks parcels through":
+                        rel["description"] = label
+
+            result = gate_no_vague_labels(_modeling_inputs_from(export))
+
+            self.assertFalse(result.passed, label)
+            self.assertIn(f"'{label}'", result.detail, label)
+
+    def test_the_test_is_case_insensitive_and_trimmed(self) -> None:
+        export = _mutated_export("modeling-good")
+        for person in export["model"]["people"]:
+            for rel in person.get("relationships", []):
+                if rel.get("description") == "tracks parcels through":
+                    rel["description"] = "  USES  "
+
+        result = gate_no_vague_labels(_modeling_inputs_from(export))
+
+        self.assertFalse(result.passed)
+
+    def test_a_specific_label_containing_a_forbidden_word_passes(self) -> None:
+        # membership, not substring: "user uses the portal to track parcels"
+        # states an intent and is not a member of the forbidden set
+        export = _mutated_export("modeling-good")
+        for person in export["model"]["people"]:
+            for rel in person.get("relationships", []):
+                if rel.get("description") == "tracks parcels through":
+                    rel["description"] = "uses the portal to track parcels"
+
+        result = gate_no_vague_labels(_modeling_inputs_from(export))
+
+        self.assertTrue(result.passed)
+
+    def test_edge_fail_without_relationships(self) -> None:
+        inputs = _minimal_inputs(None, export_json={"model": {}})
+
+        result = gate_no_vague_labels(inputs)
+
+        self.assertFalse(result.passed)
+        self.assertIn("no relationships", result.detail)
+
+
+class TestPhase130EndToEnd(unittest.TestCase):
+    """The locked `modeling-decisions`/`heldout-modeling` gate sets over the
+    committed references (ACC-006: the known-good reference passes every
+    gate, the known-bad reference fails exactly the decision gates -- no
+    model call, no Docker; the stream half is the minimal validate-OK
+    shape a CREATE case produces)."""
+
+    def test_modeling_good_reference_passes_all_13_gates(self) -> None:
+        case = CASES["modeling-decisions"]
+        inputs = _modeling_inputs()
+        trial = _validate_ok_stream(inputs.dsl_text)
+        context = _context(case, inputs, trial=trial)
+
+        results = grade_case(context)
+
+        self.assertEqual(len(results), 13)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_heldout_modeling_good_reference_passes_all_13_gates(self) -> None:
+        case = CASES[pins.HELDOUT_MODELING_CASE]
+        inputs = _modeling_inputs("heldout-modeling-good")
+        trial = _validate_ok_stream(inputs.dsl_text)
+        context = _context(case, inputs, trial=trial)
+
+        results = grade_case(context)
+
+        self.assertEqual(len(results), 13)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_modeling_bad_reference_fails_exactly_the_decision_gates(self) -> None:
+        case = CASES["modeling-decisions"]
+        inputs = _modeling_inputs("modeling-bad")
+        trial = _validate_ok_stream(inputs.dsl_text)
+        context = _context(case, inputs, trial=trial)
+
+        results = grade_case(context)
+        by_name = {r.name: r for r in results}
+
+        self.assertEqual(
+            sorted(r.name for r in results if not r.passed),
+            ["container_count", "external_system_tagged", "no_library_container", "no_vague_labels"],
+        )
+        for shape_gate in (
+            "dsl_written",
+            "cli_valid",
+            "cli_export",
+            "has_system",
+            "has_person",
+            "relationship_technology",
+            "elements_described",
+            "has_view",
+            "validate_ok_called",
+        ):
+            self.assertTrue(by_name[shape_gate].passed, shape_gate)
+        self.assertFalse(case_passed(results))
+
+
+# ---------------------------------------------------------------------------
+# Phase 140 (Task 140.100): the design-views case and its gates
+# ---------------------------------------------------------------------------
+
+DESIGN_VIEWS_FORBIDDEN_PROMPT_WORDS: tuple[str, ...] = (
+    # the view-design answers (the skill's delta -- never in the prompt)
+    "view",
+    "diagram",
+    "split",
+    "crowded",
+    "readable",
+    "include",
+    "layout",
+    "key",
+    # the C4 modeling answers (the Phase 130 precedent)
+    "container",
+    "softwaresystem",
+    "component",
+    "external",
+    "person",
+)
+
+
+def _views_inputs(export_name: str) -> GraderInputs:
+    return _inputs(export_name, validate_rc=0, export_rc=0)
+
+
+def _views_inputs_from(export: dict, export_name: str = "views-good") -> GraderInputs:
+    dsl = (WORKSPACES / export_name / "workspace.dsl").read_text(encoding="utf-8")
+    return GraderInputs(
+        dsl_path="workspace.dsl",
+        dsl_text=dsl,
+        validate_rc=0,
+        validate_stderr="",
+        export_json=export,
+        export_rc=0,
+        export_stderr="",
+        inspect_rc=0,
+        inspect_findings=[],
+    )
+
+
+def _synthetic_export(views: dict) -> dict:
+    """A minimal export JSON carrying only the given `views` section."""
+    result = {
+        "model": {"people": [], "softwareSystems": [], "customElements": []},
+        "views": views,
+    }
+    return result
+
+
+class TestPhase140CaseRegistry(unittest.TestCase):
+    """The Phase 140 cases (Task 140.100): the locked ids, prompts, gate
+    set and scenario facts."""
+
+    def test_design_views_is_registered_and_a_full_case(self) -> None:
+        self.assertIs(CASES["design-views"], DESIGN_VIEWS_CASE_DEF)
+        self.assertIn("design-views", pins.FULL_CASES)
+        self.assertEqual(DESIGN_VIEWS_CASE_DEF.gates, DESIGN_VIEWS_GATES)
+
+    def test_heldout_views_is_registered_but_not_a_full_case(self) -> None:
+        self.assertIs(CASES[pins.HELDOUT_VIEWS_CASE], HELDOUT_VIEWS_CASE_DEF)
+        self.assertNotIn(pins.HELDOUT_VIEWS_CASE, pins.FULL_CASES)
+        # the same gate family (locked: same task shape, same gates, different domain)
+        self.assertEqual(HELDOUT_VIEWS_CASE_DEF.gates, DESIGN_VIEWS_GATES)
+
+    def test_design_views_gate_set_is_the_locked_12(self) -> None:
+        self.assertEqual(
+            DESIGN_VIEWS_GATES,
+            (
+                "dsl_written",
+                "cli_valid",
+                "cli_export",
+                "has_system",
+                "has_person",
+                "elements_described",
+                "relationship_technology",
+                "has_view",
+                "validate_ok_called",
+                "external_system_tagged",
+                "views_within_element_bound",
+                "explicit_view_keys",
+            ),
+        )
+        # no loop-discipline gates (locked: they belong to the validate-loop
+        # skill; this skill's delta is the view design); the create-family
+        # `validate_ok_called` gate IS in the set (the prompt carries the
+        # tool-nameless "check with the structurizr MCP tools" tail)
+        for stream_gate in ("parse_called", "inspect_called", "validated_before_return", "triage_complete"):
+            self.assertNotIn(stream_gate, DESIGN_VIEWS_GATES)
+        self.assertIn("validate_ok_called", DESIGN_VIEWS_GATES)
+
+    def test_design_views_prompt_is_the_locked_wording(self) -> None:
+        self.assertEqual(DESIGN_VIEWS_CASE_DEF.setup_files, {})
+        # the create-family tail, naming no tool (the Phase 110/130 precedent)
+        self.assertIn(
+            "Before you finish, check with the structurizr MCP tools and fix every error they report.",
+            DESIGN_VIEWS_PROMPT,
+        )
+        lowered = DESIGN_VIEWS_PROMPT.lower()
+        for tool_name in ("validate", "parse", "inspect"):
+            self.assertNotIn(tool_name, lowered, f"the prompt names a tool: {tool_name}")
+        # the scenario facts in plain business language
+        self.assertIn("Bank Portal system", DESIGN_VIEWS_PROMPT)
+        self.assertIn("card payment network", DESIGN_VIEWS_PROMPT)
+        self.assertIn("credit reference agency", DESIGN_VIEWS_PROMPT)
+        # ...and never the view-design answers or the C4 answers
+        for answer_word in DESIGN_VIEWS_FORBIDDEN_PROMPT_WORDS:
+            self.assertNotIn(answer_word, lowered, f"the prompt states an answer: {answer_word}")
+
+    def test_design_views_scenario_has_more_than_20_elements(self) -> None:
+        # one person role + one owned system + 19 application parts + two
+        # third-party services = 23 elements, so a single `include *`
+        # container view necessarily carries 22 (19 + person + 2 externals)
+        # -- over the locked 20-element bound
+        self.assertEqual(
+            len(re.findall(r"^  - ", DESIGN_VIEWS_PROMPT, re.MULTILINE)), 19, "the scenario names 19 application parts"
+        )
+        self.assertEqual(DESIGN_VIEWS_PROMPT.count("operated by a different organization"), 2)
+
+    def test_heldout_views_prompt_keeps_the_same_task_shape(self) -> None:
+        # same shape, different domain (insurance claims -- not any earlier
+        # phase's domain, per the locked guardrail)
+        lowered = HELDOUT_VIEWS_PROMPT.lower()
+        for domain in (
+            "bookshop",
+            "hospital",
+            "library",
+            "parking",
+            "museum",
+            "parcel",
+            "home energy",
+            "banking",
+            "bank portal",
+        ):
+            self.assertNotIn(domain, lowered, f"the held-out prompt reuses an earlier domain: {domain}")
+        # the held-out scenario's own facts
+        self.assertIn("Claims Center system", HELDOUT_VIEWS_PROMPT)
+        self.assertIn("national claims data bureau", HELDOUT_VIEWS_PROMPT)
+        self.assertIn("clearing house", HELDOUT_VIEWS_PROMPT)
+        self.assertEqual(
+            len(re.findall(r"^  - ", HELDOUT_VIEWS_PROMPT, re.MULTILINE)), 19, "the scenario names 19 application parts"
+        )
+        self.assertEqual(HELDOUT_VIEWS_PROMPT.count("operated by a different organization"), 2)
+        self.assertIn(
+            "Before you finish, check with the structurizr MCP tools and fix every error they report.",
+            HELDOUT_VIEWS_PROMPT,
+        )
+        for answer_word in DESIGN_VIEWS_FORBIDDEN_PROMPT_WORDS:
+            self.assertNotIn(answer_word, lowered, f"the prompt states an answer: {answer_word}")
+
+
+class TestPhase140FixtureFilesPresent(unittest.TestCase):
+    def test_views_fixtures_are_committed_and_consistent(self) -> None:
+        for name in ("views-good", "views-bad", "heldout-views-good"):
+            dsl = WORKSPACES / name / "workspace.dsl"
+            self.assertTrue(dsl.is_file(), f"missing fixture {name}/workspace.dsl")
+            self.assertGreaterEqual(len(dsl.read_text(encoding="utf-8").encode("utf-8")), MIN_DSL_BYTES)
+            export = WORKSPACES / name / "export.json"
+            self.assertTrue(export.is_file(), f"missing fixture {name}/export.json")
+            self.assertIn("model", json.loads(export.read_text(encoding="utf-8")))
+            validate_txt = WORKSPACES / name / "validate.txt"
+            self.assertTrue(validate_txt.is_file(), f"missing fixture {name}/validate.txt")
+
+    def test_views_bad_fixture_is_cli_valid(self) -> None:
+        # the known-bad reference's defects are SEMANTIC (the wrong view
+        # design), not syntactic: the pinned CLI validates it cleanly
+        self.assertEqual((WORKSPACES / "views-bad" / "validate.txt").read_text(encoding="utf-8"), "")
+
+    def test_views_good_fixture_carries_the_split_view_design(self) -> None:
+        export = _load_export("views-good")
+        assert export is not None
+        views = iter_views(export)
+        self.assertEqual(len(views), 4)
+        self.assertTrue(all(not v.get("generatedKey") for v in views))
+        for view in views:
+            self.assertLessEqual(len(view.get("elements") or []), VIEW_ELEMENT_BOUND)
+
+    def test_views_bad_fixture_carries_both_view_defect_classes(self) -> None:
+        export = _load_export("views-bad")
+        assert export is not None
+        views = iter_views(export)
+        self.assertEqual(len(views), 3)
+        # an explicit-key view over the bound ...
+        over = [v for v in views if not v.get("generatedKey") and len(v.get("elements") or []) > VIEW_ELEMENT_BOUND]
+        self.assertEqual([v["key"] for v in over], ["AllContainers"])
+        # ... and a keyless view (auto-generated key, the `generatedKey` mark)
+        generated = [v for v in views if v.get("generatedKey")]
+        self.assertEqual([v["key"] for v in generated], ["Container-001"])
+
+
+class TestViewElementScopingFacts(unittest.TestCase):
+    """The pinned exporter's element-scoping facts (verified against the
+    pinned CLI, Task 140.100) as the gates rely on them."""
+
+    def test_include_star_counts_containers_plus_linked_elements_not_the_system(self) -> None:
+        # the views-bad `AllContainers` view (`include *` over 19
+        # containers): the element list is the 19 containers + the linked
+        # person + the two linked external software systems = 22; the
+        # scoped system itself is NOT in the list (the view references it
+        # by its own `softwareSystemId`)
+        export = _load_export("views-bad")
+        assert export is not None
+        all_containers = next(v for v in iter_views(export) if v.get("key") == "AllContainers")
+        self.assertEqual(len(all_containers["elements"]), 22)
+        self.assertIn("softwareSystemId", all_containers)
+        system_id = str(all_containers["softwareSystemId"])
+        self.assertNotIn(system_id, [str(e["id"]) for e in all_containers["elements"]])
+
+    def test_an_explicit_include_list_counts_exactly_the_listed_elements(self) -> None:
+        export = _load_export("views-good")
+        assert export is not None
+        front_office = next(v for v in iter_views(export) if v.get("key") == "FrontOffice")
+        # customer + web + mobile + accounts + transactions + payments +
+        # notifications + cache = 8, nothing else
+        self.assertEqual(len(front_office["elements"]), 8)
+
+    def test_a_filtered_view_carries_no_elements_list_of_its_own(self) -> None:
+        # the pinned exporter writes a filtered view as `baseViewKey` +
+        # `mode` + `tags` (no `elements` array): the gate bounds it by its
+        # base's count (`_view_element_count`)
+        export = _synthetic_export(
+            {
+                "containerViews": [
+                    {"key": "Big", "elements": [{"id": i} for i in range(21)]},
+                    {"key": "Small", "elements": [{"id": i} for i in range(3)]},
+                ],
+                "filteredViews": [
+                    {"key": "MyFiltered", "baseViewKey": "Big", "mode": "Include", "tags": ["X"]},
+                ],
+            }
+        )
+        inputs = _views_inputs_from(export)
+
+        result = gate_views_within_element_bound(inputs)
+
+        self.assertFalse(result.passed)
+        # `Big` itself is over; `MyFiltered` resolves through its base
+        self.assertIn("'Big' with 21 element(s)", result.detail)
+        self.assertIn("'MyFiltered' with 21 element(s)", result.detail)
+
+    def test_the_filtered_base_resolution_is_recursive_and_cycle_guarded(self) -> None:
+        export = _synthetic_export(
+            {
+                "containerViews": [
+                    {"key": "Root", "elements": [{"id": i} for i in range(21)]},
+                ],
+                "filteredViews": [
+                    {"key": "F1", "baseViewKey": "Root"},
+                    {"key": "F2", "baseViewKey": "F1"},
+                    {"key": "LoopA", "baseViewKey": "LoopB"},
+                    {"key": "LoopB", "baseViewKey": "LoopA"},
+                ],
+            }
+        )
+        inputs = _views_inputs_from(export)
+
+        result = gate_views_within_element_bound(inputs)
+
+        # Root + F1 + F2 resolve to 21; the pathological LoopA/LoopB pair
+        # terminates (cycle guard) instead of recursing forever and
+        # resolves to 0 -- not flagged over the bound
+        self.assertFalse(result.passed)
+        self.assertEqual(result.detail.count("with 21 element(s)"), 3)
+        self.assertNotIn("LoopA", result.detail)
+        self.assertNotIn("LoopB", result.detail)
+
+
+class TestViewsWithinElementBoundGate(unittest.TestCase):
+    def test_pass_when_every_user_defined_view_is_within_the_bound(self) -> None:
+        result = gate_views_within_element_bound(_views_inputs("views-good"))
+
+        self.assertTrue(result.passed)
+        self.assertIn("every one of 4 user-defined view(s) carries at most 20 element(s)", result.detail)
+
+    def test_fail_when_a_view_exceeds_the_bound(self) -> None:
+        result = gate_views_within_element_bound(_views_inputs("views-bad"))
+
+        self.assertFalse(result.passed)
+        self.assertIn("'AllContainers' with 22 element(s)", result.detail)
+
+    def test_fail_at_one_over_the_bound_and_pass_at_exactly_the_bound(self) -> None:
+        export = _load_export("views-good")
+        assert export is not None
+        # grow the CustomerContext view (4 elements) to exactly 20 -> pass
+        context_view = next(v for v in iter_views(export) if v.get("key") == "CustomerContext")
+        for i in range(16):
+            context_view["elements"].append({"id": 100 + i})
+
+        at_bound = gate_views_within_element_bound(_views_inputs_from(copy.deepcopy(export)))
+
+        self.assertTrue(at_bound.passed)
+        self.assertIn("at most 20 element(s)", at_bound.detail)
+        # one more -> 21 -> fail
+        context_view["elements"].append({"id": 200})
+
+        over = gate_views_within_element_bound(_views_inputs_from(copy.deepcopy(export)))
+
+        self.assertFalse(over.passed)
+        self.assertIn("'CustomerContext' with 21 element(s)", over.detail)
+
+    def test_pass_vacuously_without_user_defined_views(self) -> None:
+        # the `weak` fixture defines no views: the exporter's auto-generated
+        # `generatedKey` defaults are filtered out (the `has_view` precedent
+        # carries the presence requirement)
+        result = gate_views_within_element_bound(_inputs("weak", validate_rc=0, export_rc=0))
+
+        self.assertTrue(result.passed)
+        self.assertIn("vacuously within the bound", result.detail)
+
+    def test_a_keyless_crowded_view_is_not_bound_checked(self) -> None:
+        # the locked complementarity: a view the DSL wrote without a key
+        # exports under `generatedKey: true` and is filtered out of the
+        # bound check (it fails `explicit_view_keys` instead) -- the
+        # views-bad `Container-001` view carries 22 elements but is not
+        # named in the bound gate's failure
+        result = gate_views_within_element_bound(_views_inputs("views-bad"))
+
+        self.assertFalse(result.passed)
+        self.assertNotIn("Container-001", result.detail)
+        self.assertIn("1 of 2 user-defined view(s)", result.detail)
+
+    def test_edge_fail_without_an_export_json(self) -> None:
+        result = gate_views_within_element_bound(_minimal_inputs('workspace "X" "y" { model { } }'))
+
+        self.assertTrue(result.passed)
+        self.assertIn("vacuously within the bound", result.detail)
+
+
+class TestExplicitViewKeysGate(unittest.TestCase):
+    def test_pass_when_every_view_has_an_explicit_key(self) -> None:
+        result = gate_explicit_view_keys(_views_inputs("views-good"))
+
+        self.assertTrue(result.passed)
+        self.assertIn("every one of 4 view(s) has an explicit key", result.detail)
+
+    def test_fail_when_a_view_key_was_auto_generated(self) -> None:
+        result = gate_explicit_view_keys(_views_inputs("views-bad"))
+
+        self.assertFalse(result.passed)
+        self.assertIn("1 of 3 view(s) carry an auto-generated key", result.detail)
+        self.assertIn("['Container-001']", result.detail)
+
+    def test_fail_when_the_dsl_defines_no_views_at_all(self) -> None:
+        # the `weak` fixture: only the exporter's auto-generated default
+        # views exist, every one carrying the `generatedKey` mark
+        result = gate_explicit_view_keys(_inputs("weak", validate_rc=0, export_rc=0))
+
+        self.assertFalse(result.passed)
+        self.assertIn("3 of 3 view(s) carry an auto-generated key", result.detail)
+        for key in ("Container-001", "SystemContext-001", "SystemLandscape-001"):
+            self.assertIn(key, result.detail)
+
+    def test_edge_fail_without_any_views_in_the_export(self) -> None:
+        inputs = _minimal_inputs('workspace "X" "y" { model { } }', export_json={"views": {}})
+
+        result = gate_explicit_view_keys(inputs)
+
+        self.assertFalse(result.passed)
+        self.assertIn("no views at all", result.detail)
+
+
+class TestPhase140EndToEnd(unittest.TestCase):
+    """The locked `design-views`/`heldout-views` gate sets over the
+    committed references (ACC-006: the known-good reference passes every
+    gate, the known-bad reference fails exactly the two new view-design
+    gates -- no model call, no Docker; the stream half is the minimal
+    validate-OK shape a CREATE case produces)."""
+
+    def test_views_good_reference_passes_all_12_gates(self) -> None:
+        case = CASES["design-views"]
+        inputs = _views_inputs("views-good")
+        trial = _validate_ok_stream(inputs.dsl_text)
+        context = _context(case, inputs, trial=trial)
+
+        results = grade_case(context)
+
+        self.assertEqual(len(results), 12)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_heldout_views_good_reference_passes_all_12_gates(self) -> None:
+        case = CASES[pins.HELDOUT_VIEWS_CASE]
+        inputs = _views_inputs("heldout-views-good")
+        trial = _validate_ok_stream(inputs.dsl_text)
+        context = _context(case, inputs, trial=trial)
+
+        results = grade_case(context)
+
+        self.assertEqual(len(results), 12)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_views_bad_reference_fails_exactly_the_view_design_gates(self) -> None:
+        case = CASES["design-views"]
+        inputs = _views_inputs("views-bad")
+        trial = _validate_ok_stream(inputs.dsl_text)
+        context = _context(case, inputs, trial=trial)
+
+        results = grade_case(context)
+        by_name = {r.name: r for r in results}
+
+        self.assertEqual(
+            sorted(r.name for r in results if not r.passed),
+            ["explicit_view_keys", "views_within_element_bound"],
+        )
+        for shape_gate in (
+            "dsl_written",
+            "cli_valid",
+            "cli_export",
+            "has_system",
+            "has_person",
+            "elements_described",
+            "relationship_technology",
+            "has_view",
+            "validate_ok_called",
+            "external_system_tagged",
+        ):
+            self.assertTrue(by_name[shape_gate].passed, shape_gate)
+        self.assertFalse(case_passed(results))
+
+
+# ---------------------------------------------------------------------------
+# Phase 150 (Task 150.100): the review cases and the report-text gates
+# ---------------------------------------------------------------------------
+
+REPORTS = FIXTURES_DIR / "reports"
+
+
+def _review_inputs(seed_name: str) -> GraderInputs:
+    """The seed's GraderInputs over the committed pre-exported fixture facts.
+
+    The review seeds are CLI-valid (validate rc=0, export rc=0); the
+    `inspect` facts (rc=1, the pinned finding lines) are read from the
+    committed `inspect.txt` -- the ambient scope/docs/decisions findings
+    plus the seeded orphan and keyless-view findings (the review's
+    `cli_valid` gate only needs validate, but the inputs stay the full
+    collected shape).
+    """
+    dsl = (WORKSPACES / seed_name / "workspace.dsl").read_text(encoding="utf-8")
+    export = _load_export(seed_name)
+    assert export is not None, f"missing pre-exported fixture {seed_name}/export.json"
+    inspect_txt = (WORKSPACES / seed_name / "inspect.txt").read_text(encoding="utf-8")
+    result = GraderInputs(
+        dsl_path="workspace.dsl",
+        dsl_text=dsl,
+        validate_rc=0,
+        validate_stderr="",
+        export_json=export,
+        export_rc=0,
+        export_stderr="",
+        inspect_rc=1,
+        inspect_findings=parse_inspect_findings(inspect_txt),
+    )
+    return result
+
+
+def _report_trial(report_name: str) -> ParsedTrial:
+    """A synthetic one-text-event stream carrying the committed report text."""
+    text = (REPORTS / f"{report_name}.txt").read_text(encoding="utf-8")
+    return _stream(_text_event(text))
+
+
+class TestPhase150CaseRegistry(unittest.TestCase):
+    """The Phase 150 cases (Task 150.100): the locked ids, prompts, gate
+    set, seeds and review facts."""
+
+    def test_review_model_is_registered_and_a_full_case(self) -> None:
+        self.assertIs(CASES["review-model"], REVIEW_MODEL_CASE_DEF)
+        self.assertIn("review-model", pins.FULL_CASES)
+        self.assertEqual(REVIEW_MODEL_CASE_DEF.gates, REVIEW_MODEL_GATES)
+
+    def test_heldout_review_is_registered_but_not_a_full_case(self) -> None:
+        self.assertIs(CASES[pins.HELDOUT_REVIEW_CASE], HELDOUT_REVIEW_CASE_DEF)
+        self.assertNotIn(pins.HELDOUT_REVIEW_CASE, pins.FULL_CASES)
+        # the same gate family (locked: same task shape, same gates, different domain)
+        self.assertEqual(HELDOUT_REVIEW_CASE_DEF.gates, REVIEW_MODEL_GATES)
+
+    def test_review_model_gate_set_is_the_locked_nine(self) -> None:
+        self.assertEqual(
+            REVIEW_MODEL_GATES,
+            (
+                "cli_valid",
+                "file_untouched",
+                "vague_label_found",
+                "library_container_found",
+                "external_tag_found",
+                "keyless_view_found",
+                "crowded_view_found",
+                "orphan_found",
+                "no_false_findings",
+            ),
+        )
+        # no loop-discipline gates and no create-family gates (the locked
+        # Phase 120 separation -- this is a review skill)
+        for stream_gate in (
+            "parse_called",
+            "inspect_called",
+            "triage_complete",
+            "validated_before_return",
+            "validate_ok_called",
+            "elements_described",
+            "relationships_described",
+            "no_deletions",
+            "container_count",
+            "no_library_container",
+            "external_system_tagged",
+            "no_vague_labels",
+            "views_within_element_bound",
+            "explicit_view_keys",
+            "has_view",
+            "has_system",
+            "has_person",
+            "two_containers",
+            "relationship_technology",
+            "dsl_written",
+        ):
+            self.assertNotIn(stream_gate, REVIEW_MODEL_GATES, stream_gate)
+
+    def test_review_model_prompt_is_the_locked_wording(self) -> None:
+        # the read-only instruction and the report shape are locked (the
+        # prompt is line-wrapped at 120 chars, so the pins run over the
+        # whitespace-normalized text)
+        lowered = re.sub(r"\s+", " ", REVIEW_MODEL_PROMPT).lower()
+        self.assertIn("read-only quality review", lowered)
+        self.assertIn("do not change, create, delete, or rename any file", lowered)
+        self.assertIn("one bullet per finding", lowered)
+        self.assertIn("workspace.dsl", lowered)
+        # ...and the prompt never states the seeded defects (no element
+        # name, no defect-class answer)
+        for seed_text in (REVIEW_MODEL_SEED_WORKSPACE, HELDOUT_REVIEW_SEED_WORKSPACE):
+            for name in re.findall(r'(?:person|softwareSystem|container|element)\s+\w+\s+"([^"]+)"', seed_text):
+                self.assertNotIn(name.lower(), lowered, f"the prompt names a seeded element: {name}")
+        for answer_word in (
+            "external",
+            "tag",
+            "library",
+            "vague",
+            "orphan",
+            "disconnected",
+            "uses",
+            "key",
+            "20",
+            "scope",
+            "documentation",
+            "decisions",
+        ):
+            self.assertNotIn(answer_word, lowered, f"the prompt states an answer: {answer_word}")
+
+    def test_review_model_seed_carries_the_locked_defects(self) -> None:
+        seed = REVIEW_MODEL_SEED_WORKSPACE
+        # the vague label is a member of the locked Phase 130 forbidden set
+        self.assertIn(REVIEW_MODEL_REVIEW_FACTS.vague_label, VAGUE_RELATIONSHIP_LABELS)
+        self.assertIn('"uses" "HTTP"', seed)
+        # the library-as-container, the untagged third party, the orphan,
+        # the keyless crowded view
+        self.assertIn('container "Pricing Rules Library"', seed)
+        self.assertIn('element "Payment Provider" "Charges customer cards for rentals and deposits."', seed)
+        self.assertIn('softwareSystem "Legacy Billing System"', seed)
+        self.assertNotIn('"External"', seed.split('element "Payment Provider"')[1].split("\n")[0])
+        # the keyless container view (no key between `container manager` and `{`)
+        self.assertIn("container manager {\n            include *", seed)
+        # the clean control: a substantial defect-free region (the locked
+        # clean names all exist in the seed; the person role is the one
+        # clean name deliberately NOT in the list)
+        for name in REVIEW_MODEL_REVIEW_FACTS.clean_names:
+            self.assertIn(f'"{name}"', seed, f"clean name absent from the seed: {name}")
+        self.assertIn('person "Customer"', seed)
+        # and the defect-adjacent names are locked OUT of the clean list
+        for polluted in (
+            *REVIEW_MODEL_REVIEW_FACTS.vague_endpoints,
+            REVIEW_MODEL_REVIEW_FACTS.library_name,
+            REVIEW_MODEL_REVIEW_FACTS.untagged_name,
+            REVIEW_MODEL_REVIEW_FACTS.orphan_name,
+            REVIEW_MODEL_REVIEW_FACTS.system_name,
+            "Customer",
+        ):
+            self.assertNotIn(polluted, REVIEW_MODEL_REVIEW_FACTS.clean_names, polluted)
+
+    def test_heldout_review_seed_carries_the_same_defect_placement(self) -> None:
+        seed = HELDOUT_REVIEW_SEED_WORKSPACE
+        self.assertIn(f'"{HELDOUT_REVIEW_REVIEW_FACTS.vague_label}" "HTTP"', seed)
+        self.assertIn(f'container "{HELDOUT_REVIEW_REVIEW_FACTS.library_name}"', seed)
+        self.assertIn(f'element "{HELDOUT_REVIEW_REVIEW_FACTS.untagged_name}"', seed)
+        self.assertIn(f'softwareSystem "{HELDOUT_REVIEW_REVIEW_FACTS.orphan_name}"', seed)
+        # the keyless container view (no key between `container planner` and `{`)
+        self.assertIn("container planner {\n            include *", seed)
+        # the held-out domain is not any earlier phase's domain (the locked
+        # guardrail): checked over the shared prompt (which names no domain
+        # at all) and the seed -- where "library" is excluded from the seed
+        # check on purpose (the locked defect placement names the seeded
+        # library container; it is not a domain reuse)
+        prompt_lowered = re.sub(r"\s+", " ", REVIEW_MODEL_PROMPT).lower()
+        for domain in (
+            "bookshop",
+            "hospital",
+            "library",
+            "parking",
+            "museum",
+            "parcel",
+            "home energy",
+            "banking",
+            "bank portal",
+            "insurance",
+            "claims",
+            "car rental",
+            "fleet manager",
+        ):
+            self.assertNotIn(domain, prompt_lowered, f"the prompt names an earlier domain: {domain}")
+        for domain in (
+            "bookshop",
+            "hospital",
+            "parking",
+            "museum",
+            "parcel",
+            "home energy",
+            "banking",
+            "bank portal",
+            "insurance",
+            "claims",
+            "car rental",
+            "fleet manager",
+        ):
+            self.assertNotIn(domain, seed.lower(), f"the held-out seed reuses an earlier domain: {domain}")
+        # the same clean-control shape: every locked clean name in the seed
+        for name in HELDOUT_REVIEW_REVIEW_FACTS.clean_names:
+            self.assertIn(f'"{name}"', seed, f"clean name absent from the seed: {name}")
+        # ...and the defect-adjacent names locked out of its clean list
+        for polluted in (
+            *HELDOUT_REVIEW_REVIEW_FACTS.vague_endpoints,
+            HELDOUT_REVIEW_REVIEW_FACTS.library_name,
+            HELDOUT_REVIEW_REVIEW_FACTS.untagged_name,
+            HELDOUT_REVIEW_REVIEW_FACTS.orphan_name,
+            HELDOUT_REVIEW_REVIEW_FACTS.system_name,
+            "Guest",
+        ):
+            self.assertNotIn(polluted, HELDOUT_REVIEW_REVIEW_FACTS.clean_names, polluted)
+
+    def test_review_seeds_are_the_case_setup_files(self) -> None:
+        # the trial's pre-seeded file is byte-identical to the committed
+        # fixture (the `file_untouched` gate's baseline)
+        self.assertEqual(REVIEW_MODEL_CASE_DEF.setup_files, {"workspace.dsl": REVIEW_MODEL_SEED_WORKSPACE})
+        self.assertEqual(HELDOUT_REVIEW_CASE_DEF.setup_files, {"workspace.dsl": HELDOUT_REVIEW_SEED_WORKSPACE})
+        self.assertEqual(
+            (WORKSPACES / "review-model-seed" / "workspace.dsl").read_text(encoding="utf-8"),
+            REVIEW_MODEL_SEED_WORKSPACE,
+        )
+        self.assertEqual(
+            (WORKSPACES / "heldout-review-seed" / "workspace.dsl").read_text(encoding="utf-8"),
+            HELDOUT_REVIEW_SEED_WORKSPACE,
+        )
+
+
+class TestPhase150FixtureFilesPresent(unittest.TestCase):
+    def test_review_fixtures_are_committed_and_consistent(self) -> None:
+        for name in ("review-model-seed", "heldout-review-seed"):
+            dsl = WORKSPACES / name / "workspace.dsl"
+            self.assertTrue(dsl.is_file(), f"missing fixture {name}/workspace.dsl")
+            self.assertGreaterEqual(len(dsl.read_text(encoding="utf-8").encode("utf-8")), MIN_DSL_BYTES)
+            export = WORKSPACES / name / "export.json"
+            self.assertTrue(export.is_file(), f"missing fixture {name}/export.json")
+            self.assertIn("model", json.loads(export.read_text(encoding="utf-8")))
+            for sidecar in ("validate.txt", "inspect.txt"):
+                self.assertTrue((WORKSPACES / name / sidecar).is_file(), f"missing fixture {name}/{sidecar}")
+        for name in ("review-model-good", "review-model-bad", "heldout-review-good", "heldout-review-bad"):
+            report = REPORTS / f"{name}.txt"
+            self.assertTrue(report.is_file(), f"missing fixture {name}.txt")
+            self.assertGreaterEqual(len(report.read_text(encoding="utf-8").strip()), 100)
+
+    def test_review_seeds_are_cli_valid_and_carry_the_pinned_inspect_findings(self) -> None:
+        # the seeds' defects are SEMANTIC: validate.txt is empty (rc=0),
+        # and the pinned inspect output carries rc=1 with the seeded
+        # orphan + keyless-view findings (plus the ambient scope/docs/
+        # decisions findings)
+        for name in ("review-model-seed", "heldout-review-seed"):
+            self.assertEqual((WORKSPACES / name / "validate.txt").read_text(encoding="utf-8"), "")
+            inspect_txt = (WORKSPACES / name / "inspect.txt").read_text(encoding="utf-8")
+            self.assertIn("model.element.disconnected", inspect_txt)
+            self.assertIn("model.element.noview", inspect_txt)
+            self.assertIn("views.view.key", inspect_txt)
+            self.assertIn("Container-001", inspect_txt)
+
+    def test_review_seed_container_views_carry_21_elements(self) -> None:
+        # the locked crowded-view fact (over the Phase 140 bound of 20):
+        # the keyless `include *` container view exports 21 elements
+        for name in ("review-model-seed", "heldout-review-seed"):
+            export = _load_export(name)
+            assert export is not None
+            container_views = [v for v in iter_views(export) if v.get("key") == "Container-001"]
+            self.assertEqual(len(container_views), 1)
+            self.assertTrue(container_views[0].get("generatedKey"))
+            self.assertEqual(len(container_views[0].get("elements") or []), 21)
+            self.assertGreater(len(container_views[0].get("elements") or []), VIEW_ELEMENT_BOUND)
+
+
+class TestFindingLines(unittest.TestCase):
+    """The finding-line extraction (the locked report shape of the review
+    prompt): markdown list items only, conservative on everything else."""
+
+    def test_bullets_unordered_and_ordered(self) -> None:
+        text = "- one\n* two\n+ three\n1) four\n2. five\nplain prose\n"
+
+        result = _finding_lines(text)
+
+        self.assertEqual(result, ["one", "two", "three", "four", "five"])
+
+    def test_a_paragraph_report_yields_no_finding_lines(self) -> None:
+        # the locked conservative direction: an unrecognisable report
+        # shape can only fail the detection gates, never pass one
+        text = "The model is fine overall. The Legacy Billing System looks disconnected to me.\n"
+
+        self.assertEqual(_finding_lines(text), [])
+
+    def test_bullet_with_leading_whitespace_and_empty_lines(self) -> None:
+        text = "   -   indented\n\n- second\n"
+
+        self.assertEqual(_finding_lines(text), ["indented", "second"])
+
+
+class TestReviewDetectionGates(unittest.TestCase):
+    """The six per-defect report-text gates over the committed report
+    fixtures (ACC-006: known-good vs known-bad, no model call, no Docker)."""
+
+    def _context(self, case: Case, report_name: str, seed_name: str) -> GateContext:
+        return _context(case, _review_inputs(seed_name), trial=_report_trial(report_name))
+
+    def test_known_good_report_locates_every_defect(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-good", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-good", "heldout-review-seed"),
+        ):
+            with self.subTest(case=case.id):
+                context = self._context(case, report, seed)
+                for gate_name in (
+                    "vague_label_found",
+                    "library_container_found",
+                    "external_tag_found",
+                    "keyless_view_found",
+                    "crowded_view_found",
+                    "orphan_found",
+                ):
+                    result = _gate(gate_name, context)
+                    self.assertTrue(result.passed, f"{case.id}/{gate_name}: {result.detail}")
+
+    def test_known_bad_report_locates_no_defect(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-bad", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-bad", "heldout-review-seed"),
+        ):
+            with self.subTest(case=case.id):
+                context = self._context(case, report, seed)
+                for gate_name in (
+                    "vague_label_found",
+                    "library_container_found",
+                    "external_tag_found",
+                    "keyless_view_found",
+                    "crowded_view_found",
+                    "orphan_found",
+                ):
+                    result = _gate(gate_name, context)
+                    self.assertFalse(result.passed, f"{case.id}/{gate_name} passed on the known-bad report")
+
+    def test_vague_label_gate_rejects_users_and_endpoint_only_mentions(self) -> None:
+        # word-boundary on the label ("users" must not match "uses") and
+        # the vagueness-claim requirement (naming the endpoints without
+        # saying what is wrong must not match)
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        for text, expected in (
+            ("- The portal's users book through the app.", False),
+            ("- The relationship from the Booking Web App to the Pricing Service has a description.", False),
+            (
+                '- The relationship from the Booking Web App to the Pricing Service is labelled "uses", which is vague.',
+                True,
+            ),
+        ):
+            context = _context(case, inputs, trial=_stream(_text_event(text)))
+
+            self.assertEqual(gate_vague_label_found(context).passed, expected, text)
+
+    def test_keyless_view_gate_accepts_the_generated_key_quote(self) -> None:
+        # a report that quotes the generated key (from `inspect`) locates
+        # the defect without naming the system
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case, inputs, trial=_stream(_text_event('- The view "Container-001" has an auto-generated key.'))
+        )
+
+        self.assertTrue(gate_keyless_view_found(context).passed)
+
+    def test_crowded_view_gate_rejects_a_benign_20_element_mention(self) -> None:
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case,
+            inputs,
+            trial=_stream(_text_event("- The CustomerContext view carries 4 of the 20 elements on the model.")),
+        )
+
+        self.assertFalse(gate_crowded_view_found(context).passed)
+
+    def test_a_paragraph_report_fails_every_detection_gate(self) -> None:
+        # the locked conservative direction, over the full case
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(case, inputs, trial=_stream(_text_event("I reviewed it; the model looks fine overall.")))
+
+        for gate_name in (
+            "vague_label_found",
+            "library_container_found",
+            "external_tag_found",
+            "keyless_view_found",
+            "crowded_view_found",
+            "orphan_found",
+        ):
+            self.assertFalse(_gate(gate_name, context).passed, gate_name)
+
+    def test_review_gates_fail_on_a_case_without_facts(self) -> None:
+        # the `container_count` precedent: a review gate misused on a
+        # non-review case fails with the "gate misused" detail
+        context = _context(CASES["create-system"], _review_inputs("review-model-seed"))
+
+        for gate_name in (
+            "vague_label_found",
+            "library_container_found",
+            "external_tag_found",
+            "keyless_view_found",
+            "crowded_view_found",
+            "orphan_found",
+            "no_false_findings",
+        ):
+            result = GATES[gate_name](context)
+            self.assertFalse(result.passed)
+            self.assertIn("gate misused", result.detail)
+
+
+class TestNoFalseFindingsGate(unittest.TestCase):
+    """The clean control: finding lines may not name the seeded model's
+    clean parts."""
+
+    def test_known_good_report_names_no_clean_element(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-good", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-good", "heldout-review-seed"),
+        ):
+            context = _context(case, _review_inputs(seed), trial=_report_trial(report))
+
+            result = gate_no_false_findings(context)
+
+            self.assertTrue(result.passed, f"{case.id}: {result.detail}")
+
+    def test_known_bad_report_names_clean_elements(self) -> None:
+        for case, report, seed, clean_name in (
+            (CASES["review-model"], "review-model-bad", "review-model-seed", "Mobile Backend"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-bad", "heldout-review-seed", "Mobile App Backend"),
+        ):
+            context = _context(case, _review_inputs(seed), trial=_report_trial(report))
+
+            result = gate_no_false_findings(context)
+
+            self.assertFalse(result.passed, f"{case.id} passed on the known-bad report")
+            self.assertIn(clean_name, result.detail)
+
+    def test_a_finding_line_naming_a_clean_element_fails(self) -> None:
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case, inputs, trial=_stream(_text_event("- The Media Database could use a bigger retention policy."))
+        )
+
+        result = gate_no_false_findings(context)
+
+        self.assertFalse(result.passed)
+        self.assertIn("Media Database", result.detail)
+
+    def test_word_boundary_matching_does_not_flag_common_noun_usage(self) -> None:
+        # a clean multi-word name must match as a whole phrase: "mobile
+        # backends" (plural, no phrase) is not the "Mobile Backend" element
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case,
+            inputs,
+            trial=_stream(_text_event("- The mobile backends generally look well described.")),
+        )
+
+        self.assertTrue(gate_no_false_findings(context).passed)
+
+    def test_summary_prose_outside_the_finding_lines_is_exempt(self) -> None:
+        # the clean control is about findings, not about the whole message:
+        # a closing line naming the clean parts as checked-and-fine passes
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case,
+            inputs,
+            trial=_stream(_text_event("The Mobile Backend, the Fleet Database and the rest all looked fine.\n")),
+        )
+
+        self.assertTrue(gate_no_false_findings(context).passed)
+
+
+class TestPhase150EndToEnd(unittest.TestCase):
+    """The locked `review-model`/`heldout-review` gate sets over the
+    committed seeds and reports (ACC-006: the known-good report passes
+    every gate, the known-bad report fails exactly the six detection gates
+    plus the clean control -- no model call, no Docker)."""
+
+    def test_known_good_report_passes_all_nine_gates(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-good", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-good", "heldout-review-seed"),
+        ):
+            with self.subTest(case=case.id):
+                context = _context(case, _review_inputs(seed), trial=_report_trial(report))
+
+                results = grade_case(context)
+
+                self.assertEqual(len(results), 9)
+                self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_known_bad_report_fails_exactly_the_seven_report_gates(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-bad", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-bad", "heldout-review-seed"),
+        ):
+            with self.subTest(case=case.id):
+                context = _context(case, _review_inputs(seed), trial=_report_trial(report))
+
+                results = grade_case(context)
+                by_name = {r.name: r for r in results}
+
+                self.assertEqual(
+                    sorted(r.name for r in results if not r.passed),
+                    sorted(
+                        (
+                            "vague_label_found",
+                            "library_container_found",
+                            "external_tag_found",
+                            "keyless_view_found",
+                            "crowded_view_found",
+                            "orphan_found",
+                            "no_false_findings",
+                        )
+                    ),
+                )
+                # the read-only context gates pass on the known-bad report
+                # too (the report does not touch the file)
+                self.assertTrue(by_name["cli_valid"].passed)
+                self.assertTrue(by_name["file_untouched"].passed)
+                self.assertFalse(case_passed(results))
+
+    def test_a_modified_seed_fails_the_read_only_gates(self) -> None:
+        # the ACC-004 edge: an agent that edits the seeded file (any byte)
+        # fails `file_untouched` whatever its report says
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        modified = GraderInputs(
+            dsl_path=inputs.dsl_path,
+            dsl_text=inputs.dsl_text + "\n# edited\n",
+            validate_rc=0,
+            validate_stderr="",
+            export_json=inputs.export_json,
+            export_rc=0,
+            export_stderr="",
+            inspect_rc=inputs.inspect_rc,
+            inspect_findings=inputs.inspect_findings,
+        )
+        context = _context(case, modified, trial=_report_trial("review-model-good"))
+
+        results = grade_case(context)
+        by_name = {r.name: r for r in results}
+
+        self.assertFalse(by_name["file_untouched"].passed)
+        self.assertIn("modified", by_name["file_untouched"].detail)
+        self.assertFalse(case_passed(results))
 
 
 if __name__ == "__main__":

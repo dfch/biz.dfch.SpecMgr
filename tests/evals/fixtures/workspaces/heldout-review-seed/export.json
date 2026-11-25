@@ -1,0 +1,567 @@
+{
+  "configuration" : { },
+  "description" : "Plans and manages hotel stays for a regional hotel group.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "customElements" : [ {
+      "description" : "REST/JSON",
+      "id" : "22",
+      "metadata" : "Streams loyalty points balances for guests.",
+      "name" : "Loyalty Points Feed",
+      "properties" : {
+        "structurizr.dsl.identifier" : "loyaltyFeed"
+      },
+      "tags" : "Element,External"
+    }, {
+      "id" : "21",
+      "metadata" : "Charges guest cards for stays and deposits.",
+      "name" : "Payment Gateway",
+      "properties" : {
+        "structurizr.dsl.identifier" : "payments"
+      },
+      "tags" : "Element"
+    } ],
+    "people" : [ {
+      "description" : "Books and manages hotel stays.",
+      "id" : "1",
+      "name" : "Guest",
+      "properties" : {
+        "structurizr.dsl.identifier" : "guest"
+      },
+      "relationships" : [ {
+        "description" : "Books rooms through",
+        "destinationId" : "3",
+        "id" : "24",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
+      }, {
+        "description" : "Books rooms through",
+        "destinationId" : "2",
+        "id" : "25",
+        "linkedRelationshipId" : "24",
+        "sourceId" : "1",
+        "technology" : "HTTPS"
+      }, {
+        "description" : "Books rooms via",
+        "destinationId" : "4",
+        "id" : "26",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "Lets guests book and manage stays.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "Reservation Portal",
+        "properties" : {
+          "structurizr.dsl.identifier" : "portal"
+        },
+        "relationships" : [ {
+          "description" : "Registers stays in",
+          "destinationId" : "5",
+          "id" : "27",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "uses",
+          "destinationId" : "7",
+          "id" : "28",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "HTTP"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Serves the hotel group's mobile app.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Mobile App Backend",
+        "properties" : {
+          "structurizr.dsl.identifier" : "mobile"
+        },
+        "relationships" : [ {
+          "description" : "Requests room assignment via",
+          "destinationId" : "6",
+          "id" : "29",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Kotlin"
+      }, {
+        "description" : "Registers and tracks stays.",
+        "documentation" : { },
+        "id" : "5",
+        "name" : "Stay Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "stays"
+        },
+        "relationships" : [ {
+          "description" : "Registers nightly tasks in",
+          "destinationId" : "15",
+          "id" : "30",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Publishes stay events to",
+          "destinationId" : "19",
+          "id" : "39",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "Kafka"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Assigns rooms to confirmed stays.",
+        "documentation" : { },
+        "id" : "6",
+        "name" : "Room Assignment",
+        "properties" : {
+          "structurizr.dsl.identifier" : "rooms"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Calculates stay rates.",
+        "documentation" : { },
+        "id" : "7",
+        "name" : "Rate Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "rate"
+        },
+        "relationships" : [ {
+          "description" : "Looks up tariffs in",
+          "destinationId" : "20",
+          "id" : "31",
+          "sourceId" : "7",
+          "tags" : "Relationship",
+          "technology" : "in-process"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Go"
+      }, {
+        "description" : "Plans cleaning tasks for the rooms.",
+        "documentation" : { },
+        "id" : "8",
+        "name" : "Housekeeping Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "housekeeping"
+        },
+        "relationships" : [ {
+          "description" : "Stores task records in",
+          "destinationId" : "16",
+          "id" : "34",
+          "sourceId" : "8",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "C#"
+      }, {
+        "description" : "Handles guest requests and local recommendations.",
+        "documentation" : { },
+        "id" : "9",
+        "name" : "Concierge Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "concierge"
+        },
+        "relationships" : [ {
+          "description" : "Reads loyalty balances from",
+          "destinationId" : "22",
+          "id" : "41",
+          "sourceId" : "9",
+          "tags" : "Relationship",
+          "technology" : "REST/JSON"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Sends booking and stay messages.",
+        "documentation" : { },
+        "id" : "10",
+        "name" : "Notification Hub",
+        "properties" : {
+          "structurizr.dsl.identifier" : "notifications"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Manages booking deposits and refunds.",
+        "documentation" : { },
+        "id" : "11",
+        "name" : "Deposit Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "deposits"
+        },
+        "relationships" : [ {
+          "description" : "Charges cards through",
+          "destinationId" : "21",
+          "id" : "32",
+          "sourceId" : "11",
+          "tags" : "Relationship",
+          "technology" : "REST/JSON"
+        }, {
+          "description" : "Stores deposit records in",
+          "destinationId" : "17",
+          "id" : "36",
+          "sourceId" : "11",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Collects and scores guest feedback.",
+        "documentation" : { },
+        "id" : "12",
+        "name" : "Feedback Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "feedback"
+        },
+        "relationships" : [ {
+          "description" : "Stores guest feedback media in",
+          "destinationId" : "18",
+          "id" : "37",
+          "sourceId" : "12",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Produces occupancy and revenue reports.",
+        "documentation" : { },
+        "id" : "13",
+        "name" : "Reporting Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "reporting"
+        },
+        "relationships" : [ {
+          "description" : "Reads occupancy records from",
+          "destinationId" : "16",
+          "id" : "38",
+          "sourceId" : "13",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Finds rooms by date and type.",
+        "documentation" : { },
+        "id" : "14",
+        "name" : "Availability Search",
+        "properties" : {
+          "structurizr.dsl.identifier" : "availability"
+        },
+        "relationships" : [ {
+          "description" : "Reads room data from",
+          "destinationId" : "16",
+          "id" : "35",
+          "sourceId" : "14",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Go"
+      }, {
+        "description" : "Runs the nightly batch jobs.",
+        "documentation" : { },
+        "id" : "15",
+        "name" : "Batch Scheduler",
+        "properties" : {
+          "structurizr.dsl.identifier" : "scheduler"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Stores stay, room, occupancy, and task records.",
+        "documentation" : { },
+        "id" : "16",
+        "name" : "Stay Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "staydb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Stores guest and deposit records.",
+        "documentation" : { },
+        "id" : "17",
+        "name" : "Guest Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "guestdb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Stores contracts, invoices, and guest media.",
+        "documentation" : { },
+        "id" : "18",
+        "name" : "Media Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "mediadb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Carries stay events between the application parts.",
+        "documentation" : { },
+        "id" : "19",
+        "name" : "Event Queue",
+        "properties" : {
+          "structurizr.dsl.identifier" : "queue"
+        },
+        "relationships" : [ {
+          "description" : "Delivers stay events to",
+          "destinationId" : "10",
+          "id" : "40",
+          "sourceId" : "19",
+          "tags" : "Relationship",
+          "technology" : "Kafka"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Kafka"
+      }, {
+        "description" : "Computes rates from room type, season, and stay length.",
+        "documentation" : { },
+        "id" : "20",
+        "name" : "Tariff Rules Library",
+        "properties" : {
+          "structurizr.dsl.identifier" : "tariff"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      } ],
+      "description" : "Manages reservations, rooms, rates, and stays.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Stay Planner",
+      "properties" : {
+        "structurizr.dsl.identifier" : "planner"
+      },
+      "relationships" : [ {
+        "description" : "Charges cards through",
+        "destinationId" : "21",
+        "id" : "33",
+        "linkedRelationshipId" : "32",
+        "sourceId" : "2",
+        "technology" : "REST/JSON"
+      }, {
+        "description" : "Reads loyalty balances from",
+        "destinationId" : "22",
+        "id" : "42",
+        "linkedRelationshipId" : "41",
+        "sourceId" : "2",
+        "technology" : "REST/JSON"
+      } ],
+      "tags" : "Element,Software System"
+    }, {
+      "description" : "The retired booking system being phased out.",
+      "documentation" : { },
+      "id" : "23",
+      "name" : "Legacy Booking System",
+      "properties" : {
+        "structurizr.dsl.identifier" : "legacy"
+      },
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "Stay Planner",
+  "properties" : {
+    "structurizr.inspection.error" : "6",
+    "structurizr.dsl" : "d29ya3NwYWNlICJTdGF5IFBsYW5uZXIiICJQbGFucyBhbmQgbWFuYWdlcyBob3RlbCBzdGF5cyBmb3IgYSByZWdpb25hbCBob3RlbCBncm91cC4iIHsKICAgIG1vZGVsIHsKICAgICAgICBndWVzdCA9IHBlcnNvbiAiR3Vlc3QiICJCb29rcyBhbmQgbWFuYWdlcyBob3RlbCBzdGF5cy4iCiAgICAgICAgcGxhbm5lciA9IHNvZnR3YXJlU3lzdGVtICJTdGF5IFBsYW5uZXIiICJNYW5hZ2VzIHJlc2VydmF0aW9ucywgcm9vbXMsIHJhdGVzLCBhbmQgc3RheXMuIiB7CiAgICAgICAgICAgIHBvcnRhbCA9IGNvbnRhaW5lciAiUmVzZXJ2YXRpb24gUG9ydGFsIiAiTGV0cyBndWVzdHMgYm9vayBhbmQgbWFuYWdlIHN0YXlzLiIgIlB5dGhvbiIKICAgICAgICAgICAgbW9iaWxlID0gY29udGFpbmVyICJNb2JpbGUgQXBwIEJhY2tlbmQiICJTZXJ2ZXMgdGhlIGhvdGVsIGdyb3VwJ3MgbW9iaWxlIGFwcC4iICJLb3RsaW4iCiAgICAgICAgICAgIHN0YXlzID0gY29udGFpbmVyICJTdGF5IFNlcnZpY2UiICJSZWdpc3RlcnMgYW5kIHRyYWNrcyBzdGF5cy4iICJKYXZhIgogICAgICAgICAgICByb29tcyA9IGNvbnRhaW5lciAiUm9vbSBBc3NpZ25tZW50IiAiQXNzaWducyByb29tcyB0byBjb25maXJtZWQgc3RheXMuIiAiSmF2YSIKICAgICAgICAgICAgcmF0ZSA9IGNvbnRhaW5lciAiUmF0ZSBTZXJ2aWNlIiAiQ2FsY3VsYXRlcyBzdGF5IHJhdGVzLiIgIkdvIgogICAgICAgICAgICBob3VzZWtlZXBpbmcgPSBjb250YWluZXIgIkhvdXNla2VlcGluZyBTZXJ2aWNlIiAiUGxhbnMgY2xlYW5pbmcgdGFza3MgZm9yIHRoZSByb29tcy4iICJDIyIKICAgICAgICAgICAgY29uY2llcmdlID0gY29udGFpbmVyICJDb25jaWVyZ2UgU2VydmljZSIgIkhhbmRsZXMgZ3Vlc3QgcmVxdWVzdHMgYW5kIGxvY2FsIHJlY29tbWVuZGF0aW9ucy4iICJQeXRob24iCiAgICAgICAgICAgIG5vdGlmaWNhdGlvbnMgPSBjb250YWluZXIgIk5vdGlmaWNhdGlvbiBIdWIiICJTZW5kcyBib29raW5nIGFuZCBzdGF5IG1lc3NhZ2VzLiIgIlB5dGhvbiIKICAgICAgICAgICAgZGVwb3NpdHMgPSBjb250YWluZXIgIkRlcG9zaXQgU2VydmljZSIgIk1hbmFnZXMgYm9va2luZyBkZXBvc2l0cyBhbmQgcmVmdW5kcy4iICJKYXZhIgogICAgICAgICAgICBmZWVkYmFjayA9IGNvbnRhaW5lciAiRmVlZGJhY2sgU2VydmljZSIgIkNvbGxlY3RzIGFuZCBzY29yZXMgZ3Vlc3QgZmVlZGJhY2suIiAiUHl0aG9uIgogICAgICAgICAgICByZXBvcnRpbmcgPSBjb250YWluZXIgIlJlcG9ydGluZyBTZXJ2aWNlIiAiUHJvZHVjZXMgb2NjdXBhbmN5IGFuZCByZXZlbnVlIHJlcG9ydHMuIiAiSmF2YSIKICAgICAgICAgICAgYXZhaWxhYmlsaXR5ID0gY29udGFpbmVyICJBdmFpbGFiaWxpdHkgU2VhcmNoIiAiRmluZHMgcm9vbXMgYnkgZGF0ZSBhbmQgdHlwZS4iICJHbyIKICAgICAgICAgICAgc2NoZWR1bGVyID0gY29udGFpbmVyICJCYXRjaCBTY2hlZHVsZXIiICJSdW5zIHRoZSBuaWdodGx5IGJhdGNoIGpvYnMuIiAiSmF2YSIKICAgICAgICAgICAgc3RheWRiID0gY29udGFpbmVyICJTdGF5IERhdGFiYXNlIiAiU3RvcmVzIHN0YXksIHJvb20sIG9jY3VwYW5jeSwgYW5kIHRhc2sgcmVjb3Jkcy4iICJQb3N0Z3JlU1FMIiAiRGF0YWJhc2UiCiAgICAgICAgICAgIGd1ZXN0ZGIgPSBjb250YWluZXIgIkd1ZXN0IERhdGFiYXNlIiAiU3RvcmVzIGd1ZXN0IGFuZCBkZXBvc2l0IHJlY29yZHMuIiAiUG9zdGdyZVNRTCIgIkRhdGFiYXNlIgogICAgICAgICAgICBtZWRpYWRiID0gY29udGFpbmVyICJNZWRpYSBEYXRhYmFzZSIgIlN0b3JlcyBjb250cmFjdHMsIGludm9pY2VzLCBhbmQgZ3Vlc3QgbWVkaWEuIiAiUG9zdGdyZVNRTCIgIkRhdGFiYXNlIgogICAgICAgICAgICBxdWV1ZSA9IGNvbnRhaW5lciAiRXZlbnQgUXVldWUiICJDYXJyaWVzIHN0YXkgZXZlbnRzIGJldHdlZW4gdGhlIGFwcGxpY2F0aW9uIHBhcnRzLiIgIkthZmthIgogICAgICAgICAgICB0YXJpZmYgPSBjb250YWluZXIgIlRhcmlmZiBSdWxlcyBMaWJyYXJ5IiAiQ29tcHV0ZXMgcmF0ZXMgZnJvbSByb29tIHR5cGUsIHNlYXNvbiwgYW5kIHN0YXkgbGVuZ3RoLiIgIlB5dGhvbiIKICAgICAgICB9CiAgICAgICAgcGF5bWVudHMgPSBlbGVtZW50ICJQYXltZW50IEdhdGV3YXkiICJDaGFyZ2VzIGd1ZXN0IGNhcmRzIGZvciBzdGF5cyBhbmQgZGVwb3NpdHMuIgogICAgICAgIGxveWFsdHlGZWVkID0gZWxlbWVudCAiTG95YWx0eSBQb2ludHMgRmVlZCIgIlN0cmVhbXMgbG95YWx0eSBwb2ludHMgYmFsYW5jZXMgZm9yIGd1ZXN0cy4iICJSRVNUL0pTT04iICJFeHRlcm5hbCIKICAgICAgICBsZWdhY3kgPSBzb2Z0d2FyZVN5c3RlbSAiTGVnYWN5IEJvb2tpbmcgU3lzdGVtIiAiVGhlIHJldGlyZWQgYm9va2luZyBzeXN0ZW0gYmVpbmcgcGhhc2VkIG91dC4iCiAgICAgICAgZ3Vlc3QgLT4gcG9ydGFsICJCb29rcyByb29tcyB0aHJvdWdoIiAiSFRUUFMiCiAgICAgICAgZ3Vlc3QgLT4gbW9iaWxlICJCb29rcyByb29tcyB2aWEiICJIVFRQUyIKICAgICAgICBwb3J0YWwgLT4gc3RheXMgIlJlZ2lzdGVycyBzdGF5cyBpbiIgImdSUEMiCiAgICAgICAgcG9ydGFsIC0+IHJhdGUgInVzZXMiICJIVFRQIgogICAgICAgIG1vYmlsZSAtPiByb29tcyAiUmVxdWVzdHMgcm9vbSBhc3NpZ25tZW50IHZpYSIgImdSUEMiCiAgICAgICAgc3RheXMgLT4gc2NoZWR1bGVyICJSZWdpc3RlcnMgbmlnaHRseSB0YXNrcyBpbiIgImdSUEMiCiAgICAgICAgcmF0ZSAtPiB0YXJpZmYgIkxvb2tzIHVwIHRhcmlmZnMgaW4iICJpbi1wcm9jZXNzIgogICAgICAgIGRlcG9zaXRzIC0+IHBheW1lbnRzICJDaGFyZ2VzIGNhcmRzIHRocm91Z2giICJSRVNUL0pTT04iCiAgICAgICAgaG91c2VrZWVwaW5nIC0+IHN0YXlkYiAiU3RvcmVzIHRhc2sgcmVjb3JkcyBpbiIgIlNRTCIKICAgICAgICBhdmFpbGFiaWxpdHkgLT4gc3RheWRiICJSZWFkcyByb29tIGRhdGEgZnJvbSIgIlNRTCIKICAgICAgICBkZXBvc2l0cyAtPiBndWVzdGRiICJTdG9yZXMgZGVwb3NpdCByZWNvcmRzIGluIiAiU1FMIgogICAgICAgIGZlZWRiYWNrIC0+IG1lZGlhZGIgIlN0b3JlcyBndWVzdCBmZWVkYmFjayBtZWRpYSBpbiIgIlNRTCIKICAgICAgICByZXBvcnRpbmcgLT4gc3RheWRiICJSZWFkcyBvY2N1cGFuY3kgcmVjb3JkcyBmcm9tIiAiU1FMIgogICAgICAgIHN0YXlzIC0+IHF1ZXVlICJQdWJsaXNoZXMgc3RheSBldmVudHMgdG8iICJLYWZrYSIKICAgICAgICBxdWV1ZSAtPiBub3RpZmljYXRpb25zICJEZWxpdmVycyBzdGF5IGV2ZW50cyB0byIgIkthZmthIgogICAgICAgIGNvbmNpZXJnZSAtPiBsb3lhbHR5RmVlZCAiUmVhZHMgbG95YWx0eSBiYWxhbmNlcyBmcm9tIiAiUkVTVC9KU09OIgogICAgfQogICAgdmlld3MgewogICAgICAgIHN5c3RlbUNvbnRleHQgcGxhbm5lciAiR3Vlc3RDb250ZXh0IiAiU2hvd3MgdGhlIGd1ZXN0J3Mgam91cm5leSBhcm91bmQgdGhlIHN5c3RlbS4iIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICAgICAgY29udGFpbmVyIHBsYW5uZXIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KICAgIH0KfQ==",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "containerViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "4",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "6",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "7",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "8",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "9",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "10",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "11",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "12",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "13",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "14",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "15",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "16",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "17",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "18",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "19",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "20",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "21",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "generatedKey" : true,
+      "key" : "Container-001",
+      "name" : "Container View: Stay Planner",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "24"
+      }, {
+        "id" : "26"
+      }, {
+        "id" : "27"
+      }, {
+        "id" : "28"
+      }, {
+        "id" : "29"
+      }, {
+        "id" : "30"
+      }, {
+        "id" : "31"
+      }, {
+        "id" : "32"
+      }, {
+        "id" : "34"
+      }, {
+        "id" : "35"
+      }, {
+        "id" : "36"
+      }, {
+        "id" : "37"
+      }, {
+        "id" : "38"
+      }, {
+        "id" : "39"
+      }, {
+        "id" : "40"
+      }, {
+        "id" : "41"
+      } ],
+      "softwareSystemId" : "2"
+    } ],
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "description" : "Shows the guest's journey around the system.",
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "21",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "GuestContext",
+      "name" : "System Context View: Stay Planner",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "25"
+      }, {
+        "id" : "33"
+      }, {
+        "id" : "42"
+      } ],
+      "softwareSystemId" : "2"
+    } ]
+  }
+}

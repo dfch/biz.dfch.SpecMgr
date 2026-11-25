@@ -1,0 +1,129 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/fix-dsl/skill-k0.events.ndjson",
+  "event_file_bytes": 108600,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-22T21:22:16Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (1175 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "1/ 1 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "3 container(s)",
+      "name": "two_containers",
+      "passed": true
+    },
+    {
+      "detail": "2 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 4 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "description on all 4 relationship(s)",
+      "name": "relationships_described",
+      "passed": true
+    },
+    {
+      "detail": "description on all 6 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "all 6 seeded element(s) and 4 seeded relationship(s) still present",
+      "name": "no_deletions",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.004579330998240039,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 2,
+    "inspect_findings": [
+      "ERROR: The software system \"Parking Garage\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Parking Garage\" has containers, but is missing decisions.",
+      "ERROR: The container named \"Entry Gate Controller\" is not included on any views - add it to a view.",
+      "ERROR: The container named \"Exit Gate Controller\" is not included on any views - add it to a view.",
+      "ERROR: The container named \"Billing Service\" is not included on any views - add it to a view."
+    ],
+    "inspect_triage": {
+      "ERROR: The container named \"Billing Service\" is not included on any views - add it to a view.": "reported",
+      "ERROR: The container named \"Entry Gate Controller\" is not included on any views - add it to a view.": "reported",
+      "ERROR: The container named \"Exit Gate Controller\" is not included on any views - add it to a view.": "reported",
+      "ERROR: The software system \"Parking Garage\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Parking Garage\" has containers, but is missing documentation.": "expected"
+    },
+    "parse_calls": 2,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "structurizr-validate-loop"
+    ],
+    "steps": 13,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 202287,
+      "output": 8891,
+      "reasoning": 0
+    },
+    "tool_calls": 17,
+    "validate_calls": 2,
+    "validate_ok_calls": 2,
+    "validated_before_return": true,
+    "validated_by_file": true,
+    "validated_by_final_text": false,
+    "wall_time_s": 92.821,
+    "workdir_dsl": "workspace \"ParkFlow\" \"Manages a multi-level parking garage.\" {\n    model {\n        driver = person \"Driver\" \"Arrives at and departs from the garage.\"\n        garage = softwareSystem \"Parking Garage\" \"Manages bays, entry, exit, and billing.\" {\n            entry = container \"Entry Gate Controller\" \"Reads licence plates and drives the entry barrier.\" \"C/C++\"\n            exit = container \"Exit Gate Controller\" \"Drives the exit barrier.\" \"C/C++\"\n            billing = container \"Billing Service\" \"Calculates fees and issues invoices.\" \"Java\"\n        }\n        traffic = element \"City Traffic Feed\" \"Provides live traffic conditions around the garage.\"\n        entry -> billing \"Registers bay occupancy in\" \"gRPC\"\n        exit -> billing \"Clears bay occupancy in\" \"gRPC\"\n        billing -> traffic \"Considers live traffic from\" \"REST/JSON\"\n        driver -> entry \"Enters through\" \"In person\"\n    }\n    views {\n        systemContext garage \"GarageContext\" {\n            include *\n            autoLayout\n        }\n        container garage \"GarageContainers\" {\n            include *\n            autoLayout\n        }\n    }\n    configuration {\n        scope softwaresystem\n    }\n}\n"
+  },
+  "passed": true,
+  "plan": {
+    "case_id": "fix-dsl",
+    "condition": "skill",
+    "k_index": 0
+  },
+  "run_id": "p160-cumulative-2026-11-22T094832Z",
+  "skills_installed": [
+    "c4-model-review",
+    "c4-modeling",
+    "c4-view-design",
+    "structurizr-dsl-authoring",
+    "structurizr-validate-loop"
+  ],
+  "started_at": "2026-11-22T21:20:42Z",
+  "timeout": false,
+  "wall_time_s": 94.64112497400492,
+  "workdir": "/home/ubuntu/src/biz.dfch.SpecMgr.tree/feat-250-c4-structurizr-skills/evals/c4-skills/work/fix-dsl.skill-k0.p160-cumulative-2026-11-22T094832Z"
+}

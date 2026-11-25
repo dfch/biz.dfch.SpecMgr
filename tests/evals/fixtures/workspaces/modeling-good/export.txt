@@ -1,0 +1,4 @@
+21:24:21.685 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl
+21:24:21.767 [main] INFO com.structurizr.command.ExportCommand -- Exporting with JsonWorkspaceExporter
+21:24:22.032 [main] INFO com.structurizr.command.ExportCommand -- Writing /w/out/workspace.json
+21:24:22.033 [main] INFO com.structurizr.command.ExportCommand -- Finished

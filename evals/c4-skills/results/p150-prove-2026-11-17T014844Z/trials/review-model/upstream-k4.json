@@ -1,0 +1,122 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/review-model/upstream-k4.events.ndjson",
+  "event_file_bytes": 123438,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-17T04:21:02Z",
+  "gates": [
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "workspace.dsl is byte-identical to the seeded file",
+      "name": "file_untouched",
+      "passed": true
+    },
+    {
+      "detail": "finding line locates the vague label: **`booking -> pricing`** \u2014 Label is \"uses\", which is vague and conveys no intent. Something like \"requests price quotes ",
+      "name": "vague_label_found",
+      "passed": true
+    },
+    {
+      "detail": "finding line locates the library container: **`rates` \"Pricing Rules Library\" (container)** \u2014 A library is not a runtime boundary; it's code that runs inside the `p",
+      "name": "library_container_found",
+      "passed": true
+    },
+    {
+      "detail": "finding line locates the untagged element: **`payments` \"Payment Provider\" (element)** \u2014 Modeled as a bare `element` instead of a `softwareSystem`. External system",
+      "name": "external_tag_found",
+      "passed": true
+    },
+    {
+      "detail": "finding line locates the keyless view: **Container view** \u2014 Has an auto-generated key `Container-001`, which isn't guaranteed stable over time; give it an expl",
+      "name": "keyless_view_found",
+      "passed": true
+    },
+    {
+      "detail": "no finding line locates the over-bound view",
+      "name": "crowded_view_found",
+      "passed": false
+    },
+    {
+      "detail": "finding line locates the orphan: **`legacy` \"Legacy Billing System\" (softwareSystem)** \u2014 Disconnected: it has no relationships to/from it, so it appears ",
+      "name": "orphan_found",
+      "passed": true
+    },
+    {
+      "detail": "finding line names the clean element 'Vehicle Telemetry Feed': **`telemetryFeed` \"Vehicle Telemetry Feed\" (element)** \u2014 Same issue: a bare `element` instead of a `softwareSystem`. It'",
+      "name": "no_false_findings",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.009825868997722864,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 2,
+    "inspect_findings": [
+      "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 3, col 26)",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The software system \"Fleet Manager\" has containers, but is missing documentation.",
+      "The software system \"Fleet Manager\" has containers, but is missing decisions.",
+      "The software system \"Legacy Billing System\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "The software system named \"Legacy Billing System\" is not included on any views - add it to a view.",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time."
+    ],
+    "inspect_triage": {
+      "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 3, col 26)": "fix",
+      "The software system \"Fleet Manager\" has containers, but is missing decisions.": "expected",
+      "The software system \"Fleet Manager\" has containers, but is missing documentation.": "expected",
+      "The software system \"Legacy Billing System\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "The software system named \"Legacy Billing System\" is not included on any views - add it to a view.": "untriaged",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+    },
+    "parse_calls": 0,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "c4-review"
+    ],
+    "steps": 5,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 72078,
+      "output": 16174,
+      "reasoning": 0
+    },
+    "tool_calls": 5,
+    "validate_calls": 2,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 183.893,
+    "workdir_dsl": "workspace \"Fleet Manager\" \"Manages a regional car rental fleet.\" {\n    model {\n        customer = person \"Customer\" \"Rents vehicles through the fleet manager.\"\n        manager = softwareSystem \"Fleet Manager\" \"Manages bookings, vehicles, contracts, and maintenance.\" {\n            booking = container \"Booking Web App\" \"Lets customers book and return vehicles.\" \"Python\"\n            mobile = container \"Mobile Backend\" \"Serves the rental mobile app.\" \"Kotlin\"\n            fleet = container \"Fleet Service\" \"Tracks vehicle availability and locations.\" \"Java\"\n            dispatch = container \"Dispatch Service\" \"Assigns vehicles to bookings.\" \"Java\"\n            pricing = container \"Pricing Service\" \"Calculates rental prices.\" \"Go\"\n            maintenance = container \"Maintenance Service\" \"Plans servicing and repairs.\" \"C#\"\n            telemetry = container \"Telemetry Ingest\" \"Collects vehicle telemetry events.\" \"Go\"\n            notifications = container \"Notification Service\" \"Sends booking and reminder messages.\" \"Python\"\n            contracts = container \"Contract Service\" \"Manages rental contracts and deposits.\" \"Java\"\n            damage = container \"Damage Assessment\" \"Records and prices vehicle damage.\" \"Python\"\n            reports = container \"Reports Service\" \"Produces utilisation and revenue reports.\" \"Java\"\n            search = container \"Search Service\" \"Finds vehicles by location and class.\" \"Go\"\n            scheduler = container \"Batch Scheduler\" \"Runs the nightly pricing and maintenance batch.\" \"Java\"\n            fleetdb = container \"Fleet Database\" \"Stores vehicle and booking records.\" \"PostgreSQL\"\n            customerdb = container \"Customer Database\" \"Stores customer and contract records.\" \"PostgreSQL\"\n            mediadb = container \"Media Database\" \"Stores contracts, invoices, and damage photos.\" \"PostgreSQL\"\n            queue = container \"Event Queue\" \"Carries fleet events between the application parts.\" \"Kafka\"\n            rates = container \"Pricing Rules Library\" \"Computes rental prices from class, duration, and zone.\" \"Python\"\n        }\n        payments = element \"Payment Provider\" \"Charges customer cards for rentals and deposits.\"\n        telemetryFeed = element \"Vehicle Telemetry Feed\" \"Streams position and status telemetry.\" \"MQTT\" \"External\"\n        legacy = softwareSystem \"Legacy Billing System\" \"The retired billing system being phased out.\"\n        customer -> booking \"Rents vehicles through\" \"HTTPS\"\n        customer -> mobile \"Books vehicles via\" \"HTTPS\"\n        booking -> fleet \"Reserves vehicles in\" \"gRPC\"\n        booking -> pricing \"uses\" \"HTTP\"\n        mobile -> dispatch \"Requests dispatch via\" \"gRPC\"\n        fleet -> scheduler \"Registers nightly tasks in\" \"gRPC\"\n        pricing -> rates \"Looks up rules in\" \"in-process\"\n        contracts -> payments \"Charges cards through\" \"REST/JSON\"\n        damage -> mediadb \"Stores damage photos in\" \"SQL\"\n        reports -> fleetdb \"Reads booking records from\" \"SQL\"\n        maintenance -> fleetdb \"Stores service records in\" \"SQL\"\n        search -> fleetdb \"Reads availability from\" \"SQL\"\n        contracts -> customerdb \"Stores contract records in\" \"SQL\"\n        telemetry -> queue \"Publishes telemetry events to\" \"Kafka\"\n        queue -> notifications \"Delivers booking events to\" \"Kafka\"\n        telemetry -> telemetryFeed \"Receives fleet telemetry from\" \"MQTT\"\n    }\n    views {\n        systemContext manager \"CustomerContext\" \"Shows the customer's journey around the system.\" {\n            include *\n            autoLayout\n        }\n        container manager {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "review-model",
+    "condition": "upstream",
+    "k_index": 4
+  },
+  "run_id": "p150-prove-2026-11-17T014844Z",
+  "skills_installed": [
+    "c4-deployment",
+    "c4-model",
+    "c4-review",
+    "structurizr-dsl"
+  ],
+  "started_at": "2026-11-17T04:17:56Z",
+  "timeout": false,
+  "wall_time_s": 186.10344577400247,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/review-model.upstream-k4.p150-prove-2026-11-17T014844Z"
+}

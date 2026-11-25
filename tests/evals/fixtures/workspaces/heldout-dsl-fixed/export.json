@@ -1,0 +1,152 @@
+{
+  "configuration" : { },
+  "description" : "Sells and validates museum entry.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "customElements" : [ {
+      "id" : "2",
+      "metadata" : "Processes card payments.",
+      "name" : "Payment Provider",
+      "properties" : {
+        "structurizr.dsl.identifier" : "payment"
+      },
+      "tags" : "Element"
+    } ],
+    "people" : [ {
+      "description" : "Buys tickets and plans visits.",
+      "id" : "1",
+      "name" : "Museum Visitor",
+      "properties" : {
+        "structurizr.dsl.identifier" : "visitor"
+      },
+      "relationships" : [ {
+        "description" : "Buys tickets through",
+        "destinationId" : "4",
+        "id" : "10",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
+      }, {
+        "description" : "Buys tickets through",
+        "destinationId" : "3",
+        "id" : "11",
+        "linkedRelationshipId" : "10",
+        "sourceId" : "1",
+        "technology" : "HTTPS"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "Online ticket sales.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Ticket Shop",
+        "properties" : {
+          "structurizr.dsl.identifier" : "shop"
+        },
+        "relationships" : [ {
+          "description" : "Authorises charges to",
+          "destinationId" : "2",
+          "id" : "8",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "REST/JSON"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "On-site self-service ticket sales.",
+        "documentation" : { },
+        "id" : "5",
+        "name" : "Ticket Kiosk",
+        "properties" : {
+          "structurizr.dsl.identifier" : "kiosk"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Validates tickets at the door.",
+        "documentation" : { },
+        "id" : "6",
+        "name" : "Entry Scanner",
+        "properties" : {
+          "structurizr.dsl.identifier" : "scanner"
+        },
+        "relationships" : [ {
+          "description" : "Validates tickets in",
+          "destinationId" : "4",
+          "id" : "7",
+          "sourceId" : "6",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "C/C++"
+      } ],
+      "description" : "Sells tickets and manages entry.",
+      "documentation" : { },
+      "id" : "3",
+      "name" : "Museum Ticketing",
+      "properties" : {
+        "structurizr.dsl.identifier" : "ticketing"
+      },
+      "relationships" : [ {
+        "description" : "Authorises charges to",
+        "destinationId" : "2",
+        "id" : "9",
+        "linkedRelationshipId" : "8",
+        "sourceId" : "3",
+        "technology" : "REST/JSON"
+      } ],
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "Museum Ticketing",
+  "properties" : {
+    "structurizr.inspection.error" : "7",
+    "structurizr.dsl" : "d29ya3NwYWNlICJNdXNldW0gVGlja2V0aW5nIiAiU2VsbHMgYW5kIHZhbGlkYXRlcyBtdXNldW0gZW50cnkuIiB7CiAgICBtb2RlbCB7CiAgICAgICAgdmlzaXRvciA9IHBlcnNvbiAiTXVzZXVtIFZpc2l0b3IiICJCdXlzIHRpY2tldHMgYW5kIHBsYW5zIHZpc2l0cy4iCiAgICAgICAgcGF5bWVudCA9IGVsZW1lbnQgIlBheW1lbnQgUHJvdmlkZXIiICJQcm9jZXNzZXMgY2FyZCBwYXltZW50cy4iCiAgICAgICAgdGlja2V0aW5nID0gc29mdHdhcmVTeXN0ZW0gIk11c2V1bSBUaWNrZXRpbmciICJTZWxscyB0aWNrZXRzIGFuZCBtYW5hZ2VzIGVudHJ5LiIgewogICAgICAgICAgICBzaG9wID0gY29udGFpbmVyICJUaWNrZXQgU2hvcCIgIk9ubGluZSB0aWNrZXQgc2FsZXMuIiAiUHl0aG9uIgogICAgICAgICAgICBraW9zayA9IGNvbnRhaW5lciAiVGlja2V0IEtpb3NrIiAiT24tc2l0ZSBzZWxmLXNlcnZpY2UgdGlja2V0IHNhbGVzLiIgIkphdmEiCiAgICAgICAgICAgIHNjYW5uZXIgPSBjb250YWluZXIgIkVudHJ5IFNjYW5uZXIiICJWYWxpZGF0ZXMgdGlja2V0cyBhdCB0aGUgZG9vci4iICJDL0MrKyIKICAgICAgICB9CiAgICAgICAgc2Nhbm5lciAtPiBzaG9wICJWYWxpZGF0ZXMgdGlja2V0cyBpbiIgImdSUEMiCiAgICAgICAgc2hvcCAtPiBwYXltZW50ICJBdXRob3Jpc2VzIGNoYXJnZXMgdG8iICJSRVNUL0pTT04iCiAgICAgICAgdmlzaXRvciAtPiBzaG9wICJCdXlzIHRpY2tldHMgdGhyb3VnaCIgIkhUVFBTIgogICAgfQogICAgdmlld3MgewogICAgICAgIHN5c3RlbUNvbnRleHQgdGlja2V0aW5nICJUaWNrZXRpbmdDb250ZXh0IiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQogICAgfQp9",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "TicketingContext",
+      "name" : "System Context View: Museum Ticketing",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "11"
+      }, {
+        "id" : "9"
+      } ],
+      "softwareSystemId" : "3"
+    } ]
+  }
+}

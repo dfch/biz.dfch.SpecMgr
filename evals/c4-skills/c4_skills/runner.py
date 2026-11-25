@@ -775,6 +775,50 @@ def load_skill_source(path: Path) -> SkillSource:
     return result
 
 
+def stage_skills(skills_dir: Path, names: list[str], target: Path) -> Path:
+    """Stage only the named skill folders into a run-local variant root (Task 190.150, I4).
+
+    `run --skills <name,...>` copies exactly these folders from
+    `skills_dir` (a root of skill folders, e.g. `.opencode/skill`) into
+    `target` (a fresh directory under the work root), so a cumulative run
+    no longer needs a hand-staged root. The staged root hashes like any
+    variant root (`load_skill_source`): files relative to it, i.e. as
+    `<name>/<path>`.
+
+    Args:
+        skills_dir: The root that holds the skill folders.
+        names: The skill folder names to stage (non-empty, no duplicates).
+        target: The run-local directory to create (must not exist).
+
+    Returns:
+        `target`, ready to be the run's `skills_dir`.
+
+    Raises:
+        ValueError: When `names` is empty or repeats a name, a name is not
+            a plain folder name, a named folder is missing or carries no
+            `SKILL.md`, or `target` already exists (usage errors, exit 2).
+    """
+    assert isinstance(skills_dir, Path) and isinstance(target, Path)
+    assert isinstance(names, list)
+    if not names:
+        raise ValueError("--skills needs at least one skill name")
+    if len(set(names)) != len(names):
+        raise ValueError(f"--skills repeats a skill name: {names}")
+    root = skills_dir.resolve()
+    for name in names:
+        if not name or "/" in name or "\\" in name or name in (".", ".."):
+            raise ValueError(f"--skills entry {name!r} is not a skill folder name")
+        if not (root / name / "SKILL.md").is_file():
+            raise ValueError(f"--skills entry {name!r}: no {root / name / 'SKILL.md'}")
+    if target.exists():
+        raise ValueError(f"the staging directory already exists: {target}")
+    target.mkdir(parents=True)
+    for name in names:
+        shutil.copytree(root / name, target / name)
+    result = target
+    return result
+
+
 def _copy_skill_folders(workdir: Path, source: SkillSource) -> list[str]:
     """Copy a verified skill variant into the trial work dir.
 
@@ -992,6 +1036,11 @@ def grader_source_paths() -> list[Path]:
 
     Their combined hash is the `grader_hash` of the result cache key: a
     change to any of them invalidates the cached `none`/`upstream` results.
+    The set includes `codemode.py` -- the Code Mode detection layer whose
+    conservative attribution rules feed the normalized MCP-call view every
+    stream-derived metric and gate counts over (added 2026-11-07, the
+    Phase 110 review remediation: it was missing, so a change to the
+    attribution rules alone would not have invalidated the cache).
     """
     import c4_skills  # the harness package root (tests/evals put it on sys.path)
 
@@ -999,6 +1048,7 @@ def grader_source_paths() -> list[Path]:
     result = [
         root / "graders.py",
         root / "metrics.py",
+        root / "codemode.py",
         root / "events.py",
         root / "cases" / "__init__.py",
         root / "pins.py",
@@ -1241,6 +1291,10 @@ def run(config: RunConfig) -> dict:
             # has no skill condition) -- Phases 110-150 record each measured
             # variant by this hash
             "skill_variant_hash": pins.skill_variant_hash(skill_source.files) if skill_source is not None else None,
+            # the checkout-path-independent graders + cases + pins source
+            # hash (Task 190.120, G3) -- the result-cache key component,
+            # recorded with the run so a run states which graders graded it
+            "grader_hash": grader_hash,
             "order": [
                 {"case": p.case_id, "condition": p.condition, "k": p.k_index, "cached": r.cached}
                 for p, r in zip(plans, records)

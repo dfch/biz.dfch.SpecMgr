@@ -32,10 +32,12 @@ the fix.
 
 import json
 import unittest
+from pathlib import Path
 
+from c4_skills.cases import CASES
 from c4_skills.codemode import FAMILY_EXPORT
 from c4_skills.events import ParsedTrial, parse_event_stream, parse_events_file
-from c4_skills.graders import GraderInputs
+from c4_skills.graders import GateContext, GraderInputs, grade_case, parse_inspect_findings
 from c4_skills.metrics import (
     EDIT_TOOL_NAMES,
     SOURCE_CODEMODE,
@@ -44,9 +46,14 @@ from c4_skills.metrics import (
     TRIAGE_FIX,
     TRIAGE_REPORTED,
     TRIAGE_UNTRIAGED,
+    _edited_after_inspect,
+    _findings_from_output,
     compute_metrics,
     extract_final_dsl,
+    final_inspect_findings_set,
     normalized_mcp_calls,
+    normalize_finding,
+    triage_findings,
     validated_texts,
 )
 
@@ -71,7 +78,12 @@ def _good_export() -> dict:
     return json.loads((FIXTURES_DIR / "workspaces" / "good" / "export.json").read_text(encoding="utf-8"))
 
 
-def _inputs(dsl_text: str | None, export_json: dict | None) -> GraderInputs:
+def _inputs(
+    dsl_text: str | None,
+    export_json: dict | None,
+    inspect_rc: int | None = 0,
+    inspect_findings: list[str] | None = None,
+) -> GraderInputs:
     return GraderInputs(
         dsl_path="workspace.dsl" if dsl_text is not None else None,
         dsl_text=dsl_text,
@@ -80,8 +92,8 @@ def _inputs(dsl_text: str | None, export_json: dict | None) -> GraderInputs:
         export_json=export_json,
         export_rc=0 if export_json is not None else 1,
         export_stderr="" if export_json is not None else "boom",
-        inspect_rc=0,
-        inspect_findings=[],
+        inspect_rc=inspect_rc,
+        inspect_findings=list(inspect_findings or []),
     )
 
 
@@ -643,6 +655,415 @@ class TestNativeOnlyRegression(unittest.TestCase):
             parsed = parse_events_file(FIXTURES_DIR / "events" / name)
             view = normalized_mcp_calls(parsed)
             self.assertEqual({entry.source for entry in view} & {SOURCE_CODEMODE}, set(), name)
+
+
+class TestFindingsFromOutput(unittest.TestCase):
+    """Task 125.110/I1: the line fallback applies to single-line outputs only."""
+
+    def test_json_array_single_line(self) -> None:
+        result = _findings_from_output('["a", "b"]')
+
+        self.assertEqual(result, ["a", "b"])
+
+    def test_json_array_multi_line(self) -> None:
+        text = '["ERROR: a",\n "ERROR: b"]\n'
+
+        result = _findings_from_output(text)
+
+        self.assertEqual(result, ["ERROR: a", "ERROR: b"])
+
+    def test_single_line_non_array_is_the_finding(self) -> None:
+        result = _findings_from_output("ERROR: the model is empty")
+
+        self.assertEqual(result, ["ERROR: the model is empty"])
+
+    def test_multi_line_bundled_object_yields_no_findings(self) -> None:
+        # the committed mcp-limits/none-k0 shape: a bundled Code Mode
+        # answer (a valid JSON object, NOT an array) -- before I1 every
+        # non-blank line of it became a "finding" (11 in that trial,
+        # including `{`, `}` and the lines of the object itself)
+        text = (
+            "{\n"
+            '  "testC_sysToSys": "The source element \\"A\\" does not exist at line 5: \\"A\\" -> \\"B\\" \\"Calls\\"",\n'
+            '  "testD_inspect": [\n'
+            '    "ERROR: The person \\"Customer\\" is disconnected - add a relationship to/from it, or consider removing it from the model.",\n'
+            '    "ERROR: This workspace has no views."\n'
+            "  ]\n"
+            "}\n"
+        )
+
+        result = _findings_from_output(text)
+
+        self.assertEqual(result, [])
+
+    def test_multi_line_non_json_yields_no_findings(self) -> None:
+        result = _findings_from_output("ERROR: a\nERROR: b")
+
+        self.assertEqual(result, [])
+
+    def test_empty_and_blank_text_yield_no_findings(self) -> None:
+        self.assertEqual(_findings_from_output(""), [])
+        self.assertEqual(_findings_from_output("   \n  "), [])
+
+
+class TestNormalizeFinding(unittest.TestCase):
+    """Task 125.120/I2: the severity prefix is the stream/CLI merge key."""
+
+    def test_severity_prefixes_are_stripped(self) -> None:
+        for text, bare in [
+            ("ERROR: X", "X"),
+            ("ERROR X", "X"),
+            ("WARNING: X", "X"),
+            ("WARNING X", "X"),
+            ("INFO: X", "X"),
+            ("IGNORE X", "X"),
+        ]:
+            with self.subTest(text=text):
+                self.assertEqual(normalize_finding(text), bare)
+
+    def test_bare_finding_is_unchanged(self) -> None:
+        self.assertEqual(normalize_finding("The model is empty"), "The model is empty")
+
+    def test_longer_word_is_not_a_severity_prefix(self) -> None:
+        # a finding that merely starts with the word keeps its text: the
+        # prefix is a WHOLE severity token followed by a colon or
+        # whitespace, so `ERRORS ...` is untouched
+        self.assertEqual(normalize_finding("ERRORS in the model"), "ERRORS in the model")
+
+    def test_sentence_starting_with_the_token_follows_the_delimiter_rule(self) -> None:
+        # the locked delimiter rule (a whole token + colon OR whitespace)
+        # strips the `ERROR ` prefix here too; the keeping case is the
+        # longer-word one above (a token without such a delimiter)
+        self.assertEqual(normalize_finding("ERROR handling failed"), "handling failed")
+
+    def test_merge_collapses_stream_and_cli_forms_to_one_entry(self) -> None:
+        # the committed mcp-limits/skill-k1 shape: the stream answers the
+        # findings `ERROR:`-prefixed, the CLI carries their bare forms --
+        # the merge keeps ONE entry per finding (first-seen form, order
+        # preserved) and appends the CLI-only finding
+        events = [
+            {
+                "type": "tool_use",
+                "part": {
+                    "type": "tool",
+                    "tool": "structurizr_inspect",
+                    "state": {
+                        "status": "completed",
+                        "output": json.dumps(
+                            [
+                                'ERROR: The system "S" is missing documentation.',
+                                'ERROR: The system "S" is missing decisions.',
+                            ]
+                        ),
+                    },
+                },
+            },
+        ]
+        parsed = parse_event_stream([json.dumps(event) for event in events])
+        inputs = _inputs(
+            'workspace "S" "s" { model { } }',
+            None,
+            inspect_rc=1,
+            inspect_findings=[
+                'The system "S" is missing documentation.',
+                'The system "S" is missing decisions.',
+                'The relationship "R" is missing its technology.',
+            ],
+        )
+
+        result = compute_metrics(parsed, inputs)
+
+        self.assertEqual(
+            result.inspect_findings,
+            [
+                'ERROR: The system "S" is missing documentation.',
+                'ERROR: The system "S" is missing decisions.',
+                'The relationship "R" is missing its technology.',
+            ],
+        )
+        self.assertEqual(
+            result.inspect_triage,
+            {
+                'ERROR: The system "S" is missing documentation.': TRIAGE_EXPECTED,
+                'ERROR: The system "S" is missing decisions.': TRIAGE_EXPECTED,
+                'The relationship "R" is missing its technology.': TRIAGE_UNTRIAGED,
+            },
+        )
+
+
+class TestFinalInspectFindingsSet(unittest.TestCase):
+    """Task 125.100/G2: the truth anchor of the `fix` triage label."""
+
+    def test_clean_final_is_the_empty_set(self) -> None:
+        inputs = _inputs('workspace "X" "y" { model { } }', None, inspect_rc=0, inspect_findings=[])
+
+        self.assertEqual(final_inspect_findings_set(inputs), set())
+
+    def test_inspected_findings_are_the_normalized_set(self) -> None:
+        inputs = _inputs('workspace "X" "y" { model { } }', None, inspect_rc=1, inspect_findings=["ERROR: X", "Y"])
+
+        self.assertEqual(final_inspect_findings_set(inputs), {"X", "Y"})
+
+    def test_no_cli_run_is_none(self) -> None:
+        inputs = _inputs(None, None, inspect_rc=None, inspect_findings=[])
+
+        self.assertIsNone(final_inspect_findings_set(inputs))
+
+    def test_broken_workspace_with_no_parsed_finding_is_none(self) -> None:
+        # the committed mcp-limits/none-k0 shape: the final CLI inspect
+        # answered rc=1 with an error line that carries no parseable
+        # finding -- no `fix` label is valid at all
+        inputs = _inputs('workspace "X" "y" { model { } }', None, inspect_rc=1, inspect_findings=[])
+
+        self.assertIsNone(final_inspect_findings_set(inputs))
+
+
+class TestTriageFixLabel(unittest.TestCase):
+    """Task 125.100/G2: `fix` needs the post-inspect edit AND the absence."""
+
+    FINDING = 'ERROR: The container "C" is not included on any views'
+
+    def _stream(self, *, edited: bool, final_text: str = "") -> ParsedTrial:
+        events = [
+            {
+                "type": "tool_use",
+                "part": {
+                    "type": "tool",
+                    "tool": "structurizr_inspect",
+                    "state": {"status": "completed", "output": json.dumps([self.FINDING])},
+                },
+            },
+        ]
+        if edited:
+            events.append(
+                {
+                    "type": "tool_use",
+                    "part": {
+                        "type": "tool",
+                        "tool": "write",
+                        "state": {"status": "completed", "input": {"filePath": "workspace.dsl"}, "output": "wrote"},
+                    },
+                }
+            )
+        if final_text:
+            events.append({"type": "text", "part": {"type": "text", "text": final_text}})
+        return parse_event_stream([json.dumps(event) for event in events])
+
+    def test_edit_with_the_finding_still_present_in_the_final_cli_is_untriaged(self) -> None:
+        # the G2 edge: the edit happened, but the finding is STILL in the
+        # grader's own final CLI inspect findings -- no `fix`
+        parsed = self._stream(edited=True)
+        inputs = _inputs(
+            'workspace "X" "y" { model { } }',
+            None,
+            inspect_rc=1,
+            inspect_findings=['The container "C" is not included on any views'],
+        )
+
+        result = triage_findings([self.FINDING], parsed, inputs)
+
+        self.assertEqual(result, {self.FINDING: TRIAGE_UNTRIAGED})
+
+    def test_edit_with_the_finding_absent_from_the_final_cli_is_fix(self) -> None:
+        parsed = self._stream(edited=True)
+        inputs = _inputs(
+            'workspace "X" "y" { model { } }', None, inspect_rc=1, inspect_findings=["A different finding"]
+        )
+
+        result = triage_findings([self.FINDING], parsed, inputs)
+
+        self.assertEqual(result, {self.FINDING: TRIAGE_FIX})
+
+    def test_clean_final_makes_the_finding_fix(self) -> None:
+        # rc=0: a clean final inspect, the empty set -- every finding is
+        # absent from it, so the corroborated edit earns `fix`
+        parsed = self._stream(edited=True)
+        inputs = _inputs('workspace "X" "y" { model { } }', None, inspect_rc=0, inspect_findings=[])
+
+        result = triage_findings([self.FINDING], parsed, inputs)
+
+        self.assertEqual(result, {self.FINDING: TRIAGE_FIX})
+
+    def test_no_edit_is_never_fix(self) -> None:
+        parsed = self._stream(edited=False)
+        inputs = _inputs('workspace "X" "y" { model { } }', None, inspect_rc=0, inspect_findings=[])
+
+        result = triage_findings([self.FINDING], parsed, inputs)
+
+        self.assertEqual(result, {self.FINDING: TRIAGE_UNTRIAGED})
+
+    def test_broken_final_falls_through_to_reported_when_the_finding_is_in_the_final_message(self) -> None:
+        # rc=1 with no parsed finding: no `fix` is valid at all, and the
+        # locked priority (expected -> fix -> reported -> untriaged)
+        # falls through to `reported` when the finding's text is in the
+        # final message
+        parsed = self._stream(edited=True, final_text=f"The known issue: {self.FINDING}")
+        inputs = _inputs('workspace "X" "y" { model { } }', None, inspect_rc=1, inspect_findings=[])
+
+        result = triage_findings([self.FINDING], parsed, inputs)
+
+        self.assertEqual(result, {self.FINDING: TRIAGE_REPORTED})
+
+    def test_broken_final_is_untriaged_when_the_finding_is_not_reported(self) -> None:
+        parsed = self._stream(edited=True)
+        inputs = _inputs('workspace "X" "y" { model { } }', None, inspect_rc=1, inspect_findings=[])
+
+        result = triage_findings([self.FINDING], parsed, inputs)
+
+        self.assertEqual(result, {self.FINDING: TRIAGE_UNTRIAGED})
+
+
+#: The committed Phase 110 iteration-2 run (the G2/I1/I2 evidence, cited
+#: never modified -- the trial records' own `metrics` carry the pre-fix
+#: values; the final-CLI facts for its three evidence trials are the
+#: pinned fixtures under `fixtures/cli-inspect/`).
+_P110_ITER2_TRIALS = (
+    Path(__file__).resolve().parents[2] / "evals" / "c4-skills" / "results" / "p110-iter2-2026-11-05T143241Z" / "trials"
+)
+
+
+class TestPhase125CommittedEvidence(unittest.TestCase):
+    """Tasks 125.100-125.120 re-graded over the committed p110-iter2 streams.
+
+    For each evidence trial the test parses the committed event stream,
+    builds the `GraderInputs` from the pinned final-CLI fixture (the
+    trial's final on-disk workspace, the pinned CLI `inspect` output and
+    its rc + parsed findings -- rc=1 in every case; `mcp-limits-none-k0`
+    is the broken-workspace shape whose error line carries no parseable
+    finding), and asserts the NEW metrics and the `triage_complete`
+    verdict. `parse_inspect_findings` over the fixture's `inspect.txt` is
+    pinned against the fixture's `inspect.json` as well, so the CLI-text
+    parsing is part of the evidence.
+    """
+
+    def _graded(self, case_name: str, fix_dir: str, stream_name: str):
+        record = json.loads((_P110_ITER2_TRIALS / case_name / f"{stream_name}.json").read_text(encoding="utf-8"))
+        parsed = parse_events_file(_P110_ITER2_TRIALS / case_name / f"{stream_name}.events.ndjson")
+        fix = FIXTURES_DIR / "cli-inspect" / fix_dir
+        pin = json.loads((fix / "inspect.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            parse_inspect_findings((fix / "inspect.txt").read_text(encoding="utf-8")),
+            pin["inspect_findings"],
+        )
+        inputs = GraderInputs(
+            dsl_path="workspace.dsl",
+            dsl_text=(fix / "workspace.dsl").read_text(encoding="utf-8"),
+            validate_rc=0,
+            validate_stderr="",
+            export_json=None,
+            export_rc=None,
+            export_stderr="",
+            inspect_rc=pin["inspect_rc"],
+            inspect_findings=list(pin["inspect_findings"]),
+        )
+        metrics = compute_metrics(
+            parsed,
+            inputs,
+            timeout=record.get("timeout", False),
+            contended=record.get("contended", False),
+        )
+        context = GateContext(
+            inputs=inputs,
+            case=CASES[case_name],
+            trial=parsed,
+            metrics=metrics,
+            skills_installed=tuple(record.get("skills_installed") or ()),
+        )
+        return inputs, parsed, metrics, grade_case(context), record
+
+    def test_none_k0_line_fragments_are_gone_and_no_fix_is_valid(self) -> None:
+        inputs, parsed, metrics, results, record = self._graded("mcp-limits", "mcp-limits-none-k0", "none-k0")
+
+        # I1: the trial's single inspect output is a bundled Code Mode
+        # object answer (a multi-line non-JSON-array) -- the 11 old
+        # line-fragment "findings" (including `{`, `}` and the JSON lines
+        # of the object itself) are gone from the stream extraction
+        self.assertEqual(metrics.inspect_findings, [])
+        self.assertEqual(metrics.inspect_triage, {})
+        # G2: the final CLI inspect met a broken workspace (rc=1, an
+        # error line with no parseable finding) -- no `fix` label is
+        # valid at all, even though this stream DID edit after its
+        # (bundled) inspect
+        self.assertIsNone(final_inspect_findings_set(inputs))
+        self.assertTrue(_edited_after_inspect(parsed))
+        gate = next(result for result in results if result.name == "triage_complete")
+        self.assertTrue(gate.passed)
+        self.assertEqual(gate.detail, "no inspect findings (vacuously complete)")
+        # the pre-fix record (cited, never modified) shows what the old
+        # logic graded over this same stream: 11 findings, every one
+        # labeled `fix` -- the G2 edge
+        self.assertEqual(len(record["metrics"]["inspect_findings"]), 11)
+        self.assertTrue(all(label == "fix" for label in record["metrics"]["inspect_triage"].values()))
+
+    def test_mcp_limits_skill_k1_collapse_to_two_expected(self) -> None:
+        inputs, parsed, metrics, results, record = self._graded("mcp-limits", "mcp-limits-skill-k1", "skill-k1")
+
+        # I2: the 4 old findings (2 real x 2 forms) collapse to exactly
+        # 2 -- the stream's `ERROR:`-prefixed first-seen forms; the bare
+        # CLI forms merge onto them
+        self.assertEqual(
+            metrics.inspect_findings,
+            [
+                'ERROR: The software system "Bookshop" has containers, but is missing documentation.',
+                'ERROR: The software system "Bookshop" has containers, but is missing decisions.',
+            ],
+        )
+        self.assertEqual(
+            metrics.inspect_triage,
+            {
+                'ERROR: The software system "Bookshop" has containers, but is missing documentation.': TRIAGE_EXPECTED,
+                'ERROR: The software system "Bookshop" has containers, but is missing decisions.': TRIAGE_EXPECTED,
+            },
+        )
+        # G2: the final CLI inspect still reports both MCP-limits findings
+        self.assertEqual(
+            final_inspect_findings_set(inputs),
+            {
+                'The software system "Bookshop" has containers, but is missing documentation.',
+                'The software system "Bookshop" has containers, but is missing decisions.',
+            },
+        )
+        gate = next(result for result in results if result.name == "triage_complete")
+        self.assertTrue(gate.passed)
+        self.assertEqual(gate.detail, "all 2 finding(s) labeled fix/expected/reported")
+        self.assertEqual(len(record["metrics"]["inspect_findings"]), 4)
+
+    def test_create_system_skill_k1_fix_labels_are_truth_anchored(self) -> None:
+        inputs, parsed, metrics, results, record = self._graded("create-system", "create-system-skill-k1", "skill-k1")
+
+        # I2: the 6 old findings collapse to 4 (the bare CLI forms merge
+        # onto the stream's `ERROR:` forms)
+        self.assertEqual(
+            metrics.inspect_findings,
+            [
+                'ERROR: The software system "Bookshop" has containers, but is missing documentation.',
+                'ERROR: The software system "Bookshop" has containers, but is missing decisions.',
+                'ERROR: The container named "Web Store" is not included on any views - add it to a view.',
+                'ERROR: The container named "Order Processor" is not included on any views - add it to a view.',
+            ],
+        )
+        # G2: the two container-view findings the post-inspect edit
+        # cleared are ABSENT from the final CLI inspect findings -> `fix`
+        # (the legitimate case); the two MCP-limits findings are STILL in
+        # them -> `expected`
+        self.assertEqual(
+            metrics.inspect_triage,
+            {
+                'ERROR: The software system "Bookshop" has containers, but is missing documentation.': TRIAGE_EXPECTED,
+                'ERROR: The software system "Bookshop" has containers, but is missing decisions.': TRIAGE_EXPECTED,
+                'ERROR: The container named "Web Store" is not included on any views - add it to a view.': TRIAGE_FIX,
+                'ERROR: The container named "Order Processor" is not included on any views - add it to a view.': TRIAGE_FIX,
+            },
+        )
+        final_set = final_inspect_findings_set(inputs)
+        self.assertIsNotNone(final_set)
+        self.assertNotIn('The container named "Web Store" is not included on any views - add it to a view.', final_set)
+        self.assertIn('The software system "Bookshop" has containers, but is missing documentation.', final_set)
+        self.assertTrue(_edited_after_inspect(parsed))
+        gate = next(result for result in results if result.name == "triage_complete")
+        self.assertTrue(gate.passed)
+        self.assertEqual(gate.detail, "all 4 finding(s) labeled fix/expected/reported")
+        self.assertEqual(len(record["metrics"]["inspect_findings"]), 6)
 
 
 if __name__ == "__main__":

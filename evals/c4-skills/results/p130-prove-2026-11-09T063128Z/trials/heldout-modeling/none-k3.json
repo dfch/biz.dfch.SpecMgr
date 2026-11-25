@@ -1,0 +1,123 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/heldout-modeling/none-k3.events.ndjson",
+  "event_file_bytes": 267374,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-09T14:08:05Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (1866 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=1: 14:08:05.872 [main] ERROR com.structurizr.command.ValidateCommand -- Workspace is landscape scoped, but the software system named Energy Manager has containers.",
+      "name": "cli_valid",
+      "passed": false
+    },
+    {
+      "detail": "CLI export rc=1: 14:08:06.653 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+      "name": "cli_export",
+      "passed": false
+    },
+    {
+      "detail": "no softwareSystem in the export JSON",
+      "name": "has_system",
+      "passed": false
+    },
+    {
+      "detail": "no person in the export JSON",
+      "name": "has_person",
+      "passed": false
+    },
+    {
+      "detail": "0 container(s), expected 3: []",
+      "name": "container_count",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "no elements in the export JSON",
+      "name": "elements_described",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "1 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+      "name": "no_library_container",
+      "passed": true
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "no_vague_labels",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.008871358819305897,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 12,
+    "inspect_findings": [
+      "TypeError: Cannot read properties of undefined (reading 'map'). (line 58, col 19)"
+    ],
+    "inspect_triage": {
+      "TypeError: Cannot read properties of undefined (reading 'map'). (line 58, col 19)": "untriaged"
+    },
+    "parse_calls": 3,
+    "relationship_technology_coverage": null,
+    "skills_loaded": [],
+    "steps": 39,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 1556595,
+      "output": 68065,
+      "reasoning": 0
+    },
+    "tool_calls": 41,
+    "validate_calls": 19,
+    "validate_ok_calls": 1,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 902.843,
+    "workdir_dsl": "workspace \"Energy Manager\" \"C4 model of the home energy management platform\" {\n\n    model {\n        homeowner = person \"Homeowner\" \"Manages the household's energy use and costs.\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"Home energy management platform owned and operated by our company.\" {\n            dashboard = container \"Dashboard Web App\" \"Where homeowners see consumption and costs.\" \"Web Application\"\n            scheduling = container \"Scheduling Service\" \"Plans charging and heating.\" \"Service\"\n            ratesLibrary = container \"Rates Library\" \"Shared library that computes energy prices from tariff and time of day.\" \"Software Library\"\n            database = container \"Database\" \"Stores meter readings and schedules.\" \"Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"Operated by a different organization; provides live meter readings.\"\n\n        homeowner -> dashboard \"Manages household energy use and costs\" \"Web\"\n        dashboard -> ratesLibrary \"Embeds\" \"Embedded\"\n        scheduling -> ratesLibrary \"Embeds\" \"Embedded\"\n        scheduling -> smartMeterProvider \"Fetches live meter readings\" \"API\"\n        scheduling -> database \"Stores meter readings and schedules\" \"Database\"\n    }\n\n    views {\n        systemContext energyManager \"SystemContext\" \"System context view of the Energy Manager platform.\" {\n            include homeowner\n            include smartMeterProvider\n            autolayout\n        }\n\n        container energyManager \"Containers\" \"Container view of the Energy Manager platform.\" {\n            include homeowner\n            include smartMeterProvider\n            include dashboard\n            include scheduling\n            include ratesLibrary\n            include database\n            autolayout\n        }\n    }\n\n    configuration {\n        scope \"Landscape\"\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "heldout-modeling",
+    "condition": "none",
+    "k_index": 3
+  },
+  "run_id": "p130-prove-2026-11-09T063128Z",
+  "skills_installed": [],
+  "started_at": "2026-11-09T13:52:59Z",
+  "timeout": false,
+  "wall_time_s": 905.8229999900796,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.none-k3.p130-prove-2026-11-09T063128Z"
+}

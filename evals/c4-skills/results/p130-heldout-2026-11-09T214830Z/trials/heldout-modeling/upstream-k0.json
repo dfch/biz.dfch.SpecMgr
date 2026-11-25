@@ -1,0 +1,139 @@
+{
+  "cache_reason": "hit",
+  "cached": true,
+  "contended": false,
+  "event_file": "trials/heldout-modeling/upstream-k0.events.ndjson",
+  "event_file_bytes": 304533,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-09T13:12:20Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (2925 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "2/ 2 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "exactly 3 container(s)",
+      "name": "container_count",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 4 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "description on all 6 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "4 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "no validate call answered the OK marker (1 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "forbidden element(s) modeled as a container or component: component 'Rates Library', component 'Rates Library'",
+      "name": "no_library_container",
+      "passed": false
+    },
+    {
+      "detail": "top-level element(s) with the External tag: ['Smart Meter Provider']",
+      "name": "external_system_tagged",
+      "passed": true
+    },
+    {
+      "detail": "no vague label on any of the 4 relationship(s)",
+      "name": "no_vague_labels",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.010347258998081088,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 8,
+    "inspect_findings": [
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The software system \"Energy Manager\" has containers, but is missing documentation.",
+      "The software system \"Energy Manager\" has containers, but is missing decisions.",
+      "The component \"Energy Manager.Dashboard.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "The component \"Energy Manager.Scheduling Service.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model."
+    ],
+    "inspect_triage": {
+      "The component \"Energy Manager.Dashboard.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "The component \"Energy Manager.Scheduling Service.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "The software system \"Energy Manager\" has containers, but is missing decisions.": "expected",
+      "The software system \"Energy Manager\" has containers, but is missing documentation.": "expected",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+    },
+    "parse_calls": 2,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "c4-model",
+      "structurizr-dsl"
+    ],
+    "steps": 13,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 478720,
+      "output": 53453,
+      "reasoning": 0
+    },
+    "tool_calls": 13,
+    "validate_calls": 1,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 817.712,
+    "workdir_dsl": "workspace \"Home Energy Management Platform\" \"C4 model of the Energy Manager platform\" {\n\n    !identifiers hierarchical\n\n    model {\n\n        homeowner = person \"Homeowner\" \"Manages their household's energy use and costs\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"Platform for managing household energy use and costs\" {\n\n            dashboard = container \"Dashboard\" \"Web app where homeowners see consumption and costs\" \"Web app\" \"Web\" {\n                rates = component \"Rates Library\" \"Computes energy prices from tariff and time of day\" \"Shared library\"\n            }\n\n            scheduler = container \"Scheduling Service\" \"Plans charging and heating\" \"Service\" {\n                rates = component \"Rates Library\" \"Computes energy prices from tariff and time of day\" \"Shared library\"\n            }\n\n            database = container \"Database\" \"Stores meter readings and schedules\" \"Database\" \"Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"Operated by a different organization; provides live meter readings\" \"External\"\n\n        homeowner -> energyManager.dashboard \"views consumption and costs\" \"HTTPS\"\n        energyManager.dashboard -> energyManager.database \"reads meter readings from\" \"SQL\"\n        energyManager.scheduler -> smartMeterProvider \"fetches live meter readings from\" \"HTTP/JSON\"\n        energyManager.scheduler -> energyManager.database \"stores meter readings and schedules in\" \"SQL\"\n    }\n\n    views {\n\n        systemContext energyManager \"SystemContext\" {\n            include *\n            autoLayout\n            title \"System Context for Energy Manager\"\n        }\n\n        container energyManager \"Containers\" {\n            include *\n            autoLayout\n            title \"Containers for Energy Manager\"\n        }\n\n        component energyManager.dashboard \"DashboardComponents\" {\n            include *\n            autoLayout\n            title \"Components of Dashboard\"\n        }\n\n        component energyManager.scheduler \"SchedulerComponents\" {\n            include *\n            autoLayout\n            title \"Components of Scheduling Service\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Component\" {\n                background #85BBF0\n                color #000000\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n            element \"Web\" {\n                shape WebBrowser\n            }\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "heldout-modeling",
+    "condition": "upstream",
+    "k_index": 0
+  },
+  "run_id": "p130-prove-2026-11-09T063128Z",
+  "skills_installed": [
+    "c4-deployment",
+    "c4-model",
+    "c4-review",
+    "structurizr-dsl"
+  ],
+  "started_at": "2026-11-09T12:52:18Z",
+  "timeout": true,
+  "wall_time_s": 1201.1387081539724,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.upstream-k0.p130-prove-2026-11-09T063128Z"
+}

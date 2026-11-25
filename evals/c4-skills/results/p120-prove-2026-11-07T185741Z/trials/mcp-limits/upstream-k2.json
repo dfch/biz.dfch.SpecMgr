@@ -1,0 +1,147 @@
+{
+  "cache_reason": "miss:file-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/mcp-limits/upstream-k2.events.ndjson",
+  "event_file_bytes": 230295,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-07T19:17:46Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (465 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "3/ 3 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "2/2 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "6 container(s)",
+      "name": "two_containers",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 10 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "3 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "18 terminal parse call(s)",
+      "name": "parse_called",
+      "passed": true
+    },
+    {
+      "detail": "no validate call answered the OK marker (1 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "1 terminal inspect call(s)",
+      "name": "inspect_called",
+      "passed": true
+    },
+    {
+      "detail": "no validate call answered the OK marker with a dsl input",
+      "name": "validated_before_return",
+      "passed": false
+    },
+    {
+      "detail": "all 7 finding(s) labeled fix/expected/reported",
+      "name": "triage_complete",
+      "passed": true
+    },
+    {
+      "detail": "final text names neither !include nor !docs",
+      "name": "limits_acknowledged",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.006184672005474567,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 1,
+    "inspect_findings": [
+      "{",
+      "\"validate\": \"\\\"!include <file> is not permitted (feature structurizr.feature.dsl.filesystem is not enabled) at line 7: !include model/01-people.dsl\\\"\",",
+      "\"inspect\": \"Error: Error invoking method: inspect\\n!include <file> is not permitted (feature structurizr.feature.dsl.filesystem is not enabled) at line 7: !include model/01-people.dsl\"",
+      "}",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The software system \"Online Shop\" has containers, but is missing documentation.",
+      "The software system \"Online Shop\" has containers, but is missing decisions."
+    ],
+    "inspect_triage": {
+      "\"inspect\": \"Error: Error invoking method: inspect\\n!include <file> is not permitted (feature structurizr.feature.dsl.filesystem is not enabled) at line 7: !include model/01-people.dsl\"": "fix",
+      "\"validate\": \"\\\"!include <file> is not permitted (feature structurizr.feature.dsl.filesystem is not enabled) at line 7: !include model/01-people.dsl\\\"\",": "fix",
+      "The software system \"Online Shop\" has containers, but is missing decisions.": "expected",
+      "The software system \"Online Shop\" has containers, but is missing documentation.": "expected",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "fix",
+      "{": "fix",
+      "}": "fix"
+    },
+    "parse_calls": 18,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "structurizr-dsl"
+    ],
+    "steps": 46,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 1607861,
+      "output": 41219,
+      "reasoning": 0
+    },
+    "tool_calls": 61,
+    "validate_calls": 1,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 1176.576,
+    "workdir_dsl": "workspace \"Online Shop\" \"Architecture model for the Online Shop platform\" {\n\n    !identifiers hierarchical\n\n    model {\n        properties {\n            \"structurizr.feature.dsl.filesystem\" \"true\"\n            \"structurizr.feature.dsl.documentation\" \"true\"\n        }\n        !include model/01-people.dsl\n        !include model/02-systems.dsl\n        !include model/03-relationships.dsl\n    }\n\n    !docs docs/architecture\n\n    views {\n        !include views/\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "mcp-limits",
+    "condition": "upstream",
+    "k_index": 2
+  },
+  "run_id": "p120-prove-2026-11-07T185741Z",
+  "skills_installed": [
+    "c4-deployment",
+    "c4-model",
+    "c4-review",
+    "structurizr-dsl"
+  ],
+  "started_at": "2026-11-07T18:57:44Z",
+  "timeout": true,
+  "wall_time_s": 1201.5419992501847,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/mcp-limits.upstream-k2.p120-prove-2026-11-07T185741Z"
+}

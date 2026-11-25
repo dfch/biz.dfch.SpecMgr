@@ -1,0 +1,119 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/modeling-decisions/none-k2.events.ndjson",
+  "event_file_bytes": 239187,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-09T12:37:21Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (2091 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=1: 12:37:22.609 [main] ERROR com.structurizr.command.ValidateCommand -- Workspace is landscape scoped, but the software system named Parcel Tracker has containers.",
+      "name": "cli_valid",
+      "passed": false
+    },
+    {
+      "detail": "CLI export rc=1: 12:37:23.402 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+      "name": "cli_export",
+      "passed": false
+    },
+    {
+      "detail": "no softwareSystem in the export JSON",
+      "name": "has_system",
+      "passed": false
+    },
+    {
+      "detail": "no person in the export JSON",
+      "name": "has_person",
+      "passed": false
+    },
+    {
+      "detail": "0 container(s), expected 3: []",
+      "name": "container_count",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "no elements in the export JSON",
+      "name": "elements_described",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "no validate call answered the OK marker (11 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+      "name": "no_library_container",
+      "passed": true
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "no_vague_labels",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.005987339187413454,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 9,
+    "inspect_findings": [],
+    "inspect_triage": {},
+    "parse_calls": 8,
+    "relationship_technology_coverage": null,
+    "skills_loaded": [],
+    "steps": 20,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 552723,
+      "output": 49769,
+      "reasoning": 0
+    },
+    "tool_calls": 23,
+    "validate_calls": 11,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 1069.142,
+    "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n    configuration {\n        scope \"Landscape\"\n    }\n\n    model {\n        customer = person \"Customer\" \"A customer who looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"The parcel delivery tracking platform, owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\" \"Web application\" {\n                portalPricing = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\" {\n                dispatchPricing = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization\"\n\n        customer -> webPortal \"looks up the status of their parcels\" \"Web\"\n        dispatchService -> emailProvider \"sends customer notification emails through\" \"Email\"\n        webPortal -> database \"stores shipments in\" \"SQL\"\n        dispatchService -> database \"stores dispatch records in\" \"SQL\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" \"Shows the Parcel Tracker system and the people and systems that interact with it\" {\n            include *\n            autoLayout\n        }\n\n        container parcelTracker \"Containers\" \"Shows the containers that make up the Parcel Tracker system\" {\n            include *\n            autoLayout\n        }\n\n        component webPortal \"WebPortalComponents\" \"Shows the components of the web portal\" {\n            include *\n            autoLayout\n        }\n\n        component dispatchService \"DispatchServiceComponents\" \"Shows the components of the dispatch service\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "modeling-decisions",
+    "condition": "none",
+    "k_index": 2
+  },
+  "run_id": "p130-prove-2026-11-09T063128Z",
+  "skills_installed": [],
+  "started_at": "2026-11-09T12:19:30Z",
+  "timeout": false,
+  "wall_time_s": 1071.4893369700294,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k2.p130-prove-2026-11-09T063128Z"
+}

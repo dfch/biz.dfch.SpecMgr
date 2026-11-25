@@ -235,3 +235,108 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+-------------------------------------------------------------------------------
+C4/Structurizr OpenCode skills — adapted text
+-------------------------------------------------------------------------------
+
+The five C4/Structurizr OpenCode skills under `.opencode/skill/`
+(feat-250-c4-structurizr-skills) adapt text from the three MIT-licensed
+sources below. The per-skill `NOTICE.md` + `source-map.md` files next to
+each `SKILL.md` carry the passage-level attribution (which local file
+adapts which source file, and what was dropped or rewritten); the
+committed provenance record (commit, license file, license type, check
+date) is `evals/c4-skills/results/provenance.md`. The skills' `SKILL.md`
+files adapt no text (ideas only) and carry no attribution line.
+`c4model.com` (CC BY 4.0) contributed concepts only — no verbatim text is
+adapted; where its wording is reused it is attributed in the skill's
+source map. The repositories `allensanborn/skills`,
+`bitsmuggler/c4-skill` and `fedemagnani/structurizr-dsl` carry no license
+and contributed ideas only, never copied text; they are not listed here.
+
+-------------------------------------------------------------------------------
+jrjsmrtn/c4-skills
+Copyright (c) 2026 Georges Martin
+License: MIT
+https://github.com/jrjsmrtn/c4-skills (adapted at commit
+e86d8a91d3ed793cdf6c035f01d19f1b18cc8b6b)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Adapted in: `c4-modeling` (from the `c4-model` skill), `c4-view-design`
+(from the `c4-model` skill's Diagram Types tables and Diagram Selection
+Guide), `c4-model-review` (from the `c4-review` skill, made read-only) and
+`structurizr-dsl-authoring` (from the `structurizr-dsl` skill).
+
+-------------------------------------------------------------------------------
+passionsplay/structurizr-skill
+Copyright (c) 2026 Benjamin Turner
+License: MIT
+https://github.com/passionsplay/structurizr-skill (adapted at commit
+5e45154e1c266e0517d456855b415ba770412f16)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Adapted in: `structurizr-validate-loop` (the validate-versus-inspect table
+and the DSL gotchas).
+
+-------------------------------------------------------------------------------
+structurizr/structurizr.github.io
+Copyright (c) 2022 just-the-docs (the Jekyll theme the documentation site
+is built on)
+License: MIT
+https://github.com/structurizr/structurizr.github.io (adapted at commit
+530a96451b93f8fb96337b58aaaa1ec8c0ad4589)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Adapted in: `structurizr-dsl-authoring` (the DSL documentation content) and
+`c4-view-design` (the view-kind documentation content).

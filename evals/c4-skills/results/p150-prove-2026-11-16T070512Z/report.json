@@ -1,0 +1,112 @@
+{
+  "cases": [
+    "review-model",
+    "no-trigger",
+    "heldout-review"
+  ],
+  "comparison": "upstream",
+  "conditions": [
+    "none",
+    "upstream"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 20.1,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1201.1,
+    "mean_wall_time_s": 804.6,
+    "measured_trials": 30,
+    "median_wall_time_s": 805.6,
+    "within_budget_at_median": true
+  },
+  "k": 5,
+  "label": "p150-prove",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 0,
+        "contended": 12,
+        "timeout": 9
+      },
+      "gate_failures": {
+        "crowded_view_found": 10,
+        "external_tag_found": 5,
+        "keyless_view_found": 6,
+        "library_container_found": 6,
+        "mcp_limit_stated": 5,
+        "no_false_findings": 5,
+        "orphan_found": 5,
+        "vague_label_found": 6
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "heldout-review": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        },
+        "review-model": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 15,
+      "wilson": [
+        0.0,
+        0.2038833035964871
+      ]
+    },
+    "upstream": {
+      "flags": {
+        "cached": 0,
+        "contended": 9,
+        "timeout": 4
+      },
+      "gate_failures": {
+        "crowded_view_found": 9,
+        "external_tag_found": 2,
+        "keyless_view_found": 2,
+        "library_container_found": 2,
+        "mcp_limit_stated": 4,
+        "no_false_findings": 8,
+        "no_mounted_skill_loaded": 5,
+        "orphan_found": 2,
+        "vague_label_found": 2
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "heldout-review": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        },
+        "review-model": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 15,
+      "wilson": [
+        0.0,
+        0.2038833035964871
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p150-prove-2026-11-16T070512Z",
+  "seed": 812712,
+  "skill_margins": null,
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

@@ -1,0 +1,149 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/fix-dsl/skill-k3.events.ndjson",
+  "event_file_bytes": 82811,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-08T00:22:32Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (1021 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "1/ 1 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "3 container(s)",
+      "name": "two_containers",
+      "passed": true
+    },
+    {
+      "detail": "1 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 4 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "description on all 4 relationship(s)",
+      "name": "relationships_described",
+      "passed": true
+    },
+    {
+      "detail": "description on all 6 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "all 6 seeded element(s) and 4 seeded relationship(s) still present",
+      "name": "no_deletions",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.007265648804605007,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 1,
+    "inspect_findings": [
+      "{",
+      "\"validate\": \"OK\",",
+      "\"inspect\": [",
+      "\"ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \\\"Landscape\\\" or \\\"SoftwareSystem\\\".\",",
+      "\"ERROR: The software system \\\"Parking Garage\\\" has containers, but is missing documentation.\",",
+      "\"ERROR: The software system \\\"Parking Garage\\\" has containers, but is missing decisions.\",",
+      "\"ERROR: The container named \\\"Entry Gate Controller\\\" is not included on any views - add it to a view.\",",
+      "\"ERROR: The container named \\\"Exit Gate Controller\\\" is not included on any views - add it to a view.\",",
+      "\"ERROR: The container named \\\"Billing Service\\\" is not included on any views - add it to a view.\"",
+      "]",
+      "}",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The software system \"Parking Garage\" has containers, but is missing documentation.",
+      "The software system \"Parking Garage\" has containers, but is missing decisions.",
+      "The container named \"Entry Gate Controller\" is not included on any views - add it to a view.",
+      "The container named \"Exit Gate Controller\" is not included on any views - add it to a view.",
+      "The container named \"Billing Service\" is not included on any views - add it to a view."
+    ],
+    "inspect_triage": {
+      "\"ERROR: The container named \\\"Billing Service\\\" is not included on any views - add it to a view.\"": "untriaged",
+      "\"ERROR: The container named \\\"Entry Gate Controller\\\" is not included on any views - add it to a view.\",": "untriaged",
+      "\"ERROR: The container named \\\"Exit Gate Controller\\\" is not included on any views - add it to a view.\",": "untriaged",
+      "\"ERROR: The software system \\\"Parking Garage\\\" has containers, but is missing decisions.\",": "expected",
+      "\"ERROR: The software system \\\"Parking Garage\\\" has containers, but is missing documentation.\",": "expected",
+      "\"ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \\\"Landscape\\\" or \\\"SoftwareSystem\\\".\",": "untriaged",
+      "\"inspect\": [": "untriaged",
+      "\"validate\": \"OK\",": "untriaged",
+      "The container named \"Billing Service\" is not included on any views - add it to a view.": "untriaged",
+      "The container named \"Entry Gate Controller\" is not included on any views - add it to a view.": "untriaged",
+      "The container named \"Exit Gate Controller\" is not included on any views - add it to a view.": "untriaged",
+      "The software system \"Parking Garage\" has containers, but is missing decisions.": "expected",
+      "The software system \"Parking Garage\" has containers, but is missing documentation.": "expected",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged",
+      "]": "reported",
+      "{": "untriaged",
+      "}": "untriaged"
+    },
+    "parse_calls": 0,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "structurizr-dsl-authoring"
+    ],
+    "steps": 10,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 128781,
+      "output": 5521,
+      "reasoning": 0
+    },
+    "tool_calls": 11,
+    "validate_calls": 3,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 52.857,
+    "workdir_dsl": "workspace \"ParkFlow\" \"Manages a multi-level parking garage.\" {\n    model {\n        driver = person \"Driver\" \"Arrives at and departs from the garage.\"\n        traffic = element \"City Traffic Feed\" \"Live traffic conditions from the city's open data feed.\"\n        garage = softwareSystem \"Parking Garage\" \"Manages bays, entry, exit, and billing.\" {\n            entry = container \"Entry Gate Controller\" \"Reads licence plates and drives the entry barrier.\" \"C/C++\"\n            exit = container \"Exit Gate Controller\" \"Drives the exit barrier.\" \"C/C++\"\n            billing = container \"Billing Service\" \"Calculates fees and issues invoices.\" \"Java\"\n        }\n        entry -> billing \"Registers bay occupancy in\" \"gRPC\"\n        exit -> billing \"Clears bay occupancy in\" \"gRPC\"\n        billing -> traffic \"Considers live traffic from\" \"REST/JSON\"\n        driver -> entry \"Enters through\" \"Barrier\"\n    }\n    views {\n        systemContext garage \"GarageContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": true,
+  "plan": {
+    "case_id": "fix-dsl",
+    "condition": "skill",
+    "k_index": 3
+  },
+  "run_id": "p120-iter1-2026-11-07T231831Z",
+  "skills_installed": [
+    "structurizr-dsl-authoring"
+  ],
+  "started_at": "2026-11-08T00:21:37Z",
+  "timeout": false,
+  "wall_time_s": 54.714231389109045,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/fix-dsl.skill-k3.p120-iter1-2026-11-07T231831Z"
+}
