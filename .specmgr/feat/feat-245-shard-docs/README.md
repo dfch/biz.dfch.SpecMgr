@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: review
 type: feat
-updated: '2026-11-24T19:05:00.000+01:00'
+updated: '2026-11-24T20:05:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -165,6 +165,10 @@ Key invariants and rationale:
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-24 19:05:00.000Z - D12 record correction: frontmatter `updated` under-bumped by one hour
+
+The Phase 170 record's frontmatter `updated` carried 19:05+01:00 (= 18:05Z), one hour behind the record's own newest entry header (19:05Z); bumped to 20:05+01:00 (≡ 19:05Z) per the user's settled Option A — the entry headers were left as written; the local-vs-UTC true instant is not arbitrable from repo evidence (commit 20:26+01:00 postdates both), the convention (frontmatter ≡ newest entry header) is restored either way.
 
 #### 2026-11-24 19:05:00.000Z - Phase 170 complete (review cycle 3 fixes)
 
