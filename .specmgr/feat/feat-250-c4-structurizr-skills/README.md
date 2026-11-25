@@ -674,6 +674,11 @@ The plan is created from GitHub issue 250.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-11-25 00:10:00.000Z - Phase 190 decisions (user rulings)
+
+- ACC-013 and the widened `mcp_limit_stated` matcher (E1, Task 190.100): `no-trigger` is recorded as a negative-trigger guard case. `none` passing it is the expected outcome; the case discriminates by trigger (a condition whose skills load on the render prompt fails it, as `upstream` does). ACC-013 clause 1 applies to the positive cases only; this is recorded as a deviation in the ACC-013 traceability row (Task 190.190).
+- Push: the Phase 190 fix commits are pushed to PR #257 before the recheck run finishes (user ruling 2026-11-25).
+
 #### 2026-11-24 12:22:38.000Z - Phase 180 decisions (review cycle 2 — record remediation)
 
 - **D2 resolved by user ruling option (a) (2026-11-24)** — annotate in place: the gitignored result cache is never "committed"; the Phase 140 handoff doc is itself a committed record, so the stale fact is fixed in place rather than left for readers to discover, per the D7 in-place annotation precedent set in Phase 170.
