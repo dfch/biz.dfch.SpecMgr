@@ -4,7 +4,7 @@ created: '2026-11-22T15:33:48.257+01:00'
 id: feat-253-md-line-offset
 status: done
 type: feat
-updated: '2026-11-24T16:16:35.763+01:00'
+updated: '2026-11-25T13:00:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -32,7 +32,7 @@ The defect is pre-existing and shared by every domain built on `models/md`. It d
 - REQ-003: The "expected ..., found no match" message MUST report the 1-based line, in the mdformat-normalized body, where that field's remaining text starts. When the remaining text is empty (e.g. a mandatory field is missing at the end of its parent), the message MUST report the line directly after the last consumed line, which can be one past the last line of the body.
 - REQ-004: The `_line` attribute of every parsed child, at every nesting level, MUST equal its 1-based line in the mdformat-normalized body. Every domain-level message built from `self._line` therefore reports the correct line, with no change to its own code. The current consumers are `rsk/models/v1/tara.py`, `rsk/models/v1/assessment.py`, `rsk/models/v1/risk_matrix.py`, `vcr/models/v1/body.py`, `feat/models/v1/body.py`, `tsk/models/v1/task_item.py`, and `general/models/dtais.py`, `ears.py`, `iso29148.py`, `rasci.py`.
 - REQ-005: The fix MUST NOT change acceptance or rejection of any document, any exception type, any document-relative field path, or any cause/fix hint. Only line numbers that were too low may change.
-- REQ-006: The behavioral change MUST be confined to the shared `models/md` engine. No domain model, parser, or tool changes its behavior except through the corrected line number. Regenerated documentation and schema files, `CHANGELOG.md`, and this plan change only as a consequence.
+- REQ-006: The behavioral change MUST be confined to the shared `models/md` engine. No domain model, parser, or tool changes its behavior except through the corrected line number. Regenerated documentation and schema files, `CHANGELOG.md`, and this plan change only as a consequence. Review-fix exception (Phase 130): the hand-written `AGENTS.md` gets one paragraph on `consume_leading_lines` (Task 130.170), as ACC-006 records.
 - REQ-007: `MarkdownSection.from_text`, `MarkdownParagraph.from_text`, and `MarkdownListItem.from_text` MUST advance the offset they hand to their children by the actually-consumed line count of their own text (the before/after line-count delta across the re-normalization), not by the token-map end of their own block.
 
 ### Acceptance Criteria
@@ -45,7 +45,7 @@ The defect is pre-existing and shared by every domain built on `models/md`. It d
 - [x] ACC-006: `git diff --stat` against `dev` touches only `src/biz/dfch/specmgr/models/md/`, tests, regenerated files (`docs/api/`, `docs/GENERATED.md`, `docs/*_schema.json`, `src/biz/dfch/specmgr/*/data/*_schema.json`), `CHANGELOG.md`, and this plan (REQ-006). No domain model, parser, or tool source file changes. Review-fix exception (Phase 130): the hand-written `AGENTS.md` gets one paragraph on `consume_leading_lines` (Task 130.170).
 - [x] ACC-007: The full quality gate passes: `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, and the `specmgr docs` / `specmgr schema` drift checks.
 - [x] ACC-008: Synthetic tests pin the own-block hand-off (REQ-007): a section with a paragraph and a nested H3 section (the `## X` / `### Y` shape in the Overview: `A.` line 3, `### Y` line 5, `B.` line 7), and a `MarkdownListItemWithNotes` whose note follows a blank line (note on its true line). The tests fail on the pre-fix code. `MarkdownParagraph` with nested fields gets the same test if a synthetic model can reach that path; otherwise the update entry records why not.
-- [x] ACC-009: An oracle test parses every packaged `*_example.md` of the `models/md`-based domains and, for every parsed child at every nesting level, asserts that line `child._line` of the normalized body is the first line of that child's text. It needs no hand-computed line numbers and fails on the pre-fix code.
+- [x] ACC-009: An oracle test parses every packaged `*_example.md` of the `models/md`-based domains and, for every parsed child at every nesting level, asserts that line `child._line` of the normalized body is the first line of that child's text. It needs no hand-computed line numbers and fails on the pre-fix code (REQ-004, REQ-007).
 
 ### Scope
 
@@ -58,6 +58,8 @@ The defect is pre-existing and shared by every domain built on `models/md`. It d
 - The issue's `dec` `## Decision Outcome` repro as a domain-level regression test.
 - Updates to pinned messages and test docstrings whose line numbers were wrong before the fix, in `tests/models/md` and in downstream `_line` consumers (REQ-004 list).
 - Regeneration of the documentation and schema files that carry the changed docstrings.
+- Direct unit tests of `consume_leading_lines` in `tests/models/md/test__markdown.py` (Task 130.100).
+- One `AGENTS.md` paragraph on `consume_leading_lines` (Task 130.170; the ACC-006 / REQ-006 review-fix exception).
 
 #### Explicitly Out Of Scope
 
@@ -74,7 +76,7 @@ The defect is pre-existing and shared by every domain built on `models/md`. It d
 
 ### Design Notes
 
-Current scalar branch (`markdown_str.py`, end of the field loop):
+Pre-fix scalar branch (before Phase 110; `markdown_str.py`, end of the field loop):
 
 ```python
 remaining_offset += extent
@@ -82,7 +84,7 @@ remaining_lines = remaining_text.splitlines()[extent:]
 remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
 ```
 
-Current own-block hand-off (`markdown_section.py`; `markdown_paragraph.py` and `markdown_list_item.py` use the same pattern with `own_lines`):
+Pre-fix own-block hand-off (before Phase 110; `markdown_section.py`; `markdown_paragraph.py` and `markdown_list_item.py` use the same pattern with `own_lines`):
 
 ```python
 heading_lines = heading_map[1]
@@ -92,6 +94,8 @@ instance = super().from_text(body_text, _path=own_path, _offset=_offset + headin
 ```
 
 Proposed change: one shared helper in `models/md` that slices off the first `n` lines, re-normalizes the rest, and returns the new text together with the consumed line count (`len(text.splitlines()) - len(new_text.splitlines())`). Every site above calls it and advances its offset by the returned count. The per-item loop of `process_list_field` calls it as well. The list branch of `MarkdownStr.from_text` keeps its inline before/after delta across `process_list_field`, because that method returns the reduced text and not a count. That delta equals the sum of the per-item helper counts, so it advances the offset by the same value (see the Phase 110 Decisions Made entry, 2026-11-22T15:36:39.449Z). The consumed count is the block's own lines plus the separator lines that the re-normalization removed. For an empty rest it is all lines of the text, which gives the REQ-003 empty-remainder rule.
+
+Status: the proposed change is implemented (Phase 110) as `consume_leading_lines` in `models/md/_markdown.py`.
 
 Line-number model: `_offset` is 0-based and relative to the start of the text handed to the outermost `from_text` call; messages report `_offset + 1`. This is feat-27's documented limitation. Real callers pass the whole normalized body (e.g. `parse_dec_body` passes `format_text(content)` to `Decision.from_text`), so the tests compute every expected line from that normalized body, never from the raw file or from a section-relative text.
 
@@ -162,15 +166,27 @@ Verification environment: run every check with the worktree code (`uv run --froz
 
 - [x] Task 180.100: Fix D1 of the fifth review pass -- bump the Current Status marker from "**As of 2026-11-23**" to "**As of 2026-11-24**" (the paragraph's latest content, Phase 170, ran on 2026-11-24 per its entry and the frontmatter; the eab00038 precedent updates the marker whenever the paragraph is extended).
 
+#### Phase 190: Plan refinement fixes (user-requested)
+
+- [x] Task 190.100: D1: add a Decisions Made entry for the `assert count >= 0` input guard in `consume_leading_lines` (Task 130.140) and why REQ-005 still holds.
+- [x] Task 190.110: D3: add to REQ-006 the `AGENTS.md` review-fix exception that ACC-006 has.
+- [x] Task 190.120: I1: label the Design Notes snippets as pre-fix code and state that the proposed change is implemented.
+- [x] Task 190.130: I2: add "(REQ-004, REQ-007)" to ACC-009.
+- [x] Task 190.140: I3: add the `consume_leading_lines` unit tests (Task 130.100) and the `AGENTS.md` paragraph (Task 130.170) to Scope / Included.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-24**: The implementation is complete and done. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), 150 (third review fix D1: corrected test-file count in the Phase 120 entry), 160 (user-requested bookkeeping fixes: rewrote the mangled Phase 130 S1 bullet and accounted for the rebase pass-count delta), 170 (user-requested fixes: the REQ-004 attribution wording, the dead regex capture group, and the `mdformat.text()` docstring mentions), and 180 (user-requested marker fix: bumped this paragraph's date to 2026-11-24) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. The Phase 160 fixes are log-text only and change no behavior. The Phase 170 fixes change no behavior. The Phase 180 fix is plan-text only and changes no behavior. Closed out to done on 2026-11-24: the sixth review pass (the loop-exit check) reports no Errors, Gaps, Discrepancies, or Improvements, and independently reproduced every update-log figure against git and the live toolchain. Next: merge to `dev`.
+**As of 2026-11-24**: The implementation is complete and done. Phases 100, 110, 120, 130 (review fixes G1, D1, D2, S1, I1 to I4), 140 (second review fixes G1, D1, I1 to I3), 150 (third review fix D1: corrected test-file count in the Phase 120 entry), 160 (user-requested bookkeeping fixes: rewrote the mangled Phase 130 S1 bullet and accounted for the rebase pass-count delta), 170 (user-requested fixes: the REQ-004 attribution wording, the dead regex capture group, and the `mdformat.text()` docstring mentions), and 180 (user-requested marker fix: bumped this paragraph's date to 2026-11-24), and 190 (user-requested plan refinement fixes D1, D3, I1 to I3, plan text only) are done. Every hand-off in `models/md` advances the line offset by the delta that the shared helper `consume_leading_lines` returns. ACC-001 to ACC-009 are met, the full quality gate and the drift checks pass (after the rebase onto `dev` with PR #272, with 0 failures), and `CHANGELOG.md` has a Fixed entry. The Phase 140 fixes change no behavior. The Phase 130 review fixes change no behavior except the new negative-`count` assertion in `consume_leading_lines`, which no caller can trigger. The Phase 150 fix is plan-text only and changes no behavior. The Phase 160 fixes are log-text only and change no behavior. The Phase 170 fixes change no behavior. The Phase 180 fix is plan-text only and changes no behavior. Closed out to done on 2026-11-24: the sixth review pass (the loop-exit check) reports no Errors, Gaps, Discrepancies, or Improvements, and independently reproduced every update-log figure against git and the live toolchain. Next: merge to `dev`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-25T12:00:00.000Z - Phase 190 plan refinement fixes (user-requested)
+
+A plan refinement (no Errors) reported G1, G2, D1 to D4, and I1 to I4. G1, G2, D2, D4, and I4 were already covered by Phases 160, 170, and the close-out entry (the reproduced gate, the 61-file diff scope, the REQ-004 attribution, the 504 to 508 test-file count, and the ACC-004 line-38 repro). Phase 190 applies the rest, plan text only: D1 (new Decisions Made entry for the input guard), D3 (REQ-006 `AGENTS.md` exception), I1 (Design Notes snippets labeled pre-fix, implementation status line), I2 (ACC-009 cites REQ-004 and REQ-007), and I3 (two Scope / Included bullets). No code, no tests, no regeneration; the status stays done.
 
 #### 2026-11-24T15:01:18.378Z - Closed out to done
 
@@ -351,6 +367,10 @@ Created the feature plan from GitHub issue #253. The scope is the fix of the sca
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-25T12:00:00.000Z - Guard the helper's input count, not its consumed count
+
+Task 130.140 added `assert count >= 0` to `consume_leading_lines`. This does not contradict the 2026-11-22T15:36:39.449Z entry, which rejected an assertion on the consumed count. The consumed count comes from `format_text` on document content, so an assertion on it could reject a document that is accepted today and break REQ-005. The input `count` comes from the calling site's own token map or extent, which is never negative for any document, so the guard only catches a programming error in a caller and cannot change acceptance, an exception type, a field path, or a hint (REQ-005 holds).
 
 #### 2026-11-22T15:36:39.449Z - Put the hand-off helper in `_markdown.py` and keep `process_list_field`'s signature
 
