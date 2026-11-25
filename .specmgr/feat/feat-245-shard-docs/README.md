@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
-status: review
+status: done
 type: feat
-updated: '2026-11-24T20:05:00.000+01:00'
+updated: '2026-11-25T09:11:51.765+01:00'
 version: 1.0.0
 ---
 
