@@ -72,6 +72,32 @@ class TestTaskItemMalformed(unittest.TestCase):
         with self.assertRaises(AssertionError):
             _ = sut.description
 
+    def test_soft_wrapped_item_raises_actionable_error_on_checked(self) -> None:
+        """feat-99-list-item: a soft-wrapped (lazy-continuation) item raises via `.checked`,
+        naming the item's own path/line and the soft-wrap-specific cause/fix hint, instead of
+        failing `_MARKER_PATTERN`'s unanchored `$` with a confusing message."""
+        text = format_text("- [ ] Do the thing\n  across a second physical line\n")
+        sut = TaskItem.from_text(text)
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.checked
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
+
+    def test_soft_wrapped_item_raises_actionable_error_on_description(self) -> None:
+        """Same as above, via `.description`."""
+        text = format_text("- [ ] Do the thing\n  across a second physical line\n")
+        sut = TaskItem.from_text(text)
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.description
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
+
     def test_missing_marker_message_names_path_and_line_feat_27(self) -> None:
         """feat-27 Phase 1 (Task 1.7): the message now names this item's own document-
         relative path and 1-based line (`self._path`/`self._line`, threaded in by

@@ -31,6 +31,8 @@ _BODY = textwrap.dedent(
     """\
     # Simple Problem Statement
 
+    The current process is causing delays, for users because of missing automation.
+
     ## Current State
 
     ### Summary
@@ -57,8 +59,8 @@ class TestWritePrbFile(unittest.TestCase):
             id="some-id",
             type="prb",
             status="draft",
-            created="2026-08-25 10:00:00.000Z",
-            updated="2026-08-25 10:00:00.000Z",
+            created="2026-08-25T10:00:00.000Z",
+            updated="2026-08-25T10:00:00.000Z",
             version="1.0.0",
         )
         with tempfile.TemporaryDirectory() as tmp:

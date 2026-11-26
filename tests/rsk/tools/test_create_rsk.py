@@ -25,55 +25,60 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 from biz.dfch.specmgr.rsk.models.v1 import RskDocument, RskFrontmatter, parse_rsk
 from biz.dfch.specmgr.rsk.tools._paths import rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
 from biz.dfch.specmgr.rsk.tools.get_rsk import get_rsk
 
-_MINIMAL_BODY = textwrap.dedent(
-    """\
-    # Sample Risk
+from ._helpers import MANDATORY_SOURCE
 
-    ## Cause
+_MINIMAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Sample Risk
 
-    A root condition.
+        ## Cause
 
-    ## Trigger
+        A root condition.
 
-    An event that sets the risk in motion.
+        ## Trigger
 
-    ## Consequence
+        An event that sets the risk in motion.
 
-    A bounded consequence.
+        ## Consequence
 
-    ## Scope
+        A bounded consequence.
 
-    - Sample subsystem
+        ## Scope
 
-    ## Initial Assessment
+        - Sample subsystem
 
-    ### Probability 4
+        ## Initial Assessment
 
-    ### Impact 3
+        ### Probability 4
 
-    ## Strategy
+        ### Impact 3
 
-    reduce
+        ## Strategy
 
-    ## Mitigation
+        reduce
 
-    Sample treatment measures.
+        ## Mitigation
 
-    ## Residual Assessment
+        Sample treatment measures.
 
-    ### Probability 2
+        ## Residual Assessment
 
-    ### Impact 3
-    """
+        ### Probability 2
+
+        ### Impact 3
+        """
+    )
+    + MANDATORY_SOURCE
 )
 
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized risk sections.\n"
@@ -143,32 +148,60 @@ class TestCreateRsk(TempRskDirTestCase):
 
         self.assertTrue(rsk_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all."""
-        with self.assertRaises(AssertionError):
-            create_rsk(_MALFORMED_BODY)
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110)."""
+        result = create_rsk(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("rsk create_rsk (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(rsk_base_dir().exists())
 
-    def test_invalid_strategy_word_raises_and_writes_nothing(self) -> None:
-        """A `## Strategy` word outside the TARA closed set must raise and write nothing."""
-        with self.assertRaises(ValidationError):
-            create_rsk(_INVALID_STRATEGY_BODY)
+    def test_invalid_strategy_word_returns_validate_result_and_writes_nothing(self) -> None:
+        """A `## Strategy` word outside the TARA closed set must return ``ValidateResult(valid=False, ...)``
+        and write nothing (feat-204-create-error, Phase 110)."""
+        result = create_rsk(_INVALID_STRATEGY_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("rsk create_rsk (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(rsk_base_dir().exists())
 
-    def test_out_of_range_assessment_heading_raises_and_writes_nothing(self) -> None:
-        """An assessment heading value outside 1..5 (e.g. `### Probability 6`) must raise and write nothing."""
-        with self.assertRaises(AssertionError):
-            create_rsk(_OUT_OF_RANGE_PROBABILITY_BODY)
+    def test_out_of_range_assessment_heading_returns_validate_result_and_writes_nothing(self) -> None:
+        """An assessment heading value outside 1..5 (e.g. `### Probability 6`) must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110)."""
+        result = create_rsk(_OUT_OF_RANGE_PROBABILITY_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("rsk create_rsk (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(rsk_base_dir().exists())
 
-    def test_zero_scope_entries_raises_and_writes_nothing(self) -> None:
-        """A `## Scope` section with zero list entries must raise and write nothing."""
-        with self.assertRaises(AssertionError):
-            create_rsk(_ZERO_SCOPE_BODY)
+    def test_zero_scope_entries_returns_validate_result_and_writes_nothing(self) -> None:
+        """A `## Scope` section with zero list entries must return ``ValidateResult(valid=False, ...)``
+        and write nothing (feat-204-create-error, Phase 110)."""
+        result = create_rsk(_ZERO_SCOPE_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("rsk create_rsk (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(rsk_base_dir().exists())
 
 

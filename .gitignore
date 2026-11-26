@@ -217,6 +217,18 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# c4-skills measurement harness (feat-250): trial work dirs and caches are
+# never committed (the committed run records live in evals/c4-skills/results/)
+evals/c4-skills/work/
+evals/c4-skills/cache/
+evals/c4-skills/.upstream/
+
 # OpenCode session files
 doc/session-ses_*.md
 /session-ses_*.md
+.specmgr/feat/feat-32-sysrs/ISO_29148.pdf
+.specmgr/feat/feat-32-sysrs/ISO_29148.md
+.specmgr/feat/feat-32-sysrs/ISO_15288.pdf
+.specmgr/feat/feat-32-sysrs/ISO_15288.md
+.specmgr/feat/feat-32-sysrs/ISO_12207.pdf
+.specmgr/feat/feat-32-sysrs/ISO_12207.md

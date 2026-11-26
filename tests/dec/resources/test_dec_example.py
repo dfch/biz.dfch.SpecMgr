@@ -73,7 +73,7 @@ class TestDecExampleResource(unittest.TestCase):
                 related_artifacts.requirements,
                 related_artifacts.decisions,
                 related_artifacts.goals,
-                related_artifacts.acceptance_criteria,
+                related_artifacts.risks,
             )
             if sub_list is not None
         ]

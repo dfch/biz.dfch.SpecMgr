@@ -169,6 +169,22 @@ class TestPaginate(unittest.TestCase):
 
         self.assertEqual(sut.total, 1000)
 
+    def test_error_count_defaults_to_zero(self):
+        sut = paginate(list(range(5)), 0, 25)
+
+        self.assertEqual(sut.error_count, 0)
+
+    def test_error_count_is_passed_through_unchanged(self):
+        sut = paginate(list(range(5)), 0, 25, error_count=3)
+
+        self.assertEqual(sut.error_count, 3)
+
+    def test_error_count_is_independent_of_paging(self):
+        sut = paginate(list(range(100)), 50, 10, error_count=7)
+
+        self.assertEqual(sut.error_count, 7)
+        self.assertEqual(len(sut.results), 10)
+
 
 class TestNormalizePagingThenPaginate(unittest.TestCase):
     """Integration-style tests combining normalize_paging and paginate."""

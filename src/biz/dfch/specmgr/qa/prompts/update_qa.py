@@ -17,21 +17,23 @@
 
 # pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
 
-"""``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+"""``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Question and Answer (QA) document by id, using
-the existing ``qa/tools/`` surface (``get_qa``, ``validate_qa``) plus the
+the existing ``qa/tools/`` surface (``get_qa``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="qa"``; ``get_qa``'s ``raw=True`` parameter serves the
-line-range flow's line numbers). Structural shape ported 1:1 from
+line-range flow's line numbers, with ``numbered=True`` additionally
+printing each line's 1-based body-line number, ready to feed into
+``update``'s ``offset``). Structural shape ported 1:1 from
 ``req.prompts.update_req``, with the instructional content rewritten to
 describe QA's own schema and lifecycle instead of REQ's. Like ``get_req``,
 step 1 points at the ``get_qa`` tool, not a ``specmgr://qa/{id}`` resource
--- there is no such resource; see ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614.
+-- there is no such resource; see DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614.
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: QA's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: QA's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="qa"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="qa"``) -- so the tool-mapping section below
@@ -60,7 +62,9 @@ from ...server import mcp
     title="Update a QA document",
     description=(
         "Guides the LLM through revising an existing QA document by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_qa_schema` tool (the generated JSON Schema); the "
+        "`get_qa_template`/`get_qa_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_qa(id: str, instructions: str | None = None) -> str:

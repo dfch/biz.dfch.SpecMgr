@@ -86,7 +86,7 @@ ______________________________________________________________________
 17: description of the gap between the current and desired state of a system —
 18: deliberately free of assumed causes, blame, or solutions. `prb` follows the
 19: domain-first hierarchy and MCP surface already established by `req`/`tsk`/
-20: `qa` (ADR ece4554b-725c-4f76-bc04-5d2b760363d2), reusing their tools/
+20: `qa` (DEC ece4554b-725c-4f76-bc04-5d2b760363d2), reusing their tools/
 21: resources shape almost exactly, and reuses their whole-body update
 22: convention rather than ADR's granular `update_section` mechanism.
 23: 
@@ -129,7 +129,7 @@ ______________________________________________________________________
 60:   `list_prb`.
 61: - REQ-005: MCP resources: `specmgr://prb/schema`, `/example`, `/template`
 62:   (no `/list` — REQ-004 covers listing as a tool; no `/{id}` — id-based
-63:   reads are `get_prb`-only, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+63:   reads are `get_prb`-only, per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 64: - REQ-006: MCP prompts `create_prb`/`update_prb` — narrated,
 65:   `TodoWrite` + `question`-tool-driven interview flows (no other prompt in
 66:   this codebase calls `create_*`/`update_*` in a loop over 7 sub-questions
@@ -226,9 +226,9 @@ ______________________________________________________________________
 157: 
 158: ### Dependencies
 159: 
-160: - Depends on: ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
-161:   hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
-162:   `MarkdownFrontmatter` base), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614
+160: - Depends on: DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+161:   hierarchy), DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
+162:   `MarkdownFrontmatter` base), DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614
 163:   (tool-only id-based reads, no `specmgr://prb/{id}` resource), ADR
 164:   ec9f5262-9912-49d0-903f-fcfb54f28c13 (`list_<domain>` as a paged tool,
 165:   not a resource — `list_prb` must follow this from day one), the existing
@@ -306,7 +306,7 @@ ______________________________________________________________________
 237: 
 238: **Update mechanism: whole-body `update_prb(id, content)`**, not an
 239: ADR-style `update_section`. The generic `adr/tools/update_section.py`
-240: mechanism (ADR 71fd95d7-07f2-466f-81aa-d29b7e3ef34c) is currently
+240: mechanism (DEC 71fd95d7-07f2-466f-81aa-d29b7e3ef34c) is currently
 241: ADR-specific code, not a shared cross-domain component — reusing it for
 242: PRB would mean building a second, parallel implementation. Individual
 243: questions/sections stay addressable by grepping/editing their fixed
@@ -318,7 +318,7 @@ ______________________________________________________________________
 249: returning `PagedResult[PrbSummary]`, via `general/tools/_paging.py`'s
 250: `paginate`/`normalize_paging`), not a `specmgr://prb/list` resource —
 251: unlike REQ/TSK/QA (which launched as resources and were converted later in
-252: feat-13), PRB is a new domain built *after* ADR ec9f5262 was accepted, so
+252: feat-13), PRB is a new domain built *after* DEC ec9f5262 was accepted, so
 253: it must not repeat the resource-then-convert history. `PrbSummary`
 254: subclasses `general/models/summary.py::DocSummary` (`id`/`title`/`status`/
 255: `ref`), like `ReqSummary`/`TskSummary`/`QaSummary`.
@@ -622,7 +622,7 @@ ______________________________________________________________________
 553:   assumed causes in a problem statement); any future RCA artifact type
 554:   would be a separate feature, only ever referenced from `References`.
 555: - **2026-08-25**: `list_prb` ships as a paged `@mcp.tool()` from day one
-556:   (per ADR ec9f5262, already accepted/`done` via feat-13) — this domain
+556:   (per DEC ec9f5262, already accepted/`done` via feat-13) — this domain
 557:   must not repeat REQ/TSK/QA's original resource-then-later-converted
 558:   history.
 559: - **2026-08-25**: Prompt names `create_prb`/`update_prb` (tool-name
@@ -3016,7 +3016,7 @@ index bc24856..c5496c5 100644
 +through the ``get_qa`` tool only. PRB has no ``specmgr://prb/{id}`` resource
 +either, for the same reason -- id-based reads go through the ``get_prb`` tool
 +only, and there is also no ``specmgr://prb/list`` resource -- ``list_prb``
-+ships as a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
++ships as a paged tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
  
  Tools
  -----
@@ -3043,7 +3043,7 @@ index bc24856..c5496c5 100644
  ``README.md`` into an optional sibling ``history.md``, per ADR
 @@ -109,17 +126,17 @@ e369ee2e-3353-4f92-991c-6367d76d832e.
  Modules are grouped domain-first
- (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+ (DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
  document-type domain"): each document
 -domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, and later ``ac``) is a top-level package
 -with its own ``tools``/``prompts``/``resources`` sub-packages, self-
@@ -4378,7 +4378,7 @@ ______________________________________________________________________
 ````json
 {
   "description": "Implement Phase 4: AGENTS.md registration for prb",
-  "prompt": "Implement **Phase 4: Cross-cutting registration** of the feature plan at\n`/home/admin/src/biz.dfch.SpecMgr/.specmgr/feat/feat-16-problem-statement/README.md`\n(read the whole file, especially the Progress section which now shows\nPhases 1-3 complete). You are on git branch `feat-16-problem-statement`\nalready (do not switch branches, do not commit — the orchestrator commits\nafter verifying your work).\n\n## Context\n\nPhases 1-3 fully implemented the `prb` (Problem Statement) domain:\n`prb/models/v1/` (frontmatter, body, document, parser, summary),\n`prb/tools/` (parse_prb, create_prb, update_prb, set_status_prb, delete_prb\nstub, validate_prb, get_prb, list_prb, get_prb_example, get_prb_template),\n`prb/resources/` (specmgr://prb/schema, /example, /template), `prb/prompts/`\n(create_prb, update_prb), `prb/data/` packaged files, and `server.py` was\nalready updated to import/register `prb` (Task 3.16 covered that part).\nThis phase is about updating `AGENTS.md` (the repo's own agent-facing\ndocumentation) to reflect the new domain's existence, plus confirming\n`specmgr docs`/`specmgr schema`/`specmgr mcp-docs` all report zero drift.\n\n## Tasks (verbatim from the plan)\n\n- **Task 4.1**: `AGENTS.md` — update heading to \"seven domain/cross-cutting\n  packages implemented (ADR, REQ, UC, TSK, QA, PRB, general)\"; add a\n  `prb/` bullet (chronological order, after `qa/`); update the \"Still\n  genuinely missing\" list (`validate_prb` not enforced via pre-commit/CI,\n  `delete_prb` stub) and the closing domain-enumeration paragraphs.\n- **Task 4.2**: `specmgr docs` / `specmgr mcp-docs` / `specmgr schema`\n  regeneration — confirm `prb` appears correctly and all three commands\n  report zero drift.\n- **Task 4.3**: Phase-end quality gate — full pre-commit/quality gate;\n  update this README's Progress section (Current Status, dated Recent\n  Updates entry, mark Phase 4 tasks 4.1-4.3 done in the Task List\n  checkboxes).\n\n## Guidance for Task 4.1\n\nRead `AGENTS.md` in full first. It currently says \"Status: six\ndomain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, general)\"\nat the top of a section, and describes each domain (`adr/`, `req/`, `uc/`,\n`tsk/`, `qa/`, `general/`) in a bulleted list, followed by a \"Models\nlocation\" note, a \"Still genuinely missing / not yet done\" list, and a\nclosing paragraph enumerating domain packages (e.g. \"Don't assume any other\ndomain package exists beyond `adr`/`general`/`qa`/`req`/`tsk`/`uc`...\").\nEvery one of these needs a `prb` mention added, following the exact same\nstyle/tone/precision as the existing REQ/TSK/QA bullets — describe: its\ndomain-first location (`prb/models/v1/`, inside the domain package, not\ntop-level `models/`, since PRB is new post-domain-first-refactor, same as\nREQ/TSK/QA/UC); its tools (list them); its resources\n(`specmgr://prb/schema`, `/example`, `/template`; no `/{id}`, no `/list`\nsince `list_prb` is a tool per ADR ec9f5262); its prompts (`create_prb`/\n`update_prb`). Update the \"Still genuinely missing\" list to add\n`validate_prb` (not enforced via pre-commit/CI) alongside the existing\n`validate_adr`/`validate_req`/etc. mention, and add `delete_prb` alongside\nthe existing `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa` stub\nmention. Update every closing enumeration paragraph that lists\n`adr`/`general`/`qa`/`req`/`tsk`/`uc` to include `prb` in the correct\nalphabetical position.\n\nAlso check the \"req/tsk/qa each register tools, resources, and prompts;\nuc registers tools and resources only\" sentence — update it to include\n`prb` (which registers tools, resources, AND prompts, like req/tsk/qa).\n\n## Required commands to verify your own work before returning\n\n```bash\nuv run --frozen ruff format --check\nuv run --frozen ruff check\nuv run --frozen vulture src/ whitelist.py --min-confidence 60\nuv run --frozen python -m unittest discover -v -s tests -t . -p \"test_*.py\"\nuv run --frozen specmgr schema      # confirm all schemas drift-free, including docs/prb_schema.json and src/biz/dfch/specmgr/prb/data/prb_schema.json\nuv run --frozen specmgr docs        # confirm zero drift (should already be committed correctly from Phase 3, but AGENTS.md doesn't feed into this — just re-confirm)\nuv run --frozen specmgr mcp-docs    # confirm zero drift\n```\n\nNote: `AGENTS.md` itself is hand-maintained (not machine-generated), so\nediting it does not, by itself, cause `specmgr docs`/`mcp-docs`/`schema`\ndrift — those commands only check `src/` code and generated schema/doc\nfiles. Task 4.2 is really just re-confirming that Phase 3's registration\nwork is still fully drift-free before wrapping up this phase, not\nre-running anything that depends on `AGENTS.md`'s content.\n\n## What NOT to do\n\n- Do NOT touch any `src/` or `tests/` files — Phase 4 is `AGENTS.md`-only\n  plus doc-generation confirmation (no code changes expected).\n- Do NOT commit anything — leave changes staged or unstaged (your choice)\n  but NOT committed, for the orchestrator to review and commit.\n- Do NOT switch git branches.\n\n## What to report back\n\nIn your final message, report:\n1. The exact diff/summary of your `AGENTS.md` changes.\n2. The exact commands you ran for the quality gate and their pass/fail\n   output (paste key excerpts: test counts, ruff/vulture results,\n   `specmgr schema`/`docs`/`mcp-docs` output confirming zero drift).\n3. Confirmation that you updated the README's Progress section (Current\n   Status, Recent Updates entry, Task List checkboxes for Phase 4 tasks\n   4.1-4.3).\n4. Any deviations from the plan you had to make and why, or any blockers\n   you hit that need orchestrator/user attention.",
+  "prompt": "Implement **Phase 4: Cross-cutting registration** of the feature plan at\n`/home/admin/src/biz.dfch.SpecMgr/.specmgr/feat/feat-16-problem-statement/README.md`\n(read the whole file, especially the Progress section which now shows\nPhases 1-3 complete). You are on git branch `feat-16-problem-statement`\nalready (do not switch branches, do not commit — the orchestrator commits\nafter verifying your work).\n\n## Context\n\nPhases 1-3 fully implemented the `prb` (Problem Statement) domain:\n`prb/models/v1/` (frontmatter, body, document, parser, summary),\n`prb/tools/` (parse_prb, create_prb, update_prb, set_status_prb, delete_prb\nstub, validate_prb, get_prb, list_prb, get_prb_example, get_prb_template),\n`prb/resources/` (specmgr://prb/schema, /example, /template), `prb/prompts/`\n(create_prb, update_prb), `prb/data/` packaged files, and `server.py` was\nalready updated to import/register `prb` (Task 3.16 covered that part).\nThis phase is about updating `AGENTS.md` (the repo's own agent-facing\ndocumentation) to reflect the new domain's existence, plus confirming\n`specmgr docs`/`specmgr schema`/`specmgr mcp-docs` all report zero drift.\n\n## Tasks (verbatim from the plan)\n\n- **Task 4.1**: `AGENTS.md` — update heading to \"seven domain/cross-cutting\n  packages implemented (ADR, REQ, UC, TSK, QA, PRB, general)\"; add a\n  `prb/` bullet (chronological order, after `qa/`); update the \"Still\n  genuinely missing\" list (`validate_prb` not enforced via pre-commit/CI,\n  `delete_prb` stub) and the closing domain-enumeration paragraphs.\n- **Task 4.2**: `specmgr docs` / `specmgr mcp-docs` / `specmgr schema`\n  regeneration — confirm `prb` appears correctly and all three commands\n  report zero drift.\n- **Task 4.3**: Phase-end quality gate — full pre-commit/quality gate;\n  update this README's Progress section (Current Status, dated Recent\n  Updates entry, mark Phase 4 tasks 4.1-4.3 done in the Task List\n  checkboxes).\n\n## Guidance for Task 4.1\n\nRead `AGENTS.md` in full first. It currently says \"Status: six\ndomain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, general)\"\nat the top of a section, and describes each domain (`adr/`, `req/`, `uc/`,\n`tsk/`, `qa/`, `general/`) in a bulleted list, followed by a \"Models\nlocation\" note, a \"Still genuinely missing / not yet done\" list, and a\nclosing paragraph enumerating domain packages (e.g. \"Don't assume any other\ndomain package exists beyond `adr`/`general`/`qa`/`req`/`tsk`/`uc`...\").\nEvery one of these needs a `prb` mention added, following the exact same\nstyle/tone/precision as the existing REQ/TSK/QA bullets — describe: its\ndomain-first location (`prb/models/v1/`, inside the domain package, not\ntop-level `models/`, since PRB is new post-domain-first-refactor, same as\nREQ/TSK/QA/UC); its tools (list them); its resources\n(`specmgr://prb/schema`, `/example`, `/template`; no `/{id}`, no `/list`\nsince `list_prb` is a tool per DEC ec9f5262); its prompts (`create_prb`/\n`update_prb`). Update the \"Still genuinely missing\" list to add\n`validate_prb` (not enforced via pre-commit/CI) alongside the existing\n`validate_adr`/`validate_req`/etc. mention, and add `delete_prb` alongside\nthe existing `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa` stub\nmention. Update every closing enumeration paragraph that lists\n`adr`/`general`/`qa`/`req`/`tsk`/`uc` to include `prb` in the correct\nalphabetical position.\n\nAlso check the \"req/tsk/qa each register tools, resources, and prompts;\nuc registers tools and resources only\" sentence — update it to include\n`prb` (which registers tools, resources, AND prompts, like req/tsk/qa).\n\n## Required commands to verify your own work before returning\n\n```bash\nuv run --frozen ruff format --check\nuv run --frozen ruff check\nuv run --frozen vulture src/ whitelist.py --min-confidence 60\nuv run --frozen python -m unittest discover -v -s tests -t . -p \"test_*.py\"\nuv run --frozen specmgr schema      # confirm all schemas drift-free, including docs/prb_schema.json and src/biz/dfch/specmgr/prb/data/prb_schema.json\nuv run --frozen specmgr docs        # confirm zero drift (should already be committed correctly from Phase 3, but AGENTS.md doesn't feed into this — just re-confirm)\nuv run --frozen specmgr mcp-docs    # confirm zero drift\n```\n\nNote: `AGENTS.md` itself is hand-maintained (not machine-generated), so\nediting it does not, by itself, cause `specmgr docs`/`mcp-docs`/`schema`\ndrift — those commands only check `src/` code and generated schema/doc\nfiles. Task 4.2 is really just re-confirming that Phase 3's registration\nwork is still fully drift-free before wrapping up this phase, not\nre-running anything that depends on `AGENTS.md`'s content.\n\n## What NOT to do\n\n- Do NOT touch any `src/` or `tests/` files — Phase 4 is `AGENTS.md`-only\n  plus doc-generation confirmation (no code changes expected).\n- Do NOT commit anything — leave changes staged or unstaged (your choice)\n  but NOT committed, for the orchestrator to review and commit.\n- Do NOT switch git branches.\n\n## What to report back\n\nIn your final message, report:\n1. The exact diff/summary of your `AGENTS.md` changes.\n2. The exact commands you ran for the quality gate and their pass/fail\n   output (paste key excerpts: test counts, ruff/vulture results,\n   `specmgr schema`/`docs`/`mcp-docs` output confirming zero drift).\n3. Confirmation that you updated the README's Progress section (Current\n   Status, Recent Updates entry, Task List checkboxes for Phase 4 tasks\n   4.1-4.3).\n4. Any deviations from the plan you had to make and why, or any blockers\n   you hit that need orchestrator/user attention.",
   "subagent_type": "phase-implementer"
 }
 ````
@@ -4517,7 +4517,7 @@ index 22ee043..58b5954 100644
 +  `specmgr://prb/example`, `specmgr://prb/template`; no
 +  `specmgr://prb/{id}` — id-based reads are `get_prb`-only, ADR
 +  ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
-+  is the `list_prb` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13);
++  is the `list_prb` tool, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13);
 +  `prb/prompts/` (`create_prb`/`update_prb`, narrated `TodoWrite` +
 +  `question`-tool-driven 5W2H interview flows). Schema at
 +  `prb/models/v1/`, inside the domain package, not top-level `models/` —
@@ -4531,12 +4531,12 @@ index 22ee043..58b5954 100644
  Still genuinely missing / not yet done (don't assume otherwise):
  - No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
 -  `validate_qa`) tool runs over the repo's own documents yet via pre-commit
--  or CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc
+-  or CI. (DEC 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc
 -  generation/lint/tests locally via pre-commit hook, not just CI")
 -- `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa` are stubs, not yet
 -  implemented.
 +  `validate_qa`/`validate_prb`) tool runs over the repo's own documents yet
-+  via pre-commit or CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce
++  via pre-commit or CI. (DEC 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce
 +  doc generation/lint/tests locally via pre-commit hook, not just CI")
 +- `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb` are
 +  stubs, not yet implemented.

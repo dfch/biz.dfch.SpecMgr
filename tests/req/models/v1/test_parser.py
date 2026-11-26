@@ -26,6 +26,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.req.models.v1 import ReqDocument
+from biz.dfch.specmgr.req.models.v1.body import _LEVEL_PATTERN
 from biz.dfch.specmgr.req.models.v1.parser import parse_req
 
 _REFERENCE_PATH = (
@@ -39,8 +40,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: req
     version: 1.0.0
     status: draft
-    created: '2026-08-05 00:00:00.000Z'
-    updated: '2026-08-05 00:00:00.000Z'
+    created: '2026-08-05T00:00:00.000Z'
+    updated: '2026-08-05T00:00:00.000Z'
     ---
 
     # Maximum Engine Temperature
@@ -58,7 +59,7 @@ _MINIMAL_DOC = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SyRS
 
     ## Source
 
@@ -98,7 +99,7 @@ class TestParseReq(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "deaddead-dead-dead-dead-deaddeaddead")
         self.assertEqual(document.body.text, "Maximum Engine Temperature")
         self.assertEqual([item.text for item in document.body.characteristics.items], ["Safety", "Reliability"])
-        self.assertEqual(document.body.level.value.text, "MUST")
+        self.assertEqual(document.body.level.value.text, "SyRS")
         self.assertIsNotNone(document.body.priority)
         self.assertEqual(document.body.priority.value.text, "50")
         self.assertIsNotNone(document.body.tags)
@@ -109,22 +110,60 @@ class TestParseReq(unittest.TestCase):
         self.assertIsNotNone(related_artifacts)
         self.assertEqual(
             [item.text for item in related_artifacts.requirements.items],
-            ["REQ-9687: Maximum temperatures of running engines in civil vehicles"],
+            ["REQ f04dc881-ec40-4072-9a75-35002fca2bd7: Maximum temperatures of running engines in civil vehicles"],
         )
         self.assertEqual(
             [item.text for item in related_artifacts.decisions.items],
-            ["DEC-2703: Usage of metal conductors in moving engine parts"],
+            ["DEC 8502621c-177a-4e76-9bf2-d79b4e960b2c: Usage of metal conductors in moving engine parts"],
         )
         self.assertEqual(
             [item.text for item in related_artifacts.goals.items],
-            ["GOL-0007: Competitive Engines in Consumer Vehicles"],
+            ["GOL 115fa636-2b33-4baa-be66-52bcbb8eaa7c: Competitive Engines in Consumer Vehicles"],
         )
         self.assertEqual(
-            [item.text for item in related_artifacts.acceptance_criteria.items],
-            ["ACC-1234: Temperature Measurements on running combustion engines"],
+            [item.text for item in related_artifacts.risks.items],
+            ["RSK 7d310eed-1eeb-4820-bc79-03bc5ac4612c: Sensor Drift Under Sustained High-Temperature Operation"],
         )
         self.assertIsNotNone(document.body.more_information)
         self.assertIsNotNone(document.body.notes)
+
+    def test_level_accepts_every_iso_29148_kind(self) -> None:
+        """Each of the four ISO/IEC/IEEE 29148:2018 requirement specification kinds parses
+        as the `## Level` value."""
+        for kind in ["BRS", "StRS", "SyRS", "SRS"]:
+            with self.subTest(kind=kind):
+                text = _MINIMAL_DOC.replace("SyRS", kind)
+
+                document = parse_req(text)
+
+                self.assertEqual(document.body.level.value.text, kind)
+
+    def test_level_rejects_out_of_set_values_with_the_pattern_in_the_error(self) -> None:
+        """Values outside the four ISO 29148 kinds -- the RFC 2119 obligation words,
+        lowercase spellings, and extra-whitespace spellings -- fail validation, and the
+        rejection error carries `_LEVEL_PATTERN`."""
+        for bad in [
+            "MUST",
+            "SHOULD",
+            "MUST NOT",
+            "SHOULD NOT",
+            "MAY",
+            "must",
+            "should",
+            "may",
+            "brs",
+            "stRs",
+            "srs",
+            "S R S",
+            "SRS SRS",
+        ]:
+            with self.subTest(bad=bad):
+                text = _MINIMAL_DOC.replace("SyRS", bad)
+
+                with self.assertRaises(ValidationError) as ctx:
+                    parse_req(text)
+
+                self.assertIn(f"value must match pattern {_LEVEL_PATTERN!r}", str(ctx.exception))
 
     def test_defaults_frontmatter_when_absent(self) -> None:
         """Omitting the frontmatter block entirely still parses, applying ReqFrontmatter's defaults."""
@@ -174,6 +213,29 @@ class TestParseReq(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_req(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-05T00:00:00.000Z'", "created: 2026-08-05T00:00:00.000Z").replace(
+            "updated: '2026-08-05T00:00:00.000Z'", "updated: 2026-08-05 00:00:00.000Z"
+        )
+        document = parse_req(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-05T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-05T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_req(text.replace("created: 2026-08-05T00:00:00.000Z", "created: 2026-08-05"))
 
 
 if __name__ == "__main__":

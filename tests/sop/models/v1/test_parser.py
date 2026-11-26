@@ -46,8 +46,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: sop
     version: 1.0.0
     status: draft
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     # New Employee IT Account Provisioning
@@ -77,8 +77,8 @@ _FULL_DOC = textwrap.dedent(
     type: sop
     version: 1.0.0
     status: active
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     # New Employee IT Account Provisioning
@@ -133,23 +133,23 @@ _FULL_DOC = textwrap.dedent(
 
     ### Requirements
 
-    - REQ-0001: Onboarding
+    - REQ b2ae2dbd-3bc7-404c-8aa7-0a6eb457d2df: Onboarding
 
     ### Decisions
 
-    - DEC-0001: SSO choice
+    - DEC 8626319c-91ed-43c3-97b3-527de8579cb5: SSO choice
 
     ### Goals
 
-    - GOL-0001: Fast onboarding
+    - GOL e079c8ec-2e2e-4812-9360-50bb522ed20c: Fast onboarding
 
-    ### Acceptance Criteria
+    ### Risks
 
-    - ACC-0001: Account works
+    - RSK 1a8b158b-01b7-43f7-bffe-beea23780158: Account provisioning delays
 
     ### Sops
 
-    - SOP-0042: Account deprovisioning
+    - SOP 9d4320c9-54cd-40f2-aeda-80a65b71b875: Account deprovisioning
 
     ## More Information
 
@@ -175,7 +175,7 @@ class TestParseSop(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "sop-001")
         self.assertEqual(document.frontmatter.type, "sop")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-30 00:00:00.000Z")
+        self.assertEqual(document.frontmatter.created, "2026-08-30T00:00:00.000Z")
         self.assertEqual(document.body.text, "New Employee IT Account Provisioning")
         self.assertIn("Provision accounts for new hires", document.body.purpose.text)
         self.assertEqual([(s.number, s.name) for s in document.body.procedure.steps], [(1, "Submit request")])
@@ -253,7 +253,7 @@ class TestParseSop(unittest.TestCase):
 
             ### Sops
 
-            - SOP-0042: Account deprovisioning
+            - SOP 9d4320c9-54cd-40f2-aeda-80a65b71b875: Account deprovisioning
             """
         )
 
@@ -264,10 +264,10 @@ class TestParseSop(unittest.TestCase):
         self.assertIsNone(related_artifacts.requirements)
         self.assertIsNone(related_artifacts.decisions)
         self.assertIsNone(related_artifacts.goals)
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
         self.assertEqual(
             [item.text for item in related_artifacts.sops.items],
-            ["SOP-0042: Account deprovisioning"],
+            ["SOP 9d4320c9-54cd-40f2-aeda-80a65b71b875: Account deprovisioning"],
         )
 
     def test_related_artifacts_with_zero_sub_lists_parses(self) -> None:
@@ -297,7 +297,7 @@ class TestParseSop(unittest.TestCase):
         self.assertIsNone(related_artifacts.requirements)
         self.assertIsNone(related_artifacts.decisions)
         self.assertIsNone(related_artifacts.goals)
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
         self.assertIsNone(related_artifacts.sops)
 
 
@@ -828,6 +828,29 @@ class TestParseSopStructuralViolations(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_sop(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-30T00:00:00.000Z'", "created: 2026-08-30T00:00:00.000Z").replace(
+            "updated: '2026-08-30T00:00:00.000Z'", "updated: 2026-08-30 00:00:00.000Z"
+        )
+        document = parse_sop(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-30T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-30T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_sop(text.replace("created: 2026-08-30T00:00:00.000Z", "created: 2026-08-30"))
 
 
 if __name__ == "__main__":

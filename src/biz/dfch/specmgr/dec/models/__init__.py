@@ -25,7 +25,6 @@ holding the frontmatter/body classes, the document wrapper and parser for
 
 from .v1 import (
     SCHEMA_COMMENT_VERSION,
-    AcceptanceCriteria,
     Confirmation,
     Consequences,
     ConsideredOptions,
@@ -43,6 +42,7 @@ from .v1 import (
     ProsAndCons,
     RelatedArtifacts,
     Requirements,
+    Risks,
     UpdateEntry,
     Updates,
     parse_dec,
@@ -50,7 +50,6 @@ from .v1 import (
 
 __all__ = [
     "SCHEMA_COMMENT_VERSION",
-    "AcceptanceCriteria",
     "Confirmation",
     "Consequences",
     "ConsideredOptions",
@@ -68,6 +67,7 @@ __all__ = [
     "ProsAndCons",
     "RelatedArtifacts",
     "Requirements",
+    "Risks",
     "UpdateEntry",
     "Updates",
     "parse_dec",

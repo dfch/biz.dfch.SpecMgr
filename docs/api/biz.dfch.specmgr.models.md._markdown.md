@@ -63,6 +63,49 @@ Returns:
     in a code span, or write it as an HTML comment).
 
 
+### `consume_leading_lines(text: str, count: int) -> tuple[str, int]`
+
+Slice the first `count` lines off `text`, re-normalize the rest, and return it with the consumed line count.
+
+This is the one shared hand-off step of the `models/md` engine
+(feat-253): every site that cuts off the part of a text it has already
+handled and passes the rest on (the scalar-field and list-item loops of
+`MarkdownStr`, and the own-block hand-off of `MarkdownSection`,
+`MarkdownParagraph`, and `MarkdownListItem`) calls it and advances its
+0-based line offset by the returned count.
+
+The rest is re-normalized with `format_text`, because a raw substring of
+an `mdformat`-compliant text is not itself guaranteed to be compliant
+(e.g. it can start with the blank line that separated it from the
+consumed block, which `mdformat` strips). The consumed count is
+therefore measured as the before/after line-count delta
+(`len(text.splitlines()) - len(rest.splitlines())`), not taken as
+`count`: it is `count` plus every separator line the re-normalization
+removed. For an empty rest it is the line count of the whole `text`.
+
+The delta is exact only under one assumption: `format_text` of the
+sliced-off rest strips its leading blank lines but keeps the line count
+of its content (it never adds, joins, or splits a content line). The
+before/after delta of the list branch of `MarkdownStr.from_text`
+relied on the same assumption before this helper existed.
+
+Args:
+    text: `mdformat`-normalized markdown text.
+    count: the number of leading lines of `text` already consumed by
+        the caller (e.g. a field's extent, or the token-map end of a
+        heading, paragraph, or list-item paragraph); must not be
+        negative.
+
+Returns:
+    A `(rest, consumed)` pair: `rest` is the re-normalized remainder of
+    `text` after its first `count` lines (`""` if nothing remains, also
+    when `count` is at or past the end of `text`), and `consumed` is
+    the number of lines of `text` that precede the first line of `rest`
+    (the line count of the whole `text` for an empty `rest`). Under the
+    assumption above, `consumed` is `count` plus the blank separator
+    lines the re-normalization removed.
+
+
 ### `format_markdown_document(text: str) -> tuple[bool, str]`
 
 Normalize a whole markdown document, preserving any leading YAML frontmatter block.
@@ -126,7 +169,11 @@ Returns:
     `text` and `format_text(text)` disagree -- or, when every line
     compares equal under `str.splitlines()` (e.g. `text` is missing
     its single trailing newline, which `splitlines()` does not turn
-    into an extra empty line), a message naming that instead.
+    into an extra empty line), a message naming that instead. In
+    either case, the offending text is passed through `snippet()`
+    before being embedded, so the message stays bounded regardless of
+    `text`'s own size (issue #110), matching every sibling
+    message-builder in this module (e.g. `_raw_html_message`).
 
 
 ### `parse(text: str) -> list[markdown_it.token.Token]`

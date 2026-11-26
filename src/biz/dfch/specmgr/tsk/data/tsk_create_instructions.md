@@ -24,11 +24,16 @@ step 1 if this is genuinely a new task list.
   `status` metadata -- this is a deliberately lightweight, flat list.
 - `## Recent Updates` -- mandatory H2 section, an optional leading HTML
   comment (e.g. an ordering hint) followed by at least one
-  `### {timestamp} ( - | : ) {title}` entry, newest-first (e.g.
-  `### 2026-08-19 - Created` or the full date+time variant
-  `2026-08-19 05:42:00.000+02:00`), each followed by a short paragraph
-  of update text. A freshly drafted task list must include at least
-  one Recent Updates entry describing why this list was made --
+  `### {timestamp} ( - | : ) {title}` entry, newest-first, where
+  `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.SSS` +
+  `Z` or `±HH:mm` (e.g. `### 2026-08-19 05:42:00.000+02:00 - Created`),
+  each followed by the entry's own update text directly under the H3
+  heading (any markdown content -- multiple paragraphs, lists, code blocks,
+  block quotes, not just a single paragraph), which is mandatory. The
+  date/time separator may be `T` or a space; a date-only timestamp is
+  rejected. A
+  freshly drafted task list must include at least one Recent Updates
+  entry describing why this list was made --
   `RecentUpdates.updates` requires `min_length>=1`, so an empty section
   (or omitting it) will fail validation. `create_tsk` does not seed
   this entry automatically; you must include it yourself.
@@ -38,12 +43,12 @@ Elicit (asking the user if not already given): the checklist items to
 track, and a short description of why this task list is being created
 for the first `## Recent Updates` entry.
 
-## 3. Use the template/example/schema as references
-Fetch `specmgr://tsk/template` or `specmgr://tsk/example` as a starting
-point/style reference, then check `specmgr://tsk/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+## 3. Use the template/example tools as references
+Call the `get_tsk_template` and `get_tsk_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_tsk_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence
 1. Draft the body-only markdown per the structure above, including at
@@ -51,7 +56,7 @@ there.
 2. Call `create_tsk(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
    validation failure raises uncaught and nothing is written.
-3. Optionally call `validate_tsk(content, full=False)` first if you want
+3. Optionally call `validate(type="tsk", content=content, full=False)` first if you want
    to dry-run the body without writing anything -- `create_tsk` already
    performs the same validation internally, so this step is never
    required, only a convenience.

@@ -5,27 +5,38 @@ Decision (DEC) body models: whole-section fields under a single H1.
 Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
 `MarkdownSection3`/`MarkdownParagraph`/`MarkdownListItem` engine: each class
 below models one markdown heading (`## `/`### `) or list, and `Decision` is
-the top-level H1 container. A `dec` document keeps the ADR's general
+the top-level H1 container. A `dec` document keeps the MADR-style general
 structure (MADR-style headings, an `Options` collection) but is built on the
 generic engine with the simple surface used by GOL/RSK/QA (see
 `.specmgr/feat/feat-21-decision/README.md` Design Notes).
 
-Field declaration order on `Decision`/`DecisionOutcome`/`RelatedArtifacts`/
-`ProsAndCons`/`Updates` enforces markdown order (Context and Problem
-Statement -> Decision Drivers -> Considered Options -> Decision Outcome
-(-> Consequences -> Confirmation) -> Related Artifacts (-> Requirements ->
-Decisions -> Goals -> Acceptance Criteria) -> Pros and Cons (-> Option 1: ->
-Option 2: -> ...) -> More Information -> Updates (-> entry 1 -> entry 2 ->
-...)), since `models.md`'s `MarkdownStr.from_text` distributes text among
-declared fields in that same order.
+Field declaration order on `Decision`/`DecisionOutcome`/`RolesAndResponsibilities`/
+`RelatedArtifacts`/`ProsAndCons`/`Updates` enforces markdown order (Context
+and Problem Statement -> Decision Drivers -> Considered Options -> Decision
+Outcome (-> Consequences -> Confirmation) -> Roles and Responsibilities
+(-> Accountable -> Responsible -> Support -> Consulted -> Informed) -> Tags
+-> Source -> Related Artifacts (-> Requirements -> Decisions -> Goals ->
+Risks) -> Pros and Cons (-> Option 1: -> Option 2: -> ...) ->
+More Information -> Updates (-> entry 1 -> entry 2 -> ...)), since
+`models.md`'s `MarkdownStr.from_text` distributes text among declared fields
+in that same order. `## Roles and Responsibilities` and `## Source` are
+mandatory on every `dec` document (feat-29-dec-source-roles, GitHub issue
+#29) -- a decision must always name an accountable owner and record where it
+originated, unlike `sop`'s own optional `## Roles and Responsibilities`.
+`## Tags` is optional, absorbed from the DEC half of
+`feat-133-tags-dec-rsk` (issue #133).
 
 ## Classes
 
-### `AcceptanceCriteria`
+### `Accountable`
 
-`### Acceptance Criteria` under Related Artifacts -- bullet list of
-cross-references to acceptance criteria, one per line
-(e.g. "ACC-1234: <title>").
+`### Accountable` under `## Roles and Responsibilities` -- the single
+owner ultimately answerable for this decision.
+
+Subclasses the shared `models.md.AccountableBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
+Mandatory: `## Roles and Responsibilities` is itself mandatory on every
+`dec` document, so every decision always names an accountable owner.
 
 **Methods:**
 
@@ -51,14 +62,17 @@ cross-references to acceptance criteria, one per line
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -307,7 +321,7 @@ cross-references to acceptance criteria, one per line
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -316,7 +330,7 @@ cross-references to acceptance criteria, one per line
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -356,14 +370,15 @@ cross-references to acceptance criteria, one per line
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -427,14 +442,17 @@ cross-references to acceptance criteria, one per line
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -775,7 +793,7 @@ cross-references to acceptance criteria, one per line
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -784,7 +802,7 @@ cross-references to acceptance criteria, one per line
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -824,14 +842,15 @@ cross-references to acceptance criteria, one per line
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -847,18 +866,6 @@ cross-references to acceptance criteria, one per line
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `Confirmation`
@@ -890,14 +897,17 @@ or will be confirmed. Optional, free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -1146,7 +1156,7 @@ or will be confirmed. Optional, free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -1155,7 +1165,7 @@ or will be confirmed. Optional, free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -1195,14 +1205,15 @@ or will be confirmed. Optional, free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -1266,14 +1277,17 @@ or will be confirmed. Optional, free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -1614,7 +1628,7 @@ or will be confirmed. Optional, free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -1623,7 +1637,7 @@ or will be confirmed. Optional, free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -1663,14 +1677,15 @@ or will be confirmed. Optional, free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -1686,18 +1701,6 @@ or will be confirmed. Optional, free-form prose.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `Consequences`
@@ -1729,14 +1732,17 @@ the chosen outcome. Optional, free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -1985,7 +1991,7 @@ the chosen outcome. Optional, free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -1994,7 +2000,7 @@ the chosen outcome. Optional, free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -2034,14 +2040,15 @@ the chosen outcome. Optional, free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -2105,14 +2112,17 @@ the chosen outcome. Optional, free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -2453,7 +2463,7 @@ the chosen outcome. Optional, free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -2462,7 +2472,7 @@ the chosen outcome. Optional, free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -2502,14 +2512,15 @@ the chosen outcome. Optional, free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -2525,18 +2536,6 @@ the chosen outcome. Optional, free-form prose.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `ConsideredOptions`
@@ -2569,14 +2568,17 @@ content lives under `## Pros and Cons`.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -2825,7 +2827,7 @@ content lives under `## Pros and Cons`.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -2834,7 +2836,7 @@ content lives under `## Pros and Cons`.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -2874,14 +2876,15 @@ content lives under `## Pros and Cons`.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -2945,14 +2948,17 @@ content lives under `## Pros and Cons`.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -3293,7 +3299,7 @@ content lives under `## Pros and Cons`.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -3302,7 +3308,7 @@ content lives under `## Pros and Cons`.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -3342,14 +3348,15 @@ content lives under `## Pros and Cons`.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -3366,17 +3373,843 @@ content lives under `## Pros and Cons`.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
 
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
+### `Consulted`
 
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
+`### Consulted` under `## Roles and Responsibilities` -- those whose
+opinions were sought before or during the decision.
 
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
+Subclasses the shared `models.md.ConsultedBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
 
 
 ### `Context`
@@ -3412,14 +4245,17 @@ expect "Context").
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -3668,7 +4504,7 @@ expect "Context").
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -3677,7 +4513,7 @@ expect "Context").
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -3717,14 +4553,15 @@ expect "Context").
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -3788,14 +4625,17 @@ expect "Context").
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -4136,7 +4976,7 @@ expect "Context").
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -4145,7 +4985,7 @@ expect "Context").
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -4185,14 +5025,15 @@ expect "Context").
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -4209,24 +5050,12 @@ expect "Context").
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `Decision`
 
 The `dec` body: a single H1 section with the fields below.
 
-The H1 heading text is free-form. Keeps the ADR's general structure
+The H1 heading text is free-form. Keeps the MADR-style general structure
 (MADR headings + an options collection) on the generic `models.md`
 engine -- see the module docstring.
 
@@ -4239,8 +5068,17 @@ drivers:
 considered:
     `## Considered Options`. Optional.
 outcome:
-    `## Decision Outcome` (mandatory lead paragraph + optional
+    `## Decision Outcome` (mandatory lead paragraph, optional further
+    blocks after it -- feat-247 -- + optional
     `### Consequences`/`### Confirmation`). Mandatory.
+roles_and_responsibilities:
+    `## Roles and Responsibilities` (RASCI composite). Mandatory (unlike
+    `sop`'s own optional equivalent) -- a decision must always have a
+    named accountable owner.
+tags:
+    `## Tags`. Optional.
+source:
+    `## Source`. Mandatory.
 related_artifacts:
     `## Related Artifacts` (four all-optional H3 bullet lists). Optional.
 pros_and_cons:
@@ -4275,14 +5113,17 @@ updates:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -4531,7 +5372,7 @@ updates:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -4540,7 +5381,7 @@ updates:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -4580,14 +5421,15 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -4651,14 +5493,17 @@ updates:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -4999,7 +5844,7 @@ updates:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -5008,7 +5853,7 @@ updates:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -5048,14 +5893,15 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -5071,18 +5917,6 @@ updates:
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection1'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h1 and no nested headings in tokens [3:].
 
 
 ### `DecisionDrivers`
@@ -5114,14 +5948,17 @@ stakeholder interests that shape the decision. Optional, free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -5370,7 +6207,7 @@ stakeholder interests that shape the decision. Optional, free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -5379,7 +6216,7 @@ stakeholder interests that shape the decision. Optional, free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -5419,14 +6256,15 @@ stakeholder interests that shape the decision. Optional, free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -5490,14 +6328,17 @@ stakeholder interests that shape the decision. Optional, free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -5838,7 +6679,7 @@ stakeholder interests that shape the decision. Optional, free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -5847,7 +6688,7 @@ stakeholder interests that shape the decision. Optional, free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -5887,14 +6728,15 @@ stakeholder interests that shape the decision. Optional, free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -5911,18 +6753,6 @@ stakeholder interests that shape the decision. Optional, free-form prose.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `DecisionOutcome`
 
@@ -5935,6 +6765,13 @@ statement:
     itself (e.g. "We chose option 1 because ..."). Any other block in
     place of a lead paragraph (a bare list, an H3 first, nothing at
     all) is a structural error.
+further_blocks:
+    Optional further markdown blocks (paragraphs, bullet lists, ordered
+    lists, fenced code blocks) after the lead paragraph and before the
+    first H3 sub-section (feat-247-dec-outcome-blocks, GitHub issue
+    #247). A block quote, an HTML comment, a horizontal rule, or a
+    heading of any level ends the run and stays unconsumed, failing the
+    parse with the engine's own actionable "text left over" error.
 consequences:
     `### Consequences` sub-section. Optional.
 confirmation:
@@ -5964,14 +6801,17 @@ confirmation:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -6220,7 +7060,7 @@ confirmation:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -6229,7 +7069,7 @@ confirmation:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -6269,14 +7109,15 @@ confirmation:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -6340,14 +7181,17 @@ confirmation:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -6688,7 +7532,7 @@ confirmation:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -6697,7 +7541,7 @@ confirmation:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -6737,14 +7581,15 @@ confirmation:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -6760,24 +7605,17 @@ confirmation:
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
 
 
 ### `Decisions`
 
-`### Decisions` under Related Artifacts -- bullet list of
-cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
+`### Decisions` under Related Artifacts -- cross-references to
+decisions.
+
+Subclasses the shared `models.md.DecisionsBase`
+(feat-135-related-artifacts-risks) -- the field declaration and format
+validator live there; this class exists so `dec` still declares and
+owns its own concrete `Decisions` type.
 
 **Methods:**
 
@@ -6803,14 +7641,17 @@ cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -7059,7 +7900,7 @@ cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -7068,7 +7909,7 @@ cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -7108,14 +7949,15 @@ cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -7179,14 +8021,17 @@ cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -7527,7 +8372,7 @@ cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -7536,7 +8381,7 @@ cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -7576,14 +8421,15 @@ cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -7599,24 +8445,16 @@ cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `Goals`
 
-`### Goals` under Related Artifacts -- bullet list of
-cross-references to goals, one per line (e.g. "GOL-0007: <title>").
+`### Goals` under Related Artifacts -- cross-references to goals.
+
+Subclasses the shared `models.md.GoalsBase`
+(feat-135-related-artifacts-risks) -- the field declaration and format
+validator live there; this class exists so `dec` still declares and
+owns its own concrete `Goals` type.
 
 **Methods:**
 
@@ -7642,14 +8480,17 @@ cross-references to goals, one per line (e.g. "GOL-0007: <title>").
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -7898,7 +8739,7 @@ cross-references to goals, one per line (e.g. "GOL-0007: <title>").
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -7907,7 +8748,7 @@ cross-references to goals, one per line (e.g. "GOL-0007: <title>").
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -7947,14 +8788,15 @@ cross-references to goals, one per line (e.g. "GOL-0007: <title>").
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -8018,14 +8860,17 @@ cross-references to goals, one per line (e.g. "GOL-0007: <title>").
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -8366,7 +9211,7 @@ cross-references to goals, one per line (e.g. "GOL-0007: <title>").
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -8375,7 +9220,7 @@ cross-references to goals, one per line (e.g. "GOL-0007: <title>").
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -8415,14 +9260,15 @@ cross-references to goals, one per line (e.g. "GOL-0007: <title>").
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -8439,17 +9285,843 @@ cross-references to goals, one per line (e.g. "GOL-0007: <title>").
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
 
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
+### `Informed`
 
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
+`### Informed` under `## Roles and Responsibilities` -- those who are
+kept up to date on the decision or its outcome.
 
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
+Subclasses the shared `models.md.InformedBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
 
 
 ### `MoreInformation`
@@ -8481,14 +10153,17 @@ fixed format. Optional.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -8737,7 +10412,7 @@ fixed format. Optional.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -8746,7 +10421,7 @@ fixed format. Optional.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -8786,14 +10461,15 @@ fixed format. Optional.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -8857,14 +10533,17 @@ fixed format. Optional.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -9205,7 +10884,7 @@ fixed format. Optional.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -9214,7 +10893,7 @@ fixed format. Optional.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -9254,14 +10933,15 @@ fixed format. Optional.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -9277,18 +10957,6 @@ fixed format. Optional.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
 
 
 ### `Option`
@@ -9342,14 +11010,17 @@ name:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -9598,7 +11269,7 @@ name:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -9607,7 +11278,7 @@ name:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -9647,14 +11318,15 @@ name:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -9718,14 +11390,17 @@ name:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -10066,7 +11741,7 @@ name:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -10075,7 +11750,7 @@ name:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -10115,14 +11790,15 @@ name:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -10139,17 +11815,878 @@ name:
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
 
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
+### `OutcomeBlocks`
 
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
+Further markdown blocks after `DecisionOutcome`'s mandatory lead paragraph
+(feat-247-dec-outcome-blocks, GitHub issue #247).
 
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
+Leaf class (no declared nested fields, no `@markdown` metadata of its
+own) mirroring this file's own `UpdateEntryContent` precedent: an
+internal content-holding leaf that the parent's field loop resolves via
+`get_extent` and stores verbatim via the base `MarkdownStr` leaf
+`from_text` (`parse(text)` for the raw-HTML rejection, then `_value =
+text`) -- which is exactly what makes the round-trip byte-exact
+(REQ-003).
+
+Unlike `UpdateEntryContent` -- which is last on its parent and therefore
+consumes everything remaining -- `OutcomeBlocks` is *not* last: the
+`### Consequences`/`### Confirmation` H3 sections follow it. Its own
+`get_extent` therefore bounds the run it claims: it only claims an
+extent at all when the first token is one of the four accepted
+block-start kinds (`_OUTCOME_ACCEPTED_BLOCK_START_KINDS`); otherwise it
+returns `0` (the field is absent) and the H3 fields match exactly where
+they always matched before a document carries no further blocks (the
+REQ-004 parity). When it does claim an extent, the run accumulates the
+accepted blocks and STOPS at the first non-accepted top-level block --
+in particular at the first heading of any level (h1-h6) -- by returning
+that block's start line exclusive, so a block quote, an HTML comment, a
+horizontal rule, or an H4+ heading left after the run is never consumed
+and fails the parse with the engine's own actionable "text left over
+after processing all fields" error (REQ-001's rejected-kinds contract,
+enforced per distinct token kind).
+
+Adds a `text` computed property (mirroring `UpdateEntryContent`'s own,
+and `qa`'s `IntroductionBody.text` idiom, feat-114) so this
+otherwise-private `_value` is reachable through `model_dump()`/
+`model_dump_json()` (REQ-003).
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownStr'`
+  Create an instance from markdown text, splitting `text` among nested fields.
+
+  If `cls` declares no nested `MarkdownStr` fields, `text` is stored verbatim
+  in `_value` (leaf case).
+
+  Otherwise `text` is split into one block per declared field, in
+  declaration order. Each block's length is determined by calling that
+  field's own `get_extent` on the not-yet-consumed remainder of `text` --
+  this lets each field type decide its own boundary (e.g.
+  `MarkdownSection.get_extent` stops at the next sibling/ancestor
+  heading, while the base `MarkdownStr.get_extent` consumes everything
+  remaining).
+
+  The not-yet-consumed remainder is tracked as a string (`remaining_text`),
+  re-normalized with `format_text` after every field is sliced off,
+  rather than as a line-index `cursor` into the original `text`. A raw
+  substring of an already-`mdformat`-compliant document is not itself
+  guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
+  line that `mdformat` would strip), which is exactly what `get_extent`
+  requires of its input -- so `remaining_text` is kept compliant by
+  construction on every iteration instead of being handed to the next
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
+
+  A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
+  allowed a `0` extent: `process_field` reports it as `(0, None)`
+  instead of raising, that field is left unset (pydantic default, i.e.
+  `None`) rather than added to `kwargs`, `remaining_text` is left
+  untouched (nothing was consumed), and the loop simply continues to
+  the next declared field.
+
+  A field declared `list[X]`/`list[X] | None` (see `_unwrap_list`) is
+  handled by `process_list_field` instead of `process_field`: it
+  repeatedly matches `X` against the not-yet-consumed remainder, once
+  per item, until `X.get_extent` finds no further extent. The `list[X]`
+  vs. `list[X] | None` distinction plays exactly the same role as it
+  does for a scalar field -- a mandatory `list[X]` requires at least
+  one matched item (else `process_list_field` raises), while
+  `list[X] | None` allows zero items (the field is left `None`); once
+  the first item is found, every subsequent item is implicitly
+  optional regardless of which of the two was declared.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this instance's own document-relative path (REQ-001),
+          already including its own label as chosen by the caller
+          (`process_field`/`process_list_field`'s `_field_label`) --
+          `""` at the very root, in which case `cls.__name__` is used
+          instead (e.g. `"Task"` for a top-level `Task.from_text(...)`
+          call made directly by a domain parser).
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized (see
+          `not_in_mdformat_message`), `text` contains raw HTML
+          (REQ-005, see `parse`), a mandatory field/list field found
+          no match (see `_no_match_message`), or the declared fields
+          did not consume all of `text` (see `_leftover_text_message`).
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of the accepted block run parsed from `text`, as a line count.
+
+  Overrides `MarkdownStr.get_extent` (whose base behaviour would
+  consume *everything* remaining -- too greedy for a field that is
+  not last on its parent). After the standard `text ==
+  format_text(text)` precondition and `parse()`, there is an extent at
+  all only if the FIRST token is one of the four accepted block-start
+  kinds (`_OUTCOME_ACCEPTED_BLOCK_START_KINDS`); otherwise this
+  returns `0`, same as the base class's "no extent" case.
+
+  When the run is claimed, the token stream is walked with a depth
+  counter (shifted by every token's own `nesting`, mirroring
+  `MarkdownSection.get_extent`'s own `end_marker` walk): a token
+  counts as a new top-level block when it has a 2-element `.map`, is
+  seen at depth 0 (the depth going into it, before applying its own
+  nesting delta), and has one of the known block-start types
+  (`_OUTCOME_BLOCK_START_KINDS`). The first such block whose kind is
+  not accepted ends the run -- this returns that block's start line
+  (`m[0]`, exclusive); every other token contributes its own line
+  span to the accumulated extent (the max `m[1]` over all mapped
+  tokens, i.e. the end of `text` when the run reaches it).
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with an accepted block (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by
+          the accepted block run, stopping before the first
+          non-accepted top-level block or at the end of `text`.
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownStr'`
+  Create an instance from markdown text, splitting `text` among nested fields.
+
+  If `cls` declares no nested `MarkdownStr` fields, `text` is stored verbatim
+  in `_value` (leaf case).
+
+  Otherwise `text` is split into one block per declared field, in
+  declaration order. Each block's length is determined by calling that
+  field's own `get_extent` on the not-yet-consumed remainder of `text` --
+  this lets each field type decide its own boundary (e.g.
+  `MarkdownSection.get_extent` stops at the next sibling/ancestor
+  heading, while the base `MarkdownStr.get_extent` consumes everything
+  remaining).
+
+  The not-yet-consumed remainder is tracked as a string (`remaining_text`),
+  re-normalized with `format_text` after every field is sliced off,
+  rather than as a line-index `cursor` into the original `text`. A raw
+  substring of an already-`mdformat`-compliant document is not itself
+  guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
+  line that `mdformat` would strip), which is exactly what `get_extent`
+  requires of its input -- so `remaining_text` is kept compliant by
+  construction on every iteration instead of being handed to the next
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
+
+  A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
+  allowed a `0` extent: `process_field` reports it as `(0, None)`
+  instead of raising, that field is left unset (pydantic default, i.e.
+  `None`) rather than added to `kwargs`, `remaining_text` is left
+  untouched (nothing was consumed), and the loop simply continues to
+  the next declared field.
+
+  A field declared `list[X]`/`list[X] | None` (see `_unwrap_list`) is
+  handled by `process_list_field` instead of `process_field`: it
+  repeatedly matches `X` against the not-yet-consumed remainder, once
+  per item, until `X.get_extent` finds no further extent. The `list[X]`
+  vs. `list[X] | None` distinction plays exactly the same role as it
+  does for a scalar field -- a mandatory `list[X]` requires at least
+  one matched item (else `process_list_field` raises), while
+  `list[X] | None` allows zero items (the field is left `None`); once
+  the first item is found, every subsequent item is implicitly
+  optional regardless of which of the two was declared.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this instance's own document-relative path (REQ-001),
+          already including its own label as chosen by the caller
+          (`process_field`/`process_list_field`'s `_field_label`) --
+          `""` at the very root, in which case `cls.__name__` is used
+          instead (e.g. `"Task"` for a top-level `Task.from_text(...)`
+          call made directly by a domain parser).
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized (see
+          `not_in_mdformat_message`), `text` contains raw HTML
+          (REQ-005, see `parse`), a mandatory field/list field found
+          no match (see `_no_match_message`), or the declared fields
+          did not consume all of `text` (see `_leftover_text_message`).
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of the accepted block run parsed from `text`, as a line count.
+
+  Overrides `MarkdownStr.get_extent` (whose base behaviour would
+  consume *everything* remaining -- too greedy for a field that is
+  not last on its parent). After the standard `text ==
+  format_text(text)` precondition and `parse()`, there is an extent at
+  all only if the FIRST token is one of the four accepted block-start
+  kinds (`_OUTCOME_ACCEPTED_BLOCK_START_KINDS`); otherwise this
+  returns `0`, same as the base class's "no extent" case.
+
+  When the run is claimed, the token stream is walked with a depth
+  counter (shifted by every token's own `nesting`, mirroring
+  `MarkdownSection.get_extent`'s own `end_marker` walk): a token
+  counts as a new top-level block when it has a 2-element `.map`, is
+  seen at depth 0 (the depth going into it, before applying its own
+  nesting delta), and has one of the known block-start types
+  (`_OUTCOME_BLOCK_START_KINDS`). The first such block whose kind is
+  not accepted ends the run -- this returns that block's start line
+  (`m[0]`, exclusive); every other token contributes its own line
+  span to the accumulated extent (the max `m[1]` over all mapped
+  tokens, i.e. the end of `text` when the run reaches it).
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with an accepted block (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by
+          the accepted block run, stopping before the first
+          non-accepted top-level block or at the end of `text`.
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
 
 
 ### `ProsAndCons`
@@ -10158,8 +12695,8 @@ name:
 
 Optional as a whole, but present only if it carries at least one
 `### Option {N}: {name}` entry (``min_length=1``) -- an H2 with zero
-options is a structural error. The ADR heading "Pros and Cons of the
-Options" is deliberately NOT accepted (LITERAL alias).
+options is a structural error. The heading "Pros and Cons of the Options"
+is deliberately NOT accepted (LITERAL alias).
 
 Parameters
 ----------
@@ -10191,14 +12728,17 @@ options:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -10447,7 +12987,7 @@ options:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -10456,7 +12996,7 @@ options:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -10496,14 +13036,15 @@ options:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -10567,14 +13108,17 @@ options:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -10915,7 +13459,7 @@ options:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -10924,7 +13468,7 @@ options:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -10964,14 +13508,15 @@ options:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -10987,26 +13532,14 @@ options:
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
 
 
 ### `RelatedArtifacts`
 
 `## Related Artifacts` -- container for four independent, all-optional
-`### ` cross-reference lists (requirements/decisions/goals/acceptance
-criteria). Optional as a whole; no consistency check is enforced between
-the sub-lists.
+`### ` cross-reference lists (requirements/decisions/goals/risks).
+Optional as a whole; no consistency check is enforced between the
+sub-lists.
 
 **Methods:**
 
@@ -11032,14 +13565,17 @@ the sub-lists.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -11288,7 +13824,7 @@ the sub-lists.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -11297,7 +13833,7 @@ the sub-lists.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -11337,14 +13873,15 @@ the sub-lists.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -11408,14 +13945,17 @@ the sub-lists.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -11756,7 +14296,7 @@ the sub-lists.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -11765,7 +14305,7 @@ the sub-lists.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -11805,14 +14345,15 @@ the sub-lists.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -11828,25 +14369,17 @@ the sub-lists.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
 
 
 ### `Requirements`
 
-`### Requirements` under Related Artifacts -- bullet list of
-cross-references to requirements, one per line
-(e.g. "REQ-9687: <title>").
+`### Requirements` under Related Artifacts -- cross-references to
+requirements.
+
+Subclasses the shared `models.md.RequirementsBase`
+(feat-135-related-artifacts-risks) -- the field declaration and format
+validator live there; this class exists so `dec` still declares and
+owns its own concrete `Requirements` type.
 
 **Methods:**
 
@@ -11872,14 +14405,17 @@ cross-references to requirements, one per line
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -12128,7 +14664,7 @@ cross-references to requirements, one per line
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -12137,7 +14673,7 @@ cross-references to requirements, one per line
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -12177,14 +14713,15 @@ cross-references to requirements, one per line
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -12248,14 +14785,17 @@ cross-references to requirements, one per line
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -12596,7 +15136,7 @@ cross-references to requirements, one per line
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -12605,7 +15145,7 @@ cross-references to requirements, one per line
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -12645,14 +15185,15 @@ cross-references to requirements, one per line
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -12669,42 +15210,5088 @@ cross-references to requirements, one per line
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
 
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
+### `Responsible`
 
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
+`### Responsible` under `## Roles and Responsibilities` -- those who
+carry out the decision or its consequences.
 
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
+Subclasses the shared `models.md.ResponsibleBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+
+### `Risks`
+
+`### Risks` under Related Artifacts -- cross-references to risks.
+
+Subclasses the shared `models.md.RisksBase`
+(feat-135-related-artifacts-risks) -- the field declaration and format
+validator live there; this class exists so `dec` still declares and
+owns its own concrete `Risks` type.
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+
+### `RolesAndResponsibilities`
+
+`## Roles and Responsibilities` -- the RASCI responsibility assignment
+for this decision. Mandatory on every `dec` document (unlike `sop`'s own
+optional equivalent) -- a decision must always have a named accountable
+owner. `### Accountable` and `### Responsible` are both mandatory (strict-
+RACI "always has an owner and a doer"), while `### Support`/
+`### Consulted`/`### Informed` stay independently optional and MAY each
+be present with zero list items. See the general `specmgr://rasci`
+resource for RASCI role definitions.
+
+Subclasses the shared `models.md.RolesAndResponsibilitiesBase`
+(feat-29-dec-source-roles), which also carries the `@alias(value="Roles
+and Responsibilities", ...)` override this class needs -- inherited
+automatically, not redeclared here. The fields below narrow the base
+class's field types to `dec`'s own concrete `Accountable`/`Responsible`/
+`Support`/`Consulted`/`Informed` subclasses declared above.
+
+Parameters
+----------
+accountable:
+    `### Accountable` sub-section (single paragraph). Mandatory.
+responsible:
+    `### Responsible` sub-section (bullet list, >=1 item). Mandatory.
+support:
+    `### Support` sub-section (bullet list, MAY be empty). Optional.
+consulted:
+    `### Consulted` sub-section (bullet list, MAY be empty). Optional.
+informed:
+    `### Informed` sub-section (bullet list, MAY be empty). Optional.
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+
+### `Source`
+
+`## Source` -- single-line value naming the origin/authority of this
+decision (e.g. an issue, a meeting, a stakeholder request). Mandatory.
+
+Subclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --
+the field declaration itself lives there; this class exists so `dec`
+still declares and owns its own concrete `Source` type. Note: the
+generated JSON Schema's `value` field description comes from
+`SourceBase` and is intentionally domain-neutral ("this document"),
+not the domain-specific "this decision" wording used above -- see
+`SourceBase`'s own comment for the rationale (REQ-016).
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+
+### `Support`
+
+`### Support` under `## Roles and Responsibilities` -- those who
+provide resources or assistance to the responsible parties.
+
+Subclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+
+### `Tags`
+
+`## Tags` -- bullet list of free-form labels for grouping/filtering
+decisions. Optional. Absorbed from the DEC half of
+`feat-133-tags-dec-rsk` (issue #133), structurally identical to `req`'s
+existing `Tags` model.
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
+  Create an instance from markdown text starting with this class's own heading.
+
+  Validates that `text` starts with the heading triple
+  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
+  decorator's metadata (`type`/`tag`), then that the heading's actual
+  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
+  the one explicitly declared, or, absent one, the implicit
+  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
+  `match_alias`).
+
+  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
+  else will ever retain this section's body text, so `_value` is set to
+  the complete extent `from_text` received (heading and body verbatim),
+  exactly like the base `MarkdownStr.from_text` leaf case.
+
+  Otherwise the heading's own line span is stripped off `text` and the
+  remainder ("body") is delegated to `MarkdownStr.from_text` (via
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this section's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead (see
+          `MarkdownStr.from_text`'s own `_path` docs).
+      _offset: the 0-based line at which `text` (this section's own
+          heading) starts, relative to the root document's own
+          `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized, does not
+          start with this class's own heading triple, or that
+          heading's own text does not satisfy `cls`'s effective
+          `@alias` (see `_alias_mismatch_message`) -- or any of the
+          structural errors `MarkdownStr.from_text` itself may raise
+          while populating this section's own declared fields.
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of this heading section, as a line count.
+
+  Overrides `MarkdownStr.get_extent` for heading-based sections. A
+  level-N heading section's extent spans from its own `heading_open`
+  token through every subsequent token, up to (but excluding) the
+  next heading whose level is `<= N` -- i.e. a sibling or ancestor
+  heading. Deeper headings (level > N, nested subsections) do not end
+  the extent. If no such heading follows, the extent reaches the end
+  of `text`.
+
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
+  There is only an extent at all if the *first* token parsed from
+  `text` is a `heading_open` matching this class's own tag (from the
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
+      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
+          heading and its nested content, stopping before the next
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
 
 
 ### `UpdateEntry`
 
 `### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-The H3 heading text carries a timestamp and a title, joined by either
-``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
-e.g. `### 2026-08-27 - Confirmed` or
-`### 2026-08-27 14:30:00.000+02:00 : Confirmed`. The em-dash separator
-is rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
-full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
-``-05:00``) or ``Z`` for UTC variant (REQ-004) -- deliberately **not**
-the same format as frontmatter ``created``/``updated``; this format is
+The H3 heading text carries a full date+time timestamp and a title,
+joined by either ``" - "`` (space, hyphen, space) or ``" : "`` (space,
+colon, space): e.g. `### 2026-08-27 14:30:00.000+02:00 - Confirmed` or
+`### 2026-08-27T14:30:00.000+02:00 : Confirmed`. The em-dash separator
+is rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or
+space) + ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``,
+``-05:00``) or ``Z`` for UTC variant -- the same full format as
+frontmatter ``created``/``updated`` (both separators accepted, date-only
+rejected; DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is
 scoped to `## Updates` entry headings only, which are hand/LLM-authored
 body content. Constrained by the regex `@alias` above and enforced by
 `match_alias` (`re.fullmatch`) at parse time -- a heading that does not
-start with a valid date, an em-dash separator, or a missing
-`` - ``/`` : `` title all fail the parse eagerly.
+start with a valid full timestamp (a date-only value fails too), an
+em-dash separator, or a missing `` - ``/`` : `` title all fail the
+parse eagerly.
 
 Parameters
 ----------
 content:
-    The lead paragraph right after the H3 heading -- this entry's own
-    update text. Mandatory.
+    This entry's own update text, directly under the H3 heading (any
+    markdown content, not just a single paragraph). Mandatory.
 timestamp:
     Computed. The timestamp carried by the heading, verbatim. Never
     stored separately -- derived from the retained heading text.
@@ -12737,14 +20324,17 @@ title:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -12993,7 +20583,7 @@ title:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -13002,7 +20592,7 @@ title:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -13042,14 +20632,15 @@ title:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -13113,14 +20704,17 @@ title:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -13461,7 +21055,7 @@ title:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -13470,7 +21064,7 @@ title:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -13510,14 +21104,15 @@ title:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -13534,17 +21129,847 @@ title:
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
 
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
+### `UpdateEntryContent`
 
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
+`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.
 
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
+Leaf class (no declared fields) applying no `@markdown` type/tag
+restriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/
+`MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to
+the unmodified `MarkdownStr` base implementation, which simply consumes
+everything remaining in the given text regardless of its shape. Since
+`content` is the sole (and last) field on `UpdateEntry` -- nothing
+follows it before the next heading -- "everything remaining" is exactly
+correct, and no custom stop-condition override is needed.
+
+Mandatory: `UpdateEntry` declares `content` non-`Optional`, so the
+engine's existing mandatory-field zero-extent check (the base
+`MarkdownStr.get_extent` returning `0` for blank text) still rejects a
+heading with no body content -- no new validator code.
+
+Adds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`
+idiom, feat-114) so this otherwise-private `_value` is reachable through
+`model_dump()`/`model_dump_json()`.
+
+**Methods:**
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownStr'`
+  Create an instance from markdown text, splitting `text` among nested fields.
+
+  If `cls` declares no nested `MarkdownStr` fields, `text` is stored verbatim
+  in `_value` (leaf case).
+
+  Otherwise `text` is split into one block per declared field, in
+  declaration order. Each block's length is determined by calling that
+  field's own `get_extent` on the not-yet-consumed remainder of `text` --
+  this lets each field type decide its own boundary (e.g.
+  `MarkdownSection.get_extent` stops at the next sibling/ancestor
+  heading, while the base `MarkdownStr.get_extent` consumes everything
+  remaining).
+
+  The not-yet-consumed remainder is tracked as a string (`remaining_text`),
+  re-normalized with `format_text` after every field is sliced off,
+  rather than as a line-index `cursor` into the original `text`. A raw
+  substring of an already-`mdformat`-compliant document is not itself
+  guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
+  line that `mdformat` would strip), which is exactly what `get_extent`
+  requires of its input -- so `remaining_text` is kept compliant by
+  construction on every iteration instead of being handed to the next
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
+
+  A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
+  allowed a `0` extent: `process_field` reports it as `(0, None)`
+  instead of raising, that field is left unset (pydantic default, i.e.
+  `None`) rather than added to `kwargs`, `remaining_text` is left
+  untouched (nothing was consumed), and the loop simply continues to
+  the next declared field.
+
+  A field declared `list[X]`/`list[X] | None` (see `_unwrap_list`) is
+  handled by `process_list_field` instead of `process_field`: it
+  repeatedly matches `X` against the not-yet-consumed remainder, once
+  per item, until `X.get_extent` finds no further extent. The `list[X]`
+  vs. `list[X] | None` distinction plays exactly the same role as it
+  does for a scalar field -- a mandatory `list[X]` requires at least
+  one matched item (else `process_list_field` raises), while
+  `list[X] | None` allows zero items (the field is left `None`); once
+  the first item is found, every subsequent item is implicitly
+  optional regardless of which of the two was declared.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this instance's own document-relative path (REQ-001),
+          already including its own label as chosen by the caller
+          (`process_field`/`process_list_field`'s `_field_label`) --
+          `""` at the very root, in which case `cls.__name__` is used
+          instead (e.g. `"Task"` for a top-level `Task.from_text(...)`
+          call made directly by a domain parser).
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized (see
+          `not_in_mdformat_message`), `text` contains raw HTML
+          (REQ-005, see `parse`), a mandatory field/list field found
+          no match (see `_no_match_message`), or the declared fields
+          did not consume all of `text` (see `_leftover_text_message`).
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of the markdown token stream parsed from `text`, as a line count.
+
+  The result is a count, not a 0-based line index, matching Python's own
+  slicing/`len()`/`range()` convention: `text.splitlines()[:get_extent(text)]`
+  yields exactly the lines covered by the extent. This also keeps `0`
+  unambiguous as "no extent" -- a single-line extent returns `1`, never
+  colliding with the no-extent sentinel the way a 0-based last-line-index
+  would.
+
+  NOTE that `text` must already be formatted with `mdformat`.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: no extend found.
+      int > 0: the number of lines, from the start of `text`, covered by
+          the extent. Equivalent to the highest `token.map[1]` across all
+          tokens with a 2-element `.map` (`token.map[1]` is already the
+          exclusive-end line bound, so it doubles as a line count since
+          every extent starts at line 0).
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
+
+- `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+
+- `copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  Returns a copy of the model.
+
+  !!! warning "Deprecated"
+      This method is now deprecated; use `model_copy` instead.
+
+  If you need `include` or `exclude`, use:
+
+  ```python {test="skip" lint="skip"}
+  data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+  data = {**data, **(update or {})}
+  copied = self.model_validate(data)
+  ```
+
+  Args:
+      include: Optional set or mapping specifying which fields to include in the copied model.
+      exclude: Optional set or mapping specifying which fields to exclude in the copied model.
+      update: Optional dictionary of field-value pairs to override field values in the copied model.
+      deep: If True, the values of fields that are Pydantic models will be deep-copied.
+
+  Returns:
+      A copy of the model with included, excluded and updated fields as specified.
+
+- `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
+
+- `from_orm(obj: 'Any') -> 'Self'`
+
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownStr'`
+  Create an instance from markdown text, splitting `text` among nested fields.
+
+  If `cls` declares no nested `MarkdownStr` fields, `text` is stored verbatim
+  in `_value` (leaf case).
+
+  Otherwise `text` is split into one block per declared field, in
+  declaration order. Each block's length is determined by calling that
+  field's own `get_extent` on the not-yet-consumed remainder of `text` --
+  this lets each field type decide its own boundary (e.g.
+  `MarkdownSection.get_extent` stops at the next sibling/ancestor
+  heading, while the base `MarkdownStr.get_extent` consumes everything
+  remaining).
+
+  The not-yet-consumed remainder is tracked as a string (`remaining_text`),
+  re-normalized with `format_text` after every field is sliced off,
+  rather than as a line-index `cursor` into the original `text`. A raw
+  substring of an already-`mdformat`-compliant document is not itself
+  guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
+  line that `mdformat` would strip), which is exactly what `get_extent`
+  requires of its input -- so `remaining_text` is kept compliant by
+  construction on every iteration instead of being handed to the next
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
+
+  A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
+  allowed a `0` extent: `process_field` reports it as `(0, None)`
+  instead of raising, that field is left unset (pydantic default, i.e.
+  `None`) rather than added to `kwargs`, `remaining_text` is left
+  untouched (nothing was consumed), and the loop simply continues to
+  the next declared field.
+
+  A field declared `list[X]`/`list[X] | None` (see `_unwrap_list`) is
+  handled by `process_list_field` instead of `process_field`: it
+  repeatedly matches `X` against the not-yet-consumed remainder, once
+  per item, until `X.get_extent` finds no further extent. The `list[X]`
+  vs. `list[X] | None` distinction plays exactly the same role as it
+  does for a scalar field -- a mandatory `list[X]` requires at least
+  one matched item (else `process_list_field` raises), while
+  `list[X] | None` allows zero items (the field is left `None`); once
+  the first item is found, every subsequent item is implicitly
+  optional regardless of which of the two was declared.
+
+  Args:
+      text: the markdown text to parse.
+      _path: this instance's own document-relative path (REQ-001),
+          already including its own label as chosen by the caller
+          (`process_field`/`process_list_field`'s `_field_label`) --
+          `""` at the very root, in which case `cls.__name__` is used
+          instead (e.g. `"Task"` for a top-level `Task.from_text(...)`
+          call made directly by a domain parser).
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root.
+
+  Raises:
+      AssertionError: `text` is not `mdformat`-normalized (see
+          `not_in_mdformat_message`), `text` contains raw HTML
+          (REQ-005, see `parse`), a mandatory field/list field found
+          no match (see `_no_match_message`), or the declared fields
+          did not consume all of `text` (see `_leftover_text_message`).
+
+- `get_extent(text: 'str') -> 'int'`
+  Return the extent of the markdown token stream parsed from `text`, as a line count.
+
+  The result is a count, not a 0-based line index, matching Python's own
+  slicing/`len()`/`range()` convention: `text.splitlines()[:get_extent(text)]`
+  yields exactly the lines covered by the extent. This also keeps `0`
+  unambiguous as "no extent" -- a single-line extent returns `1`, never
+  colliding with the no-extent sentinel the way a 0-based last-line-index
+  would.
+
+  NOTE that `text` must already be formatted with `mdformat`.
+
+  Args:
+      text: Markdown source, pre-formatted with `mdformat`.
+
+  Returns:
+      0: no extend found.
+      int > 0: the number of lines, from the start of `text`, covered by
+          the extent. Equivalent to the highest `token.map[1]` across all
+          tokens with a 2-element `.map` (`token.map[1]` is already the
+          exclusive-end line bound, so it doubles as a line count since
+          every extent starts at line 0).
+
+- `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
+
+- `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
+  Creates a new instance of the `Model` class with validated data.
+
+  Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+  Default values are respected, but no other validation is performed.
+
+  !!! note
+      `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+      That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+      and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+      Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+      an error if extra values are passed, but they will be ignored.
+
+  Args:
+      _fields_set: A set of field names that were originally explicitly set during instantiation. If provided,
+          this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute.
+          Otherwise, the field names from the `values` argument will be used.
+      values: Trusted or pre-validated data dictionary.
+
+  Returns:
+      A new instance of the `Model` class with validated data.
+
+- `model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [`model_copy`](../concepts/models.md#model-copy)
+
+  Returns a copy of the model.
+
+  !!! note
+      The underlying instance's [`__dict__`][object.__dict__] attribute is copied. This
+      might have unexpected side effects if you store anything in it, on top of the model
+      fields (e.g. the value of [cached properties][functools.cached_property]).
+
+  Args:
+      update: Values to change/add in the new model. Note: the data is not validated
+          before creating the new model. You should trust this data.
+      deep: Set to `True` to make a deep copy of the model.
+
+  Returns:
+      New model instance.
+
+- `model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'dict[str, Any]'`
+  !!! abstract "Usage Documentation"
+      [`model_dump`](../concepts/serialization.md#python-mode)
+
+  Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+  Args:
+      mode: The mode in which `to_python` should run.
+          If mode is 'json', the output will only contain JSON serializable types.
+          If mode is 'python', the output may contain non-JSON-serializable Python objects.
+      include: A set of fields to include in the output.
+      exclude: A set of fields to exclude from the output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to use the field's alias in the dictionary key if defined.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A dictionary representation of the model.
+
+- `model_dump_json(self, *, indent: 'int | None' = None, ensure_ascii: 'bool' = False, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, exclude_computed_fields: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, fallback: 'Callable[[Any], Any] | None' = None, serialize_as_any: 'bool' = False, polymorphic_serialization: 'bool | None' = None) -> 'str'`
+  !!! abstract "Usage Documentation"
+      [`model_dump_json`](../concepts/serialization.md#json-mode)
+
+  Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+  Args:
+      indent: Indentation to use in the JSON output. If None is passed, the output will be compact.
+      ensure_ascii: If `True`, the output is guaranteed to have all incoming non-ASCII characters escaped.
+          If `False` (the default), these characters will be output as-is.
+      include: Field(s) to include in the JSON output.
+      exclude: Field(s) to exclude from the JSON output.
+      context: Additional context to pass to the serializer.
+      by_alias: Whether to serialize using field aliases.
+      exclude_unset: Whether to exclude fields that have not been explicitly set.
+      exclude_defaults: Whether to exclude fields that are set to their default value.
+      exclude_none: Whether to exclude fields that have a value of `None`.
+      exclude_computed_fields: Whether to exclude computed fields.
+          While this can be useful for round-tripping, it is usually recommended to use the dedicated
+          `round_trip` parameter instead.
+      round_trip: If True, dumped values should be valid as input for non-idempotent types such as Json[T].
+      warnings: How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors,
+          "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError].
+      fallback: A function to call when an unknown value is encountered. If not provided,
+          a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError] error is raised.
+      serialize_as_any: Whether to serialize fields with duck-typing serialization behavior.
+      polymorphic_serialization: Whether to use model and dataclass polymorphic serialization for this call.
+
+  Returns:
+      A JSON string representation of the model.
+
+- `model_json_schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation', *, union_format: "Literal['any_of', 'primitive_type_array']" = 'any_of') -> 'dict[str, Any]'`
+  Generates a JSON schema for a model class.
+
+  Args:
+      by_alias: Whether to use attribute aliases or not.
+      ref_template: The reference template.
+      union_format: The format to use when combining schemas from unions together. Can be one of:
+
+          - `'any_of'`: Use the [`anyOf`](https://json-schema.org/understanding-json-schema/reference/combining#anyOf)
+          keyword to combine schemas (the default).
+          - `'primitive_type_array'`: Use the [`type`](https://json-schema.org/understanding-json-schema/reference/type)
+          keyword as an array of strings, containing each type of the combination. If any of the schemas is not a primitive
+          type (`string`, `boolean`, `null`, `integer` or `number`) or contains constraints/metadata, falls back to
+          `any_of`.
+      schema_generator: To override the logic used to generate the JSON schema, as a subclass of
+          `GenerateJsonSchema` with your desired modifications
+      mode: The mode in which to generate the schema.
+
+  Returns:
+      The JSON schema for the given model class.
+
+- `model_parametrized_name(params: 'tuple[type[Any], ...]') -> 'str'`
+  Compute the class name for parametrizations of generic classes.
+
+  This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+  Args:
+      params: Tuple of types of the class. Given a generic class
+          `Model` with 2 type variables and a concrete model `Model[str, int]`,
+          the value `(str, int)` would be passed to `params`.
+
+  Returns:
+      String representing the new class where `params` are passed to `cls` as type variables.
+
+  Raises:
+      TypeError: Raised when trying to generate concrete names for non-generic models.
+
+- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
+  This function is meant to behave like a BaseModel method to initialize private attributes.
+
+  It takes context as an argument since that's what pydantic-core passes when calling it.
+
+  Args:
+      self: The BaseModel instance.
+      context: The context.
+
+- `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
+  Try to rebuild the pydantic-core schema for the model.
+
+  This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+  the initial attempt to build the schema, and automatic rebuilding fails.
+
+  Args:
+      force: Whether to force the rebuilding of the model schema, defaults to `False`.
+      raise_errors: Whether to raise errors, defaults to `True`.
+      _parent_namespace_depth: The depth level of the parent namespace, defaults to 2.
+      _types_namespace: The types namespace, defaults to `None`.
+
+  Returns:
+      Returns `None` if the schema is already "complete" and rebuilding was not required.
+      If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+- `model_validate(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate a pydantic model instance.
+
+  Args:
+      obj: The object to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      from_attributes: Whether to extract data from object attributes.
+      context: Additional context to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Raises:
+      ValidationError: If the object could not be validated.
+
+  Returns:
+      The validated model instance.
+
+- `model_validate_json(json_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  !!! abstract "Usage Documentation"
+      [JSON Parsing](../concepts/json.md#json-parsing)
+
+  Validate the given JSON data against the Pydantic model.
+
+  Args:
+      json_data: The JSON data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+  Raises:
+      ValidationError: If `json_data` is not a JSON string or the object could not be validated.
+
+- `model_validate_strings(obj: 'Any', *, strict: 'bool | None' = None, extra: 'ExtraValues | None' = None, context: 'Any | None' = None, by_alias: 'bool | None' = None, by_name: 'bool | None' = None) -> 'Self'`
+  Validate the given object with string data against the Pydantic model.
+
+  Args:
+      obj: The object containing string data to validate.
+      strict: Whether to enforce types strictly.
+      extra: Whether to ignore, allow, or forbid extra data during model validation.
+          See the [`extra` configuration value][pydantic.ConfigDict.extra] for details.
+      context: Extra variables to pass to the validator.
+      by_alias: Whether to use the field's alias when validating against the provided input data.
+      by_name: Whether to use the field's name when validating against the provided input data.
+
+  Returns:
+      The validated Pydantic model.
+
+- `parse_file(path: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `parse_obj(obj: 'Any') -> 'Self'`
+
+- `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
+
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
+  Resolve one nested field's extent and parsed instance from `text`.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      type_: the field's declared `MarkdownStr` subclass.
+      text: the not-yet-consumed remainder of the parent's markdown text;
+          the field is assumed to start at the very first line of `text`.
+      optional: whether the field is declared `Optional[type_]`/
+          `type_ | None`. When `True` and `type_.get_extent(text)` finds
+          no extent, this is not an error: the field is simply absent
+          from `text` (e.g. an optional section whose heading doesn't
+          appear next), and `(0, None)` is returned so the caller can
+          move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
+
+  Returns:
+      A `(extent, instance)` pair: `extent` is the number of leading
+      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
+      and `instance` is the field's value, parsed via
+      `type_.from_text` on exactly those `extent` leading lines -- or
+      `(0, None)` for an absent optional field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `format_text` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `format_text`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `format_text`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
+
+- `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
+
+- `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `update_forward_refs(**localns: 'Any') -> 'None'`
+
+- `validate(value: 'Any') -> 'Self'`
 
 
 ### `Updates`
@@ -13554,9 +21979,8 @@ entries. Optional as a whole, and the last section of the document if
 present. May be preceded by an explanatory HTML comment (e.g. an
 ordering hint).
 
-Mirrors `tsk`'s `RecentUpdates` shape: no dedicated per-entry tools (no
-`option_create`/`option_list` equivalent) -- entries are prepended
-(newest-first) by editing the whole body.
+Mirrors `tsk`'s `RecentUpdates` shape: no dedicated per-entry tools
+-- entries are prepended (newest-first) by editing the whole body.
 
 Parameters
 ----------
@@ -13759,7 +22183,7 @@ updates:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -13768,7 +22192,7 @@ updates:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -13808,14 +22232,15 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -14136,7 +22561,7 @@ updates:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -14145,7 +22570,7 @@ updates:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -14185,14 +22610,15 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -14208,16 +22634,4 @@ updates:
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
 

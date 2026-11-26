@@ -25,54 +25,66 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pydantic import ValidationError
-
 from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter, parse_dec
 from biz.dfch.specmgr.dec.tools._paths import dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 
-_MINIMAL_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+from ._helpers import MANDATORY_ROLES_AND_SOURCE
 
-    ## Context and Problem Statement
+_MINIMAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    The current store cannot serve the dashboard read path.
+        ## Context and Problem Statement
 
-    ## Decision Outcome
+        The current store cannot serve the dashboard read path.
 
-    We chose the document store.
-    """
+        ## Decision Outcome
+
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
 )
 
 # Structurally valid, but a field/cross-field failure: two `### Option 1:`
 # headings are duplicate option numbers (the `Decision` after-validator's
 # `ValidationError` channel).
-_BAD_OPTION_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+_BAD_OPTION_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    ## Context and Problem Statement
+        ## Context and Problem Statement
 
-    The current store cannot serve the dashboard read path.
+        The current store cannot serve the dashboard read path.
 
-    ## Decision Outcome
+        ## Decision Outcome
 
-    We chose the document store.
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
+    + textwrap.dedent(
+        """\
 
-    ## Pros and Cons
+        ## Pros and Cons
 
-    ### Option 1: Document Store
+        ### Option 1: Document Store
 
-    Meets the latency budget.
+        Meets the latency budget.
 
-    ### Option 1: Key-Value Store
+        ### Option 1: Key-Value Store
 
-    Even faster reads.
-    """
+        Even faster reads.
+        """
+    )
 )
 
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized decision sections.\n"
@@ -132,18 +144,32 @@ class TestCreateDec(TempDecDirTestCase):
 
         self.assertTrue(dec_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all."""
-        with self.assertRaises(AssertionError):
-            create_dec(_MALFORMED_BODY)
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110)."""
+        result = create_dec(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("dec create_dec (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(dec_base_dir().exists())
 
-    def test_field_validation_failure_raises_and_writes_nothing(self) -> None:
-        """A field-level validation failure (duplicate `### Option 1:` number) must raise, writing nothing."""
-        with self.assertRaises(ValidationError):
-            create_dec(_BAD_OPTION_BODY)
+    def test_field_validation_failure_returns_validate_result_and_writes_nothing(self) -> None:
+        """A field-level validation failure (duplicate `### Option 1:` number) must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110)."""
+        result = create_dec(_BAD_OPTION_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("dec create_dec (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(dec_base_dir().exists())
 
 

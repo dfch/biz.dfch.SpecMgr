@@ -82,7 +82,7 @@ class TestSopExampleResource(unittest.TestCase):
         self.assertIsNotNone(related_artifacts.requirements)
         self.assertIsNotNone(related_artifacts.decisions)
         self.assertIsNotNone(related_artifacts.goals)
-        self.assertIsNotNone(related_artifacts.acceptance_criteria)
+        self.assertIsNotNone(related_artifacts.risks)
         self.assertIsNotNone(related_artifacts.sops)
 
         updates = document.body.updates

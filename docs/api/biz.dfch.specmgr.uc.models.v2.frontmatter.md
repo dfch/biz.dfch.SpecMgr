@@ -7,10 +7,15 @@ which re-declared `id`/`version`/`created`/`updated`/`status` from scratch. Here
 only `type` and `status` are narrowed beyond the base's free-form defaults --
 `id`'s `uc-NNN` pattern is deliberately *not* ported forward: per
 `MarkdownFrontmatter.id`'s own docstring, `id` is a specmgr-assigned identifier
-(the same convention `models.adr.v1.AdrFrontmatter.id` already uses), not a
-hand-authored `uc-NNN` sequence number -- mirroring `AdrFrontmatter`'s own
+(the same convention `MarkdownFrontmatter.id` uses), not a hand-authored
+`uc-NNN` sequence number -- mirroring
 `id: str | None = None`, not `UseCaseFrontmatter`'s stricter, now-superseded
 `Field(..., pattern=r"^uc-[0-9]+$")`.
+
+This module also owns the use-case status state machine (feat-108-fsm, GitHub
+issue #108): the ``_STATUS_TRANSITIONS`` table, next to ``_ALLOWED_STATUSES``,
+enforced by the generic ``set_status`` tool post-load/pre-write (REQ-001/
+REQ-002).
 
 ## Classes
 

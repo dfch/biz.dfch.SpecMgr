@@ -1,0 +1,303 @@
+---
+classification: null
+created: '2026-09-17 14:06:49.067+02:00'
+id: feat-29-dec-source-roles
+status: done
+type: feat
+updated: '2026-10-07T06:21:40.922Z'
+version: 1.0.0
+---
+
+# Feature: Add `## Roles and Responsibilities`, `## Tags`, and `## Source` Sections to DEC Documents
+
+## Plan
+
+### Overview
+
+GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attributes (examples given: `source`, `owner`) that plain decisions are missing compared to ADRs. Analysis during planning showed these examples map onto two existing, already-implemented concepts elsewhere in the codebase rather than new frontmatter fields: `owner`/`decision-makers`/`consulted`/`informed` are RASCI roles (already implemented as a body section on `sop`), and `source` is already implemented as REQ's own `## Source` body section. This feature therefore adds three new **body** sections to `dec` documents -- a mandatory `## Roles and Responsibilities` (RASCI), an optional `## Tags` (absorbed from the DEC half of `feat-133-tags-dec-rsk`, issue #133), and a mandatory `## Source` -- and refactors the underlying field/validator logic into shared base classes so `req`, `sop`, and `dec` stop duplicating structurally-identical leaf sections. `DecFrontmatter` itself is not changed.
+
+### Requirements
+
+- REQ-001: `DecFrontmatter` is not changed by this feature; `id`/`version`/`status` remain exactly as they are today (no `date`/`decision-makers`/`consulted`/`informed`/`source`/`owner` frontmatter fields are added).
+- REQ-002: `dec` documents gain a mandatory `## Roles and Responsibilities` section: `### Accountable` (single mandatory paragraph, the decision-maker/owner) and `### Responsible` (mandatory bullet list, >=1 item) are always required once the section exists, and since the section itself is mandatory on every `dec` document, every decision always names an accountable owner; `### Support`/`### Consulted`/`### Informed` remain independently optional bullet lists that may be present with zero items.
+- REQ-003: `dec` documents gain an optional `## Tags` section, structurally identical to `req`'s existing `Tags` model (bullet list of `MarkdownListItemWithNotes`, `min_length=1` when present), absorbing the DEC half of `feat-133-tags-dec-rsk` (issue #133).
+- REQ-004: `dec` documents gain a mandatory `## Source` section, structurally identical in shape to `req`'s existing `## Source` (single mandatory paragraph naming the origin/authority of the decision).
+- REQ-005: The three new `dec` sections appear in this exact order: `## Roles and Responsibilities`, then `## Tags`, then `## Source`, positioned after `## Decision Outcome` and before `## Related Artifacts`.
+- REQ-006: `Source` and the six RASCI classes (`Accountable`/`Responsible`/`Support`/`Consulted`/`Informed`/`RolesAndResponsibilities`) are implemented via shared base classes in a new `models/md/common_sections.py` module; `req`'s existing `Source` and `sop`'s existing six RASCI classes are refactored to subclass those bases instead of duplicating field/validator definitions, and `dec`'s new classes subclass the same bases; every domain still declares and owns its own concrete class in its own package, matching the domain-first convention.
+- REQ-007: No new ADR is written for the shared-base-class decision; a "Decisions Made" log entry in this feature's own README documents the rationale instead.
+- REQ-008: `feat-133-tags-dec-rsk` (issue #133) is rescoped to RSK-only once this feature ships DEC's Tags section, with a note in its own README pointing at this feature, and a brief comment posted on GitHub issue #133 noting the absorption.
+- REQ-009: Every phase of this feature's own Task List that touches any `src/**/*.py` file ends with a full local quality gate (`ruff format --check`, `ruff check`, `vulture`, `specmgr docs`, `specmgr mcp-docs`, `specmgr schema` for all 12 registered types plus their packaged per-domain copies, `pytest -n auto --cov=src --cov-report=`, `specmgr coverage-badge`) run and passing before that phase's own commit, since `models/md` and every domain's `models/v1`(or `v2`) package are matched by the `specmgr-schema*` pre-commit hooks' file-scope regex and force full-repo schema regeneration on every touch, not just the touched domain's own.
+- REQ-010: Every remaining phase (Phase 4 onward) is implemented by a dedicated `phase-implementer` subagent dispatch, one phase per dispatch, driven by a `phase-orchestrator`-style main session that reads this README and reports back between phases -- not implemented inline in one long-running session, to keep each phase's own context small and this plan document the single source of truth for what is/isn't done.
+- REQ-011: `CHANGELOG.md` gains an `[Unreleased]` entry for this feature's shipped changes: the three new `dec` body sections, explicitly marked `**BREAKING**` where it says that any existing `dec` document created before this release fails to parse via `get_dec`/`parse_dec`/`update`/`create_dec` round-trips until the two new mandatory sections are added, including a short before/after markdown snippet showing the fix.
+- REQ-012: `tests/dec/models/v1/test_body.py::TestDecisionMisordering::test_updates_before_more_information_raises_assertion_error` and `::test_related_artifacts_after_pros_and_cons_raises_assertion_error` are corrected so their fixtures satisfy the mandatory `## Roles and Responsibilities`/`## Source` sections ahead of the actual misordering trigger they exist to test, and each additionally asserts on the raised `AssertionError`'s message content (not just its type), so a recurrence of "passes for the wrong reason" is caught automatically.
+- REQ-013: The mandatory-vs-optional cardinality question for `## Roles and Responsibilities`/`## Source`, raised during external PR review, is explicitly revisited and the decision to keep both mandatory (accepting the resulting backward incompatibility as a documented, intentional breaking change on this pre-1.0 project) is recorded in this feature's Decisions Made log.
+- REQ-014: This feature's own README records, in a new "Known Limitations" section (mirroring `feat-8-coverage-badge/README.md`'s precedent), that the unmerged `feat-46-remove-adr` branch's own plan assumes GitHub issue #29 would be resolved via new `DecFrontmatter` fields (including `date`) for ADR-to-DEC conversion fidelity -- a different, incompatible resolution from what this feature actually shipped (body sections, no frontmatter change, no `date` field) -- so a future reader has that context without needing to consult a closed PR description.
+- REQ-015: `TestDecisionMisordering` (or a new, dedicated test class) in `tests/dec/models/v1/test_body.py` gains at least one regression test that puts one of the three new sections out of their required relative order -- e.g. `## Source` before `## Roles and Responsibilities`, `## Tags` after `## Source`, or the whole new block before `## Decision Outcome`/after `## Related Artifacts` -- and asserts on the raised `AssertionError`, closing the gap a follow-up `feat-reviewer` review of this feature found: ACC-004 claims this case is covered, but every existing misordering test only exercises pre-existing sections.
+- REQ-016: The wording drift the same review found between `SourceBase.value`'s `Field(description=...)` in `models/md/common_sections.py` (genericized to "this document" during the Phase 1 refactor) and `req.Source`'s/`dec.Source`'s own class-level docstrings (still domain-specific, "requirement"/"decision") is resolved by making the generic wording an explicit, documented policy choice -- e.g. a short comment in `common_sections.py` explaining why the shared field description is domain-neutral by design, and/or a one-line note added to `req.Source`'s docstring pointing this out -- rather than leaving it as an unremarked side effect of the refactor.
+- REQ-017: `tests/dec/models/v1/test_parser.py`'s module-level `_MANDATORY_ROLES_AND_SOURCE` constant (byte-identical to `tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE`) is removed in favor of importing the shared helper, completing the de-duplication `_helpers.py` was introduced for in Phase 2 but that this one file was missed by.
+- REQ-018: `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/`_DEC_BAD_FIELD_BODY` fixtures, currently built by concatenating two-to-three separate `textwrap.dedent(...)` calls with `+`, are rewritten to use the single-`textwrap.dedent`-call style every sibling generic test file (`test_update.py`, `test_delete.py`, `test_set_status.py`, `test_set_classification.py`) already uses for its own `dec` fixtures, removing the unexplained style divergence the same review found.
+
+### Acceptance Criteria
+
+- [x] ACC-001: Verifies REQ-002 -- a `dec` document with `## Roles and Responsibilities` present (Accountable + Responsible, optionally Support/Consulted/Informed) parses via `parse_dec`/`get_dec`, and a `dec` document missing the section entirely fails validation.
+- [x] ACC-002: Verifies REQ-003 -- a `dec` document with `## Tags` parses/validates/round-trips through `create_dec`/`get_dec`/`validate` (`type="dec"`), and a `dec` document without `## Tags` still parses successfully (optional).
+- [x] ACC-003: Verifies REQ-004 -- a `dec` document with `## Source` present parses, and a `dec` document missing `## Source` fails validation.
+- [x] ACC-004: Verifies REQ-005 -- a `dec` document with the new sections out of their required relative order fails validation.
+- [x] ACC-005: Verifies REQ-006 -- `req/models/v1/body.py::Source` and `sop/models/v1/body.py`'s six RASCI classes are refactored to subclass the new `models/md/common_sections.py` base classes, and the full existing REQ and SOP test suites still pass unchanged.
+- [x] ACC-006: Verifies REQ-006 -- `dec/models/v1/body.py::RolesAndResponsibilities`/`Source` subclass the shared bases and correctly match their expected headings without redeclaring `@alias`, confirmed by a unit test.
+- [x] ACC-007: Verifies REQ-008 -- `feat-133-tags-dec-rsk/README.md`'s Requirements/Acceptance Criteria/Task List no longer mention `dec`, and a comment referencing this feature is posted on GitHub issue #133.
+- [x] ACC-008: Verifies REQ-009 -- every phase's commit in this feature's history passes the full local pre-commit hook chain with no follow-up "fix docs/schema drift" commit needed afterward.
+- [x] ACC-009: Verifies REQ-010 -- Phase 4 and Phase 5 are each implemented by a distinct `phase-implementer` dispatch, each producing its own commit and its own Progress-section update in this README.
+- [x] ACC-010: Verifies REQ-011 -- `CHANGELOG.md` has a new `[Unreleased]` entry documenting this feature, with a `**BREAKING**`-marked bullet and a migration snippet.
+- [x] ACC-011: Verifies REQ-012 -- both corrected tests fail again if the mandatory-section-first fix is reverted (spot-check this during implementation, then restore the fix), and pass with the fix in place, asserting on message content.
+- [x] ACC-012: Verifies REQ-013 -- a dated Decisions Made entry records the cardinality decision and its rationale.
+- [x] ACC-013: Verifies REQ-014 -- a "Known Limitations" section exists and cross-references `feat-46-remove-adr`.
+- [x] ACC-014: Verifies REQ-015 -- a new misordering regression test covering the three new sections exists and fails (with an `AssertionError`) when the fix is temporarily reverted, then passes with the fix restored.
+- [x] ACC-015: Verifies REQ-016 -- `models/md/common_sections.py` and/or `req.Source`'s docstring explicitly document the domain-neutral field-description wording as an intentional choice.
+- [x] ACC-016: Verifies REQ-017 -- `tests/dec/models/v1/test_parser.py` no longer defines its own `_MANDATORY_ROLES_AND_SOURCE` constant and imports the shared one instead; the full DEC test suite still passes unchanged.
+- [x] ACC-017: Verifies REQ-018 -- `tests/general/tools/test_validate.py`'s DEC fixtures use a single `textwrap.dedent` call each, matching sibling generic test files; the full `test_validate.py` suite still passes unchanged.
+
+### Scope
+
+#### Included
+
+- `models/md/common_sections.py`: new shared base classes (`SourceBase`, `AccountableBase`, `ResponsibleBase`, `SupportBase`, `ConsultedBase`, `InformedBase`, `RolesAndResponsibilitiesBase`).
+- `dec/models/v1/body.py`: new `RolesAndResponsibilities` (mandatory), `Tags` (optional), `Source` (mandatory) sections; DEC schema `version` bump.
+- `req/models/v1/body.py` and `sop/models/v1/body.py`: refactor existing `Source`/RASCI classes to subclass the shared bases (behavior-preserving).
+- DEC packaged template/example data and `dec_schema.json` (docs copy and packaged copy) updates.
+- `dec/prompts/create_dec`/`update_dec` instruction updates.
+- Unit tests for all of the above.
+- Docs regeneration (`docs/api/`, `docs/GENERATED.md`, `docs/MCP.md`, all 12 `docs/*_schema.json`).
+- `AGENTS.md` update for the `dec/` bullet.
+- `feat-7-various-improvements/README.md` Task 0.33 update (split out into this feature, mirroring Task 0.32's own precedent).
+- `feat-133-tags-dec-rsk/README.md` rescoping to RSK-only.
+- GitHub issue #29 and #133 comments.
+- A new misordering regression test, a documentation note on the domain-neutral `Source.value` field description, and two test-fixture cleanups (`tests/dec/models/v1/test_parser.py`, `tests/general/tools/test_validate.py`) identified by a follow-up `feat-reviewer` review (see Phase 7).
+
+#### Explicitly Out Of Scope
+
+- RSK's own `## Tags` section -- stays with `feat-133-tags-dec-rsk`.
+- Any change to `DecFrontmatter` itself.
+- Any change to SOP's own optional-as-a-whole `## Roles and Responsibilities` cardinality -- SOP keeps its section optional; only its field/validator implementation is refactored to share code, not its cardinality.
+- A dedicated ADR for the shared-base-class decision -- a feature-level Decisions Made entry is used instead, per explicit user decision.
+
+### Dependencies
+
+#### Depends On
+
+- None.
+
+#### Blocks
+
+- None directly; `feat-133-tags-dec-rsk`'s remaining RSK-only scope is unaffected and does not block on this feature landing first, but its README is edited by this feature to drop the DEC half.
+
+### Design Notes
+
+RASCI shape decision: DEC intentionally diverges from SOP's own cardinality. SOP made the whole `## Roles and Responsibilities` section optional (a procedure might not need explicit roles), with `### Accountable`/`### Responsible` only forced once the section is present. DEC makes the whole section mandatory on every document, because a decision must always have a named accountable owner -- there is no such thing as a decision with nobody responsible for it. `### Support`/`### Consulted`/`### Informed` stay independently optional under DEC too, exactly like SOP.
+
+Alias inheritance, verified empirically: `@alias(...)` sets `cls._alias_metadata` as a plain Python class attribute at decoration time, and `match_alias()` reads it via `getattr(cls, "_alias_metadata", None)`, which follows normal MRO-based attribute lookup. A live test during planning confirmed a subclass that never redeclares `_alias_metadata` correctly inherits it from its base class, and `match_alias` matches correctly against the inherited value. Consequence: `@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)` needs to be declared exactly once, on the shared `RolesAndResponsibilitiesBase` in `models/md/common_sections.py` -- `sop.RolesAndResponsibilities` and `dec.RolesAndResponsibilities` both inherit it automatically and do not need to redeclare `@alias` themselves. `Source`/`Accountable`/`Responsible`/`Support`/`Consulted`/`Informed` need no `@alias` at all, base or subclass, since their default `SPACE_SEPARATED`-derived heading text (computed from the actual runtime class's own `__name__` at match time, not at decoration time) already equals the desired heading text for those already-matching class names. **Verified empirically twice**: once with a standalone `Base`/`Derived` pair during planning (plan-mode conversation), and again during Phase 1 implementation with a dedicated `tests/models/md/test_common_sections.py` -- the `*Base` classes are NOT parseable directly (their own suffixed class name, e.g. `"AccountableBase"`, derives the wrong default heading `"Accountable Base"`); only a bare, correctly-named concrete subclass (e.g. `class Accountable(AccountableBase): pass`) is ever used as an actual Pydantic field type.
+
+Field-narrowing pattern (added during Phase 1 implementation): `RolesAndResponsibilitiesBase` types its `accountable`/`responsible`/`support`/`consulted`/`informed` fields to the shared `*Base` leaf classes, but every domain's own concrete `RolesAndResponsibilities` subclass re-declares those same fields narrowed to that domain's own concrete `Accountable`/`Responsible`/`Support`/`Consulted`/`Informed` subclasses. Verified with a standalone Pydantic v2 test during planning that a subclass may narrow an inherited field's type to a subtype, with validation enforced against the narrowed type (a plain base-class instance is rejected). This narrowing is what makes `cls.__name__` resolve to the domain's own class name at parse time, required for the default `SPACE_SEPARATED` alias match to succeed. The narrowed field re-declarations trigger a `pyright`/pylance "invariant mutable attribute" warning (not enforced by this repo's `ruff`/`pylint`/`vulture` gates) suppressed with `# type: ignore`, mirroring `DecFrontmatter`'s own existing precedent for a similar narrowing pattern (`type: Literal["dec"] = "dec"  # type: ignore`).
+
+Section order: mirrors REQ's own precedent of `## Tags` immediately preceding `## Source` (REQ's field order is Priority, then Tags, then Source). DEC's new block sits right after `## Decision Outcome` (its `### Consequences`/`### Confirmation` sub-sections) and right before `## Related Artifacts`.
+
+Tags absorption: `feat-133-tags-dec-rsk` (issue #133) already independently planned an identical `## Tags` shape for both `dec` and `rsk`. Since this feature touches `dec/models/v1/body.py` anyway, it absorbs the DEC half of that work in the same pass, leaving `feat-133-tags-dec-rsk` scoped to RSK only.
+
+Pre-commit hook scope, verified by reading `.pre-commit-config.yaml`: the `specmgr-schema` hook (and its 12 per-domain `specmgr-schema-{type}-package` siblings) match any `.py` file under the `dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`sysrs`/`tsk`/`uc`/`vcr` `models/v1`(or `v2`) packages, or `models/md`. Because `models/md` is one of the literal alternation branches, editing `models/md/common_sections.py` in Phase 1 alone -- before `dec` is even touched -- already forces regeneration of every registered domain's `docs/*_schema.json` and packaged copy, by design (a shared-model change can change any domain's generated tool parameter schema). Every phase from Phase 1 onward must therefore run the full regen/verify checklist in REQ-009, not just a final "docs" phase at the end. **Confirmed in practice during Phase 1 and Phase 2**: `specmgr schema` regenerated all 12 `docs/*_schema.json` files each time, but only the domains actually touched by that phase changed content (Phase 1: `req`/`sop`; Phase 2: `dec` only), exactly as predicted.
+
+Existing DEC test fixtures required updating across ~15 test files once `## Roles and Responsibilities`/`## Source` became mandatory (Phase 2): a new `tests/dec/tools/_helpers.py` module (mirroring the existing `tests/adr/tools/_helpers.py` precedent) centralizes the mandatory-section markdown snippet for the per-tool test files; `tests/general/tools/test_update.py`/`test_delete.py`/`test_set_status.py`/`test_set_classification.py`/`test_validate.py` (the generic, cross-domain parametrized test suites) each needed their own local `_DEC_MINIMAL_BODY` fixture literal updated in place, since they intentionally duplicate per-domain fixtures rather than import them. `test_update.py`'s `dec` case also needed its `eof_marker`/`eof_fragment` changed from `"## Decision Outcome"` to `"## Source"` (the new actual last section in the minimal fixture), matching the pattern every other domain's case already followed (the `eof_marker` names whichever section is last in that domain's own minimal body).
+
+No DEC schema `version` bump was needed (Task 2.4 originally assumed one): investigation of `dec/models/v1/_util.py`'s `SCHEMA_COMMENT_VERSION` and `models/md/_util.py`'s `CURRENT_SCHEMA_VERSION` (plus git history showing REQ's own `## Tags` addition never bumped either) confirmed neither is bumped for additive, non-breaking field changes -- `SCHEMA_COMMENT_VERSION` only bumps for a breaking generated-schema-structure change needing a new `vN` sibling package, and `CURRENT_SCHEMA_VERSION` is a single value shared across every domain's frontmatter default, not a per-domain schema version at all.
+
+Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one long-running planning-and-implementation session, which grew large enough to warrant a fresh start for the remaining work. Phase 4 had a partial, uncommitted edit to `dec_create_instructions.md` at handoff time; it was discarded (`git checkout --`) so the `phase-implementer` dispatch for Phase 4 starts clean from this README's own Task List rather than from a half-finished, unreviewed draft.
+
+**Known Limitations**
+
+- **Backward compatibility**: `## Roles and Responsibilities` and `## Source` are mandatory on every `dec` document. Any `dec` document created before this feature shipped and lacking those two sections will fail to parse via `get_dec`/`parse_dec`/`update`/`create_dec` round-trips (though `list_dec` degrades gracefully, reporting it as a failed entry inline rather than raising). This is an accepted, documented breaking change on this pre-1.0 project (see Decisions Made) -- see `CHANGELOG.md` for the migration snippet.
+- **Conflicts with feat-46-remove-adr's own plan**: the unmerged `feat-46-remove-adr` branch (not present on `dev`) plans to resolve GitHub issue #29 via new `DecFrontmatter` fields (`date`/`decision-makers`/`consulted`/`informed`) as a hard prerequisite for ADR-to-DEC conversion fidelity, since 28 of 30 real ADRs populate `date`/`decision-makers`. This feature resolved issue #29 differently (body sections, no frontmatter change) and does not provide a `date` field. Whoever resumes `feat-46-remove-adr` will need to reconcile its own Phase 0 (which currently assumes #29 is still open and assigned to it) with the fact that #29 will already be closed by this feature's shipped, incompatible design.
+
+### Related Decisions
+
+- None yet -- see this feature's own "Decisions Made" log below for the shared-base-class rationale instead of a dedicated ADR.
+
+### Task List
+
+#### Phase 100: Feature Folder
+
+- [x] Task 100.100: Create this feature folder (`feat-29-dec-source-roles`) via `create_feat`, capturing the full design discussed with the user.
+
+#### Phase 110: Shared Base Classes
+
+- [x] Task 110.100: Add `models/md/common_sections.py` with `SourceBase`, `AccountableBase`, `ResponsibleBase`, `SupportBase`, `ConsultedBase`, `InformedBase`, `RolesAndResponsibilitiesBase` (the last decorated once with `@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)`).
+- [x] Task 110.110: Refactor `req/models/v1/body.py::Source` to subclass `SourceBase`; confirm REQ's existing test suite passes unchanged.
+- [x] Task 110.120: Refactor `sop/models/v1/body.py`'s six RASCI classes to subclass the new bases; confirm SOP's existing test suite passes unchanged.
+- [x] Task 110.130: Run this phase's full quality gate (REQ-009) and commit.
+
+#### Phase 120: DEC Schema
+
+- [x] Task 120.100: Add mandatory `RolesAndResponsibilities` (subclassing the Phase 1 bases) to `dec/models/v1/body.py`.
+- [x] Task 120.110: Add optional `Tags` to `dec/models/v1/body.py`, absorbing the DEC half of `feat-133-tags-dec-rsk`.
+- [x] Task 120.120: Add mandatory `Source` (subclassing `SourceBase`) to `dec/models/v1/body.py`.
+- [x] Task 120.130: Wire the three new fields into `Decision`'s field declaration order per REQ-005 (no schema version bump needed -- see Design Notes).
+- [x] Task 120.140: Add unit tests for DEC's three new sections (parser/body/summary), mirroring `tests/sop/models/v1/test_body.py` and `tests/req/models/v1/test_body.py`; update every other DEC/general test fixture broken by the two new mandatory sections (see Design Notes).
+- [x] Task 120.150: Run this phase's full quality gate (REQ-009) and commit.
+
+#### Phase 130: Templates, Examples, Schema Resource
+
+- [x] Task 130.100: Update DEC's packaged template/example data files to include the three new sections with representative content.
+- [x] Task 130.110: Add/adjust a test asserting the packaged DEC template/example still parse successfully with the new mandatory sections present (covered by the existing `tests/dec/resources/test_dec_example.py`/`test_dec_template.py`, which already assert full-document parsing).
+- [x] Task 130.120: Run this phase's full quality gate (REQ-009) and commit -- combined with Phase 2's commit since both were implemented and verified together in one pass.
+
+#### Phase 140: Prompts
+
+- [x] Task 140.100: Update `dec/prompts/create_dec.py` instructions to mention the three new sections and reference `specmgr://rasci` for RASCI role definitions.
+- [x] Task 140.110: Update `dec/prompts/update_dec.py` instructions similarly.
+- [x] Task 140.120: Run this phase's full quality gate (REQ-009) and commit.
+
+#### Phase 150: Docs and Housekeeping
+
+- [x] Task 150.100: Update `AGENTS.md`'s `dec/` bullet to mention the three new sections and the shared-base-class refactor.
+- [x] Task 150.110: Update `feat-7-various-improvements/README.md`'s Task 0.33 entry to "split out into `feat-29-dec-source-roles`".
+- [x] Task 150.120: Update `feat-133-tags-dec-rsk/README.md` to drop DEC from scope, pointing at this feature for the DEC half.
+- [x] Task 150.130: Post a comment on GitHub issue #29 summarizing the shipped design.
+- [x] Task 150.140: Post a comment on GitHub issue #133 noting DEC's Tags half was absorbed into issue #29.
+- [x] Task 150.150: Run this phase's full quality gate (REQ-009), commit, and mark this feature's status `done`.
+
+#### Phase 160: Post-Review Remediation
+
+- [x] Task 160.100: Add a dated Decisions Made entry recording that `## Roles and Responsibilities`/`## Source` stay mandatory as shipped, and the resulting backward incompatibility is an accepted, documented breaking change rather than a design reversal (REQ-013).
+- [x] Task 160.110: Fix `tests/dec/models/v1/test_body.py::TestDecisionMisordering::test_updates_before_more_information_raises_assertion_error` and `::test_related_artifacts_after_pros_and_cons_raises_assertion_error` per REQ-012.
+- [x] Task 160.120: Add the `CHANGELOG.md [Unreleased]` entry per REQ-011, including a short before/after migration snippet.
+- [x] Task 160.130: Add the "Known Limitations" section per REQ-014.
+- [x] Task 160.140: Run the full local quality gate (REQ-009's existing checklist) and report the evidence. Do NOT commit.
+- [x] Task 160.150: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 6.1-6.5 are complete.
+
+#### Phase 170: External Review Remediation (Round 2)
+
+- [x] Task 170.100: Add a regression test to `tests/dec/models/v1/test_body.py` covering misordering of the three new sections per REQ-015 (ACC-014); spot-check by temporarily reverting the ordering guard and confirming the new test fails, then restore.
+- [x] Task 170.110: Document the domain-neutral `SourceBase.value` field-description wording as an intentional choice per REQ-016 (ACC-015).
+- [x] Task 170.120: Remove the duplicated `_MANDATORY_ROLES_AND_SOURCE` constant from `tests/dec/models/v1/test_parser.py` and import the shared `tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE` instead per REQ-017 (ACC-016).
+- [x] Task 170.130: Rewrite `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/`_DEC_BAD_FIELD_BODY` fixtures to use a single `textwrap.dedent` call each per REQ-018 (ACC-017).
+- [x] Task 170.140: Run this phase's full quality gate (REQ-009) and commit.
+- [x] Task 170.150: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 7.1-7.5 are complete.
+
+## Progress
+
+### Current Status
+
+**As of 2026-09-19**: **Feature complete.** Phases 0-7 are all done; ACC-001 through ACC-017 are all met. Phase 7 (External Review Remediation, Round 2) closed the four items a follow-up `feat-reviewer` review found after Phase 6: a missing new-section misordering regression test, an unremarked wording drift in the shared `SourceBase.value` field description, a duplicated test fixture constant, and a test-fixture style divergence. Frontmatter `status` set back to `done`. Commits on branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), Phase 5, Phase 6, Phase 7.
+
+### Blockers
+
+- None.
+
+### Updates
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 16:30:00.000Z - Phase 7 complete: external review remediation (round 2)
+
+Executed Phase 7, closing all four items the second-round `feat-reviewer`
+review found. **Task 7.1 (REQ-015/ACC-014)**: added
+`test_source_before_roles_and_responsibilities_raises_assertion_error` to
+`tests/dec/models/v1/test_body.py::TestDecisionMisordering` -- a `## Source`
+placed ahead of the mandatory `## Roles and Responsibilities` -- closing the
+gap where every existing misordering test only exercised pre-existing
+sections. Verified the test matters by temporarily reordering `Decision`'s
+own field declarations (`source` before `roles_and_responsibilities`) to
+mirror the misordered fixture: the new test then failed with
+`AssertionError: AssertionError not raised`, confirming it genuinely
+depends on the field-order guard; restored the original order immediately
+afterward, leaving no reverted state in the diff. **Task 7.2
+(REQ-016/ACC-015)**: added a comment above `SourceBase.value`'s
+`Field(description=...)` in `models/md/common_sections.py` explaining the
+domain-neutral wording is an intentional policy choice (every domain
+subclass inherits it verbatim into its own generated JSON Schema), plus a
+one-line cross-reference note in both `req.Source`'s and `dec.Source`'s own
+docstrings. This turned out to change generated schema content after all
+(`specmgr schema`'s `req`/`dec` output changed) -- Pydantic embeds a
+model's class docstring as its JSON Schema-level `description`, so the
+`req.Source`/`dec.Source` docstring edits (not the `common_sections.py`
+comment, which sits beside a field, not a docstring) did affect
+`docs/req_schema.json`/`docs/dec_schema.json` and their packaged
+`req/data/`/`dec/data/` copies; this is expected, correct drift, not a bug.
+**Task 7.3 (REQ-017/ACC-016)**: before touching this file, verified the
+plan's own "byte-identical" premise by importing both constants directly
+and diffing them -- they were **not** byte-identical:
+`tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE` carries a leading
+`\n` that `tests/dec/models/v1/test_parser.py`'s own local
+`_MANDATORY_ROLES_AND_SOURCE` does not, since each was written for its own
+call sites' surrounding-text conventions (the shared helper's callers in
+`tests/dec/tools/*.py` need the leading blank line; `test_parser.py`'s two
+use sites already end their preceding fixture text with a blank line and
+would double up on it). Stopped and reported this discrepancy rather than
+guessing; the user/orchestrator weighed the three options previously laid
+out (import anyway relying on mdformat normalization; leave as-is and
+correct REQ-017's wording; normalize both constants to be genuinely
+byte-identical) and chose **option 1** -- import the shared constant
+anyway, since literal byte-identity wasn't worth a wider diff or a worse
+helper contract, and the swap had already been verified
+mdformat-normalization-safe for both of `test_parser.py`'s current use
+sites (`format_text` collapses the extra blank line before `parse_dec`
+ever sees it). Removed the local `_MANDATORY_ROLES_AND_SOURCE` constant,
+added `from tests.dec.tools._helpers import MANDATORY_ROLES_AND_SOURCE`,
+and added a comment at the constant's former definition site documenting
+why the swap is safe despite the literal difference, so this isn't
+"rediscovered" as confusing later. Re-ran `tests.dec.models.v1.test_parser`
+(28 tests, including the two specifically-affected tests by name) and the
+full `tests/dec/` suite -- both green. **Task 7.4 (REQ-018/ACC-017)**:
+rewrote `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/
+`_DEC_BAD_FIELD_BODY` fixtures from two-to-three concatenated
+`textwrap.dedent` calls to a single call each, matching
+`test_update.py`/`test_delete.py`/`test_set_status.py`/
+`test_set_classification.py`'s own established style; verified byte-for-
+byte identical rendered output both via a standalone Python diff and by
+running `tests.general.tools.test_validate` (20 tests) before and after.
+Ran the full quality gate (**Task 7.5**): `ruff format --check`/`ruff
+check` clean, `vulture` clean, `specmgr docs` (only
+`docs/api/biz.dfch.specmgr.dec.models.v1.body.md` changed, from the Task
+7.2 docstring edit), `specmgr mcp-docs` (no content changes), `specmgr
+schema` for all 12 registered types plus their packaged per-domain copies
+(`docs/{req,dec}_schema.json` and `src/biz/dfch/specmgr/{req,dec}/data/
+{req,dec}_schema.json` changed, exactly matching Task 7.2's docstring
+edits; the other 10 types unchanged), full `pytest -n auto --cov=src`
+suite green at **3330 tests** (up from 3329, +1 for the new Task 7.1
+test), `specmgr coverage-badge` unchanged (99%). No unexplained drift in
+any generated file. Checked ACC-014 through ACC-017 and all six Phase 7
+task boxes; frontmatter `status` bumped back to `done`.
+
+### Decisions Made
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 10:05:00.000Z - Kept Roles and Responsibilities/Source mandatory; accepted as breaking
+
+An external code review of the resulting PR (#136) flagged that making `## Roles and Responsibilities`/`## Source` mandatory breaks parsing of any pre-existing `dec` document lacking them, with no version bump or CHANGELOG signal. Reconsidered reverting to optional-as-a-whole (mirroring SOP's own precedent) versus keeping mandatory and documenting the break. Decided to keep both sections mandatory -- reverting would undo this feature's own core design intent (a decision must always name an accountable owner) and issue #29's original ask. Instead, the incompatibility is treated as an intentional, accepted breaking change on this pre-1.0 project, made explicit via a new `CHANGELOG.md [Unreleased]` entry (with a migration snippet) and this Decisions Made record, rather than a schema-version fork or a cardinality reversal.
+
+#### 2026-09-17 00:00:07.000Z - Restart remaining phases via phase-orchestrator/phase-implementer dispatch
+
+After Phase 3 landed, the planning-and-implementation session's own context had grown large enough that continuing inline risked losing fidelity. Decided to end that session and, for Phase 4 onward, use the intended division of labor instead: a `phase-orchestrator`-style main session reads this README, dispatches exactly one `phase-implementer` subagent per remaining phase, and reports back between dispatches -- never implementing a phase inline itself. This README (not the orchestrating session's own context) remains the single source of truth for what is/isn't done, which is what makes the handoff safe.
+
+#### 2026-09-17 00:00:03.000Z - Absorbed feat-133's DEC half
+
+Decided to absorb the DEC half of `feat-133-tags-dec-rsk` (issue #133, `## Tags` section) into this feature rather than keep it as a separate dependency, since both touch `dec/models/v1/body.py` in the same pass. `feat-133-tags-dec-rsk` is rescoped to RSK-only as part of this feature's Phase 5, with a comment posted on issue #133 noting the absorption.
+
+#### 2026-09-17 00:00:02.000Z - DEC's Roles and Responsibilities is mandatory, unlike SOP's
+
+Decided DEC's `## Roles and Responsibilities` section is mandatory as a whole (SOP's own equivalent stays optional), because a decision must always have a named accountable owner -- this was the direct resolution of the original issue's "owner"/decision-maker concern.
+
+#### 2026-09-17 00:00:01.000Z - Shared base classes instead of a dedicated ADR
+
+Chose to implement `Source` and the RASCI classes as shared base classes in `models/md/common_sections.py`, with each domain (`req`/`sop`/`dec`) declaring its own thin concrete subclass, rather than writing a dedicated ADR for the decision. This is treated as a lower-risk extension of `models/md`'s existing generic-base-class pattern (every domain already inherits `MarkdownSection1`/`MarkdownSection2`/`MarkdownSection3` etc. from there) rather than a novel precedent of sharing whole concrete domain classes across packages, so a feature-level log entry here is proportionate instead of a full ADR.
+
+### Related PRs / Commits
+
+- [Issue #29](https://github.com/dfch/biz.dfch.SpecMgr/issues/29): tracking issue for this feature.
+- [Issue #29 comment](https://github.com/dfch/biz.dfch.SpecMgr/issues/29#issuecomment-5714986670): Phase 5 summary of the shipped design, posted on the tracking issue.
+- [Issue #133](https://github.com/dfch/biz.dfch.SpecMgr/issues/133): DEC's `## Tags` half absorbed from this issue; `feat-133-tags-dec-rsk` retains the RSK half.
+- [Issue #133 comment](https://github.com/dfch/biz.dfch.SpecMgr/issues/133#issuecomment-5714987415): Phase 5 note on issue #133 that its DEC half was absorbed here.
+- Branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), `3b33598` (Phase 5), `da492d5` (Phase 6), `5ec76b2` (Phase 7 planning), `06ad643` (Phase 7 implementation).
+
+### More Information
+
+None.

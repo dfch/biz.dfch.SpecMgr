@@ -1,0 +1,14 @@
+@startuml Buy Goods
+
+actor Buyer
+actor "Credit card company" as actor2
+actor Bank
+actor "Shipping service" as actor4
+usecase "Buy Goods" as uc <<summary>>
+
+Buyer --> uc
+actor2 --> uc
+Bank --> uc
+actor4 --> uc
+
+@enduml

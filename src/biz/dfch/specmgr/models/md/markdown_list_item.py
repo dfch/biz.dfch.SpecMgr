@@ -25,7 +25,7 @@ from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
 from .markdown_paragraph import MarkdownParagraph
-from ._markdown import format_text, not_in_mdformat_message, parse
+from ._markdown import consume_leading_lines, format_text, not_in_mdformat_message, parse
 
 #: The two markdown-it block-container token types a list item can be nested under.
 #: `MarkdownListItem` is deliberately shared between bullet (`ul`) and ordered (`ol`)
@@ -162,11 +162,14 @@ class MarkdownListItem(MarkdownStr):
         off `text`, the remainder is dedented (`mdformat` dedents an
         indented sub-block automatically once it is renormalized on its own)
         and delegated to `MarkdownStr.from_text` (via `super()`) for the
-        declared fields' population. `_value` is set to the leading
-        paragraph's own lines verbatim, *marker included* -- unlike
-        `MarkdownParagraph`, whose marker-free `_value` needs no
-        reconstruction, an item cannot reconstruct its own marker from class
-        metadata alone (see the class docstring), so it is kept as-is instead.
+        declared fields' population, at an offset advanced by the line count
+        actually consumed (the leading paragraph plus the blank separator
+        line the re-normalization removes -- see `consume_leading_lines`).
+        `_value` is set to the leading paragraph's own lines verbatim,
+        *marker included* -- unlike `MarkdownParagraph`, whose marker-free
+        `_value` needs no reconstruction, an item cannot reconstruct its own
+        marker from class metadata alone (see the class docstring), so it is
+        kept as-is instead.
 
         Args:
             text: the markdown text to parse.
@@ -223,10 +226,12 @@ class MarkdownListItem(MarkdownStr):
         own_lines = own_map[1]
 
         lines = text.splitlines()
-        body_lines = lines[own_lines:]
-        body_text = format_text("\n".join(body_lines)) if body_lines else ""
+        # Hand the rest on at the actually-consumed line count (feat-253): the
+        # re-normalization also removes the blank line after the item's own
+        # paragraph, so `own_lines` alone would start every note one line too low.
+        body_text, consumed = consume_leading_lines(text, own_lines)
 
-        instance = super().from_text(body_text, _path=own_path, _offset=_offset + own_lines)
+        instance = super().from_text(body_text, _path=own_path, _offset=_offset + consumed)
         instance._value = "\n".join(lines[:own_lines])
         instance._path = own_path
         instance._line = own_line
@@ -287,6 +292,60 @@ class MarkdownListItem(MarkdownStr):
                 return token.content.strip()
 
         return ""
+
+    def single_line_text(self, *, expected: str) -> str:
+        """Return `.text`, rejecting it if it spans more than one physical line.
+
+        `.text` (see the property above) already correctly joins a
+        soft-wrapped ("lazy continuation", standard CommonMark) list item
+        onto a single string with an embedded `\\n` where the original
+        source had 2+ physical lines -- but a structurally-checked
+        subclass (e.g. `tsk.TaskItem`, `feat.RequirementItem`/
+        `AcceptanceCriterionItem`, `rsk.ThresholdItem`/`StrategyItem`)
+        applies its own marker/pattern regex to that text and never
+        expects it to span more than one physical source line. Rather
+        than teach every such regex to additionally tolerate an embedded
+        `\\n` (`re.DOTALL`), this shared guard rejects a soft-wrapped item
+        outright with an actionable error -- call it once, before running
+        the domain regex against `.text`, from each affected subclass's
+        own computed field.
+
+        Free-form `MarkdownListItem`/`MarkdownListItemWithNotes` usages
+        with no structural regex of their own (e.g. `req`'s `## Tags`,
+        the `sysrs` cross-reference lists, or any subclass whose own
+        regex already uses `re.DOTALL`, such as `rsk.QuadrantItem`/
+        `MitigationItem`/`StatusItem`) must not call this helper -- they
+        are meant to keep tolerating soft-wraps unchanged.
+
+        Args:
+            expected: a short, human-readable description of the shape
+                this item's text is expected to have (e.g. `"a '- [ ]'/
+                '- [x]' checkbox marker"`), echoed into the error message
+                so it reads consistently with the calling subclass's own
+                malformed-shape assertion message.
+
+        Returns:
+            `.text`, unchanged -- only once confirmed to be a single
+            physical line.
+
+        Raises:
+            AssertionError: `.text` spans more than one physical line
+                (contains an embedded `\\n`, meaning the original source
+                had 2+ physical lines joined via CommonMark lazy
+                continuation). The message names this item's own path and
+                1-based line (`self._path`/`self._line`, same convention
+                as every other regex-assert message in this codebase),
+                states plainly that soft-wrapped/lazy-continuation list
+                items are not supported, and tells the author to join the
+                text onto one physical line instead.
+        """
+        text = self.text
+        assert "\n" not in text, (
+            f"{self._path} (line {self._line}): expected {expected}, but this item's text spans more than one "
+            f"physical line; soft-wrapped/lazy-continuation list items are not supported here -- join the text "
+            f"onto one physical line."
+        )
+        return text
 
 
 class MarkdownListItemWithNotes(MarkdownListItem):

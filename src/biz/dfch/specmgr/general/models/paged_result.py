@@ -39,7 +39,7 @@ T = TypeVar("T")
 class PagedResult(BaseModel, Generic[T]):
     """One page of results plus the paging metadata needed to fetch the next page.
 
-    Every ``list_<domain>`` MCP tool (``list_adr``, ``list_req``, ``list_uc``,
+    Every ``list_<domain>`` MCP tool (``list_req``, ``list_uc``,
     ``list_tsk``, ``list_qa``) returns this same shape, parameterized by that
     domain's own summary model (e.g. ``PagedResult[ReqSummary]``), so callers
     learn one paging contract instead of five.
@@ -64,6 +64,12 @@ class PagedResult(BaseModel, Generic[T]):
     results:
         The page's items, i.e. ``items[offset : offset + max_results]`` of
         the full, materialized item list.
+    error_count:
+        The number of items in the full, materialized item list that
+        represent a document that failed to parse (feat-81-83-validation
+        Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+        mirrors ``total``'s own already-documented across-all-pages
+        semantics. Defaults to ``0``.
     """
 
     total: int
@@ -71,3 +77,4 @@ class PagedResult(BaseModel, Generic[T]):
     max_results: int
     truncated: bool
     results: list[T]
+    error_count: int = 0

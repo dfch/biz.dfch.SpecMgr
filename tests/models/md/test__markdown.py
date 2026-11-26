@@ -15,12 +15,17 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for `models.md._markdown.format_markdown_document`.
+"""Tests for `models.md._markdown.format_markdown_document` and `consume_leading_lines`.
 
-This is the single shared formatting implementation behind both the
-`mdformat` MCP tool (`general.tools.mdformat`) and the `mdformat` CLI command
-(`commands.mdformat`) -- see their own test suites for the file-I/O and
-exit-code behavior each builds on top of this pure, disk-free helper.
+`format_markdown_document` is the single shared formatting implementation
+behind both the `mdformat` MCP tool (`general.tools.mdformat`) and the
+`mdformat` CLI command (`commands.mdformat`) -- see their own test suites for
+the file-I/O and exit-code behavior each builds on top of this pure,
+disk-free helper.
+
+`consume_leading_lines` is the shared hand-off step of the `models/md` engine
+(feat-253): it slices consumed lines off a text, re-normalizes the rest, and
+returns the line count that the caller's offset must advance by.
 """
 
 from __future__ import annotations
@@ -28,7 +33,7 @@ from __future__ import annotations
 import textwrap
 import unittest
 
-from biz.dfch.specmgr.models.md._markdown import format_markdown_document, format_text
+from biz.dfch.specmgr.models.md._markdown import consume_leading_lines, format_markdown_document, format_text
 
 
 class TestFormatMarkdownDocument(unittest.TestCase):
@@ -112,7 +117,7 @@ class TestFormatMarkdownDocument(unittest.TestCase):
             """\
             ---
             id: test
-            type: adr
+            type: req
             ---
 
             # Title
@@ -165,7 +170,7 @@ class TestFormatMarkdownDocument(unittest.TestCase):
             """\
             ---
             id: test
-            type: adr
+            type: req
             ---
 
             # Title
@@ -183,6 +188,58 @@ class TestFormatMarkdownDocument(unittest.TestCase):
         self.assertTrue(changed)
         self.assertIn("\n---\n", formatted_text)
         self.assertNotIn("_" * 70, formatted_text)
+
+
+class TestConsumeLeadingLines(unittest.TestCase):
+    """Tests for `consume_leading_lines()` (feat-253)."""
+
+    #: An `mdformat`-normalized 3-line text: paragraph, blank separator, paragraph.
+    TEXT = "A.\n\nB.\n"
+
+    def test_text_is_normalized(self) -> None:
+        self.assertEqual(self.TEXT, format_text(self.TEXT))
+
+    def test_count_zero_returns_the_whole_text_and_consumes_nothing(self) -> None:
+        rest, consumed = consume_leading_lines(self.TEXT, 0)
+
+        self.assertEqual(rest, self.TEXT)
+        self.assertEqual(consumed, 0)
+
+    def test_removed_leading_blank_separator_line_is_counted_as_consumed(self) -> None:
+        rest, consumed = consume_leading_lines(self.TEXT, 1)
+
+        self.assertEqual(rest, "B.\n")
+        # The sliced-off line `A.` plus the blank separator line that the
+        # re-normalization of the rest removes.
+        self.assertEqual(consumed, 2)
+
+    def test_count_at_the_end_returns_an_empty_rest_and_consumes_every_line(self) -> None:
+        rest, consumed = consume_leading_lines(self.TEXT, 3)
+
+        self.assertEqual(rest, "")
+        self.assertEqual(consumed, len(self.TEXT.splitlines()))
+
+    def test_count_past_the_end_returns_an_empty_rest_and_consumes_every_line(self) -> None:
+        # REQ-003: for an empty rest the consumed count is the line count of
+        # the whole text, never `count`.
+        rest, consumed = consume_leading_lines(self.TEXT, 10)
+
+        self.assertEqual(rest, "")
+        self.assertEqual(consumed, len(self.TEXT.splitlines()))
+
+    def test_empty_text_returns_an_empty_rest_and_consumes_nothing(self) -> None:
+        for count in (0, 1):
+            with self.subTest(count=count):
+                rest, consumed = consume_leading_lines("", count)
+
+                self.assertEqual(rest, "")
+                self.assertEqual(consumed, 0)
+
+    def test_negative_count_is_rejected(self) -> None:
+        with self.assertRaises(AssertionError) as ctx:
+            consume_leading_lines(self.TEXT, -1)
+
+        self.assertIn("must not be negative", str(ctx.exception))
 
 
 if __name__ == "__main__":

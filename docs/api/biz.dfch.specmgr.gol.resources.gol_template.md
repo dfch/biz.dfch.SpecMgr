@@ -13,7 +13,7 @@ depends on the other just for this one file read. Mirrors
 ``prb.resources.prb_template`` file-for-file.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://gol/schema``/``specmgr://gol/example``'s own precedent.
+``specmgr://gol/template``/``specmgr://gol/example``'s own precedent.
 
 ## Functions
 

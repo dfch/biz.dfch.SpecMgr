@@ -1,0 +1,90 @@
+{
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/smoke-create-system/upstream-k1.events.ndjson",
+  "exit_code": 1,
+  "finished_at": "2026-11-02T00:05:00Z",
+  "gates": [
+    {
+      "detail": "no .dsl file in the work dir",
+      "name": "dsl_written",
+      "passed": false
+    },
+    {
+      "detail": "CLI validate could not run (no DSL file)",
+      "name": "cli_valid",
+      "passed": false
+    },
+    {
+      "detail": "CLI export could not run (no DSL file)",
+      "name": "cli_export",
+      "passed": false
+    },
+    {
+      "detail": "no softwareSystem in the export JSON",
+      "name": "has_system",
+      "passed": false
+    },
+    {
+      "detail": "no person in the export JSON",
+      "name": "has_person",
+      "passed": false
+    },
+    {
+      "detail": "only 0 container(s) in the export JSON",
+      "name": "two_containers",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 531.2494187990669,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 0,
+    "inspect_findings": [],
+    "inspect_triage": {},
+    "parse_calls": 0,
+    "relationship_technology_coverage": null,
+    "skills_loaded": [],
+    "steps": 0,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 0,
+      "output": 0,
+      "reasoning": 0
+    },
+    "tool_calls": 0,
+    "validate_calls": 0,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": null,
+    "workdir_dsl": null
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "smoke-create-system",
+    "condition": "upstream",
+    "k_index": 1
+  },
+  "run_id": "smoke-2026-11-01T224901Z",
+  "started_at": "2026-11-02T00:04:39Z",
+  "timeout": false,
+  "wall_time_s": 20.673880887101404,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/smoke-create-system.upstream-k1.smoke-2026-11-01T224901Z"
+}

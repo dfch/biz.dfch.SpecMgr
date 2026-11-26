@@ -18,7 +18,7 @@
 """MCP resource registrations that are not specific to any single document
 domain.
 
-See ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
+See DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
 
 ``version`` registers the server package version resource. ``iso25010``
 registers the ISO/IEC 25010:2023 product quality model resource. ``dtais``
@@ -29,25 +29,82 @@ owned by ``vcr``'s own schema. ``rasci`` registers the generic RASCI
 responsibility-assignment guidance resource (``specmgr://rasci``,
 REQ-011) -- motivated by the ``sop`` domain but not scoped to it, mirroring
 ``iso25010``'s cross-cutting placement rather than ``rsk/tara``'s
-domain-scoped one. ``config`` registers the ``specmgr://config`` diagnostic
-resource (feat-51-mcp-cwd REQ-001) -- the resolved absolute base directory
-and env-var-set flag for all twelve document domains, so a client can
+domain-scoped one. ``ears`` registers the EARS requirement-phrasing-
+templates guidance resource (``specmgr://ears``, feat-92-resources
+REQ-006) -- cross-cutting domain knowledge for any requirement-phrasing
+document type (``req``, ``gol``, ``sysrs``, ...), not owned by any single
+domain's own schema, mirroring ``dtais``'s cross-domain placement
+rationale. ``iso29148`` registers the ISO/IEC/IEEE 29148:2018
+requirement-specifications guidance resource (``specmgr://iso29148``,
+feat-173-req-iso29148-level-set Phase 130) -- cross-cutting domain
+knowledge for ``req``'s ``## Level`` closed set (BRS/StRS/SyRS/SRS), not
+owned by ``req``'s own schema, mirroring ``ears``'s cross-domain
+placement rationale. ``reference_graph`` registers the frozen reference-graph
+rulebook resource (``specmgr://reference-graph``,
+feat-207-reference-graph Phase 100) -- the deterministic PlantUML
+component-diagram spec for the cross-reference network (emission layout +
+palette, alias/label/truncation, title rules, FEAT-exclusion, the
+bare-``feat-NNN`` source-id rejection, the cycle rule + red-arrow syntax,
+the construction semantics, the CLI file layout) plus the pointer at the
+UC rulebook §3–§6 for the validation chain reused as-is; it spans every
+document domain, so it is cross-cutting rather than owned by any single
+domain's schema (the ``specmgr://uc/plantuml`` rulebook shape, registered
+flat top-level like ``dtais``/``iso25010``). ``config`` registers the
+``specmgr://config`` diagnostic resource (feat-51-mcp-cwd REQ-001) -- the
+resolved absolute base directory
+and env-var-set flag for every document domain, so a client can
 self-diagnose a CWD/env-var misconfiguration without shell access to the
 server's host; it never discloses the value of any environment variable,
-only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002). Domain-specific
-resources (e.g. ``adr_list``/``adr_get``)
-live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
+only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002). ``i18n`` registers
+the multi-language artifact-variant guidance resource (``specmgr://i18n``,
+feat-197-i18n Phase 130) -- the directory layout/basename rule, the language
+vocabulary and heading tables, the per-domain never-translate list (REQ-010),
+and the create-versus-update and guard semantics the ``translate_artifact``
+prompt reads first (its sibling resource template
+``specmgr://i18n/headings/{language}`` serves a language's heading-mapping
+table as JSON, so the flow needs no host file tool); cross-cutting like
+``dtais``/``rasci``, since it spans the thirteen i18n-eligible domains. ``harness_bundle``
+registers the specmgr harness bundle resource (``specmgr://harness-bundle``,
+feat-167-mcp-lifecycle-commands-2 Phase 130, REQ-007/008) -- the single
+generated package-data file ``general/data/general_harness_bundle.json``
+served verbatim as ``application/json``: the complete agent-driven install
+protocol in the top-level ``instructions`` field plus every
+``.opencode/{agent,command,skill}/`` markdown file as a ``{path, sha256,
+content}`` entry in ``files``; the agent's sole discoverable entry point
+for installing the published harness files into a fresh harness setup (no
+install CLI, no MCP prompt -- OpenCode exposes no prompt surface to the
+agent). Domain-specific
+resources live under their own domain package instead (e.g.
+``biz.dfch.specmgr.req.resources``).
 Import this package to load all cross-cutting resources at once::
 
     from biz.dfch.specmgr.general import resources  # noqa: F401 (side-effects only)
 """
 
-from . import config, dtais, iso25010, rasci, version  # noqa: F401
+from . import (  # noqa: F401
+    config,
+    dtais,
+    ears,
+    harness_bundle,
+    i18n,
+    iso25010,
+    iso29148,
+    rasci,
+    reference_graph,
+    version,
+)
+from .i18n import i18n_headings  # noqa: F401
 
 __all__ = [
     "config",
     "dtais",
+    "ears",
+    "harness_bundle",
+    "i18n",
+    "i18n_headings",
     "iso25010",
+    "iso29148",
     "rasci",
+    "reference_graph",
     "version",
 ]

@@ -26,7 +26,6 @@ in a goal markdown file -- see ``body.py`` for the full hierarchy.
 
 from ._util import SCHEMA_COMMENT_VERSION
 from .body import (
-    AcceptanceCriteria,
     Decisions,
     Description,
     Goal,
@@ -36,17 +35,17 @@ from .body import (
     Priority,
     RelatedArtifacts,
     Requirements,
+    Risks,
     Source,
     Tags,
 )
 from .document import GolDocument
 from .frontmatter import GolFrontmatter
-from .parser import parse_gol
+from .parser import parse_gol, parse_gol_body
 from .summary import GolSummary
 
 __all__ = [
     "SCHEMA_COMMENT_VERSION",
-    "AcceptanceCriteria",
     "Decisions",
     "Description",
     "Goal",
@@ -59,7 +58,9 @@ __all__ = [
     "Priority",
     "RelatedArtifacts",
     "Requirements",
+    "Risks",
     "Source",
     "Tags",
     "parse_gol",
+    "parse_gol_body",
 ]

@@ -1,9 +1,9 @@
 ---
-created: '2026-08-05 08:15:42.000Z'
+created: '2025-01-07T08:15:42.617Z'
 id: deaddead-dead-dead-dead-deaddeaddead
 status: draft
 type: req
-updated: '2026-08-06 03:27:27.000Z'
+updated: '2025-01-20T03:27:27.459Z'
 version: 1.0.0
 ---
 
@@ -22,8 +22,8 @@ This is a description of the requirement statement that gives more context. Use 
 
 ## Level
 
-<!-- RFC 2119 Requirement Keyword. Mandatory. -->
-MUST
+<!-- ISO 29148 requirement specification kind: one of BRS, StRS, SyRS, SRS. Mandatory. -->
+SyRS
 
 ## Priority
 
@@ -43,19 +43,19 @@ Where does this requirement come from? This can be a document reference, an inte
 
 ### Requirements
 
-- A bullet list with related requirements. Optional.
+- REQ 00000000-0000-4000-8000-000000000001: title of the related requirement
 
 ### Decisions
 
-- A bullet list with related decisions. Optional.
+- DEC 00000000-0000-4000-8000-000000000002: title of the related decision
 
 ### Goals
 
-- A bullet list with related goals. Optional.
+- GOL 00000000-0000-4000-8000-000000000003: title of the related goal
 
-### Acceptance Criteria
+### Risks
 
-- A bullet list with related acceptance criteria. Optional.
+- RSK 00000000-0000-4000-8000-000000000004: title of the related risk
 
 ## More Information
 

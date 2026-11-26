@@ -4,7 +4,7 @@ Pydantic model for one line of SYSRS listing output (Phase 2, Task 2.4).
 
 Mirrors :class:`~biz.dfch.specmgr.sop.models.v1.summary.SopSummary`
 field-for-field, for the (Phase-3, not-yet-built) ``list_sysrs`` tool -- a
-paged MCP tool from day one per ADR ec9f5262-9912-49d0-903f-fcfb54f28c13,
+paged MCP tool from day one per DEC ec9f5262-9912-49d0-903f-fcfb54f28c13,
 so SYSRS has no ``specmgr://sysrs/list`` resource. Subclasses
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
 ``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003) --

@@ -170,20 +170,23 @@ class TestNestedFieldPathComposition(unittest.TestCase):
         self.assertIn("expected MarkdownParagraph, found no match", message)
 
     def test_missing_leaf_paragraph_line_reference_points_at_the_entry_heading(self) -> None:
-        """The `### My Update` heading itself is line 4 of the normalized body; the missing
-        `content` paragraph is reported as starting right after it, also line 4 (there is no
-        body line of its own to point to)."""
+        """The `### My Update` heading itself is line 5 of the normalized body; the missing
+        `content` paragraph is reported as starting right after it, on line 6 -- the line
+        directly after the last consumed line, one past the end of the body (there is no body
+        line of its own to point to; feat-253 REQ-003)."""
         text = mdformat.text("# Task Title\n\n## Recent Updates\n\n### My Update\n")
 
         with self.assertRaises(AssertionError) as ctx:
             Task.from_text(text)
 
-        self.assertIn("remaining text starts at line 4 of the normalized body", str(ctx.exception))
+        self.assertIn("remaining text starts at line 6 of the normalized body", str(ctx.exception))
 
     def test_a_second_entry_reports_a_deeper_line_reference(self) -> None:
         """A second `### ` entry, several lines further down, reports a correspondingly
         higher line number -- the running offset accumulates correctly across a mandatory
-        `list[...]` field's own already-matched items (REQ-002)."""
+        `list[...]` field's own already-matched items (REQ-002). `### Second Update` is line 9
+        of the normalized body, so its missing `content` is reported at line 10 (feat-253
+        REQ-003)."""
         text = mdformat.text(
             "# Task Title\n\n## Recent Updates\n\n### First Update\n\nFirst update text.\n\n### Second Update\n"
         )
@@ -193,7 +196,7 @@ class TestNestedFieldPathComposition(unittest.TestCase):
 
         message = str(ctx.exception)
         self.assertTrue(message.startswith("Task > RecentUpdates > UpdateEntry > content: "))
-        self.assertIn("remaining text starts at line 8 of the normalized body", message)
+        self.assertIn("remaining text starts at line 10 of the normalized body", message)
 
 
 # ---------------------------------------------------------------------------
@@ -260,6 +263,25 @@ class TestNotInMdformatMessage(unittest.TestCase):
 
         self.assertIn("every line matches", message)
         self.assertNotIn("line 0", message)
+
+    def test_trailing_newline_only_difference_with_long_text_is_truncated(self) -> None:
+        """Issue #110/ACC-003: the `line_no == 0` (global-mismatch) branch routes both `text`
+        and `format_text(text)` through `snippet()` before embedding them, just like every
+        sibling message-builder in this module -- a long input (here, missing its trailing
+        newline only, so it still hits this same branch) no longer produces a message that
+        embeds the full raw text/formatted-text verbatim."""
+        long_content = (
+            "A rather long paragraph line repeated many times to exceed the snippet cap of "
+            "three hundred characters comfortably so that this test can prove truncation "
+            "kicks in for the global mismatch branch. "
+        ) * 3
+        text = "# Title\n\n" + long_content.rstrip()  # missing trailing newline only
+
+        message = not_in_mdformat_message(text)
+
+        self.assertIn("every line matches", message)
+        self.assertNotIn(text, message)
+        self.assertIn("... (truncated)", message)
 
 
 if __name__ == "__main__":

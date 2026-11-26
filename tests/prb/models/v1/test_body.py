@@ -27,12 +27,14 @@ each of the 7 questions individually absent/present, and
 
 from __future__ import annotations
 
+import re
 import unittest
 
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.models.md.alias_match import match_alias
+from biz.dfch.specmgr.models.md.markdown_paragraph import MarkdownParagraph
 from biz.dfch.specmgr.prb.models.v1.body import (
     CurrentState,
     FutureState,
@@ -51,6 +53,25 @@ from biz.dfch.specmgr.prb.models.v1.body import (
     Summary,
 )
 
+#: A minimal, valid `problem_statement` lead paragraph matching the fixed template skeleton.
+_VALID_PROBLEM_STATEMENT_TEXT = "The current process is causing delays, for users because of missing automation."
+
+#: Test-only mirror of `_PROBLEM_STATEMENT_PATTERN`
+#: (`prb/models/v1/body.py`) with the four blanks made *capturing* instead
+#: of non-capturing. Production code intentionally keeps them non-capturing
+#: (REQ-011) since it only ever checks `fullmatch()` truthiness and never
+#: reads the groups; this copy exists solely so the two
+#: "...still_matches_documented_trade_off" tests below can assert exactly
+#: which blank absorbed a joiner-shaped substring during backtracking,
+#: instead of only asserting that construction did not raise. Keep the two
+#: patterns' literal joiner/anchor text in sync by hand if
+#: `_PROBLEM_STATEMENT_PATTERN` ever changes.
+_CAPTURING_PROBLEM_STATEMENT_PATTERN = re.compile(
+    r"^(.+)\s+is\s+causing\s+(.+),"
+    r"\s+for\s+(.+)\s+because\s+(.+)\.$",
+    re.DOTALL,
+)
+
 # Every `Question{N}` class alongside the exact canonical heading text it
 # must -- and only it must -- match (verbatim from the iSixSigma 5W2H list,
 # see the feature README's Design Notes).
@@ -64,14 +85,25 @@ _QUESTION_CLASSES_AND_HEADINGS = [
     (Question7, "How Often Is the Problem Observed?"),
 ]
 
+# The fixed Problem Statement template's lead sentence for the reference
+# document scenario, matching `prb_reference.md`/`prb_example.md`.
+_LEAD_SENTENCE = (
+    "The migration tool's lack of a rollback step is causing widgets to become\n"
+    "half-migrated, for the on-call platform engineer because the\n"
+    "WidgetRegistryV1 de-registration call sometimes fails after the\n"
+    "WidgetRegistryV2 write succeeds."
+)
+
 # The reference document's body (`prb_reference.md`, frontmatter stripped),
 # exercising every field: all 7 5W2H questions answered, `Impact`/
 # `References`/`More Information` all present.
 _REFERENCE_TEXT = format_text(
-    """\
+    f"""\
 # Widget Registry Migration Rollback Failures
 
 <!-- Captured during the platform team's weekly incident review. -->
+
+{_LEAD_SENTENCE}
 
 ## Current State
 
@@ -155,8 +187,9 @@ half-migrated state, and no manual recovery is required.
 ## More Information
 
 This problem statement was drafted after the third rollback incident, once
-a clear pattern across all three occurrences had emerged. No root cause
-analysis is included here by design; a separate root-cause investigation is
+a clear pattern across all three occurrences had emerged. No `## Root Cause`
+section exists; the lead sentence above carries the best-known cause by
+design. Formal root-cause analysis remains a separate, later activity,
 tracked internally and will be linked from `References` once complete.
 """
 )
@@ -177,6 +210,7 @@ A short placeholder summary.
 
 def _minimal_prb_kwargs() -> dict:
     return {
+        "problem_statement": MarkdownParagraph.from_text(format_text(_VALID_PROBLEM_STATEMENT_TEXT)),
         "current_state": _minimal_current_state(),
         "gap": Gap.from_text(format_text("## Gap\n\nSome gap text.\n")),
         "future_state": FutureState.from_text(format_text("## Future State\n\nSome future state text.\n")),
@@ -336,6 +370,189 @@ class TestGapFutureStateMandatory(unittest.TestCase):
             Prb(**kwargs)
 
 
+class TestProblemStatementMandatoryAndTemplateValidated(unittest.TestCase):
+    """`Prb.problem_statement` is mandatory and its text must match the fixed template skeleton (ACC-001).
+
+    Covers direct-construction absence (`ValidationError`, structural
+    "field required") and the code-level template-skeleton `field_validator`
+    (`ValidationError`, naming the expected template and the actual text) --
+    plus, separately (`TestParsePrbRejectsMissingLeadParagraph` below), the
+    structural `AssertionError` raised when the paragraph is missing
+    entirely from the markdown text (`Prb.from_text`, not direct
+    construction).
+    """
+
+    def test_present_and_valid_parses(self) -> None:
+        sut = Prb(**_minimal_prb_kwargs())
+
+        self.assertEqual(sut.problem_statement.text, _VALID_PROBLEM_STATEMENT_TEXT)
+
+    def test_missing_problem_statement_raises_validation_error(self) -> None:
+        kwargs = _minimal_prb_kwargs()
+        del kwargs["problem_statement"]
+
+        with self.assertRaises(ValidationError):
+            Prb(**kwargs)
+
+    def test_malformed_template_raises_validation_error_naming_template_and_text(self) -> None:
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text("This sentence does not follow the fixed template at all.")
+        )
+
+        with self.assertRaises(ValidationError) as ctx:
+            Prb(**kwargs)
+        message = str(ctx.exception)
+        self.assertIn("problem_statement", message)
+        self.assertIn("is causing", message)
+        self.assertIn("This sentence does not follow the fixed template at all.", message)
+
+    def test_soft_wrap_landing_at_is_causing_joiner_still_matches(self) -> None:
+        """ACC-008/REQ-010: a soft-wrap landing exactly at the `is causing` joiner still parses."""
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text("The current process is\ncausing delays, for users because of missing automation.")
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn("is\ncausing", sut.problem_statement.text)
+
+    def test_soft_wrap_landing_at_for_joiner_still_matches(self) -> None:
+        """ACC-008/REQ-010: a soft-wrap landing exactly at the `for` joiner still parses."""
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text("The current process is causing delays,\nfor users because of missing automation.")
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn(",\nfor", sut.problem_statement.text)
+
+    def test_soft_wrap_landing_at_because_joiner_still_matches(self) -> None:
+        """ACC-008/REQ-010: a soft-wrap landing exactly at the `because` joiner still parses."""
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text("The current process is causing delays, for users\nbecause of missing automation.")
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn("users\nbecause", sut.problem_statement.text)
+
+    def test_blank_containing_a_literal_joiner_substring_still_matches_documented_trade_off(self) -> None:
+        """REQ-013: a documentation test, not a behavior change.
+
+        `_PROBLEM_STATEMENT_PATTERN`'s greedy `(?:.+)` blanks can backtrack
+        across a joiner-shaped substring that happens to sit inside a
+        blank's own free text. Here the `[Current state]`/`[specific
+        issue]` blank text itself contains a second, literal "is causing"
+        occurrence -- the pattern still fulfills its own accepted, documented
+        trade-off (see the pattern's explanatory comment block) by matching
+        anyway, rather than rejecting the sentence.
+        """
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text(
+                "The current process is causing extra work is causing delays, for users because of missing automation."
+            )
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn("is causing extra work is causing delays", sut.problem_statement.text)
+        # Prove *which* "is causing" backtracking actually treated as the real
+        # joiner: the rightmost one, absorbing the first, literal "is causing"
+        # occurrence into the `[Current state]`/`[specific issue]` blank's own
+        # captured text rather than rejecting the sentence.
+        match = _CAPTURING_PROBLEM_STATEMENT_PATTERN.fullmatch(sut.problem_statement.text)
+        assert match is not None
+        self.assertEqual("The current process is causing extra work", match.group(1))
+        self.assertEqual("delays", match.group(2))
+
+    def test_specific_issue_blank_containing_a_literal_for_joiner_substring_still_matches_documented_trade_off(
+        self,
+    ) -> None:
+        """REQ-016: a second documentation test, covering the `, for` joiner boundary.
+
+        Mirrors `test_blank_containing_a_literal_joiner_substring_still_matches_documented_trade_off`
+        above (which covers the `is causing` joiner) but at a different
+        joiner boundary: here the sentence contains a second, literal
+        ", for" occurrence ahead of the real one. Greedy backtracking always
+        resolves the actual ", for" delimiter against the *rightmost*
+        occurrence in the sentence, so the earlier occurrence is absorbed
+        into the `[specific issue]` blank's own captured text rather than
+        rejected -- the same accepted, documented trade-off (see the
+        pattern's explanatory comment block), demonstrated at a second
+        joiner. (Embedding the extra occurrence inside the *following*
+        `[stakeholder]` blank instead was considered but is not achievable:
+        because backtracking always treats the rightmost ", for" occurrence
+        as the actual delimiter, a `[stakeholder]` blank can structurally
+        never itself retain a literal ", for" substring while the sentence
+        still matches -- confirmed empirically before writing this test.)
+        """
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text(
+                "The current process is causing delays, for users, for contractors because of missing automation."
+            )
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn("delays, for users, for contractors", sut.problem_statement.text)
+        # Prove the actual ", for" delimiter resolves to the rightmost
+        # occurrence: the earlier ", for users" is absorbed into the
+        # `[specific issue]` blank's own captured text, not treated as the
+        # real delimiter.
+        match = _CAPTURING_PROBLEM_STATEMENT_PATTERN.fullmatch(sut.problem_statement.text)
+        assert match is not None
+        self.assertEqual("delays, for users", match.group(2))
+        self.assertEqual("contractors", match.group(3))
+
+
+class TestParsePrbRejectsMissingLeadParagraph(unittest.TestCase):
+    """`Prb.from_text` structurally rejects a body with no lead paragraph at all (ACC-001, REQ-008 trigger).
+
+    This is the pre-change (feat-16) PRB shape: no `problem_statement`
+    paragraph directly under the H1 title. Documents this pre-existing-
+    document recovery trigger (`update_prb`'s REQ-008 flow, Phase 2) --
+    `Prb.from_text` itself raises an actionable `AssertionError` naming the
+    missing `problem_statement` field, not a `ValidationError`, since the
+    paragraph is entirely absent from the markdown text (a structural
+    failure, not a field-value failure -- see `models.md.markdown_str.
+    MarkdownStr.process_field`).
+    """
+
+    def test_old_shape_without_problem_statement_fails_with_actionable_error(self) -> None:
+        old_shape_text = format_text(
+            """\
+# Widget Registry Migration Rollback Failures
+
+<!-- Captured during the platform team's weekly incident review. -->
+
+## Current State
+
+### Summary
+
+A short placeholder summary.
+
+## Gap
+
+Some gap text.
+
+## Future State
+
+Some future state text.
+"""
+        )
+
+        with self.assertRaises(AssertionError) as ctx:
+            Prb.from_text(old_shape_text)
+        message = str(ctx.exception)
+        self.assertIn("problem_statement", message)
+
+
 class TestImpactReferencesMoreInformationOptional(unittest.TestCase):
     """`Prb.impact`/`references`/`more_information` are independently optional (ACC-002)."""
 
@@ -393,6 +610,12 @@ class TestPrbReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertEqual(sut.text, "Widget Registry Migration Rollback Failures")
         self.assertIsNotNone(sut.comment)
         self.assertIn("Captured during the platform team's weekly incident review.", sut.comment.text)
+
+    def test_problem_statement_present_and_matches_template(self) -> None:
+        sut = Prb.from_text(_REFERENCE_TEXT)
+
+        self.assertIn("is causing widgets to become", sut.problem_statement.text)
+        self.assertIn("because the", sut.problem_statement.text)
 
     def test_all_seven_questions_are_present(self) -> None:
         sut = Prb.from_text(_REFERENCE_TEXT)

@@ -1,0 +1,5 @@
+19:20:06.578 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl
+19:20:06.652 [main] INFO com.structurizr.command.AbstractCommand --  - no views defined; creating default views
+19:20:06.668 [main] INFO com.structurizr.command.ExportCommand -- Exporting with JsonWorkspaceExporter
+19:20:06.917 [main] INFO com.structurizr.command.ExportCommand -- Writing /w/out/workspace.json
+19:20:06.917 [main] INFO com.structurizr.command.ExportCommand -- Finished

@@ -15,7 +15,10 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for `general.models.paged_result.PagedResult` (feat-13 Task 1.1/1.4)."""
+"""Tests for `general.models.paged_result.PagedResult` (feat-13 Task 1.1/1.4).
+
+feat-81-83-validation Phase 3 (REQ-006) added ``error_count: int = 0``.
+"""
 
 from __future__ import annotations
 
@@ -30,7 +33,8 @@ class TestPagedResult(unittest.TestCase):
 
     def test_holds_fields_in_the_documented_order(self):
         self.assertEqual(
-            list(PagedResult.model_fields.keys()), ["total", "offset", "max_results", "truncated", "results"]
+            list(PagedResult.model_fields.keys()),
+            ["total", "offset", "max_results", "truncated", "results", "error_count"],
         )
 
     def test_constructs_with_given_values(self):
@@ -42,12 +46,25 @@ class TestPagedResult(unittest.TestCase):
         self.assertFalse(sut.truncated)
         self.assertEqual(sut.results, [1, 2, 3, 4, 5])
 
+    def test_error_count_defaults_to_zero(self):
+        sut = PagedResult(total=10, offset=5, max_results=5, truncated=False, results=[1, 2, 3, 4, 5])
+
+        self.assertEqual(sut.error_count, 0)
+
+    def test_error_count_accepts_a_given_value(self):
+        sut = PagedResult(total=10, offset=5, max_results=5, truncated=False, results=[], error_count=3)
+
+        self.assertEqual(sut.error_count, 3)
+
     def test_serializes_to_the_documented_shape(self):
         sut = PagedResult(total=1, offset=0, max_results=25, truncated=False, results=["only"])
 
         dumped = sut.model_dump()
 
-        self.assertEqual(dumped, {"total": 1, "offset": 0, "max_results": 25, "truncated": False, "results": ["only"]})
+        self.assertEqual(
+            dumped,
+            {"total": 1, "offset": 0, "max_results": 25, "truncated": False, "results": ["only"], "error_count": 0},
+        )
 
     def test_accepts_an_empty_results_list(self):
         sut = PagedResult(total=0, offset=0, max_results=25, truncated=False, results=[])
@@ -55,7 +72,7 @@ class TestPagedResult(unittest.TestCase):
         self.assertEqual(sut.results, [])
 
     def test_accepts_model_instances_as_results(self):
-        items = [DocSummary(id="1", title="t", status="draft", ref="r")]
+        items = [DocSummary(id="1", title="t", status="draft", ref="r", path="/tmp/r.md")]
 
         sut = PagedResult(total=1, offset=0, max_results=25, truncated=False, results=items)
 

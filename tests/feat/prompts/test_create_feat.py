@@ -103,22 +103,23 @@ class TestCreateFeatPrompt(unittest.TestCase):
         result = create_feat("Some topic")
         self.assertIn("skip", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_feat_template/get_feat_example
+        tools and name the conditional get_feat_schema fetch."""
         result = create_feat("Some topic")
-        self.assertIn("specmgr://feat/template", result)
-        self.assertIn("specmgr://feat/example", result)
-        self.assertIn("specmgr://feat/schema", result)
+        self.assertIn("get_feat_template", result)
+        self.assertIn("get_feat_example", result)
+        self.assertIn("get_feat_schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_feat tool, the template/example
-        resources, specmgr://feat/schema, and create_feat, in that order,
+        tools, get_feat_schema, and create_feat, in that order,
         matching the intended sequence."""
         result = create_feat("Some topic")
         markers = [
             "list_feat",
-            "specmgr://feat/template",
-            "specmgr://feat/schema",
+            "get_feat_template",
+            "get_feat_schema",
             "create_feat(content)",
         ]
         positions = [result.index(marker) for marker in markers]
@@ -194,9 +195,9 @@ _WALKTHROUGH_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Create branch and package skeleton
+    - [x] Task 100.100: Create branch and package skeleton
 
     ## Progress
 

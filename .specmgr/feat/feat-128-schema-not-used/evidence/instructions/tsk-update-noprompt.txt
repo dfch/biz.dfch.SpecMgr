@@ -1,0 +1,3 @@
+In the task list document titled 'Onboarding the new build server', mark the task 'Provision the machine' as done and add a new task 'Document the setup'.
+
+Use only the specmgr MCP tools to complete the task. When the document change is complete, reply DONE.

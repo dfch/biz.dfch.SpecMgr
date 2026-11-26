@@ -17,10 +17,10 @@
 
 """Generic base frontmatter model shared by every markdown-backed document type.
 
-Per ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (REQ-006/Task 4.1 of
+Per DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (REQ-006/Task 4.1 of
 ``feat-5-md-model-parser``): this is a *base* frontmatter model carrying only
 the handful of fields every document type shares. A concrete document type
-(e.g. a future ``uc``/``req``) defines its own frontmatter model that
+(e.g. ``uc``/``req``) defines its own frontmatter model that
 subclasses :class:`MarkdownFrontmatter` and adds its own fields, narrowing
 ``type`` to a fixed ``Literal[...]`` value, e.g.::
 
@@ -30,36 +30,41 @@ subclasses :class:`MarkdownFrontmatter` and adds its own fields, narrowing
         type: Literal["uc"] = "uc"
         # ... uc-specific fields ...
 
-This model is deliberately independent of ``models.adr.v1.AdrFrontmatter``:
-no shared base class, no shared validator module. ``AdrFrontmatter`` is left
-exactly as-is (see the ADR's Decision Outcome/Consequences) -- a possible
-future convergence is noted there but not decided.
+This model has no shared base class and no shared validator module -- each document type owns its own frontmatter model.
 
-This module has no import dependency on ``models.adr.v1`` or any other
-document-type package, consistent with ``models.md``'s existing
-no-dependency invariant (ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
+This module has no import dependency on any other document-type package, consistent with ``models.md``'s existing
+no-dependency invariant (DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
 """
 
 from __future__ import annotations
 
 import re
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from ._util import CURRENT_SCHEMA_VERSION, blank_to_none, default_if_blank, validate_schema_version
 
 #: Default ``status`` value when omitted or blank/``None``.
 DEFAULT_STATUS = "draft"
 
-#: The canonical date+time variant (D4/D5/D7,
-#: ``.specmgr/feat/feat-38-39-41-43-44/README.md`` Design Notes):
-#: space-separated ``yyyy-MM-dd HH:mm:ss.fff``, followed by either ``Z``
-#: (UTC) or a signed ``±HH:mm`` offset. Date-only, ``T``-separated,
-#: microsecond, and timezone-less values all fail this pattern -- ``created``/
-#: ``updated`` are the two fields that are strictly date+time-only (D5); a
-#: date-only value is legitimate elsewhere (e.g. a DEC/VCR/TSK ``UpdateEntry``
-#: heading) but never here.
-_DATE_TIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+#: The date+time variant accepted for ``created``/``updated`` (feat-146,
+#: DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf): ``yyyy-MM-dd`` + (``T`` or
+#: space) + ``HH:mm:ss.SSS`` (exactly three millisecond digits), followed by
+#: either ``Z`` (UTC) or a signed ``±HH:mm`` offset. The machine-written
+#: canonical form is the ``T``-separated one (the MCP is the only writer of
+#: frontmatter; ``general.tools._timestamps.format_timestamp`` emits it);
+#: the space separator remains accepted so existing space-form values keep
+#: parsing until their next write converges them to ``T``. Date-only,
+#: six-digit-fraction (microsecond), and timezone-less values all fail this
+#: pattern -- ``created``/``updated`` are the two fields that are strictly
+#: date+time-only (feat-38-39-41-43-44 D5, retained); the entry-heading
+#: aliases of the seven log-entry domains (``tsk``'s ``RecentUpdates``,
+#: ``dec``/``sop``/``vcr``/``sysrs``/``txt``'s ``Updates``, ``feat``'s
+#: ``Updates``/``DecisionsMade``) enforce this same full date+time fragment
+#: as of feat-146 Phase 2, so a date-only value is rejected everywhere, not
+#: just here. Supersedes feat-38-39-41-43-44 D5's ``T`` rejection and D4's
+#: space-canonical write form.
+_DATE_TIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
 
 
 class MarkdownFrontmatter(BaseModel):
@@ -84,15 +89,26 @@ class MarkdownFrontmatter(BaseModel):
         needing to know that beforehand. Must not be blank.
     created:
         Free-form date/timestamp the document was first created. Optional.
+        The required shape is ``yyyy-MM-dd`` + (``T`` or space) +
+        ``HH:mm:ss.SSS`` + ``Z``/``±HH:mm``; the machine-written canonical
+        form is the ``T``-separated one (the MCP is the only writer of
+        frontmatter). The generated JSON Schema carries a ``pattern`` key
+        (derived from :data:`_DATE_TIME_PATTERN`, the same regex
+        :meth:`_validate_date_time_format` enforces at runtime) documenting
+        that shape -- this is schema-level documentation only, added via
+        ``json_schema_extra`` rather than ``Field(pattern=...)`` so that
+        pydantic-core does not itself enforce the pattern (which would fire
+        before, and mask the message of, :meth:`_validate_date_time_format`).
     updated:
         Free-form date/timestamp the document was last updated. Optional.
+        Carries the same schema-level ``pattern`` documentation as
+        ``created`` (see above).
     status:
         Free-form lifecycle status. Defaults to ``"draft"`` -- both when
         the key is absent entirely and when it is present but blank (e.g. a
         template shipping a placeholder ``status:`` with nothing after the
         colon, which YAML parses as ``None``, not an absent key).
-        Deliberately not restricted to a fixed set of values here (unlike
-        ``AdrFrontmatter.status``'s closed six-value enum): different
+        Deliberately not restricted to a fixed set of values here: different
         document types may have different valid status vocabularies, and a
         subclass is free to add its own stricter validator.
     version:
@@ -116,8 +132,8 @@ class MarkdownFrontmatter(BaseModel):
 
     id: str | None = None
     type: str
-    created: str | None = None
-    updated: str | None = None
+    created: str | None = Field(default=None, json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})
+    updated: str | None = Field(default=None, json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})
     status: str = DEFAULT_STATUS
     version: str = CURRENT_SCHEMA_VERSION
     classification: str | None = None
@@ -147,21 +163,22 @@ class MarkdownFrontmatter(BaseModel):
     @field_validator("created", "updated", mode="after")
     @classmethod
     def _validate_date_time_format(cls, value: str | None) -> str | None:
-        """Reject any non-``None`` ``created``/``updated`` value that isn't the date+time variant (D5).
+        """Reject any non-``None`` ``created``/``updated`` value that isn't the date+time variant (feat-146).
 
         Runs after :meth:`_optional_blank_to_none` (mode="before" validators
         on a class run before mode="after" validators on the same class),
         so this validator only ever sees ``None`` or an already-non-blank
         string. ``None`` passes through unchanged; any other value must
         :func:`re.fullmatch` :data:`_DATE_TIME_PATTERN` -- date-only,
-        ``T``-separated, microsecond, and timezone-less values are all
-        rejected here.
+        six-digit-fraction (microsecond), and timezone-less values are all
+        rejected here; both the ``T`` and the space separator are accepted
+        (the machine-written canonical form is the ``T`` one).
         """
         if value is None:
             return value
         if not _DATE_TIME_PATTERN.fullmatch(value):
             raise ValueError(
                 f"created/updated {value!r} must be the date+time variant "
-                f"'yyyy-MM-dd HH:mm:ss.fff' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset"
+                f"'yyyy-MM-dd' + 'T' or space + 'HH:mm:ss.SSS' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset"
             )
         return value

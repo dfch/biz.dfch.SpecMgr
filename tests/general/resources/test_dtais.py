@@ -48,6 +48,44 @@ def _acceptance_criterion_heading(method: str) -> str:
     return result
 
 
+def _valid_dtais_text(marker: str) -> str:
+    """Build a minimal, well-formed DTAIS-shaped document, tagged with `marker`.
+
+    `marker` is embedded in the title so two calls with different markers produce
+    distinguishable, but both individually valid, `parse_dtais`-accepted text.
+    """
+    result = f"""# {marker}
+
+The five valid `### AC-NNN (Method): ...` method words used by `vcr`'s
+`## Acceptance Criteria`:
+
+- `Demonstration` -- observing the system in operation.
+- `Test` -- exercising the system under controlled conditions.
+- `Analysis` -- using calculation, modeling, or simulation.
+- `Inspection` -- visual or procedural examination of the system.
+- `Special` -- any other verification approach not covered above.
+
+## When to apply each method
+
+- **`Demonstration`** -- use when the criterion is about observable behavior.
+- **`Test`** -- use when the criterion states a quantitative threshold.
+- **`Analysis`** -- use when direct observation is not practical.
+- **`Inspection`** -- use when the criterion is about the presence of an artifact.
+- **`Special`** -- use for verification approaches outside the other four.
+
+## Relationship to `## Coverage`
+
+`## Coverage` is the document-level roll-up of every criterion's status.
+
+- **`full`** -- every acceptance criterion has been verified.
+- **`partial`** -- at least one criterion has been verified, but not all.
+- **`none`** -- no acceptance criterion has been successfully verified yet.
+
+`## Coverage` always reflects the least-verified criterion in the set.
+"""
+    return result
+
+
 class TestDtaisResource(unittest.TestCase):
     """Tests for the `dtais` resource function."""
 
@@ -93,19 +131,22 @@ class TestDtaisResource(unittest.TestCase):
 
     def test_reads_fresh_on_every_call(self):
         """No in-memory cache -- a second call must reflect an on-disk change since the first."""
+        first_text = _valid_dtais_text("First Marker")
+        second_text = _valid_dtais_text("Second Marker")
+
         with tempfile.TemporaryDirectory() as tmp:
             dtais_path = Path(tmp) / "general_dtais.md"
-            dtais_path.write_text("first", encoding="utf-8")
+            dtais_path.write_text(first_text, encoding="utf-8")
 
             with mock.patch.object(_packaged_data, "packaged_data_path", return_value=dtais_path):
                 sut = dtais
 
                 first = sut()
-                dtais_path.write_text("second", encoding="utf-8")
+                dtais_path.write_text(second_text, encoding="utf-8")
                 second = sut()
 
-            self.assertEqual(first, "first")
-            self.assertEqual(second, "second")
+            self.assertEqual(first, first_text)
+            self.assertEqual(second, second_text)
 
     def test_raises_file_not_found_when_missing(self):
         """A missing packaged general_dtais.md must propagate FileNotFoundError uncaught."""
@@ -116,6 +157,20 @@ class TestDtaisResource(unittest.TestCase):
                 sut = dtais
 
                 with self.assertRaises(FileNotFoundError):
+                    sut()
+
+    def test_raises_on_structural_drift(self):
+        """A malformed packaged file must fail fast via `parse_dtais`, not return silently."""
+        malformed_text = "# Not A Valid DTAIS Document\n\nThis file has no method bullets at all.\n"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dtais_path = Path(tmp) / "general_dtais.md"
+            dtais_path.write_text(malformed_text, encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=dtais_path):
+                sut = dtais
+
+                with self.assertRaises((AssertionError, ValueError)):
                     sut()
 
 

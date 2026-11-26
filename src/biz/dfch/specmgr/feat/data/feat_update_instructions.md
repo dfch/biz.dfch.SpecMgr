@@ -42,13 +42,16 @@ revise.
   otherwise. `content` is body markdown only (no frontmatter block) in
   both cases.
   - **Line-range replace** (a localized change -- one paragraph, list
-    item, or section): first call `get_feat(id, raw=True)` to see the
-    exact body text, identify the 1-based line to start at and how many
-    lines to replace -- `offset` is the first body line, `limit` the
-    number of lines (`offset`..`offset+limit-1`); `limit` omitted
-    replaces through the last body line, `limit=0` is a pure insert,
-    and the `N+1` position is end-of-body: `offset = N+1` appends after
-    the last line -- and call `update(id, type="feat", content, offset=..., limit=...)`
+    item, or section): first call `get_feat(id, raw=True, numbered=True)`
+    to see the exact body text -- every line prefixed with its 1-based
+    body-line number, so no manual counting is needed and a number seen
+    can be fed straight back into `update`'s `offset` -- identify the
+    1-based line to start at and how many lines to replace -- `offset`
+    is the first body line, `limit` the number of lines
+    (`offset`..`offset+limit-1`); `limit` omitted replaces through the
+    last body line, `limit=0` is a pure insert, and the `N+1` position
+    is end-of-body: `offset = N+1` appends after the last line -- and
+    call `update(id, type="feat", content, offset=..., limit=...)`
     passing only the replacement lines. The server splices the fragment
     into the current on-disk body and validates the result as a whole
     document before writing anything, so every out-of-range line stays
@@ -56,7 +59,36 @@ revise.
     is typically a line-range insert directly below the section's
     optional leading comment (or directly below the `### Updates`/
     `### Decisions Made` heading if no comment is present) -- new entries
-    go first, since both sections are newest-first, enforced.
+    go first, since both sections are newest-first, enforced. Each entry's heading is
+    `#### {timestamp} ( - | : ) {title}`, where `{timestamp}` is the full
+    date+time form `yyyy-MM-dd[T ]HH:mm:ss.SSS` + `Z` or `±HH:mm` (the
+    date/time separator may be `T` or a space; a date-only timestamp is
+    rejected), followed by the entry's own update/decision text directly
+    under the H4 heading (any markdown content -- multiple paragraphs,
+    lists, code blocks, block quotes, not just a single paragraph), which
+    is mandatory. Adding a new phase or task
+    to the `### Task List` section is the same kind of line-range insert
+    of one new, numbered line -- never a renumber of the existing lines.
+    Task List numbering scheme: phases carry 3-digit zero-padded numbers
+    starting at 100, step 10 (`Phase 100`, `Phase 110`, `Phase 120`,
+    ...); each task line is `- [ ] Task NNN.MMM: {text}` (or `- [x] ...`
+    once done), where `NNN` is the enclosing phase's number and `MMM` is
+    a 3-digit zero-padded task number starting at 100, step 10, within
+    its phase (`Task 100.100`, `Task 100.110`, ...). The schema enforces
+    only the number SHAPES -- `#### Phase NNN: {title}` and the
+    `Task NNN.MMM: ` prefix -- not the step-10 increments, not
+    uniqueness, and not the match between a task's `NNN` and its
+    enclosing phase's number: those are authoring conventions. Gaps are
+    deliberate: to insert a new phase or task, pick the number between
+    its neighbours (e.g. `Phase 105`, `Task 100.105`) so existing numbers
+    never renumber; once assigned, a number is permanent, and removals
+    leave gaps.
+    `offset`/`limit` address the frontmatter-stripped body, never the
+    raw on-disk `.md` file: the YAML frontmatter block is variable-
+    length, so a raw file read's line numbers are never the same as
+    body-line coordinates -- and never feed the `numbered=True` output
+    back verbatim as `content`: strip the `"<n>: "` prefix from each
+    line first.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call `update(id, type="feat", content)`
     with no `offset`/`limit` -- `content` is then the full replacement body:
@@ -87,11 +119,16 @@ revise.
   used for the body/status changes above -- it is not itself a generic
   dispatch tool.
 
-## 5. Check the schema, and validate before writing if useful
+## 5. Check the schema only for structural changes, and validate before writing if useful
 
-Fetch `specmgr://feat/schema` to confirm field names and constraints
-before drafting the replacement body. Optionally call
-`validate_feat(content, full=False)` beforehand to dry-run the new body
+Call the `get_feat_schema` tool (the generated JSON Schema) only for a
+whole-body rewrite or a structural change -- adding, removing, or
+renaming sections, or editing closed-form content -- to confirm field
+names and constraints. Skip the fetch for a local splice (a line-range
+replace), where the raw body is already in context: `update` still
+validates the spliced result as a whole document before writing
+anything, so the skip is safe. Optionally call
+`validate(type="feat", content=content, full=False)` beforehand to dry-run the new body
 without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

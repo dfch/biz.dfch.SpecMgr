@@ -11,6 +11,11 @@ version: 1.0.0
 
 <!-- Captured during the platform team's weekly incident review. -->
 
+The migration tool's lack of a rollback step is causing widgets to become
+half-migrated, for the on-call platform engineer because the
+WidgetRegistryV1 de-registration call sometimes fails after the
+WidgetRegistryV2 write succeeds.
+
 ## Current State
 
 ### Summary
@@ -93,6 +98,7 @@ half-migrated state, and no manual recovery is required.
 ## More Information
 
 This problem statement was drafted after the third rollback incident, once
-a clear pattern across all three occurrences had emerged. No root cause
-analysis is included here by design; a separate root-cause investigation is
+a clear pattern across all three occurrences had emerged. No `## Root Cause`
+section exists; the lead sentence above carries the best-known cause by
+design. Formal root-cause analysis remains a separate, later activity,
 tracked internally and will be linked from `References` once complete.

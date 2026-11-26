@@ -22,7 +22,10 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import frontmatter
+
 from biz.dfch.specmgr.general.tools import _packaged_data
+from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.qa.models.v2.parser import parse_qa
 from biz.dfch.specmgr.qa.resources.qa_example import qa_example
 from biz.dfch.specmgr.qa.tools.get_qa_example import get_qa_example
@@ -47,12 +50,16 @@ class TestQaExampleResource(unittest.TestCase):
         self.assertEqual(qa_example(), get_qa_example())
 
     def test_parses_successfully_as_a_v2_document(self):
-        """The packaged example must actually parse as a v2 document (ACC-006)."""
-        result = parse_qa(qa_example())
+        """The packaged example must actually parse as a v2 document (its numbered
+        questions and `TODO: answer pending` placeholders included) and round-trip
+        byte-exact through `parse_qa` (feat-156 ACC-004)."""
+        original = qa_example()
+        result = parse_qa(original)
 
         self.assertIsNotNone(result.body.elicitation_context)
         self.assertIsNotNone(result.body.elicitation_context.questions)
         self.assertGreaterEqual(len(result.body.elicitation_context.questions), 1)
+        self.assertEqual(str(result.body), format_text(frontmatter.loads(original).content))
 
     def test_reads_fresh_on_every_call(self):
         """No in-memory cache -- a second call must reflect an on-disk change since the first."""

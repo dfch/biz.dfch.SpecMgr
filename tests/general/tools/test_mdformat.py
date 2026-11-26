@@ -131,7 +131,7 @@ class TestMdformatTool(unittest.TestCase):
             """\
             ---
             id: test
-            type: adr
+            type: req
             ---
 
             # Title
@@ -176,13 +176,13 @@ class TestMdformatTool(unittest.TestCase):
         original = textwrap.dedent(
             """\
             ---
-            id: adr-12345
-            type: adr
+            id: doc-12345
+            type: req
             status: accepted
             date: 2026-08-13
             ---
 
-            # ADR Title
+            # Doc Title
 
             Some content.
             """
@@ -195,8 +195,8 @@ class TestMdformatTool(unittest.TestCase):
 
             content = path.read_text(encoding="utf-8")
             # All frontmatter fields should be present with correct values.
-            self.assertIn("id: adr-12345", content)
-            self.assertIn("type: adr", content)
+            self.assertIn("id: doc-12345", content)
+            self.assertIn("type: req", content)
             self.assertIn("status: accepted", content)
             self.assertIn("date: 2026-08-13", content)
 

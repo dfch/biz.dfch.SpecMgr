@@ -21,11 +21,10 @@ from __future__ import annotations
 
 from abc import ABC
 
-from markdown_it.token import Token
-from pydantic import model_validator, computed_field, PrivateAttr
+from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, not_in_mdformat_message, parse
+from ._markdown import consume_leading_lines, format_text, not_in_mdformat_message, parse
 from .markdown import markdown
 from .alias_match import describe_alias, match_alias
 
@@ -60,8 +59,6 @@ def _alias_mismatch_message(path: str, line: int, cls: type, heading_text: str) 
 @markdown(type="heading_open")
 class MarkdownSection(MarkdownStr, ABC):
     """Abstract base class for markdown sections with heading constraints."""
-
-    _tokens: list[Token] = PrivateAttr(default_factory=list)
 
     @classmethod
     def get_extent(cls, text: str) -> int:
@@ -189,14 +186,17 @@ class MarkdownSection(MarkdownStr, ABC):
 
         Otherwise the heading's own line span is stripped off `text` and the
         remainder ("body") is delegated to `MarkdownStr.from_text` (via
-        `super()`) for the actual recursive field population -- each child
-        field recursively captures its own full extent this same way, all the
-        way down to whichever leaf(ves) ultimately hold the body text. Since
-        the body is therefore already fully represented by the nested fields,
-        this section's own `_value` only needs the heading's inline content
-        (the `inline` token's text, e.g. `"Characteristic Information"`) so
-        that `__str__` can re-emit the original heading line without
-        duplicating what the children already carry.
+        `super()`) for the actual recursive field population, at an offset
+        advanced by the line count actually consumed (the heading plus the
+        blank separator line the re-normalization removes -- see
+        `consume_leading_lines`) -- each child field recursively captures
+        its own full extent this same way, all the way down to whichever
+        leaf(ves) ultimately hold the body text. Since the body is therefore
+        already fully represented by the nested fields, this section's own
+        `_value` only needs the heading's inline content (the `inline`
+        token's text, e.g. `"Characteristic Information"`) so that
+        `__str__` can re-emit the original heading line without duplicating
+        what the children already carry.
 
         Args:
             text: the markdown text to parse.
@@ -256,10 +256,12 @@ class MarkdownSection(MarkdownStr, ABC):
         assert heading_map and len(heading_map) == 2, f"{cls.__name__}: heading token has no line map"
         heading_lines = heading_map[1]
 
-        body_lines = text.splitlines()[heading_lines:]
-        body_text = format_text("\n".join(body_lines)) if body_lines else ""
+        # Hand the body on at the actually-consumed line count (feat-253): the
+        # re-normalization also removes the blank line after the heading, so
+        # `heading_lines` alone would start every child one line too low.
+        body_text, consumed = consume_leading_lines(text, heading_lines)
 
-        instance = super().from_text(body_text, _path=own_path, _offset=_offset + heading_lines)
+        instance = super().from_text(body_text, _path=own_path, _offset=_offset + consumed)
         instance._value = heading_text
         instance._path = own_path
         instance._line = own_line
@@ -294,25 +296,6 @@ class MarkdownSection(MarkdownStr, ABC):
 
         body = super().__str__()
         return format_text(f"{heading_line}\n\n{body}")
-
-    @model_validator(mode="after")
-    def validate_heading_structure(self) -> MarkdownSection:
-        """Validate that section starts with a heading (h1-h6) triple.
-
-        Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-        Token [0] must have tag h1-h6.
-        """
-        text = str(self)
-        tokens = parse(text)
-        _ = tokens
-
-        # assert len(tokens) >= 3, "Expected at least 3 tokens for heading triple"
-        # assert tokens[0].type == "heading_open", f"Token[0]: expected heading_open, got {tokens[0].type}"
-        # assert tokens[2].type == "heading_close", f"Token[2]: expected heading_close, got {tokens[2].type}"
-        # assert tokens[0].tag in ("h1", "h2", "h3", "h4", "h5", "h6"), (
-        #     f"Token[0]: expected h1-h6, got {tokens[0].tag}"
-        # )
-        return self
 
     @computed_field  # type: ignore
     @property

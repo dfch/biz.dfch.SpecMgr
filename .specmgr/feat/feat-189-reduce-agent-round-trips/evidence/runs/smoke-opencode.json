@@ -1,0 +1,28 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "vllm-sys0-2": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "vllm (SYS0) 2",
+      "options": {
+        "baseURL": "http://127.0.0.1:8007/v1"
+      },
+      "models": {
+        "qwen3.8-27b-bf16-896k-mtp-2": {
+          "name": "qwen3.8-27b-bf16-896k-mtp-2",
+          "limit": {
+            "context": 917504,
+            "output": 131072
+          }
+        }
+      }
+    }
+  },
+  "mcp": {
+    "specmgr": {
+      "type": "local",
+      "enabled": true,
+      "command": ["/home/user/src/biz.dfch.SpecMgr.worktrees/feat-189-reduce-agent-round-trips/.venv/bin/specmgr", "mcp"]
+    }
+  }
+}

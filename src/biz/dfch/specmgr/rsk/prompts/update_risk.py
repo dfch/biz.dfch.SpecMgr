@@ -21,16 +21,18 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Risk (RSK) document by id, using the existing
-``rsk/tools/`` surface (``get_rsk``, ``validate_rsk``) plus the generic
+``rsk/tools/`` surface (``get_rsk``, generic ``validate`` tool) plus the generic
 ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="rsk"``; ``get_rsk``'s ``raw=True`` parameter serves the line-range
-flow's line numbers). There is no ``specmgr://rsk/{id}`` resource to point at
+flow's line numbers, with ``numbered=True`` additionally printing each
+line's 1-based body-line number, ready to feed into ``update``'s
+``offset``). There is no ``specmgr://rsk/{id}`` resource to point at
 -- id-based reads always go through the ``get_rsk`` tool only (there was no
-earlier resource to remove, unlike REQ's own history -- ADR
+earlier resource to remove, unlike REQ's own history -- DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: RSK's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: RSK's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="rsk"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="rsk"``) -- so the tool-mapping section
@@ -63,7 +65,9 @@ from ...server import mcp
     title="Update a risk",
     description=(
         "Guides the LLM through revising an existing risk by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_rsk_schema` tool (the generated JSON Schema); the "
+        "`get_rsk_template`/`get_rsk_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_risk(id: str, instructions: str | None = None) -> str:

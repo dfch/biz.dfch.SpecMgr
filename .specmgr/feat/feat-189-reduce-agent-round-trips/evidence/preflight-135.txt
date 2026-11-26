@@ -1,0 +1,20 @@
+# Phase 135 re-verification preflight (2026-10-18, before any run attempt)
+
+opencode binary: 1.19.3
+pinned model string: vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2 (Phase 130 pin, Deviations D3/D4)
+
+## Endpoint /v1/models (127.0.0.1:8007 -- the pinned endpoint)
+['qwen3.8-27b-bf16-896k']
+
+## chat/completions probe with the PINNED model name (expect: served in Phase 130)
+{"error":{"message":"The model `qwen3.8-27b-bf16-896k-mtp-2` does not exist.","type":"NotFoundError","param":"model","code":404}}
+
+## Other local endpoints (checked for a relocated MTP engine)
+port 8001: no endpoint
+port 8008: ['qwen3.8-27b-bf16-896k']
+
+## Instruction hash verification (must match evidence/instruction-hashes.txt -- Phase 130 copies)
+395ba85f59bbdfe44edb6c9dc88bdc9da006eff11eac7ce4b6fffcb2a9f66cf8  evidence/instructions/prb-create-noprompt.txt
+53ddec39a6f91522524efbd3b642249bef353f9486621a31088bc28cc437d79b  evidence/instructions/prb-update-prompt.txt
+395ba85f59bbdfe44edb6c9dc88bdc9da006eff11eac7ce4b6fffcb2a9f66cf8  prb-create-noprompt.txt
+53ddec39a6f91522524efbd3b642249bef353f9486621a31088bc28cc437d79b  prb-update-prompt.txt

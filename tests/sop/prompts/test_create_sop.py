@@ -83,18 +83,19 @@ class TestCreateSopPrompt(unittest.TestCase):
         result = create_sop("Some topic")
         self.assertIn("specmgr://rasci", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_sop_template/get_sop_example
+        tools and name the conditional get_sop_schema fetch."""
         result = create_sop("Some topic")
-        self.assertIn("specmgr://sop/template", result)
-        self.assertIn("specmgr://sop/example", result)
-        self.assertIn("specmgr://sop/schema", result)
+        self.assertIn("get_sop_template", result)
+        self.assertIn("get_sop_example", result)
+        self.assertIn("get_sop_schema", result)
 
     def test_mentions_create_and_validate_tools(self):
-        """The prompt must name the create_sop and validate_sop tools."""
+        """The prompt must name the create_sop tool and the generic validate tool."""
         result = create_sop("Some topic")
         self.assertIn("create_sop(content)", result)
-        self.assertIn("validate_sop(content, full=False)", result)
+        self.assertIn('validate(type="sop", content=content, full=False)', result)
 
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from sop/data/sop_create_instructions.md,

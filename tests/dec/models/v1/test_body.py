@@ -23,6 +23,25 @@ the `ProsAndCons`/`Updates` containers' zero-entry rejection, the
 `RelatedArtifacts` sub-list independence, `Decision`'s section
 optional/misordering behavior, and the duplicate-option-number
 after-validator (the `ValidationError` channel).
+
+Also covers feat-135-related-artifacts-risks: `AcceptanceCriteria` was
+removed and replaced by `Risks` (REQ-001/REQ-002), and every sub-list now
+enforces the shared `"<TAG> <uuid>: <title>"` cross-reference format
+(REQ-004), `Decisions` is DEC-only (REQ-005), and an optional trailing
+notes paragraph is supported (REQ-006).
+
+Also covers feat-180-updates (issue #180): `UpdateEntry.content` accepts
+any markdown content (multi-paragraph, bullet/numbered list, fenced code
+block, block quote), not just a single paragraph.
+
+Also covers feat-247-dec-outcome-blocks (issue #247): `DecisionOutcome`
+accepts zero or more further blocks (paragraphs, bullet/ordered lists,
+fenced code blocks) after the mandatory lead paragraph, held in the new
+optional `further_blocks` field (the `OutcomeBlocks` leaf) -- with the
+rejected kinds (block quote, HTML comment, horizontal rule, H4+ heading,
+raw HTML) still failing the parse, pipe-table content accepted as a
+paragraph (confirmed Option A), and a no-further-blocks section parsing
+to exactly the pre-feature result.
 """
 
 from __future__ import annotations
@@ -32,7 +51,7 @@ import unittest
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.dec.models.v1.body import (
-    AcceptanceCriteria,
+    Accountable,
     Confirmation,
     Consequences,
     ConsideredOptions,
@@ -44,25 +63,35 @@ from biz.dfch.specmgr.dec.models.v1.body import (
     Goals,
     MoreInformation,
     Option,
+    OutcomeBlocks,
     ProsAndCons,
     RelatedArtifacts,
     Requirements,
+    Responsible,
+    Risks,
+    RolesAndResponsibilities,
+    Source,
+    Tags,
     UpdateEntry,
     Updates,
 )
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.models.md.alias_match import match_alias
 
+# A well-formed, lowercase 8-4-4-4-12 hex UUID reused by every generic
+# (non-reference-document) cross-reference fixture below -- the exact value
+# is never significant, only its shape.
+_VALID_UUID = "12345678-1234-1234-1234-123456789abc"
+
 # Every `RelatedArtifacts` sub-list class alongside the exact canonical
 # heading text it must -- and only it must -- match. The headings derive
 # from the class names via the `AliasType.SPACE_SEPARATED` convention (no
-# explicit `@alias`), including the multi-word `AcceptanceCriteria` ->
-# "Acceptance Criteria" derivation.
+# explicit `@alias`).
 _SUB_LIST_CLASSES_AND_HEADINGS = [
     (Requirements, "Requirements"),
     (Decisions, "Decisions"),
     (Goals, "Goals"),
-    (AcceptanceCriteria, "Acceptance Criteria"),
+    (Risks, "Risks"),
 ]
 
 # The full reference body (frontmatter stripped), exercising every field:
@@ -107,25 +136,58 @@ from the nightly export instead.
 A two-week load test of the dashboard read path against the document store
 confirms the p95 latency target.
 
+## Roles and Responsibilities
+
+### Accountable
+
+The platform architecture lead is accountable for this decision and its
+outcome.
+
+### Responsible
+
+- The order service team implements the migration to the document store.
+
+### Support
+
+- The platform infrastructure team provisions the new document store cluster.
+
+### Consulted
+
+- The database reliability team is consulted on migration risk.
+
+### Informed
+
+- The reporting team is informed once the migration completes.
+
+## Tags
+
+- data-store
+
+- performance
+
+## Source
+
+The customer dashboard latency incident review meeting on 2026-08-20.
+
 ## Related Artifacts
 
 ### Requirements
 
-- REQ-9687: Order dashboard read latency
+- REQ cfa5456a-2374-4ce2-adfa-c3e9b0d9059e: Order dashboard read latency
 
-- REQ-9688: Order history retention
+- REQ 59007036-69fe-47d3-9e59-16f83228de0b: Order history retention
 
 ### Decisions
 
-- DEC-2703: Nightly order export to the data warehouse
+- DEC a70c52dd-7185-4759-a518-e64fd3205d9e: Nightly order export to the data warehouse
 
 ### Goals
 
-- GOL-0007: Cost-neutral platform migration
+- GOL ec2ca6b8-36be-4ded-b407-5cee3cb180f3: Cost-neutral platform migration
 
-### Acceptance Criteria
+### Risks
 
-- ACC-1234: Dashboard p95 latency under 100 ms
+- RSK 016dfcc6-f6b4-4856-9a85-6d71e7ba4158: Document Store Read Replica Lag Breaches the Dashboard Latency Budget
 
 ## Pros and Cons
 
@@ -146,12 +208,12 @@ under `load-tests/orders/`.
 
 ## Updates
 
-### 2026-08-27 : Confirmed
+### 2026-08-27 00:00:00.000Z : Confirmed
 
 Load test passed; the decision is confirmed and the migration task list
 opened.
 
-### 2026-08-26 - Created
+### 2026-08-26 00:00:00.000Z - Created
 
 Initial decision record drafted after the 2026-08-25 platform review.
 """
@@ -166,10 +228,24 @@ def _outcome() -> DecisionOutcome:
     return DecisionOutcome.from_text(format_text("## Decision Outcome\n\nSome outcome prose.\n"))
 
 
+def _roles_and_responsibilities() -> RolesAndResponsibilities:
+    return RolesAndResponsibilities.from_text(
+        format_text(
+            "## Roles and Responsibilities\n\n### Accountable\n\nSome owner.\n\n### Responsible\n\n- Some doer.\n"
+        )
+    )
+
+
+def _source() -> Source:
+    return Source.from_text(format_text("## Source\n\nSome source.\n"))
+
+
 def _minimal_decision_kwargs() -> dict:
     return {
         "context": _context(),
         "outcome": _outcome(),
+        "roles_and_responsibilities": _roles_and_responsibilities(),
+        "source": _source(),
     }
 
 
@@ -244,17 +320,22 @@ class TestOptionHeadingAlias(unittest.TestCase):
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s regex alias requires a `yyyy-MM-dd` (or full date+time) timestamp + ` - `/` : ` + `title`."""
+    """`UpdateEntry`'s regex alias requires a full date+time timestamp + ` - `/` : ` + `title`."""
 
-    def test_accepts_date_only_and_date_time_headings(self) -> None:
+    def test_accepts_full_date_time_headings(self) -> None:
         for heading in (
-            "2026-08-26 - Created",
-            "2026-08-26 : Created",
             "2026-08-26 14:30:00.000+02:00 - Confirmed",
             "2026-08-26 14:30:00.000Z : Confirmed",
+            "2026-08-26T14:30:00.000+02:00 - Confirmed",
+            "2026-08-26T14:30:00.000Z : Confirmed",
         ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_rejects_date_only_headings(self) -> None:
+        for heading in ("2026-08-26 - Created", "2026-08-26 : Created"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_rejects_non_timestamp_led_headings(self) -> None:
         for heading in ("A Note", "x", "2026-8-26 - Created", "Created"):
@@ -273,11 +354,9 @@ class TestSubListHeadingAliases(unittest.TestCase):
     """Each `RelatedArtifacts` sub-list class resolves its own, correct, distinct heading alias.
 
     Regression-style coverage mirroring GOL's `RelatedArtifacts` sub-list
-    alias test: since the four sub-list headings are all short, single- (or
-    double-) word title-case names, this confirms each class's
-    `SPACE_SEPARATED`-derived alias matches its own exact wording and no
-    other sub-list's -- in particular that `AcceptanceCriteria` derives
-    "Acceptance Criteria" (space inserted) from its class name.
+    alias test: since the four sub-list headings are all short, single-word
+    title-case names, this confirms each class's `SPACE_SEPARATED`-derived
+    alias matches its own exact wording and no other sub-list's.
     """
 
     def test_each_sub_list_matches_its_own_canonical_heading_and_no_other(self) -> None:
@@ -298,9 +377,6 @@ class TestSubListHeadingAliases(unittest.TestCase):
                 self.assertEqual(cls._metadata.get("type"), "heading_open")
                 self.assertEqual(cls._metadata.get("tag"), "h3")
 
-    def test_acceptance_criteria_rejects_unsplit_class_name(self) -> None:
-        self.assertFalse(match_alias(AcceptanceCriteria, "AcceptanceCriteria"))
-
 
 class TestImplicitHeadingAliases(unittest.TestCase):
     """The remaining leaf sections derive their heading from their class name (SPACE_SEPARATED).
@@ -318,6 +394,8 @@ class TestImplicitHeadingAliases(unittest.TestCase):
             (Confirmation, "Confirmation"),
             (MoreInformation, "More Information"),
             (Updates, "Updates"),
+            (Source, "Source"),
+            (Tags, "Tags"),
         ):
             with self.subTest(cls=cls.__name__):
                 self.assertTrue(match_alias(cls, heading))
@@ -330,9 +408,30 @@ class TestImplicitHeadingAliases(unittest.TestCase):
             (ConsideredOptions, "Considered Option"),
             (MoreInformation, "More Information "),
             (Updates, "Update"),
+            (Source, "source"),
+            (Tags, "Tag"),
         ):
             with self.subTest(cls=cls.__name__):
                 self.assertFalse(match_alias(cls, foreign))
+
+
+class TestRolesAndResponsibilitiesHeadingAlias(unittest.TestCase):
+    """`RolesAndResponsibilities` inherits its `@alias` from the shared
+    `models.md.RolesAndResponsibilitiesBase` (feat-29-dec-source-roles) --
+    it pins the literal "Roles and Responsibilities" wording, not the
+    `SPACE_SEPARATED` default its own class name would derive
+    ("Roles And Responsibilities", capital "And")."""
+
+    def test_accepts_canonical_heading(self) -> None:
+        self.assertTrue(match_alias(RolesAndResponsibilities, "Roles and Responsibilities"))
+
+    def test_rejects_the_space_separated_default(self) -> None:
+        self.assertFalse(match_alias(RolesAndResponsibilities, "Roles And Responsibilities"))
+
+    def test_rejects_other_wording(self) -> None:
+        for heading in ("Roles", "Responsibilities", "roles and responsibilities"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(RolesAndResponsibilities, heading))
 
 
 class TestMandatorySections(unittest.TestCase):
@@ -359,6 +458,53 @@ class TestMandatorySections(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             Decision(**kwargs)
+
+    def test_missing_roles_and_responsibilities_raises_validation_error(self) -> None:
+        """`## Roles and Responsibilities` is mandatory on `dec` (unlike `sop`'s own optional
+        equivalent) -- a decision must always name an accountable owner (feat-29-dec-source-roles)."""
+        kwargs = _minimal_decision_kwargs()
+        del kwargs["roles_and_responsibilities"]
+
+        with self.assertRaises(ValidationError):
+            Decision(**kwargs)
+
+    def test_missing_source_raises_validation_error(self) -> None:
+        kwargs = _minimal_decision_kwargs()
+        del kwargs["source"]
+
+        with self.assertRaises(ValidationError):
+            Decision(**kwargs)
+
+    def test_from_text_missing_roles_and_responsibilities_raises_assertion_error(self) -> None:
+        text = format_text(
+            "# A Decision\n\n## Context and Problem Statement\n\nSome context prose.\n\n"
+            "## Decision Outcome\n\nSome outcome prose.\n\n## Source\n\nSome source.\n"
+        )
+
+        with self.assertRaises(AssertionError):
+            Decision.from_text(text)
+
+    def test_from_text_missing_source_raises_assertion_error(self) -> None:
+        text = format_text(
+            "# A Decision\n\n## Context and Problem Statement\n\nSome context prose.\n\n"
+            "## Decision Outcome\n\nSome outcome prose.\n\n## Roles and Responsibilities\n\n"
+            "### Accountable\n\nSome owner.\n\n### Responsible\n\n- Some doer.\n"
+        )
+
+        with self.assertRaises(AssertionError):
+            Decision.from_text(text)
+
+    def test_roles_and_responsibilities_missing_accountable_raises_validation_error(self) -> None:
+        """`### Accountable` is mandatory once `## Roles and Responsibilities` is present."""
+        with self.assertRaises(ValidationError):
+            RolesAndResponsibilities(
+                responsible=Responsible.from_text(format_text("### Responsible\n\n- Some doer.\n"))
+            )
+
+    def test_roles_and_responsibilities_missing_responsible_raises_validation_error(self) -> None:
+        """`### Responsible` is mandatory once `## Roles and Responsibilities` is present."""
+        with self.assertRaises(ValidationError):
+            RolesAndResponsibilities(accountable=Accountable.from_text(format_text("### Accountable\n\nSome owner.\n")))
 
     def test_from_text_missing_context_raises_assertion_error(self) -> None:
         text = format_text("# A Decision\n\n## Decision Outcome\n\nSome outcome prose.\n")
@@ -435,7 +581,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
     def test_related_artifacts_present(self) -> None:
         kwargs = _minimal_decision_kwargs()
         kwargs["related_artifacts"] = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Decisions\n\n- DEC-0001: Some decision.\n")
+            format_text(f"## Related Artifacts\n\n### Decisions\n\n- DEC {_VALID_UUID}: Some decision.\n")
         )
 
         sut = Decision(**kwargs)
@@ -482,7 +628,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
     def test_updates_present(self) -> None:
         kwargs = _minimal_decision_kwargs()
         kwargs["updates"] = Updates.from_text(
-            format_text("## Updates\n\n### 2026-08-26 - Created\n\nSome update text.\n")
+            format_text("## Updates\n\n### 2026-08-26 00:00:00.000Z - Created\n\nSome update text.\n")
         )
 
         sut = Decision(**kwargs)
@@ -559,6 +705,236 @@ class TestDecisionOutcomeComposite(unittest.TestCase):
     def test_missing_statement_raises_validation_error(self) -> None:
         with self.assertRaises(ValidationError):
             DecisionOutcome()
+
+
+class TestDecisionOutcomeFurtherBlocks(unittest.TestCase):
+    """`DecisionOutcome` accepts further blocks after the lead paragraph (feat-247-dec-outcome-blocks, ACC-001/ACC-003/ACC-009)."""
+
+    def test_parses_lead_plus_second_paragraph_plus_bullet_list(self) -> None:
+        """ACC-001: `statement` holds the lead paragraph; `further_blocks` holds the remainder."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1 because it is the cheapest.\n\n"
+            "The choice carries two sub-decisions.\n\n"
+            "- The first sub-decision.\n"
+            "- The second sub-decision.\n"
+        )
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertEqual(sut.statement.text, "We chose option 1 because it is the cheapest.")
+        assert sut.further_blocks is not None
+        self.assertIsInstance(sut.further_blocks, OutcomeBlocks)
+        self.assertEqual(
+            sut.further_blocks.text,
+            "The choice carries two sub-decisions.\n\n- The first sub-decision.\n- The second sub-decision.\n",
+        )
+        self.assertIsNone(sut.consequences)
+        self.assertIsNone(sut.confirmation)
+
+    def test_lead_plus_second_paragraph_plus_bullet_list_round_trips(self) -> None:
+        """ACC-003: byte-exact model-to-text over lead + second paragraph + bullet list."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1 because it is the cheapest.\n\n"
+            "The choice carries two sub-decisions.\n\n"
+            "- The first sub-decision.\n"
+            "- The second sub-decision.\n"
+        )
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertEqual(str(sut), text)
+
+    def test_lead_plus_ordered_list_round_trips(self) -> None:
+        """ACC-003: byte-exact round-trip over lead + ordered list, including a single item starting at 2."""
+        for list_text in (
+            "1. The first step.\n2. The second step.\n",
+            "2. The only numbered step.\n",
+        ):
+            with self.subTest(list_text=list_text):
+                text = format_text(f"## Decision Outcome\n\nWe chose option 1.\n\n{list_text}")
+
+                sut = DecisionOutcome.from_text(text)
+
+                assert sut.further_blocks is not None
+                self.assertEqual(sut.further_blocks.text, list_text)
+                self.assertEqual(str(sut), text)
+
+    def test_lead_plus_fence_round_trips(self) -> None:
+        """ACC-003: byte-exact round-trip over lead + fenced code block (with and without an info string)."""
+        for fence_text in (
+            "```python\nchoice = 1\n```\n",
+            "```\nplain code\n```\n",
+        ):
+            with self.subTest(fence_text=fence_text):
+                text = format_text(f"## Decision Outcome\n\nWe chose option 1.\n\n{fence_text}")
+
+                sut = DecisionOutcome.from_text(text)
+
+                assert sut.further_blocks is not None
+                self.assertEqual(sut.further_blocks.text, fence_text)
+                self.assertEqual(str(sut), text)
+
+    def test_mixed_run_before_the_h3s_round_trips(self) -> None:
+        """ACC-001/ACC-003: a paragraph + list + fence + paragraph run hands off to the H3s, byte-exact."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1.\n\n"
+            "Second paragraph.\n\n"
+            "- a bullet\n\n"
+            "```text\nfenced content\n```\n\n"
+            "Fourth paragraph.\n\n"
+            "### Consequences\n\n"
+            "Consequence prose.\n\n"
+            "### Confirmation\n\n"
+            "Confirmation prose.\n"
+        )
+
+        sut = DecisionOutcome.from_text(text)
+
+        assert sut.further_blocks is not None
+        self.assertEqual(
+            sut.further_blocks.text,
+            "Second paragraph.\n\n- a bullet\n\n```text\nfenced content\n```\n\nFourth paragraph.\n",
+        )
+        assert sut.consequences is not None
+        self.assertIn("Consequence prose.", sut.consequences.text)
+        assert sut.confirmation is not None
+        self.assertIn("Confirmation prose.", sut.confirmation.text)
+        self.assertEqual(str(sut), text)
+
+    def test_nested_block_quote_inside_a_list_item_is_consumed_and_round_trips(self) -> None:
+        """ACC-001/ACC-003: the rejected-kind contract is enforced at the top-level block boundary of the
+        outcome lead -- a block quote NESTED inside an accepted list item (indented under the bullet) is
+        not a top-level block of its own, so it is consumed as part of that list block and the whole
+        section round-trips byte-exact with `further_blocks` populated."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1 because it is the cheapest.\n\n"
+            "- The sub-decision.\n"
+            "  > A quoted rationale.\n"
+        )
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertEqual(sut.statement.text, "We chose option 1 because it is the cheapest.")
+        assert sut.further_blocks is not None
+        self.assertEqual(str(sut), text)
+
+    def test_model_dump_carries_further_blocks_text(self) -> None:
+        """ACC-003 (REQ-003): `model_dump(mode='json')` exposes the extra blocks under `further_blocks.text`."""
+        text = format_text("## Decision Outcome\n\nWe chose option 1.\n\nSecond paragraph.\n\n- a bullet\n")
+
+        sut = DecisionOutcome.from_text(text)
+
+        dump = sut.model_dump(mode="json")
+        self.assertEqual(dump["further_blocks"]["text"], "Second paragraph.\n\n- a bullet\n")
+
+    def test_pipe_table_after_the_lead_is_accepted_as_a_paragraph(self) -> None:
+        """Option A (confirmed): a GFM pipe table after the lead is a plain paragraph to the shared
+        commonmark tokenizer (which has no table token) -- accepted, not rejected by text pattern."""
+        text = format_text("## Decision Outcome\n\nWe chose option 1.\n\n| a | b |\n| - | - |\n| 1 | 2 |\n")
+
+        sut = DecisionOutcome.from_text(text)
+
+        assert sut.further_blocks is not None
+        self.assertIn("| a | b |", sut.further_blocks.text)
+        self.assertEqual(str(sut), text)
+
+    def test_pipe_table_as_the_lead_is_accepted_as_statement(self) -> None:
+        """Option A (confirmed): a pipe table in the lead position is a `statement` paragraph -- the
+        pre-feature lead behavior, no regression."""
+        text = format_text("## Decision Outcome\n\n| a | b |\n| - | - |\n| 1 | 2 |\n")
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertIsNone(sut.further_blocks)
+        self.assertIn("| a | b |", sut.statement.text)
+        self.assertEqual(str(sut), text)
+
+    def test_lead_only_section_parses_to_today_exact_result(self) -> None:
+        """ACC-004 (REQ-004): no further blocks -- `further_blocks` is `None`, the parse result and
+        the `str()` output are exactly today's."""
+        text = format_text("## Decision Outcome\n\nSome outcome prose.\n")
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertIsNone(sut.further_blocks)
+        self.assertEqual(sut.statement.text, "Some outcome prose.")
+        self.assertIsNone(sut.consequences)
+        self.assertIsNone(sut.confirmation)
+        self.assertEqual(str(sut), text)
+        self.assertIsNone(sut.model_dump(mode="json")["further_blocks"])
+
+    def test_empty_outcome_body_is_rejected(self) -> None:
+        """ACC-002: an empty `## Decision Outcome` body (no lead paragraph at all) is still rejected
+        with the actionable "found no match" error naming `statement`."""
+        with self.assertRaisesRegex(AssertionError, "found no match"):
+            DecisionOutcome.from_text(format_text("## Decision Outcome\n"))
+
+    def test_block_quote_after_the_lead_is_rejected(self) -> None:
+        """ACC-009: a top-level block quote after the lead ends the run and stays unconsumed."""
+        self._assert_leftover_rejected("We chose option 1.\n\n> A quoted block.\n")
+
+    def test_horizontal_rule_after_the_lead_is_rejected(self) -> None:
+        """ACC-009: a top-level horizontal rule after the lead ends the run and stays unconsumed."""
+        self._assert_leftover_rejected("We chose option 1.\n\n---\n\nMore prose.\n")
+
+    def test_html_comment_after_the_lead_is_rejected(self) -> None:
+        """ACC-009: a top-level HTML comment after the lead ends the run and stays unconsumed."""
+        self._assert_leftover_rejected("We chose option 1.\n\n<!-- an explanatory note -->\n\nMore prose.\n")
+
+    def test_headings_h4_to_h6_after_the_lead_are_rejected(self) -> None:
+        """ACC-009: an H4/H5/H6 heading after the lead ends the run (at the first heading of any level)
+        and stays unconsumed."""
+        for level in (4, 5, 6):
+            with self.subTest(level=level):
+                self._assert_leftover_rejected(f"We chose option 1.\n\n{'#' * level} Sub\n\nMore prose.\n")
+
+    def test_raw_html_after_the_lead_is_rejected(self) -> None:
+        """ACC-009: raw (non-comment) HTML is rejected by the engine's own raw-HTML rule, not accepted
+        as a further block."""
+        with self.assertRaisesRegex(AssertionError, "raw HTML is not permitted"):
+            DecisionOutcome.from_text(format_text("## Decision Outcome\n\nWe chose option 1.\n\n<div>raw</div>\n"))
+
+    def test_block_quote_after_an_accepted_run_is_rejected(self) -> None:
+        """ACC-009: the mid-run stop -- a rejected kind placed AFTER an accepted run (here the lead
+        paragraph, then an accepted bullet list, then a top-level block quote) still ends the run at the
+        first non-accepted top-level block: the bullet list is consumed by `further_blocks`, the block
+        quote is not, and the parse fails with "text left over" (the other rejection tests place the
+        offending kind as the first block of the remainder)."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1.\n\n"
+            "- The first sub-decision.\n"
+            "- The second sub-decision.\n\n"
+            "> A quoted block.\n"
+        )
+
+        with self.assertRaisesRegex(AssertionError, "text left over"):
+            DecisionOutcome.from_text(text)
+
+    def test_duplicate_consequences_h3_after_confirmation_is_rejected(self) -> None:
+        """ACC-009: a second `### Consequences` after `### Confirmation` violates the H3 order and is
+        still rejected -- no field is left to consume it."""
+        with self.assertRaisesRegex(AssertionError, "text left over"):
+            DecisionOutcome.from_text(
+                format_text(
+                    "## Decision Outcome\n\n"
+                    "We chose option 1.\n\n"
+                    "### Consequences\n\n"
+                    "A consequence.\n\n"
+                    "### Confirmation\n\n"
+                    "A confirmation.\n\n"
+                    "### Consequences\n\n"
+                    "A duplicate heading.\n"
+                )
+            )
+
+    def _assert_leftover_rejected(self, lead: str) -> None:
+        with self.assertRaisesRegex(AssertionError, "text left over"):
+            DecisionOutcome.from_text(format_text(f"## Decision Outcome\n\n{lead}"))
 
 
 class TestOptionComputedFields(unittest.TestCase):
@@ -662,7 +1038,7 @@ class TestRelatedArtifactsSubListsIndividuallyOptional(unittest.TestCase):
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
 
     def test_empty_related_artifacts_container_parses(self) -> None:
         sut = RelatedArtifacts.from_text(format_text("## Related Artifacts\n"))
@@ -670,52 +1046,54 @@ class TestRelatedArtifactsSubListsIndividuallyOptional(unittest.TestCase):
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
 
     def test_requirements_sub_list_present(self) -> None:
         sut = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Requirements\n\n- REQ-0001: Some requirement.\n")
+            format_text(f"## Related Artifacts\n\n### Requirements\n\n- REQ {_VALID_UUID}: Some requirement.\n")
         )
 
         self.assertIsNotNone(sut.requirements)
-        self.assertEqual([item.text for item in sut.requirements.items], ["REQ-0001: Some requirement."])
+        self.assertEqual([item.text for item in sut.requirements.items], [f"REQ {_VALID_UUID}: Some requirement."])
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
 
     def test_decisions_sub_list_present(self) -> None:
         sut = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Decisions\n\n- DEC-0001: Some decision.\n")
+            format_text(f"## Related Artifacts\n\n### Decisions\n\n- DEC {_VALID_UUID}: Some decision.\n")
         )
 
         self.assertIsNotNone(sut.decisions)
-        self.assertEqual([item.text for item in sut.decisions.items], ["DEC-0001: Some decision."])
+        self.assertEqual([item.text for item in sut.decisions.items], [f"DEC {_VALID_UUID}: Some decision."])
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
 
     def test_goals_sub_list_present(self) -> None:
-        sut = RelatedArtifacts.from_text(format_text("## Related Artifacts\n\n### Goals\n\n- GOL-0001: Some goal.\n"))
-
-        self.assertIsNotNone(sut.goals)
-        self.assertEqual([item.text for item in sut.goals.items], ["GOL-0001: Some goal."])
-        self.assertIsNone(sut.requirements)
-        self.assertIsNone(sut.decisions)
-        self.assertIsNone(sut.acceptance_criteria)
-
-    def test_acceptance_criteria_sub_list_present(self) -> None:
         sut = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Acceptance Criteria\n\n- ACC-0001: Some criterion.\n")
+            format_text(f"## Related Artifacts\n\n### Goals\n\n- GOL {_VALID_UUID}: Some goal.\n")
         )
 
-        self.assertIsNotNone(sut.acceptance_criteria)
-        self.assertEqual([item.text for item in sut.acceptance_criteria.items], ["ACC-0001: Some criterion."])
+        self.assertIsNotNone(sut.goals)
+        self.assertEqual([item.text for item in sut.goals.items], [f"GOL {_VALID_UUID}: Some goal."])
+        self.assertIsNone(sut.requirements)
+        self.assertIsNone(sut.decisions)
+        self.assertIsNone(sut.risks)
+
+    def test_risks_sub_list_present(self) -> None:
+        sut = RelatedArtifacts.from_text(
+            format_text(f"## Related Artifacts\n\n### Risks\n\n- RSK {_VALID_UUID}: Some risk.\n")
+        )
+
+        self.assertIsNotNone(sut.risks)
+        self.assertEqual([item.text for item in sut.risks.items], [f"RSK {_VALID_UUID}: Some risk."])
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
 
     def test_sub_list_present_without_any_bullet_raises_assertion_error(self) -> None:
-        for heading in ("Requirements", "Decisions", "Goals", "Acceptance Criteria"):
+        for heading in ("Requirements", "Decisions", "Goals", "Risks"):
             with self.subTest(heading=heading):
                 with self.assertRaises(AssertionError):
                     RelatedArtifacts.from_text(format_text(f"## Related Artifacts\n\n### {heading}\n"))
@@ -728,20 +1106,20 @@ class TestRelatedArtifactsSubListsIndividuallyOptional(unittest.TestCase):
         with self.assertRaises(ValidationError):
             Goals(items=[])
         with self.assertRaises(ValidationError):
-            AcceptanceCriteria(items=[])
+            Risks(items=[])
 
 
 class TestUpdateEntryComputedFields(unittest.TestCase):
     """`UpdateEntry.timestamp`/`UpdateEntry.title` are computed from the heading (ACC-002)."""
 
-    def test_parses_timestamp_and_title_date_only(self) -> None:
-        text = format_text("### 2026-08-26 - Created\n\nSome update text.\n")
+    def test_parses_timestamp_and_title_date_time(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\nSome update text.\n")
 
         sut = UpdateEntry.from_text(text)
 
-        self.assertEqual(sut.timestamp, "2026-08-26")
+        self.assertEqual(sut.timestamp, "2026-08-26 00:00:00.000Z")
         self.assertEqual(sut.title, "Created")
-        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.content.text, "Some update text.\n")
         self.assertEqual(str(sut), text)
 
     def test_parses_timestamp_and_title_date_time_with_colon_separator(self) -> None:
@@ -750,44 +1128,126 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
         self.assertEqual(sut.timestamp, "2026-08-27 14:30:00.000+02:00")
         self.assertEqual(sut.title, "Confirmed")
 
+    def test_parses_timestamp_and_title_t_separator(self) -> None:
+        sut = UpdateEntry.from_text(format_text("### 2026-08-27T14:30:00.000Z - Confirmed\n\nBody.\n"))
+
+        self.assertEqual(sut.timestamp, "2026-08-27T14:30:00.000Z")
+        self.assertEqual(sut.title, "Confirmed")
+
+    def test_rejects_date_only_heading_at_parse_time(self) -> None:
+        for heading in ("### 2026-08-26 - Created", "### 2026-08-26 : Created"):
+            with self.subTest(heading=heading):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"{heading}\n\nSome update text.\n"))
+
     def test_rejects_non_timestamp_led_heading_at_parse_time(self) -> None:
         with self.assertRaises(AssertionError):
             UpdateEntry.from_text(format_text("### Anything Goes\n\nSome update text.\n"))
 
     def test_entry_without_lead_paragraph_raises_assertion_error(self) -> None:
         with self.assertRaises(AssertionError):
-            UpdateEntry.from_text(format_text("### 2026-08-26 - Created\n"))
+            UpdateEntry.from_text(format_text("### 2026-08-26 00:00:00.000Z - Created\n"))
 
     def test_missing_content_raises_validation_error(self) -> None:
         with self.assertRaises(ValidationError):
             UpdateEntry()
 
 
+class TestUpdateEntryAcceptsNonParagraphContent(unittest.TestCase):
+    """`UpdateEntry.content` accepts any markdown content verbatim, not just one paragraph
+    (feat-180-updates, issue #180, ACC-002/ACC-003/ACC-004).
+
+    Every body below is mdformat-stable (mdformat renormalizes e.g. a
+    `+`-style bullet to `-`), so the entry round-trips byte-identically
+    and `.content.text` carries the raw body including mdformat's
+    canonical single trailing `"\n"`.
+    """
+
+    def test_multi_paragraph_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\nFirst paragraph.\n\nSecond paragraph.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "First paragraph.\n\nSecond paragraph.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_bullet_list_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "- item one\n\n- item two\n")
+        self.assertEqual(str(sut), text)
+
+    def test_numbered_list_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-26 00:00:00.000Z - Created\n\n1. Do the first thing.\n\n2. Do the second thing.\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "1. Do the first thing.\n\n2. Do the second thing.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_fenced_code_block_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-26 00:00:00.000Z - Created\n\nSome lead prose.\n\n```\ncode block content\n```\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some lead prose.\n\n```\ncode block content\n```\n")
+        self.assertEqual(str(sut), text)
+
+    def test_block_quote_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\n> A quoted observation.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "> A quoted observation.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_model_dump_surfaces_non_paragraph_content(self) -> None:
+        # ACC-006: `model_dump()` (the MCP-transport path) carries the real entry text,
+        # not an empty object.
+        kwargs = _minimal_decision_kwargs()
+        kwargs["updates"] = Updates.from_text(
+            format_text("## Updates\n\n### 2026-08-26 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+        )
+
+        dump = Decision(**kwargs).model_dump(mode="json")
+
+        self.assertEqual(dump["updates"]["updates"][0]["content"]["text"], "- item one\n\n- item two\n")
+
+
 class TestUpdatesContainer(unittest.TestCase):
     """`Updates`/`UpdateEntry` mirror TSK's `RecentUpdates`/`UpdateEntry` shape."""
 
     def test_parses_multiple_entries_in_document_order(self) -> None:
+        # The first entry's body is non-paragraph (feat-180): its "consume
+        # everything remaining" content must stop at the second entry's heading.
         text = format_text(
             "## Updates\n\n"
-            "### 2026-08-27 : Confirmed\n\n"
-            "Second entry text.\n\n"
-            "### 2026-08-26 - Created\n\n"
+            "### 2026-08-27 00:00:00.000Z : Confirmed\n\n"
+            "- item one\n\n"
+            "- item two\n\n"
+            "### 2026-08-26 00:00:00.000Z - Created\n\n"
             "First entry text.\n"
         )
 
         sut = Updates.from_text(text)
 
         self.assertEqual(len(sut.updates), 2)
-        self.assertEqual(sut.updates[0].content.text, "Second entry text.")
-        self.assertEqual(sut.updates[1].content.text, "First entry text.")
+        self.assertEqual(sut.updates[0].content.text, "- item one\n\n- item two\n")
+        self.assertEqual(sut.updates[1].content.text, "First entry text.\n")
         self.assertEqual(str(sut), text)
 
     def test_out_of_order_entries_raise_validation_error(self) -> None:
         text = format_text(
             "## Updates\n\n"
-            "### 2026-08-26 - Created\n\n"
+            "### 2026-08-26 00:00:00.000Z - Created\n\n"
             "First entry text.\n\n"
-            "### 2026-08-27 : Confirmed\n\n"
+            "### 2026-08-27 00:00:00.000Z : Confirmed\n\n"
             "Second entry text.\n"
         )
 
@@ -797,9 +1257,9 @@ class TestUpdatesContainer(unittest.TestCase):
     def test_equal_timestamps_are_allowed(self) -> None:
         text = format_text(
             "## Updates\n\n"
-            "### 2026-08-27 - First\n\n"
+            "### 2026-08-27 00:00:00.000Z - First\n\n"
             "First entry text.\n\n"
-            "### 2026-08-27 - Second\n\n"
+            "### 2026-08-27 00:00:00.000Z - Second\n\n"
             "Second entry text.\n"
         )
 
@@ -819,7 +1279,7 @@ class TestUpdatesContainer(unittest.TestCase):
         text = format_text(
             "## Updates\n\n"
             "<!-- Newest entry first -- prepend new entries directly below this comment. -->\n\n"
-            "### 2026-08-27 - Confirmed\n\n"
+            "### 2026-08-27 00:00:00.000Z - Confirmed\n\n"
             "Some update text.\n"
         )
 
@@ -839,15 +1299,23 @@ class TestDecisionMisordering(unittest.TestCase):
             "Some context prose.\n\n"
             "## Decision Outcome\n\n"
             "Some outcome prose.\n\n"
+            "## Roles and Responsibilities\n\n"
+            "### Accountable\n\n"
+            "Some owner.\n\n"
+            "### Responsible\n\n"
+            "- Some doer.\n\n"
+            "## Source\n\n"
+            "Some source.\n\n"
             "## Updates\n\n"
-            "### 2026-08-26 - Created\n\n"
+            "### 2026-08-26 00:00:00.000Z - Created\n\n"
             "Some update text.\n\n"
             "## More Information\n\n"
             "Some more information text.\n"
         )
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as ctx:
             Decision.from_text(text)
+        self.assertIn("More Information", str(ctx.exception))
 
     def test_related_artifacts_after_pros_and_cons_raises_assertion_error(self) -> None:
         text = format_text(
@@ -856,6 +1324,13 @@ class TestDecisionMisordering(unittest.TestCase):
             "Some context prose.\n\n"
             "## Decision Outcome\n\n"
             "Some outcome prose.\n\n"
+            "## Roles and Responsibilities\n\n"
+            "### Accountable\n\n"
+            "Some owner.\n\n"
+            "### Responsible\n\n"
+            "- Some doer.\n\n"
+            "## Source\n\n"
+            "Some source.\n\n"
             "## Pros and Cons\n\n"
             "### Option 1: Some option\n\n"
             "Some option body.\n\n"
@@ -864,8 +1339,32 @@ class TestDecisionMisordering(unittest.TestCase):
             "- REQ-0001: Some requirement.\n"
         )
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as ctx:
             Decision.from_text(text)
+        self.assertIn("Related Artifacts", str(ctx.exception))
+
+    def test_source_before_roles_and_responsibilities_raises_assertion_error(self) -> None:
+        """`## Source` misordered ahead of the mandatory `## Roles and Responsibilities`
+        (feat-29-dec-source-roles, REQ-015/ACC-014) -- closes the gap where every prior
+        misordering test only exercised pre-existing sections, not the three new ones."""
+        text = format_text(
+            "# A Decision\n\n"
+            "## Context and Problem Statement\n\n"
+            "Some context prose.\n\n"
+            "## Decision Outcome\n\n"
+            "Some outcome prose.\n\n"
+            "## Source\n\n"
+            "Some source.\n\n"
+            "## Roles and Responsibilities\n\n"
+            "### Accountable\n\n"
+            "Some owner.\n\n"
+            "### Responsible\n\n"
+            "- Some doer.\n"
+        )
+
+        with self.assertRaises(AssertionError) as ctx:
+            Decision.from_text(text)
+        self.assertIn("Roles and Responsibilities", str(ctx.exception))
 
     def test_consequences_under_h1_outside_outcome_raises_assertion_error(self) -> None:
         text = format_text(
@@ -950,6 +1449,19 @@ class TestDecisionReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertIn("We chose the document store", sut.outcome.statement.text)
         self.assertIsNotNone(sut.outcome.consequences)
         self.assertIsNotNone(sut.outcome.confirmation)
+        self.assertIsNotNone(sut.roles_and_responsibilities)
+        self.assertIn("architecture lead is accountable", sut.roles_and_responsibilities.accountable.value.text)
+        self.assertEqual(
+            [item.text for item in sut.roles_and_responsibilities.responsible.items],
+            ["The order service team implements the migration to the document store."],
+        )
+        self.assertIsNotNone(sut.roles_and_responsibilities.support)
+        self.assertIsNotNone(sut.roles_and_responsibilities.consulted)
+        self.assertIsNotNone(sut.roles_and_responsibilities.informed)
+        self.assertIsNotNone(sut.tags)
+        self.assertEqual([item.text for item in sut.tags.items], ["data-store", "performance"])
+        self.assertIsNotNone(sut.source)
+        self.assertIn("incident review meeting", sut.source.value.text)
         self.assertIsNotNone(sut.more_information)
         self.assertIn("load-test harness configuration", sut.more_information.text)
 
@@ -960,19 +1472,25 @@ class TestDecisionReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertIsNotNone(related_artifacts)
         self.assertEqual(
             [item.text for item in related_artifacts.requirements.items],
-            ["REQ-9687: Order dashboard read latency", "REQ-9688: Order history retention"],
+            [
+                "REQ cfa5456a-2374-4ce2-adfa-c3e9b0d9059e: Order dashboard read latency",
+                "REQ 59007036-69fe-47d3-9e59-16f83228de0b: Order history retention",
+            ],
         )
         self.assertEqual(
             [item.text for item in related_artifacts.decisions.items],
-            ["DEC-2703: Nightly order export to the data warehouse"],
+            ["DEC a70c52dd-7185-4759-a518-e64fd3205d9e: Nightly order export to the data warehouse"],
         )
         self.assertEqual(
             [item.text for item in related_artifacts.goals.items],
-            ["GOL-0007: Cost-neutral platform migration"],
+            ["GOL ec2ca6b8-36be-4ded-b407-5cee3cb180f3: Cost-neutral platform migration"],
         )
         self.assertEqual(
-            [item.text for item in related_artifacts.acceptance_criteria.items],
-            ["ACC-1234: Dashboard p95 latency under 100 ms"],
+            [item.text for item in related_artifacts.risks.items],
+            [
+                "RSK 016dfcc6-f6b4-4856-9a85-6d71e7ba4158: Document Store Read Replica Lag Breaches the "
+                "Dashboard Latency Budget"
+            ],
         )
 
     def test_options_number_and_name_computed(self) -> None:
@@ -999,5 +1517,106 @@ class TestDecisionReferenceDocumentRoundTrips(unittest.TestCase):
         # wrapped reference paragraph is checked with `assertIn`; the
         # byte-exact structure is guarded by `test_round_trips` above.
         self.assertEqual(
-            updates.updates[1].content.text, "Initial decision record drafted after the 2026-08-25 platform review."
+            updates.updates[1].content.text, "Initial decision record drafted after the 2026-08-25 platform review.\n"
         )
+
+
+# Every sub-list class alongside its own correct type tag (feat-135-related-artifacts-risks).
+_SUB_LIST_CLASSES_AND_TAGS = [
+    (Requirements, "REQ"),
+    (Decisions, "DEC"),
+    (Goals, "GOL"),
+    (Risks, "RSK"),
+]
+
+
+class TestSubListCrossReferenceFormatMatrix(unittest.TestCase):
+    """Every `RelatedArtifacts` sub-list enforces the shared `"<TAG> <uuid>: <title>"`
+    cross-reference format (feat-135-related-artifacts-risks, REQ-004, ACC-002/ACC-003):
+    a well-formed bullet parses, and each malformed variant (wrong tag, uppercase uuid,
+    malformed uuid, dash instead of space, missing title) raises `pydantic.ValidationError`.
+    """
+
+    def test_well_formed_bullet_parses(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}: A title\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(len(sut.items), 1)
+
+    def test_wrong_type_tag_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            wrong_tag = next(other_tag for _, other_tag in _SUB_LIST_CLASSES_AND_TAGS if other_tag != tag)
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {wrong_tag} {_VALID_UUID}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_uppercase_uuid_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID.upper()}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_malformed_uuid_raises_validation_error(self) -> None:
+        # One hex digit short in the last group.
+        malformed_uuid = "12345678-1234-1234-1234-123456789a"
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {malformed_uuid}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_dash_instead_of_space_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag}-{_VALID_UUID}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_missing_title_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}:\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_decisions_rejects_non_dec_tag(self) -> None:
+        """`Decisions` is DEC-only (REQ-005/ACC-004): a non-DEC bullet is rejected."""
+        text = format_text(f"### Decisions\n\n- REQ {_VALID_UUID}: A title\n")
+
+        with self.assertRaises(ValidationError):
+            Decisions.from_text(text)
+
+
+class TestSubListNotesCapture(unittest.TestCase):
+    """A bullet with a trailing indented notes paragraph parses into `.items[0].notes`;
+    a bare bullet leaves `.items[0].notes` as `None` (feat-135-related-artifacts-risks,
+    REQ-006, ACC-005) -- every sub-list's `items` is now `list[MarkdownListItemWithNotes]`.
+    """
+
+    def test_bullet_with_notes_captures_notes(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}: A title\n\n  A paraphrase note.\n")
+
+                sut = cls.from_text(text)
+
+                self.assertIsNotNone(sut.items[0].notes)
+
+    def test_bare_bullet_leaves_notes_none(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}: A title\n")
+
+                sut = cls.from_text(text)
+
+                self.assertIsNone(sut.items[0].notes)

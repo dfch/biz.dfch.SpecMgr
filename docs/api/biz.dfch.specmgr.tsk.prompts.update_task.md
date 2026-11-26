@@ -4,16 +4,18 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Task List (TSK) document by id, using the
-existing ``tsk/tools/`` surface (``get_tsk``, ``validate_tsk``) plus the
+existing ``tsk/tools/`` surface (``get_tsk``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="tsk"``; ``get_tsk``'s ``raw=True`` parameter serves the
-line-range flow's line numbers). There is no
+line-range flow's line numbers, with ``numbered=True`` additionally
+printing each line's 1-based body-line number, ready to feed into
+``update``'s ``offset``). There is no
 ``specmgr://tsk/{id}`` resource to point at -- id-based reads always went
 through the ``get_tsk`` tool only (there was no earlier resource to remove,
-unlike REQ's own history -- ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+unlike REQ's own history -- DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: TSK's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: TSK's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="tsk"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="tsk"``) -- so the tool-mapping section

@@ -64,9 +64,17 @@ if the category was empty), phrased as a genuine open question relevant
 to that category (grounded in its ISO/IEC 25010:2023 definition from step
 3, where applicable). Each new pair has **no heading of its own** and
 consists of exactly:
-- `> {the question}` as a block quote, and
+- `> **<d>.<NNNN>**: {the question}` as a block quote, where `<d>` is the
+  category's own fixed digit (0=`Elicitation Context`, then the nine
+  ISO/IEC 25010:2023 characteristics in document order, 1 through 9) and
+  `<NNNN>` the category's own next number: that category's existing max
+  sequence + 10 (e.g. append the first two new questions after a category
+  whose last existing question is `**2.0020**` as `**2.0030**` and
+  `**2.0040**`), or `0010` when the category holds no numbered question
+  yet. A question's number, once assigned, is permanent -- never reuse,
+  renumber, or touch any existing question's number.
 - immediately below it, on its own line, the literal placeholder text
-  `_(awaiting response)_` -- nothing else.
+  `TODO: answer pending` -- nothing else.
 This placeholder is not the interviewee's answer -- it only marks where
 a human will later type their actual answer directly into the document.
 Do not add an HTML comment to these new pairs: that is only ever added
@@ -79,10 +87,18 @@ The generic `update` tool is a whole-body replace unless you give it a
 line range:
 - **Clean append (the `N+1` range)**: when the new pairs all go at the
   very end of the body (every targeted category is the document's last
-  `##` section), call `get_qa(id, raw=True)` to count the body's lines
-  (`N`) and call `update(id, type="qa", content, offset=N+1)`
-  passing only the new pairs -- the `N+1` position is end-of-body, so
-  this appends without touching any existing line.
+  `##` section), call `get_qa(id, raw=True, numbered=True)` to count
+  the body's lines (`N`) -- the highest printed 1-based body-line number
+  is `N`, so no manual counting is needed and the number seen can be
+  fed straight back into `update`'s `offset` -- and call
+  `update(id, type="qa", content, offset=N+1)` passing only the new
+  pairs -- the `N+1` position is end-of-body, so this appends without
+  touching any existing line. `offset` addresses the frontmatter-
+  stripped body, never the raw on-disk `.md` file: the YAML frontmatter
+  block is variable-length, so a raw file read's line numbers are never
+  the same as body-line coordinates -- and never feed the
+  `numbered=True` output back verbatim as `content`: strip the
+  `"<n>: "` prefix from each line first.
 - **Otherwise (whole-body replace)**: carry forward every section of
   the document exactly as read in step 1 (including all ten fixed
   category headings, even ones you are not adding questions to this
@@ -95,7 +111,7 @@ line range:
 Once `update` succeeds, tell the user:
 - exactly how many questions you added, and to which characteristic(s);
 - that they should now open the document and answer each new question
-  by replacing its `_(awaiting response)_` placeholder with their own
+  by replacing its `TODO: answer pending` placeholder with their own
   answer, directly in the file;
 - that once they are done answering, they should run the `/resolve`
   command to continue to the next step.

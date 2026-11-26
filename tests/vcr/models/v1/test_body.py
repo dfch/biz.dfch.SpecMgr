@@ -26,6 +26,10 @@ mirroring `.specmgr/feat/feat-33-vcr/example.md`'s empirically-validated
 shape), `AcceptanceCriteria`'s zero-entry rejection, `Vcr`'s section
 optional/misordering behavior, and the duplicate-AC-number after-validator
 (the `ValidationError` channel).
+
+Also covers feat-180-updates (issue #180): `UpdateEntry.content` accepts
+any markdown content (multi-paragraph, bullet/numbered list, fenced code
+block, block quote), not just a single paragraph.
 """
 
 from __future__ import annotations
@@ -107,11 +111,11 @@ Verification performed against the staging gateway (build 2026.08.30-rc3).
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-27 : Confirmed
+### 2026-08-27 00:00:00.000Z : Confirmed
 
 AC-001 and AC-003 executed against staging.
 
-### 2026-08-26 - Created
+### 2026-08-26 00:00:00.000Z - Created
 
 Initial verification case drafted.
 """
@@ -431,17 +435,22 @@ class TestAcceptanceCriteriaZeroEntries(unittest.TestCase):
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s regex alias requires a `yyyy-MM-dd` (or full date+time) timestamp + ` - `/` : ` + `title`."""
+    """`UpdateEntry`'s regex alias requires a full date+time timestamp + ` - `/` : ` + `title`."""
 
-    def test_accepts_date_only_and_date_time_headings(self) -> None:
+    def test_accepts_full_date_time_headings(self) -> None:
         for heading in (
-            "2026-08-26 - Created",
-            "2026-08-26 : Created",
             "2026-08-26 14:30:00.000+02:00 - Confirmed",
             "2026-08-26 14:30:00.000Z : Confirmed",
+            "2026-08-26T14:30:00.000+02:00 - Confirmed",
+            "2026-08-26T14:30:00.000Z : Confirmed",
         ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_rejects_date_only_headings(self) -> None:
+        for heading in ("2026-08-26 - Created", "2026-08-26 : Created"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_rejects_non_timestamp_led_headings(self) -> None:
         for heading in ("A Note", "x", "2026-8-26 - Created", "Created"):
@@ -450,6 +459,94 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
 
     def test_update_entry_rejects_empty_h3_text(self) -> None:
         self.assertFalse(match_alias(UpdateEntry, ""))
+
+    def test_update_entry_rejects_date_only_heading_at_parse_time(self) -> None:
+        for heading in ("### 2026-08-26 - Created", "### 2026-08-26 : Created"):
+            with self.subTest(heading=heading):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"{heading}\n\nSome update text.\n"))
+
+    def test_parses_timestamp_and_title_t_separator(self) -> None:
+        sut = UpdateEntry.from_text(format_text("### 2026-08-26T14:30:00.000Z - Created\n\nBody.\n"))
+
+        self.assertEqual(sut.timestamp, "2026-08-26T14:30:00.000Z")
+        self.assertEqual(sut.title, "Created")
+
+
+class TestUpdateEntryAcceptsNonParagraphContent(unittest.TestCase):
+    """`UpdateEntry.content` accepts any markdown content verbatim, not just one paragraph
+    (feat-180-updates, issue #180, ACC-002/ACC-003/ACC-004).
+
+    Every body below is mdformat-stable (mdformat renormalizes e.g. a
+    `+`-style bullet to `-`), so the entry round-trips byte-identically
+    and `.content.text` carries the raw body including mdformat's
+    canonical single trailing `"\n"`.
+    """
+
+    def test_multi_paragraph_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\nFirst paragraph.\n\nSecond paragraph.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "First paragraph.\n\nSecond paragraph.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_bullet_list_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "- item one\n\n- item two\n")
+        self.assertEqual(str(sut), text)
+
+    def test_numbered_list_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-26 00:00:00.000Z - Created\n\n1. Do the first thing.\n\n2. Do the second thing.\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "1. Do the first thing.\n\n2. Do the second thing.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_fenced_code_block_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-26 00:00:00.000Z - Created\n\nSome lead prose.\n\n```\ncode block content\n```\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some lead prose.\n\n```\ncode block content\n```\n")
+        self.assertEqual(str(sut), text)
+
+    def test_block_quote_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\n> A quoted observation.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "> A quoted observation.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_blank_content_raises_assertion_error(self) -> None:
+        # `content` stays mandatory: a heading with no body (or a whitespace-only
+        # body, which mdformat normalizes to nothing) fails the engine's
+        # mandatory-field zero-extent check (feat-180-updates, issue #180, ACC-005).
+        for body in ("", "   \n"):
+            with self.subTest(body=body):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"### 2026-08-26 00:00:00.000Z - Created\n{body}"))
+
+    def test_model_dump_surfaces_non_paragraph_content(self) -> None:
+        # ACC-006: `model_dump()` (the MCP-transport path) carries the real entry text,
+        # not an empty object.
+        kwargs = _minimal_vcr_kwargs()
+        kwargs["updates"] = Updates.from_text(
+            format_text("## Updates\n\n### 2026-08-26 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+        )
+
+        dump = Vcr(**kwargs).model_dump(mode="json")
+
+        self.assertEqual(dump["updates"]["updates"][0]["content"]["text"], "- item one\n\n- item two\n")
 
 
 class TestImplicitHeadingAliases(unittest.TestCase):
@@ -555,7 +652,9 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
 
     def test_updates_present(self) -> None:
         kwargs = _minimal_vcr_kwargs()
-        kwargs["updates"] = Updates.from_text(format_text("## Updates\n\n### 2026-08-26 - Created\n\nSome text.\n"))
+        kwargs["updates"] = Updates.from_text(
+            format_text("## Updates\n\n### 2026-08-26 00:00:00.000Z - Created\n\nSome text.\n")
+        )
 
         sut = Vcr(**kwargs)
 
@@ -571,7 +670,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
         # outline), mirroring `feat`'s own `Updates(MarkdownSection3WithComment)`.
         text = format_text(
             "## Updates\n\n<!-- Newest entry first -- prepend new entries directly below this comment. -->\n\n"
-            "### 2026-08-26 - Created\n\nSome text.\n"
+            "### 2026-08-26 00:00:00.000Z - Created\n\nSome text.\n"
         )
 
         sut = Updates.from_text(text)
@@ -619,7 +718,7 @@ class TestVcrMisordering(unittest.TestCase):
             "## Acceptance Criteria\n\n"
             "### AC-001 (Test): Some criterion\n\n"
             "## Updates\n\n"
-            "### 2026-08-26 - Created\n\n"
+            "### 2026-08-26 00:00:00.000Z - Created\n\n"
             "Some update text.\n\n"
             "## More Information\n\n"
             "Some more information text.\n"
@@ -737,8 +836,8 @@ class TestVcrReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertIsNotNone(updates)
         self.assertIsNotNone(updates.comment)
         self.assertEqual(len(updates.updates), 2)
-        self.assertEqual(updates.updates[0].content.text, "AC-001 and AC-003 executed against staging.")
-        self.assertEqual(updates.updates[1].content.text, "Initial verification case drafted.")
+        self.assertEqual(updates.updates[0].content.text, "AC-001 and AC-003 executed against staging.\n")
+        self.assertEqual(updates.updates[1].content.text, "Initial verification case drafted.\n")
 
 
 if __name__ == "__main__":

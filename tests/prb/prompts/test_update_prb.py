@@ -15,7 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``update_prb`` ``@mcp.prompt()`` (Task 3.15, ACC-006).
+"""Tests for the ``update_prb`` ``@mcp.prompt()`` (Task 3.15; feat-132-prb-update
+Phase 2, ACC-007).
 
 ``update_prb`` (the prompt) only ever returns instructional text -- it never
 calls ``get_prb``/``question``/``update``/``set_status`` (the tools) itself
@@ -48,6 +49,35 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         self.assertIn("get_prb(id)", result)
         self.assertLess(result.index("get_prb(id)"), result.index('update(id, type="prb", content)'))
 
+    def test_mentions_old_shape_recovery_via_raw_reread(self):
+        """The prompt must instruct recognizing the missing-lead-paragraph parse
+        error from get_prb(id) and recovering via get_prb(id, raw=True) (REQ-008)."""
+        result = update_prb("abc-123")
+        self.assertIn("Old-shape recovery", result)
+        self.assertIn("missing the mandatory lead sentence", result)
+        self.assertIn("get_prb(id, raw=True)", result)
+        self.assertLess(result.index("get_prb(id)"), result.index("Old-shape recovery"))
+
+    def test_mentions_deriving_or_eliciting_lead_sentence_blanks(self):
+        """The recovery flow must instruct deriving/confirming (or eliciting)
+        the lead sentence's 4 blanks, mirroring create_prb's own flow (REQ-006)."""
+        result = update_prb("abc-123")
+        self.assertIn("create_prb", result)
+        self.assertIn("derive-then-confirm", result)
+        self.assertIn("`What` -> both `[Current state]` and", result)
+        self.assertIn("`Who` -> `[stakeholder]`", result)
+        self.assertIn("`Why` ->", result)
+        self.assertIn("[underlying cause]", result)
+
+    def test_mentions_inserting_sentence_under_h1_then_proceeding(self):
+        """The recovery flow must instruct inserting the composed sentence
+        directly under the H1, then proceeding with the originally requested
+        change once the document parses again."""
+        result = update_prb("abc-123")
+        self.assertIn("Insert the confirmed sentence as its own paragraph directly under the", result)
+        self.assertIn("H1 title", result)
+        self.assertIn("proceeding to step 2 below with the originally requested change", result)
+
     def test_mentions_both_generic_mutation_tools(self):
         """Both the generic `update` (type="prb") and `set_status`
         (type="prb") call shapes must be named."""
@@ -57,19 +87,19 @@ class TestUpdatePrbPrompt(unittest.TestCase):
 
     def test_mentions_range_update_flow(self):
         """The prompt must teach the line-range flow: read the exact body
-        via get_prb(id, raw=True), identify the 1-based line to start at
+        via get_prb(id, raw=True, numbered=True), identify the 1-based line to start at
         and how many lines to replace (N+1 is end-of-body), call
         `update` with offset/limit passing only the replacement lines;
         whole-body for multi-section or uncertain changes."""
         result = update_prb("abc-123")
-        self.assertIn("get_prb(id, raw=True)", result)
+        self.assertIn("get_prb(id, raw=True, numbered=True)", result)
         self.assertIn("1-based line to start at and how many", result)
         self.assertIn("offset = N+1", result)
         self.assertIn('update(id, type="prb", content, offset=..., limit=...)', result)
         self.assertIn("multi-section change, or whenever you are", result)
         self.assertIn("byte-identical", result)
         self.assertLess(
-            result.index("get_prb(id, raw=True)"),
+            result.index("get_prb(id, raw=True, numbered=True)"),
             result.index('update(id, type="prb", content, offset=..., limit=...)'),
         )
 

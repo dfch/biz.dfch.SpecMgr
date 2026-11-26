@@ -4,12 +4,18 @@ One adjacent question/answer pair with no heading of its own (QA v2).
 
 Many Q&A pairs can appear directly one after another inside a single
 ISO/IEC 25010:2023 characteristic section, each shaped as
-`<!-- optional comment -->` + `> {question}` (a block quote) + free-form
-answer prose -- with **no heading of its own** per pair:
+`<!-- optional comment -->` + `> **<d>.<NNNN>**: {question}` (a block quote
+whose own text starts with the bold question-number prefix -- a single
+category digit and a 4-digit zero-padded per-category sequence, enforced by
+`QaQuestionAnswer`'s own `field_validator("question")`; feat-156) +
+free-form answer prose (an unanswered question carries a `TODO: `
+placeholder, e.g. `TODO: answer pending`, in the answer text -- a pure
+authoring convention, not parsed or validated) -- with **no heading of its
+own** per pair:
 
 ```
 <!-- optional comment -->                comment: MarkdownComment | None
-> {question}                             question: MarkdownBlockQuote | None
+> **<d>.<NNNN>**: {question}             question: MarkdownBlockQuote | None
 {free-form answer prose}                 answer: QaAnswer | None
 ```
 
@@ -35,6 +41,12 @@ feature adds zero changes to that shared engine.
 ### `QaAnswer`
 
 One `QaQuestionAnswer`'s free-form prose answer -- an opaque, unparsed markdown blob.
+
+An unanswered question carries a `TODO: ` placeholder (e.g.
+`TODO: answer pending`) as its answer text, replaced by the real answer
+once the question is answered -- the placeholder is a pure authoring
+convention, never parsed or validated by this class (feat-156
+REQ-007/008).
 
 Deliberately **not** heading-anchored: since further adjacent Q&A pairs
 can follow within the same enclosing category section, the base
@@ -69,14 +81,25 @@ Adds a `text` computed property (mirroring
   remaining).
 
   The not-yet-consumed remainder is tracked as a string (`remaining_text`),
-  re-normalized with `mdformat.text()` after every field is sliced off,
+  re-normalized with `format_text` after every field is sliced off,
   rather than as a line-index `cursor` into the original `text`. A raw
   substring of an already-`mdformat`-compliant document is not itself
   guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -314,7 +337,7 @@ Adds a `text` computed property (mirroring
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -323,7 +346,7 @@ Adds a `text` computed property (mirroring
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -363,14 +386,15 @@ Adds a `text` computed property (mirroring
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -431,14 +455,25 @@ Adds a `text` computed property (mirroring
   remaining).
 
   The not-yet-consumed remainder is tracked as a string (`remaining_text`),
-  re-normalized with `mdformat.text()` after every field is sliced off,
+  re-normalized with `format_text` after every field is sliced off,
   rather than as a line-index `cursor` into the original `text`. A raw
   substring of an already-`mdformat`-compliant document is not itself
   guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -768,7 +803,7 @@ Adds a `text` computed property (mirroring
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -777,7 +812,7 @@ Adds a `text` computed property (mirroring
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -817,14 +852,15 @@ Adds a `text` computed property (mirroring
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -859,11 +895,23 @@ Parameters
 ----------
 comment:
     Optional leading `<!-- ... -->` comment, belonging to the question
-    that follows it.
+    that follows it. Keeps its original free-form purpose (who/when a
+    pair was elicited) -- the question's number never lives here (the
+    number lives in exactly one place: the `question` prefix, feat-156
+    REQ-001).
 question:
-    The interviewer's question, as a block quote. Optional.
+    The interviewer's question, as a block quote whose own text must
+    start with the bold question-number prefix `**<d>.<NNNN>**: ` (see
+    `_QUESTION_NUMBER_PREFIX`/`_validate_question`): a single category
+    digit and a 4-digit zero-padded per-category sequence. Once
+    assigned, a number is permanent -- never reused, never renumbered;
+    a removed question leaves a gap (feat-156 REQ-005). Optional.
 answer:
-    The interviewee's free-form prose answer. Optional.
+    The interviewee's free-form prose answer. An unanswered question is
+    marked by a `TODO: ` placeholder (e.g. `TODO: answer pending`) as
+    its answer text, replaced by the real answer once the question is
+    answered -- a pure authoring convention, not parsed or validated
+    (feat-156 REQ-007/008). Optional.
 
 **Methods:**
 
@@ -886,14 +934,25 @@ answer:
   remaining).
 
   The not-yet-consumed remainder is tracked as a string (`remaining_text`),
-  re-normalized with `mdformat.text()` after every field is sliced off,
+  re-normalized with `format_text` after every field is sliced off,
   rather than as a line-index `cursor` into the original `text`. A raw
   substring of an already-`mdformat`-compliant document is not itself
   guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -1154,7 +1213,7 @@ answer:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -1163,7 +1222,7 @@ answer:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -1203,14 +1262,15 @@ answer:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -1271,14 +1331,25 @@ answer:
   remaining).
 
   The not-yet-consumed remainder is tracked as a string (`remaining_text`),
-  re-normalized with `mdformat.text()` after every field is sliced off,
+  re-normalized with `format_text` after every field is sliced off,
   rather than as a line-index `cursor` into the original `text`. A raw
   substring of an already-`mdformat`-compliant document is not itself
   guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -1631,7 +1702,7 @@ answer:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -1640,7 +1711,7 @@ answer:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -1680,14 +1751,15 @@ answer:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).

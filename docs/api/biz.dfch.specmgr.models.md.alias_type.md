@@ -34,7 +34,7 @@ Attributes:
             inline formatting markup). Not the default: `@alias`'s own default
             `type` is `SPACE_SEPARATED` (see `alias.py`), and a class with no
             `@alias` decorator at all also defaults to `SPACE_SEPARATED`'s
-            derivation of its own class name, not a `LITERAL` match (ADR
+            derivation of its own class name, not a `LITERAL` match (DEC
             832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0).
 
     REGEX: Treats the `alias` parameter as a regular expression pattern that can

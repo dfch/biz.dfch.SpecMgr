@@ -81,6 +81,56 @@ def _body_with_title(title: str) -> str:
     return _MINIMAL_BODY.replace("Some QA Title", title)
 
 
+_UNNUMBERED_QUESTION_FILE = textwrap.dedent(
+    """\
+    ---
+    created: '2026-09-27T07:40:00.000+02:00'
+    id: ec3b0e5a-d34d-4310-9af2-57c90626b718
+    status: draft
+    type: qa
+    updated: '2026-09-27T07:40:00.000+02:00'
+    version: 1.0.0
+    ---
+
+    # Unnumbered Question QA
+
+    ## General
+
+    ### Introduction
+
+    Some intro text.
+
+    ### Raw Requirements
+
+    Some raw requirements text.
+
+    ## Elicitation Context
+
+    > Which stakeholders have approved the migration plan so far?
+
+    Only the team lead has approved it; the rest are still reviewing.
+
+    ## Functional Suitability
+
+    ## Performance Efficiency
+
+    ## Compatibility
+
+    ## Interaction Capability
+
+    ## Reliability
+
+    ## Security
+
+    ## Maintainability
+
+    ## Flexibility
+
+    ## Safety
+    """
+)
+
+
 class TestListQa(unittest.TestCase):
     """Tests for the list_qa tool."""
 
@@ -88,28 +138,66 @@ class TestListQa(unittest.TestCase):
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
 
-    def test_returns_summaries_and_skips_malformed_file(self) -> None:
+    def test_returns_summaries_and_reports_malformed_file_as_a_failed_entry(self) -> None:
         first = create_qa(_MINIMAL_BODY)
         second = create_qa(_OTHER_BODY)
 
         base_dir = ensure_qa_base_dir()
-        (base_dir / "broken.md").write_text("not a valid QA document, no headings at all", encoding="utf-8")
+        broken_path = base_dir / "broken.md"
+        broken_path.write_text("not a valid QA document, no headings at all", encoding="utf-8")
 
         sut = list_qa()
 
         self.assertIsInstance(sut, PagedResult)
-        self.assertEqual(sut.total, 2)
+        self.assertEqual(sut.total, 3)
+        self.assertEqual(sut.error_count, 1)
         for summary in sut.results:
             self.assertIsInstance(summary, QaSummary)
         ids = {summary.id for summary in sut.results}
-        self.assertEqual(ids, {first.id, second.id})
+        self.assertEqual(ids, {first.id, second.id, None})
         titles = {summary.title for summary in sut.results}
-        self.assertEqual(titles, {"Some QA Title", "Another QA Title"})
+        self.assertEqual(titles, {"Some QA Title", "Another QA Title", "<failed to parse>"})
         statuses = {summary.status for summary in sut.results}
-        self.assertEqual(statuses, {"draft"})
+        self.assertEqual(statuses, {"draft", "<failed to parse>"})
         for summary in sut.results:
             self.assertNotIn(".md", summary.ref)
             self.assertTrue(summary.ref)
+            self.assertTrue(Path(summary.path).is_absolute())
+
+        failed = next(summary for summary in sut.results if summary.ref == "broken")
+        self.assertIsNone(failed.id)
+        self.assertEqual(failed.title, "<failed to parse>")
+        self.assertEqual(failed.status, "<failed to parse>")
+        self.assertEqual(Path(failed.path), broken_path.resolve())
+        self.assertIsNotNone(failed.error)
+
+    def test_reports_structurally_sound_file_with_unnumbered_question_as_a_failed_entry(self) -> None:
+        """A structurally-sound document whose single question lacks the `**<d>.<NNNN>**: `
+        prefix (a field-level failure, not a structural one) surfaces as an inline failed
+        entry too (feat-156 ACC-001, the feat-81-83-validation Phase 3 `list_*` mechanism)."""
+        first = create_qa(_MINIMAL_BODY)
+        second = create_qa(_OTHER_BODY)
+
+        base_dir = ensure_qa_base_dir()
+        unnumbered_path = base_dir / "unnumbered.md"
+        unnumbered_path.write_text(_UNNUMBERED_QUESTION_FILE, encoding="utf-8")
+
+        sut = list_qa()
+
+        self.assertEqual(sut.total, 3)
+        self.assertEqual(sut.error_count, 1)
+        ids = {summary.id for summary in sut.results}
+        self.assertEqual(ids, {first.id, second.id, None})
+        titles = {summary.title for summary in sut.results}
+        self.assertEqual(titles, {"Some QA Title", "Another QA Title", "<failed to parse>"})
+        failed = next(summary for summary in sut.results if summary.ref == "unnumbered")
+        self.assertIsNone(failed.id)
+        self.assertEqual(failed.title, "<failed to parse>")
+        self.assertEqual(failed.status, "<failed to parse>")
+        self.assertEqual(Path(failed.path), unnumbered_path.resolve())
+        error = failed.error
+        self.assertIsNotNone(error)
+        self.assertIn("question must start with the bold question-number prefix", error)
 
     def test_empty_result_for_missing_directory(self) -> None:
         self.assertFalse((self.docs_root / "qa").exists())
@@ -183,7 +271,7 @@ class TestListQa(unittest.TestCase):
 
         self.assertTrue(sut.truncated)
 
-    def test_total_reflects_full_parseable_count_regardless_of_paging(self) -> None:
+    def test_total_and_error_count_reflect_the_full_directory_regardless_of_paging(self) -> None:
         for i in range(5):
             create_qa(_body_with_title(f"Title {i}"))
         base_dir = ensure_qa_base_dir()
@@ -191,7 +279,8 @@ class TestListQa(unittest.TestCase):
 
         sut = list_qa(max_results=1, offset=1)
 
-        self.assertEqual(sut.total, 5)
+        self.assertEqual(sut.total, 6)
+        self.assertEqual(sut.error_count, 1)
 
 
 if __name__ == "__main__":

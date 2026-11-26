@@ -21,8 +21,7 @@ the generic ``update`` tool in ``general.tools`` (``type="req"``).
 Deliberately **not** part of ``req.tools._io`` -- that module's own docstring
 rules out a ``write_req``/``render_req`` counterpart to ``read_req``, since
 Task 3.9's design never renders a body back out from a parsed
-:class:`~biz.dfch.specmgr.req.models.v1.ReqDocument` model (unlike
-``adr.tools._io.write_adr``, which does via ``render_adr``). What
+:class:`~biz.dfch.specmgr.req.models.v1.ReqDocument` model. What
 :func:`write_req_file` does instead is a strictly narrower thing: combine an
 already-constructed, already-validated
 :class:`~biz.dfch.specmgr.req.models.v1.ReqFrontmatter` with the caller's own

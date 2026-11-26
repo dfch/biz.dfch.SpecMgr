@@ -1,25 +1,6 @@
 {
   "$comment": "v1",
   "$defs": {
-    "AcceptanceCriteria": {
-      "description": "`### Acceptance Criteria` under Related Artifacts -- bullet list of\ncross-references to acceptance criteria, one per line\n(e.g. \"ACC-1234: <title>\").",
-      "properties": {
-        "items": {
-          "description": "Bullet list of cross-references to acceptance criteria, one per line (e.g. \"ACC-1234: <title>\"); must contain at least one item.",
-          "items": {
-            "$ref": "#/$defs/MarkdownListItem"
-          },
-          "minItems": 1,
-          "title": "Items",
-          "type": "array"
-        }
-      },
-      "required": [
-        "items"
-      ],
-      "title": "AcceptanceCriteria",
-      "type": "object"
-    },
     "Characteristics": {
       "description": "`## Characteristics` -- bullet list of ISO 25010:2023 quality attributes this\nrequirement concerns (\"Functional Suitability\", \"Performance\", \"User Interaction\",\n\"Compatibility\", \"Maintainability\", \"Security\", \"Reliability\", \"Safety\").\nMandatory. At least one characteristic.",
       "properties": {
@@ -41,12 +22,12 @@
       "type": "object"
     },
     "Decisions": {
-      "description": "`### Decisions` under Related Artifacts -- bullet list of\ncross-references to decisions, one per line (e.g. \"DEC-2703: <title>\").",
+      "description": "`### Decisions` under Related Artifacts -- cross-references to\ndecisions.\n\nSubclasses the shared `models.md.DecisionsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `req` still declares and\nowns its own concrete `Decisions` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to decisions, one per line (e.g. \"DEC-2703: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `DEC <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -66,12 +47,12 @@
       "type": "object"
     },
     "Goals": {
-      "description": "`### Goals` under Related Artifacts -- bullet list of\ncross-references to goals, one per line (e.g. \"GOL-0007: <title>\").",
+      "description": "`### Goals` under Related Artifacts -- cross-references to goals.\n\nSubclasses the shared `models.md.GoalsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `req` still declares and\nowns its own concrete `Goals` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to goals, one per line (e.g. \"GOL-0007: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `GOL <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -85,7 +66,7 @@
       "type": "object"
     },
     "Level": {
-      "description": "`## Level` -- single-line value giving the requirement's obligation\nstrength (e.g. \"MUST\"). Mandatory. May be preceded by an explanatory\nHTML comment (e.g. listing the allowed values).",
+      "description": "`## Level` -- single-line value giving the requirement's\nISO/IEC/IEEE 29148:2018 requirement specification kind (one of\n`BRS`, `StRS`, `SyRS`, `SRS`, the standard's own \u00a73.2 abbreviations).\nMandatory. May be preceded by an explanatory HTML comment\n(e.g. naming the allowed kinds).",
       "properties": {
         "comment": {
           "anyOf": [
@@ -97,11 +78,11 @@
             }
           ],
           "default": null,
-          "description": "Optional explanatory HTML comment (`<!-- ... -->`) preceding `value`, e.g. listing the allowed obligation-strength values."
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`) preceding `value`, e.g. naming the allowed ISO/IEC/IEEE 29148:2018 requirement specification kinds."
         },
         "value": {
           "$ref": "#/$defs/MarkdownParagraph",
-          "description": "Single-line value giving the requirement's obligation strength (e.g. \"MUST\")."
+          "description": "Single-line value giving the requirement's ISO/IEC/IEEE 29148:2018 requirement specification kind. One of `BRS`, `StRS`, `SyRS`, `SRS` (the standard's \u00a73.2 abbreviations; \u00a75.4 maps the four kinds to the standard's requirement levels, \u00a79.3-9.6 give their normative content clauses)."
         }
       },
       "required": [
@@ -189,20 +170,8 @@
       "type": "object"
     },
     "RelatedArtifacts": {
-      "description": "`## Related Artifacts` -- container for four independent, all-optional\n`### ` cross-reference lists (requirements/decisions/goals/acceptance\ncriteria). Optional as a whole; no consistency check is enforced between\nthe sub-lists.",
+      "description": "`## Related Artifacts` -- container for four independent, all-optional\n`### ` cross-reference lists (requirements/decisions/goals/risks).\nOptional as a whole; no consistency check is enforced between the\nsub-lists.",
       "properties": {
-        "acceptance_criteria": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/AcceptanceCriteria"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "`### Acceptance Criteria` sub-section. Optional."
-        },
         "decisions": {
           "anyOf": [
             {
@@ -238,6 +207,18 @@
           ],
           "default": null,
           "description": "`### Requirements` sub-section. Optional."
+        },
+        "risks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Risks"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Risks` sub-section. Optional."
         }
       },
       "title": "RelatedArtifacts",
@@ -268,6 +249,7 @@
             }
           ],
           "default": null,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Created"
         },
         "id": {
@@ -284,6 +266,15 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "accepted",
+            "deprecated",
+            "draft",
+            "implemented",
+            "proposed",
+            "rejected",
+            "superseded"
+          ],
           "title": "Status",
           "type": "string"
         },
@@ -303,6 +294,7 @@
             }
           ],
           "default": null,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Updated"
         },
         "version": {
@@ -315,7 +307,7 @@
       "type": "object"
     },
     "Requirement": {
-      "description": "The requirement body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form.\n\nParameters\n----------\nstatement:\n    The lead paragraph right after the H1. Mandatory.\ndescription:\n    `## Description`. Optional.\ncharacteristics:\n    `## Characteristics`. Mandatory.\nlevel:\n    `## Level`. Mandatory.\npriority:\n    `## Priority`. Optional.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nrelated_artifacts:\n    `## Related Artifacts`. Optional.\nmore_information:\n    `## More Information`. Optional.\nnotes:\n    `## Notes`. Optional.",
+      "description": "The requirement body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form.\n\nParameters\n----------\nstatement:\n    The lead paragraph right after the H1. Mandatory.\ndescription:\n    `## Description`. Optional.\ncharacteristics:\n    `## Characteristics`. Mandatory.\nlevel:\n    `## Level`. Mandatory. The requirement's ISO/IEC/IEEE 29148:2018\n    requirement specification kind (one of `BRS`, `StRS`, `SyRS`, `SRS`).\npriority:\n    `## Priority`. Optional.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nrelated_artifacts:\n    `## Related Artifacts`. Optional.\nmore_information:\n    `## More Information`. Optional.\nnotes:\n    `## Notes`. Optional.",
       "properties": {
         "characteristics": {
           "$ref": "#/$defs/Characteristics",
@@ -416,12 +408,12 @@
       "type": "object"
     },
     "Requirements": {
-      "description": "`### Requirements` under Related Artifacts -- bullet list of\ncross-references to other requirements, one per line\n(e.g. \"REQ-9687: <title>\").",
+      "description": "`### Requirements` under Related Artifacts -- cross-references to\nother requirements.\n\nSubclasses the shared `models.md.RequirementsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `req` still declares and\nowns its own concrete `Requirements` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to other requirements, one per line (e.g. \"REQ-9687: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -434,12 +426,31 @@
       "title": "Requirements",
       "type": "object"
     },
+    "Risks": {
+      "description": "`### Risks` under Related Artifacts -- cross-references to risks.\n\nSubclasses the shared `models.md.RisksBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `req` still declares and\nowns its own concrete `Risks` type.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `RSK <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Risks",
+      "type": "object"
+    },
     "Source": {
-      "description": "`## Source` -- single-line value naming the origin/authority of this\nrequirement. Mandatory.",
+      "description": "`## Source` -- single-line value naming the origin/authority of this\nrequirement. Mandatory.\n\nSubclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --\nthe field declaration itself lives there; this class exists so `req`\nstill declares and owns its own concrete `Source` type. Note: the\ngenerated JSON Schema's `value` field description comes from\n`SourceBase` and is intentionally domain-neutral (\"this document\"),\nnot the domain-specific \"this requirement\" wording used above --\nsee `SourceBase`'s own comment for the rationale (REQ-016).",
       "properties": {
         "value": {
           "$ref": "#/$defs/MarkdownParagraph",
-          "description": "Single-line value naming the origin/authority of this requirement."
+          "description": "Single-line value naming the origin/authority of this document."
         }
       },
       "required": [

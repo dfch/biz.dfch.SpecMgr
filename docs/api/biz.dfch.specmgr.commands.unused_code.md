@@ -26,7 +26,7 @@ Thin, friendlier wrapper around ``vulture`` with two modes:
   symbol name, not by definition site, so a hit still needs a manual ``grep`` to confirm which
   definition it actually refers to before concluding anything should change.
 
-See the "Detect unreferenced code with vulture" ADR for the full rationale and ``whitelist.py``
+See the "Detect unreferenced code with vulture" DEC for the full rationale and ``whitelist.py``
 for the enforced-in-CI counterpart of the default mode.
 
 Requires the ``test`` extra (``pip install biz-dfch-specmgr[test]``), since ``vulture`` is only

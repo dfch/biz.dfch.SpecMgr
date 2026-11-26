@@ -33,6 +33,6 @@ version: 1.0.0
 
 ## Recent Updates
 
-### 2026-08-18 - Created
+### 2026-08-18 00:00:00.000Z - Created
 
 Created as the implementation plan for `.specmgr/feat/feat-7-various-improvements/README.md`'s Task 0.18: "Fix `MarkdownListItem.get_extent` for numbered lists".

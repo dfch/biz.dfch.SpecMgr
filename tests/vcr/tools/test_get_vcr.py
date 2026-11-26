@@ -32,6 +32,8 @@ from biz.dfch.specmgr.vcr.models.v1 import VcrDocument
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 from biz.dfch.specmgr.vcr.tools.get_vcr import get_vcr
+from biz.dfch.specmgr.vcr.tools.list_vcr import list_vcr
+from biz.dfch.specmgr.general.models import ParseFailureResult
 
 
 #: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
@@ -59,8 +61,10 @@ _MINIMAL_BODY = textwrap.dedent(
 )
 
 
-class TestGetVcr(unittest.TestCase):
-    """Tests for the get_vcr tool."""
+class TestGetVcr(unittest.TestCase):  # pylint: disable=too-many-public-methods
+    """Tests for the get_vcr tool (one method per read path x outcome; the feat-150 parse-failure,
+    feat-153 numbered, and feat-162 byte-identical-error test groups together push the class past
+    pylint's default of 20 public methods)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -151,6 +155,81 @@ class TestGetVcr(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_vcr(created.id, raw=False, limit=3)
 
+    def test_numbered_raw_read_prefixes_absolute_line_numbers(self) -> None:
+        """numbered=True must prefix every body line with ``"<n>: "`` (1-based absolute numbers, single trailing
+        newline), and numbered=False must stay byte-identical to today's raw=True output (ACC-004; feat-153
+        Task 5.3 cross-domain matrix)."""
+        created = create_vcr(_MINIMAL_BODY)
+        doc_id = created.id
+        unnumbered = get_vcr(doc_id, raw=True)
+
+        self.assertEqual(get_vcr(doc_id, raw=True, numbered=False), unnumbered)
+
+        lines = unnumbered.splitlines()
+        expected = "".join(f"{n}: {line}\n" for n, line in enumerate(lines, start=1))
+        numbered = get_vcr(doc_id, raw=True, numbered=True)
+        self.assertEqual(numbered, expected)
+        self.assertEqual(numbered.splitlines()[1], "2: ")  # the empty body line: trailing space, no special case
+        # A numbered no-window read equals the numbered whole-body-equivalent windowed read (byte-identical
+        # contract).
+        self.assertEqual(numbered, get_vcr(doc_id, raw=True, numbered=True, offset=1))
+
+    def test_numbered_windowed_read_starts_at_clamped_offset_and_never_restarts(self) -> None:
+        """A windowed numbered read numbers from the clamped offset (absolute, not window-relative;
+        ACC-011): a k < 1 window starts at 1, a k > N window is empty and prints no numbers."""
+        created = create_vcr(_MINIMAL_BODY)
+        doc_id = created.id
+        lines = get_vcr(doc_id, raw=True).splitlines()
+        k, m = 5, 3
+
+        window = get_vcr(doc_id, raw=True, numbered=True, offset=k, limit=m)
+
+        self.assertEqual(window, "".join(f"{k + i}: {lines[k - 1 + i]}\n" for i in range(m)))
+        self.assertEqual(get_vcr(doc_id, raw=True, numbered=True, offset=0, limit=2), f"1: {lines[0]}\n2: {lines[1]}\n")
+        self.assertEqual(get_vcr(doc_id, raw=True, numbered=True, offset=len(lines) + 1), "")
+
+    def test_numbered_with_raw_false_raises_value_error_before_any_file_access(self) -> None:
+        """numbered=True with raw=False must raise ValueError (ACC-005) -- even for a document that fails to
+        parse: the guard fires before the feat-150 parse-failure channel."""
+        created = create_vcr(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        with self.assertRaises(ValueError) as ctx:
+            get_vcr(created.id, raw=False, numbered=True)
+        message = str(ctx.exception)
+        self.assertIn("numbered", message)
+        self.assertIn("raw", message)
+
+    def test_numbered_raw_read_of_broken_document_returns_parse_failure_result(self) -> None:
+        """A numbered raw read of a document that exists but fails to parse must return the feat-150
+        ParseFailureResult channel, never numbered text (ACC-004's third clause, REQ-004)."""
+        created = create_vcr(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_vcr(created.id, raw=True, numbered=True)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertNotIsInstance(result, str)
+        self.assertEqual(result.id, created.id)
+
+    def test_raw_no_window_read_is_byte_identical_for_a_body_without_trailing_newline(self) -> None:
+        """The unnumbered no-window raw read must return the frontmatter-stripped body verbatim even when the
+        body has no trailing newline -- the no-window path bypasses window_body, which would add one
+        (ACC-004's byte-identity; feat-153 Task 5.2's no-trailing-newline fixture); the numbered read of the
+        same body still normalizes to exactly one trailing newline."""
+        created = create_vcr(_MINIMAL_BODY)
+        path = self._doc_path()
+        path.write_text(path.read_text(encoding="utf-8").rstrip("\n"), encoding="utf-8")
+        body = body_text(path)
+        self.assertFalse(body.endswith("\n"))
+
+        self.assertEqual(get_vcr(created.id, raw=True), body)
+        self.assertEqual(get_vcr(created.id, raw=True, numbered=False), body)
+
+        lines = body.splitlines()
+        expected = "".join(f"{n}: {line}\n" for n, line in enumerate(lines, start=1))
+        self.assertEqual(get_vcr(created.id, raw=True, numbered=True), expected)
+
     def test_windowed_raw_read_coordinates_index_into_the_splice_target(self) -> None:
         """The coordinates of a windowed raw read must splice at exactly those lines, unchanged
         regions byte-identical (ACC-003 windowed)."""
@@ -190,6 +269,78 @@ class TestGetVcr(unittest.TestCase):
             get_vcr(_MISSING_UUID, raw=True, offset=2, limit=3)
         with self.assertRaises(VcrNotFoundError):
             get_vcr(_MISSING_UUID, raw=False)
+
+    def test_broken_document_returns_parse_failure_result(self) -> None:
+        """get_vcr must return a ParseFailureResult (not raise) for an id whose on-disk file fails to parse."""
+        created = create_vcr(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_vcr(created.id)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertEqual(result.id, created.id)
+        self.assertEqual(result.path, str(self._doc_path().resolve()))
+        self.assertTrue(result.error)
+        self.assertNotIsInstance(result, VcrDocument)
+
+    def test_broken_document_raw_true_returns_parse_failure_result_never_str(self) -> None:
+        """raw=True on a broken document must return a ParseFailureResult, never a raw str."""
+        created = create_vcr(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_vcr(created.id, raw=True)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertNotIsInstance(result, str)
+
+    def test_broken_document_error_matches_list_failed_row_get_first(self) -> None:
+        """ParseFailureResult.error must be byte-identical to list_vcr's failed-row error for the same broken
+        file, in cold-get-then-warm-list read order (REQ-003)."""
+        created = create_vcr(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        get_result = get_vcr(created.id)
+        failed = [summary for summary in list_vcr().results if summary.title == "<failed to parse>"]
+
+        self.assertIsInstance(get_result, ParseFailureResult)
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(get_result.error, failed[0].error)
+        # The core defect content (this fixture's structural parse failure) must be present in both texts.
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", get_result.error)
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
+
+    def test_broken_document_error_matches_list_failed_row_list_first(self) -> None:
+        """ParseFailureResult.error must be byte-identical to list_vcr's failed-row error for the same broken
+        file, in cold-list-then-warm-get read order (REQ-003)."""
+        created = create_vcr(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        failed = [summary for summary in list_vcr().results if summary.title == "<failed to parse>"]
+        get_result = get_vcr(created.id)
+
+        self.assertIsInstance(get_result, ParseFailureResult)
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(get_result.error, failed[0].error)
+        # The core defect content (this fixture's structural parse failure) must be present in both texts.
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", get_result.error)
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
+
+    def test_broken_document_list_error_is_stable_across_repeated_calls(self) -> None:
+        """list_vcr()'s row error text must be byte-identical across repeated calls (REQ-004)."""
+        create_vcr(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        first_call = [s for s in list_vcr().results if s.title == "<failed to parse>"]
+        second_call = [s for s in list_vcr().results if s.title == "<failed to parse>"]
+
+        self.assertEqual(len(first_call), 1)
+        self.assertEqual(len(second_call), 1)
+        self.assertEqual(first_call[0].error, second_call[0].error)
+
+    def test_invalid_id_shape_raises_value_error(self) -> None:
+        """An id that is not a well-formed canonical UUID must raise ValueError before any file access."""
+        with self.assertRaises(ValueError):
+            get_vcr("not-a-well-formed-uuid")
 
 
 if __name__ == "__main__":

@@ -28,15 +28,21 @@ step 1 if this is genuinely a new goal.
 - `## Source` -- mandatory single-line value naming the origin/authority
   of this goal.
 - `## Related Artifacts` -- optional container for up to four `### `
-  cross-reference bullet lists: Requirements, Decisions, Goals,
-  Acceptance Criteria (each `{ID}: {description}` per line).
+  cross-reference bullet lists: Requirements, Decisions, Goals, Risks
+  (each bullet MUST match `<TAG> <uuid>: <title>` -- a space-separated
+  tag, a lowercase 8-4-4-4-12 hex UUID, and a title, e.g.
+  `REQ 550e8400-e29b-41d4-a716-446655440000: <title>`; `Decisions`
+  accepts only the `DEC` tag).
 - `## More Information` -- optional freeform supplementary text.
 - `## Notes` -- optional freeform remarks.
 
 No `## Characteristics` section exists in this schema, and none should be
 added: ISO 25010:2023 quality characteristics grade requirements, not
-goals. Likewise no `## Level` section -- a goal is implicitly always a
-MUST; RFC 2119 obligation strength applies to the requirements below it.
+goals. Likewise no `## Level` section -- a goal states what to achieve,
+not which ISO/IEC/IEEE 29148:2018 requirement-specification kind the
+requirements below it are; obligation lives on those requirements, in
+each one's `## Level` kind plus its statement's own phrasing
+(`specmgr://ears`).
 
 ## 2. Build a todo list, then gather the information one at a time
 
@@ -49,13 +55,13 @@ explicitly telling the user they may skip any optional field they
 cannot or do not want to answer yet -- a freshly created goal may
 have zero optional sections.
 
-## 3. Use the template/example/schema as references
+## 3. Use the template/example tools as references
 
-Fetch `specmgr://gol/template` or `specmgr://gol/example` as a starting
-point/style reference, then check `specmgr://gol/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+Call the `get_gol_template` and `get_gol_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_gol_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence
 
@@ -64,7 +70,7 @@ there.
 2. Call `create_gol(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
    validation failure raises uncaught and nothing is written.
-3. Optionally call `validate_gol(content, full=False)` first if you
+3. Optionally call `validate(type="gol", content=content, full=False)` first if you
    want to dry-run the body without writing anything -- `create_gol`
    already performs the same validation internally, so this step is
    never required, only a convenience.

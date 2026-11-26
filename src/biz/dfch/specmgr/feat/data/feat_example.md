@@ -1,9 +1,9 @@
 ---
-created: '2026-08-30 00:00:00.000Z'
+created: '2025-05-02T09:11:34.267Z'
 id: feat-99-example-widget
 status: progress
 type: feat
-updated: '2026-08-30 00:00:00.000Z'
+updated: '2025-05-20T21:46:12.803Z'
 version: 1.0.0
 ---
 
@@ -45,7 +45,7 @@ Short description of what this feature is and why it exists.
 
 #### Depends On
 
-- ADR xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx: the component library this widget is built on.
+- DEC xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx: the component library this widget is built on.
 
 #### Blocks
 
@@ -57,21 +57,21 @@ Free-form design rationale, schema sketches, etc.
 
 ### Related Decisions
 
-- xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (ADR): short description
+- xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (DEC): short description
 
 - yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy (dec): short description
 
 ### Task List
 
-#### Phase 0: Scaffolding
+#### Phase 100: Scaffolding
 
-- [x] Task 0.1: Create branch and package skeleton
+- [x] Task 100.100: Create branch and package skeleton
 
-#### Phase 1: Implementation
+#### Phase 110: Implementation
 
-- [ ] Task 1.1: Implement the widget component
+- [ ] Task 110.100: Implement the widget component
 
-- [ ] Task 1.2: Add keyboard navigation
+- [ ] Task 110.110: Add keyboard navigation
 
 ## Progress
 
@@ -99,11 +99,11 @@ Free-form prose describing what happened in this update.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures
+#### 2025-05-19 17:42:38.906Z - Deferred mobile gestures
 
 Free-form prose describing the decision and its rationale.
 
-#### 2026-08-30 09:15:00.000+02:00 : Chose composite-based library
+#### 2025-05-19 09:15:47.213+02:00 : Chose composite-based library
 
 Free-form prose describing the decision and its rationale.
 

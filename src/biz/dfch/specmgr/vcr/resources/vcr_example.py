@@ -18,16 +18,15 @@
 """Resource: specmgr://vcr/example (Task 3.1).
 
 Read-only, addressable counterpart of the ``get_vcr_example`` tool, mirroring
-this repo's existing tool+resource pairs (e.g. ADR's ``get_adr`` tool /
-``specmgr://adr/{id}`` resource) for a host that wants to fetch the example as
-context without an explicit tool call. Deliberately does not import from
+this repo's existing tool+resource pairs, for a host that wants to
+fetch the example as context without an explicit tool call. Deliberately does not import from
 ``vcr.tools`` (nor vice versa): both this resource and the ``get_vcr_example``
 tool import the shared, doc-type-agnostic ``general.tools._packaged_data``
 helper directly, so neither sub-package depends on the other just for this
 one file read. Mirrors ``dec.resources.dec_example`` file-for-file.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://vcr/schema``'s own precedent.
+``specmgr://vcr/template``'s own precedent.
 """
 
 from __future__ import annotations

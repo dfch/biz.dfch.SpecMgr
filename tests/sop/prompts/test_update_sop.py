@@ -72,26 +72,26 @@ class TestUpdateSopPrompt(unittest.TestCase):
     def test_mentions_both_generic_mutation_tools(self):
         """Both the generic `update` (type="sop") and `set_status`
         (type="sop") call shapes must be named -- sop has no per-domain
-        mutation tools (ADR 36905d5b)."""
+        mutation tools (DEC 36905d5b)."""
         result = update_sop("id-abc-123")
         for tool in ('update(id, type="sop", content)', 'set_status(id, type="sop", status)'):
             self.assertIn(tool, result)
 
     def test_mentions_range_update_flow(self):
         """The prompt must teach the line-range flow: read the exact body
-        via get_sop(id, raw=True), identify the 1-based line to start at
+        via get_sop(id, raw=True, numbered=True), identify the 1-based line to start at
         and how many lines to replace (N+1 is end-of-body), call
         `update` with offset/limit passing only the replacement lines;
         whole-body for multi-section or uncertain changes."""
         result = update_sop("id-abc-123")
-        self.assertIn("get_sop(id, raw=True)", result)
+        self.assertIn("get_sop(id, raw=True, numbered=True)", result)
         self.assertIn("1-based line to start at and how many", result)
         self.assertIn("offset = N+1", result)
         self.assertIn('update(id, type="sop", content, offset=..., limit=...)', result)
         self.assertIn("multi-section change, or whenever you are", result)
         self.assertIn("byte-identical", result)
         self.assertLess(
-            result.index("get_sop(id, raw=True)"),
+            result.index("get_sop(id, raw=True, numbered=True)"),
             result.index('update(id, type="sop", content, offset=..., limit=...)'),
         )
 

@@ -6,10 +6,10 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Verification Case Record (VCR) document using
 the existing ``vcr/tools/``/``vcr/resources/`` surface (``list_vcr``,
 ``specmgr://vcr/template``/``specmgr://vcr/example``,
-``specmgr://vcr/schema``, ``specmgr://dtais``, ``create_vcr``,
-``validate_vcr``).
+``get_vcr_schema``, ``specmgr://dtais``, ``create_vcr``,
+generic ``validate`` tool).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_vcr`` builds the entire VCR frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown. The body narrates VCR's own

@@ -58,9 +58,9 @@ _BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Create branch and package skeleton
+    - [x] Task 100.100: Create branch and package skeleton
 
     ## Progress
 
@@ -86,8 +86,8 @@ class TestWriteFeatFile(unittest.TestCase):
             id="feat-1-example-widget",
             type="feat",
             status="planning",
-            created="2026-08-30 00:00:00.000Z",
-            updated="2026-08-30 00:00:00.000Z",
+            created="2026-08-30T00:00:00.000Z",
+            updated="2026-08-30T00:00:00.000Z",
             version="1.0.0",
         )
         with tempfile.TemporaryDirectory() as tmp:

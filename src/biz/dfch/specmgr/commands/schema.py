@@ -24,7 +24,7 @@ JSON Schema artifact registers a ``generate_x() -> str`` function in
 **all** registered types. Each type is written to its own
 ``{output_dir}/{type}_schema.json`` (default ``docs/``).
 
-Unlike ``adr-toc``/``docs``, drift detection is built into this command
+Unlike ``docs``, drift detection is built into this command
 itself rather than left to a separate ``git diff --exit-code`` CI step: the
 previous on-disk content (if any) is compared against the freshly generated
 content for every type this invocation touches, and the command exits with
@@ -35,8 +35,9 @@ drift, which is what a CI step relies on directly.
 
 The emitted dialect is Pydantic v2's native JSON Schema 2020-12 (``$defs``,
 not ``definitions``) -- see `feat-6-requirement-artifact`'s README
-"Decisions Made" for why this deliberately diverges from
-``uc_schema.json``'s hand-authored draft-07.
+"Decisions Made" for the rationale. Every registered document type
+is generated through this command; no registered schema is
+hand-authored.
 """
 
 import json
@@ -67,6 +68,10 @@ from ..sysrs.models.v1 import SCHEMA_COMMENT_VERSION as SYSRS_SCHEMA_COMMENT_VER
 from ..sysrs.models.v1.document import SysrsDocument
 from ..tsk.models.v1 import SCHEMA_COMMENT_VERSION as TSK_SCHEMA_COMMENT_VERSION
 from ..tsk.models.v1.document import TskDocument
+from ..txt.models.v1 import SCHEMA_COMMENT_VERSION as TXT_SCHEMA_COMMENT_VERSION
+from ..txt.models.v1.document import TxtDocument
+from ..set.models.v1 import SCHEMA_COMMENT_VERSION as SET_SCHEMA_COMMENT_VERSION
+from ..set.models.v1.document import SetDocument
 from ..uc.models.v2 import SCHEMA_COMMENT_VERSION as UC_SCHEMA_COMMENT_VERSION
 from ..uc.models.v2.document import UcDocument
 from ..vcr.models.v1 import SCHEMA_COMMENT_VERSION as VCR_SCHEMA_COMMENT_VERSION
@@ -299,9 +304,45 @@ def generate_vcr_schema() -> str:
     return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
 
 
+def generate_txt_schema() -> str:
+    """Generate TXT's JSON Schema (2020-12 dialect) from ``TxtDocument.model_json_schema()``.
+
+    Mirrors :func:`generate_req_schema` exactly, but for ``txt.models.v1``:
+    the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+    default), and ``"$comment"`` holds ``txt.models.v1.SCHEMA_COMMENT_VERSION``
+    (currently ``"v1"``) instead of REQ's own version token.
+
+    Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+    the same byte-identical-output/drift-detection reason as
+    :func:`generate_req_schema`.
+    """
+    schema_dict = TxtDocument.model_json_schema()
+    schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
+    schema_dict["$comment"] = TXT_SCHEMA_COMMENT_VERSION
+    return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
+
+
+def generate_set_schema() -> str:
+    """Generate SET's JSON Schema (2020-12 dialect) from ``SetDocument.model_json_schema()``.
+
+    Mirrors :func:`generate_req_schema` exactly, but for ``set.models.v1``:
+    the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+    default), and ``"$comment"`` holds ``set.models.v1.SCHEMA_COMMENT_VERSION``
+    (currently ``"v1"``) instead of REQ's own version token.
+
+    Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+    the same byte-identical-output/drift-detection reason as
+    :func:`generate_req_schema`.
+    """
+    schema_dict = SetDocument.model_json_schema()
+    schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
+    schema_dict["$comment"] = SET_SCHEMA_COMMENT_VERSION
+    return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
+
+
 #: Registry mapping a doc-type name (as accepted by ``--type``) to its
 #: ``generate_x() -> str`` function. Add an entry here when a new document
-#: type's schema generator is implemented (e.g. ``"adr"``).
+#: type's schema generator is implemented.
 _GENERATORS: dict[str, Callable[[], str]] = {
     "dec": generate_dec_schema,
     "feat": generate_feat_schema,
@@ -310,9 +351,11 @@ _GENERATORS: dict[str, Callable[[], str]] = {
     "qa": generate_qa_schema,
     "req": generate_req_schema,
     "rsk": generate_rsk_schema,
+    "set": generate_set_schema,
     "sop": generate_sop_schema,
     "sysrs": generate_sysrs_schema,
     "tsk": generate_tsk_schema,
+    "txt": generate_txt_schema,
     "uc": generate_uc_schema,
     "vcr": generate_vcr_schema,
 }

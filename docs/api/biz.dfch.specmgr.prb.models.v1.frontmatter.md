@@ -10,6 +10,11 @@ lifecycle (still being filled in, current state captured, future state
 reached, or abandoned) -- see `.specmgr/feat/feat-16-problem-statement/README.md`
 Design Notes.
 
+This module also owns the problem-statement status state machine
+(feat-108-fsm, GitHub issue #108): the ``_STATUS_TRANSITIONS`` table, next
+to ``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
+
 ## Classes
 
 ### `PrbFrontmatter`

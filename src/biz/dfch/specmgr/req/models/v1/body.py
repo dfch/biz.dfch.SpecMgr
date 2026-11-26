@@ -30,11 +30,15 @@ from ....models.md import (
     MarkdownSection1,
     MarkdownSection2,
     MarkdownSection2WithComment,
-    MarkdownSection3,
     MarkdownParagraph,
     MarkdownListItem,
     MarkdownListItemWithNotes,
     MarkdownComment,
+    DecisionsBase,
+    GoalsBase,
+    RequirementsBase,
+    RisksBase,
+    SourceBase,
     alias,
     AliasType,
 )
@@ -60,22 +64,36 @@ class Characteristics(MarkdownSection2):
     )
 
 
-_LEVEL_PATTERN = r"^(MUST|SHOULD|MUST NOT|SHOULD NOT|MAY)$"
+_LEVEL_PATTERN = r"^(BRS|StRS|SyRS|SRS)$"
 
 
 class Level(MarkdownSection2WithComment):
-    """`## Level` -- single-line value giving the requirement's obligation
-    strength (e.g. "MUST"). Mandatory. May be preceded by an explanatory
-    HTML comment (e.g. listing the allowed values).
+    """`## Level` -- single-line value giving the requirement's
+    ISO/IEC/IEEE 29148:2018 requirement specification kind (one of
+    `BRS`, `StRS`, `SyRS`, `SRS`, the standard's own §3.2 abbreviations).
+    Mandatory. May be preceded by an explanatory HTML comment
+    (e.g. naming the allowed kinds).
     """
 
     comment: MarkdownComment | None = Field(
         default=None,
         description="Optional explanatory HTML comment (`<!-- ... -->`) preceding `value`, "
-        "e.g. listing the allowed obligation-strength values.",
+        "e.g. naming the allowed ISO/IEC/IEEE 29148:2018 requirement specification kinds.",
     )
     value: MarkdownParagraph = Field(
-        description='Single-line value giving the requirement\'s obligation strength (e.g. "MUST").',
+        # feat-189 Phase 135: the Phase 120 (C13) `enum` key on this field's
+        # object-typed schema node was removed -- the MCP SDK validates every
+        # `structuredContent` payload against the generated output schema,
+        # and an object instance can never equal a string `enum` member
+        # (round-trip-rerun.md, feat-189). The closed set now lives in the
+        # description; `_validate_value` below remains the sole enforcement
+        # point.
+        description=(
+            "Single-line value giving the requirement's ISO/IEC/IEEE 29148:2018 requirement "
+            "specification kind. One of `BRS`, `StRS`, `SyRS`, `SRS` (the standard's §3.2 "
+            "abbreviations; §5.4 maps the four kinds to the standard's requirement levels, "
+            "§9.3-9.6 give their normative content clauses)."
+        ),
     )
 
     @field_validator("value")
@@ -143,77 +161,73 @@ class Tags(MarkdownSection2):
     )
 
 
-class Source(MarkdownSection2):
+class Source(SourceBase):
     """`## Source` -- single-line value naming the origin/authority of this
     requirement. Mandatory.
+
+    Subclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --
+    the field declaration itself lives there; this class exists so `req`
+    still declares and owns its own concrete `Source` type. Note: the
+    generated JSON Schema's `value` field description comes from
+    `SourceBase` and is intentionally domain-neutral ("this document"),
+    not the domain-specific "this requirement" wording used above --
+    see `SourceBase`'s own comment for the rationale (REQ-016).
     """
 
-    value: MarkdownParagraph = Field(description="Single-line value naming the origin/authority of this requirement.")
 
+class Requirements(RequirementsBase):
+    """`### Requirements` under Related Artifacts -- cross-references to
+    other requirements.
 
-class Requirements(MarkdownSection3):
-    """`### Requirements` under Related Artifacts -- bullet list of
-    cross-references to other requirements, one per line
-    (e.g. "REQ-9687: <title>").
+    Subclasses the shared `models.md.RequirementsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `req` still declares and
+    owns its own concrete `Requirements` type.
     """
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to other requirements, one per line "
-        '(e.g. "REQ-9687: <title>"); must contain at least one item.',
-    )
 
+class Decisions(DecisionsBase):
+    """`### Decisions` under Related Artifacts -- cross-references to
+    decisions.
 
-class Decisions(MarkdownSection3):
-    """`### Decisions` under Related Artifacts -- bullet list of
-    cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
+    Subclasses the shared `models.md.DecisionsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `req` still declares and
+    owns its own concrete `Decisions` type.
     """
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to decisions, one per line "
-        '(e.g. "DEC-2703: <title>"); must contain at least one item.',
-    )
 
+class Goals(GoalsBase):
+    """`### Goals` under Related Artifacts -- cross-references to goals.
 
-class AcceptanceCriteria(MarkdownSection3):
-    """`### Acceptance Criteria` under Related Artifacts -- bullet list of
-    cross-references to acceptance criteria, one per line
-    (e.g. "ACC-1234: <title>").
+    Subclasses the shared `models.md.GoalsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `req` still declares and
+    owns its own concrete `Goals` type.
     """
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to acceptance criteria, one per line "
-        '(e.g. "ACC-1234: <title>"); must contain at least one item.',
-    )
 
+class Risks(RisksBase):
+    """`### Risks` under Related Artifacts -- cross-references to risks.
 
-class Goals(MarkdownSection3):
-    """`### Goals` under Related Artifacts -- bullet list of
-    cross-references to goals, one per line (e.g. "GOL-0007: <title>").
+    Subclasses the shared `models.md.RisksBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `req` still declares and
+    owns its own concrete `Risks` type.
     """
-
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to goals, one per line "
-        '(e.g. "GOL-0007: <title>"); must contain at least one item.',
-    )
 
 
 class RelatedArtifacts(MarkdownSection2):
     """`## Related Artifacts` -- container for four independent, all-optional
-    `### ` cross-reference lists (requirements/decisions/goals/acceptance
-    criteria). Optional as a whole; no consistency check is enforced between
-    the sub-lists.
+    `### ` cross-reference lists (requirements/decisions/goals/risks).
+    Optional as a whole; no consistency check is enforced between the
+    sub-lists.
     """
 
     requirements: Requirements | None = Field(default=None, description="`### Requirements` sub-section. Optional.")
     decisions: Decisions | None = Field(default=None, description="`### Decisions` sub-section. Optional.")
     goals: Goals | None = Field(default=None, description="`### Goals` sub-section. Optional.")
-    acceptance_criteria: AcceptanceCriteria | None = Field(
-        default=None, description="`### Acceptance Criteria` sub-section. Optional."
-    )
+    risks: Risks | None = Field(default=None, description="`### Risks` sub-section. Optional.")
 
 
 class MoreInformation(MarkdownSection2):
@@ -241,7 +255,8 @@ class Requirement(MarkdownSection1):
     characteristics:
         `## Characteristics`. Mandatory.
     level:
-        `## Level`. Mandatory.
+        `## Level`. Mandatory. The requirement's ISO/IEC/IEEE 29148:2018
+        requirement specification kind (one of `BRS`, `StRS`, `SyRS`, `SRS`).
     priority:
         `## Priority`. Optional.
     tags:

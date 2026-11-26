@@ -26,9 +26,16 @@ class TestVersionInfo(unittest.TestCase):
     """Tests for the VersionInfo Pydantic model."""
 
     def test_version_info_holds_fields(self):
-        """A VersionInfo must store specmgr as given."""
-        info = VersionInfo(specmgr="1.0.0")
+        """A VersionInfo must store specmgr and fastembed as given."""
+        info = VersionInfo(specmgr="1.0.0", fastembed="0.8.0")
         self.assertEqual(info.specmgr, "1.0.0")
+        self.assertEqual(info.fastembed, "0.8.0")
+
+    def test_version_info_holds_no_fastembed(self):
+        """A VersionInfo must store a `None` fastembed (the extra not installed)."""
+        info = VersionInfo(specmgr="1.0.0", fastembed=None)
+        self.assertEqual(info.specmgr, "1.0.0")
+        self.assertIsNone(info.fastembed)
 
 
 if __name__ == "__main__":

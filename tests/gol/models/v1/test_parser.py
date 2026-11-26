@@ -43,8 +43,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: gol
     version: 1.0.0
     status: draft
-    created: '2026-08-25 00:00:00.000Z'
-    updated: '2026-08-25 00:00:00.000Z'
+    created: '2026-08-25T00:00:00.000Z'
+    updated: '2026-08-25T00:00:00.000Z'
     ---
 
     # Competitive Engines in Consumer Vehicles
@@ -107,22 +107,22 @@ class TestParseGol(unittest.TestCase):
         self.assertIsNotNone(related_artifacts)
         self.assertEqual(
             [item.text for item in related_artifacts.requirements.items],
-            ["REQ-9687: Maximum temperatures of running engines in civil vehicles"],
+            ["REQ f04dc881-ec40-4072-9a75-35002fca2bd7: Maximum temperatures of running engines in civil vehicles"],
         )
         self.assertEqual(
             [item.text for item in related_artifacts.decisions.items],
-            ["DEC-2703: Usage of metal conductors in moving engine parts"],
+            ["DEC 8502621c-177a-4e76-9bf2-d79b4e960b2c: Usage of metal conductors in moving engine parts"],
         )
         self.assertEqual(
             [item.text for item in related_artifacts.goals.items],
             [
-                "GOL-0003: Affordable and Efficient Powertrains for the Consumer Segment",
-                "GOL-0007: Competitive Engines in Consumer Vehicles",
+                "GOL 68a4a8dc-8a9f-4150-b7ca-dc5591ee6ede: Affordable and Efficient Powertrains for the Consumer Segment",
+                "GOL 115fa636-2b33-4baa-be66-52bcbb8eaa7c: Competitive Engines in Consumer Vehicles",
             ],
         )
         self.assertEqual(
-            [item.text for item in related_artifacts.acceptance_criteria.items],
-            ["ACC-1234: Temperature Measurements on running combustion engines"],
+            [item.text for item in related_artifacts.risks.items],
+            ["RSK 7d310eed-1eeb-4820-bc79-03bc5ac4612c: Sensor Drift Under Sustained High-Temperature Operation"],
         )
         self.assertIsNotNone(document.body.more_information)
         self.assertIsNotNone(document.body.notes)
@@ -218,6 +218,29 @@ class TestParseGol(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_gol(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-25T00:00:00.000Z'", "created: 2026-08-25T00:00:00.000Z").replace(
+            "updated: '2026-08-25T00:00:00.000Z'", "updated: 2026-08-25 00:00:00.000Z"
+        )
+        document = parse_gol(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-25T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-25T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_gol(text.replace("created: 2026-08-25T00:00:00.000Z", "created: 2026-08-25"))
 
 
 if __name__ == "__main__":

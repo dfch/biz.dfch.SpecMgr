@@ -1,9 +1,9 @@
 ---
-created: '2026-08-30 00:00:00.000Z'
+created: '2025-06-03T06:27:41.558Z'
 id: feat-0-template
 status: planning
 type: feat
-updated: '2026-08-30 00:00:00.000Z'
+updated: '2025-06-15T13:09:56.732Z'
 version: 1.0.0
 ---
 
@@ -49,13 +49,13 @@ Free-form design rationale, schema sketches, etc. Optional.
 
 ### Related Decisions
 
-- A bullet list of related ADR or DEC ids, each with a short description. Optional.
+- A free-form cross-reference list; entries may reference a dec id or any other decision record. Optional.
 
 ### Task List
 
-#### Phase 1: Placeholder Phase
+#### Phase 100: Placeholder Phase
 
-- [ ] Task 1.1: A short description of one task in this phase.
+- [ ] Task 100.100: A short description of one task in this phase.
 
 ## Progress
 
@@ -71,7 +71,7 @@ Free-form design rationale, schema sketches, etc. Optional.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-08-30 00:00:00.000Z - Created
+#### 2025-06-15 08:47:29.104Z - Created
 
 A short lead paragraph describing this update.
 
@@ -79,7 +79,7 @@ A short lead paragraph describing this update.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-08-30 00:00:00.000Z - Placeholder decision
+#### 2025-06-14 19:22:53.667Z - Placeholder decision
 
 A short lead paragraph describing the decision and its rationale.
 

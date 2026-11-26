@@ -17,7 +17,7 @@
 
 """Tests for the UcDocument Pydantic model (frontmatter + body composition).
 
-Mirrors `tests/models/adr/v1/test_adr.py`'s own `Adr` test shape.
+Mirrors the domain test shape.
 """
 
 from __future__ import annotations

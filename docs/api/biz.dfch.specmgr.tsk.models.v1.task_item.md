@@ -60,11 +60,14 @@ content:
   off `text`, the remainder is dedented (`mdformat` dedents an
   indented sub-block automatically once it is renormalized on its own)
   and delegated to `MarkdownStr.from_text` (via `super()`) for the
-  declared fields' population. `_value` is set to the leading
-  paragraph's own lines verbatim, *marker included* -- unlike
-  `MarkdownParagraph`, whose marker-free `_value` needs no
-  reconstruction, an item cannot reconstruct its own marker from class
-  metadata alone (see the class docstring), so it is kept as-is instead.
+  declared fields' population, at an offset advanced by the line count
+  actually consumed (the leading paragraph plus the blank separator
+  line the re-normalization removes -- see `consume_leading_lines`).
+  `_value` is set to the leading paragraph's own lines verbatim,
+  *marker included* -- unlike `MarkdownParagraph`, whose marker-free
+  `_value` needs no reconstruction, an item cannot reconstruct its own
+  marker from class metadata alone (see the class docstring), so it is
+  kept as-is instead.
 
   Args:
       text: the markdown text to parse.
@@ -291,7 +294,7 @@ content:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -300,7 +303,7 @@ content:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -340,14 +343,15 @@ content:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -412,11 +416,14 @@ content:
   off `text`, the remainder is dedented (`mdformat` dedents an
   indented sub-block automatically once it is renormalized on its own)
   and delegated to `MarkdownStr.from_text` (via `super()`) for the
-  declared fields' population. `_value` is set to the leading
-  paragraph's own lines verbatim, *marker included* -- unlike
-  `MarkdownParagraph`, whose marker-free `_value` needs no
-  reconstruction, an item cannot reconstruct its own marker from class
-  metadata alone (see the class docstring), so it is kept as-is instead.
+  declared fields' population, at an offset advanced by the line count
+  actually consumed (the leading paragraph plus the blank separator
+  line the re-normalization removes -- see `consume_leading_lines`).
+  `_value` is set to the leading paragraph's own lines verbatim,
+  *marker included* -- unlike `MarkdownParagraph`, whose marker-free
+  `_value` needs no reconstruction, an item cannot reconstruct its own
+  marker from class metadata alone (see the class docstring), so it is
+  kept as-is instead.
 
   Args:
       text: the markdown text to parse.
@@ -735,7 +742,7 @@ content:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -744,7 +751,7 @@ content:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -784,14 +791,15 @@ content:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -803,6 +811,52 @@ content:
 - `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
 
 - `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `single_line_text(self, *, expected: 'str') -> 'str'`
+  Return `.text`, rejecting it if it spans more than one physical line.
+
+  `.text` (see the property above) already correctly joins a
+  soft-wrapped ("lazy continuation", standard CommonMark) list item
+  onto a single string with an embedded `\n` where the original
+  source had 2+ physical lines -- but a structurally-checked
+  subclass (e.g. `tsk.TaskItem`, `feat.RequirementItem`/
+  `AcceptanceCriterionItem`, `rsk.ThresholdItem`/`StrategyItem`)
+  applies its own marker/pattern regex to that text and never
+  expects it to span more than one physical source line. Rather
+  than teach every such regex to additionally tolerate an embedded
+  `\n` (`re.DOTALL`), this shared guard rejects a soft-wrapped item
+  outright with an actionable error -- call it once, before running
+  the domain regex against `.text`, from each affected subclass's
+  own computed field.
+
+  Free-form `MarkdownListItem`/`MarkdownListItemWithNotes` usages
+  with no structural regex of their own (e.g. `req`'s `## Tags`,
+  the `sysrs` cross-reference lists, or any subclass whose own
+  regex already uses `re.DOTALL`, such as `rsk.QuadrantItem`/
+  `MitigationItem`/`StatusItem`) must not call this helper -- they
+  are meant to keep tolerating soft-wraps unchanged.
+
+  Args:
+      expected: a short, human-readable description of the shape
+          this item's text is expected to have (e.g. `"a '- [ ]'/
+          '- [x]' checkbox marker"`), echoed into the error message
+          so it reads consistently with the calling subclass's own
+          malformed-shape assertion message.
+
+  Returns:
+      `.text`, unchanged -- only once confirmed to be a single
+      physical line.
+
+  Raises:
+      AssertionError: `.text` spans more than one physical line
+          (contains an embedded `\n`, meaning the original source
+          had 2+ physical lines joined via CommonMark lazy
+          continuation). The message names this item's own path and
+          1-based line (`self._path`/`self._line`, same convention
+          as every other regex-assert message in this codebase),
+          states plainly that soft-wrapped/lazy-continuation list
+          items are not supported, and tells the author to join the
+          text onto one physical line instead.
 
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 

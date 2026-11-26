@@ -1,0 +1,141 @@
+{
+  "configuration" : { },
+  "description" : "A valid but thin workspace: one container, no views, one relationship without a technology.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "people" : [ {
+      "description" : "Buys books online.",
+      "id" : "1",
+      "name" : "Customer",
+      "properties" : {
+        "structurizr.dsl.identifier" : "customer"
+      },
+      "relationships" : [ {
+        "description" : "Orders books through",
+        "destinationId" : "3",
+        "id" : "4",
+        "sourceId" : "1",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Orders books through",
+        "destinationId" : "2",
+        "id" : "5",
+        "linkedRelationshipId" : "4",
+        "sourceId" : "1"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "The customer-facing web shop.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "Web Store",
+        "properties" : {
+          "structurizr.dsl.identifier" : "web"
+        },
+        "relationships" : [ {
+          "description" : "Self",
+          "destinationId" : "3",
+          "id" : "6",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "HTTPS"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      } ],
+      "description" : "Sells books to customers.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Bookshop",
+      "properties" : {
+        "structurizr.dsl.identifier" : "bookshop"
+      },
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "Weak",
+  "properties" : {
+    "structurizr.inspection.error" : "9",
+    "structurizr.dsl" : "d29ya3NwYWNlICJXZWFrIiAiQSB2YWxpZCBidXQgdGhpbiB3b3Jrc3BhY2U6IG9uZSBjb250YWluZXIsIG5vIHZpZXdzLCBvbmUgcmVsYXRpb25zaGlwIHdpdGhvdXQgYSB0ZWNobm9sb2d5LiIgewogICAgbW9kZWwgewogICAgICAgIGN1c3RvbWVyID0gcGVyc29uICJDdXN0b21lciIgIkJ1eXMgYm9va3Mgb25saW5lLiIKICAgICAgICBib29rc2hvcCA9IHNvZnR3YXJlU3lzdGVtICJCb29rc2hvcCIgIlNlbGxzIGJvb2tzIHRvIGN1c3RvbWVycy4iIHsKICAgICAgICAgICAgd2ViID0gY29udGFpbmVyICJXZWIgU3RvcmUiICJUaGUgY3VzdG9tZXItZmFjaW5nIHdlYiBzaG9wLiIgIlB5dGhvbiIKICAgICAgICB9CiAgICAgICAgY3VzdG9tZXIgLT4gd2ViICJPcmRlcnMgYm9va3MgdGhyb3VnaCIKICAgICAgICB3ZWIgLT4gd2ViICJTZWxmIiAiSFRUUFMiCiAgICB9Cn0=",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "containerViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "TopBottom",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "generatedKey" : true,
+      "key" : "Container-001",
+      "name" : "Container View: Bookshop",
+      "order" : 3,
+      "relationships" : [ {
+        "id" : "4"
+      }, {
+        "id" : "6"
+      } ],
+      "softwareSystemId" : "2"
+    } ],
+    "systemContextViews" : [ {
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "generatedKey" : true,
+      "key" : "SystemContext-001",
+      "name" : "System Context View: Bookshop",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "5"
+      } ],
+      "softwareSystemId" : "2"
+    } ],
+    "systemLandscapeViews" : [ {
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "generatedKey" : true,
+      "key" : "SystemLandscape-001",
+      "name" : "System Landscape View",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "5"
+      } ]
+    } ]
+  }
+}

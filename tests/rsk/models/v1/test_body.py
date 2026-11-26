@@ -92,6 +92,10 @@ Ronald Rink
 
 - upload pipeline
 
+## Source
+
+The QA interview on 2026-09-17 that elicited this risk.
+
 ## More Information
 
 Tracked in the incident-response backlog; revisit at the next library audit.
@@ -138,7 +142,18 @@ none
 ### Probability 1
 
 ### Impact 1
+
+## Source
+
+The QA interview on 2026-09-17 that elicited this risk.
 """
+)
+
+#: `_MINIMAL_TEXT` without its `## Source` section -- the derived starting point for the
+#: mandatory-`## Source` and `## Source`-position tests below (kept in lockstep with
+#: `_MINIMAL_TEXT` by replacement, not a second hand-maintained literal).
+_MINIMAL_NO_SOURCE = _MINIMAL_TEXT.replace(
+    "\n## Source\n\nThe QA interview on 2026-09-17 that elicited this risk.\n", ""
 )
 
 
@@ -180,6 +195,7 @@ class TestRiskWithComment(unittest.TestCase):
         self.assertEqual(sut.residual_assessment.level, LEVEL_MEDIUM)
         self.assertEqual(sut.owner.value.text, "Ronald Rink")
         self.assertEqual([item.text for item in sut.tags.items], ["security", "upload pipeline"])
+        self.assertEqual(sut.source.value.text, "The QA interview on 2026-09-17 that elicited this risk.")
         self.assertEqual(
             sut.more_information.text,
             "## More Information\n\nTracked in the incident-response backlog; revisit at the next library audit.\n",
@@ -199,6 +215,7 @@ class TestRiskWithoutComment(unittest.TestCase):
         self.assertEqual(sut.strategy.value.text, "accept")
         self.assertIsNone(sut.owner)
         self.assertIsNone(sut.tags)
+        self.assertEqual(sut.source.value.text, "The QA interview on 2026-09-17 that elicited this risk.")
         self.assertIsNone(sut.more_information)
         self.assertEqual(str(sut), _MINIMAL_TEXT)
 
@@ -292,6 +309,96 @@ none
         with self.assertRaises(AssertionError):
             Risk.from_text(text)
 
+    def test_rejects_source_before_tags(self) -> None:
+        """`## Source` ahead of `## Tags` (feat-102-133-rsk-tags-source, ACC-003): the optional
+        `## Tags` section is skipped over, `## Source` is consumed, and the tag list is left
+        over with no declared field to consume it -- a structural failure naming the leftover."""
+        text = format_text(
+            _MINIMAL_NO_SOURCE
+            + "\n## Source\n\nThe QA interview on 2026-09-17 that elicited this risk.\n"
+            + "\n## Tags\n\n- security\n"
+        )
+
+        with self.assertRaises(AssertionError) as ctx:
+            Risk.from_text(text)
+        message = str(ctx.exception)
+        self.assertIn("text left over after processing all fields", message)
+        self.assertIn("## Tags", message)
+
+    def test_rejects_source_after_more_information(self) -> None:
+        """`## Source` behind `## More Information` (feat-102-133-rsk-tags-source, ACC-003): the
+        mandatory `## Source` field is processed before `## More Information` in declaration
+        order and finds its heading only behind foreign text -- a structural failure naming
+        the expected field and the text it actually found first."""
+        text = format_text(
+            _MINIMAL_NO_SOURCE
+            + "\n## More Information\n\nFree-form supplementary text.\n"
+            + "\n## Source\n\nThe QA interview on 2026-09-17 that elicited this risk.\n"
+        )
+
+        with self.assertRaises(AssertionError) as ctx:
+            Risk.from_text(text)
+        message = str(ctx.exception)
+        self.assertIn("Risk > Source", message)
+        self.assertIn("expected Source (heading 'Source')", message)
+        self.assertIn("found no match", message)
+        self.assertIn("## More Information", message)
+
+
+class TestRiskSourceMandatory(unittest.TestCase):
+    """`## Source` is mandatory on every rsk document (feat-102-133-rsk-tags-source, GitHub issue #102).
+
+    A document carrying `## Source` parses in both relative positions the field
+    order allows (between `## Tags` and `## More Information`, and directly
+    before `## More Information` when `## Tags` is absent) and the section's
+    `value.text` round-trips; a document missing `## Source` fails the parse
+    with an actionable `AssertionError` naming the missing field and a 1-based
+    line reference (feat-27-validation convention) -- the message content is
+    asserted, not just the exception type (REQ-009/ACC-002).
+    """
+
+    def test_parses_with_source_between_tags_and_more_information(self) -> None:
+        sut = Risk.from_text(_WITH_COMMENT_TEXT)
+
+        self.assertEqual(sut.source.value.text, "The QA interview on 2026-09-17 that elicited this risk.")
+        self.assertEqual(str(sut), _WITH_COMMENT_TEXT)
+
+    def test_parses_with_source_directly_before_more_information(self) -> None:
+        text = format_text(
+            _MINIMAL_NO_SOURCE
+            + "\n## Source\n\nThe QA interview on 2026-09-17 that elicited this risk.\n"
+            + "\n## More Information\n\nFree-form supplementary text.\n"
+        )
+
+        sut = Risk.from_text(text)
+
+        self.assertIsNone(sut.tags)
+        self.assertEqual(sut.source.value.text, "The QA interview on 2026-09-17 that elicited this risk.")
+        self.assertEqual(sut.more_information.text, "## More Information\n\nFree-form supplementary text.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_rejects_missing_source(self) -> None:
+        text = format_text(_MINIMAL_NO_SOURCE)
+
+        with self.assertRaises(AssertionError) as ctx:
+            Risk.from_text(text)
+        message = str(ctx.exception)
+        self.assertIn("Risk > Source", message)
+        self.assertIn("expected Source (heading 'Source')", message)
+        self.assertIn("found no match", message)
+
+    def test_rejects_missing_source_when_more_information_follows(self) -> None:
+        """The failure must name `## Source`, not the section that follows the expected position."""
+        text = format_text(_MINIMAL_NO_SOURCE + "\n## More Information\n\nFree-form supplementary text.\n")
+
+        with self.assertRaises(AssertionError) as ctx:
+            Risk.from_text(text)
+        message = str(ctx.exception)
+        self.assertIn("Risk > Source", message)
+        self.assertIn("expected Source (heading 'Source')", message)
+        self.assertIn("found no match", message)
+        self.assertIn("## More Information", message)
+
 
 class TestRiskMissingMandatorySection(unittest.TestCase):
     """Omitting a mandatory `## ` section fails the parse."""
@@ -375,6 +482,10 @@ none
 ## Owner
 
 Ronald Rink
+
+## Source
+
+The QA interview on 2026-09-17 that elicited this risk.
 """
         )
 
@@ -382,6 +493,7 @@ Ronald Rink
 
         self.assertEqual(sut.owner.value.text, "Ronald Rink")
         self.assertIsNone(sut.tags)
+        self.assertEqual(sut.source.value.text, "The QA interview on 2026-09-17 that elicited this risk.")
         self.assertIsNone(sut.more_information)
         self.assertEqual(str(sut), text)
 
@@ -429,6 +541,10 @@ none
 ## Tags
 
 - security
+
+## Source
+
+The QA interview on 2026-09-17 that elicited this risk.
 """
         )
 
@@ -436,6 +552,7 @@ none
 
         self.assertEqual([item.text for item in sut.tags.items], ["security"])
         self.assertIsNone(sut.owner)
+        self.assertEqual(sut.source.value.text, "The QA interview on 2026-09-17 that elicited this risk.")
         self.assertIsNone(sut.more_information)
         self.assertEqual(str(sut), text)
 
@@ -480,6 +597,10 @@ none
 
 ### Impact 1
 
+## Source
+
+The QA interview on 2026-09-17 that elicited this risk.
+
 ## More Information
 
 Free-form supplementary text.
@@ -488,9 +609,91 @@ Free-form supplementary text.
 
         sut = Risk.from_text(text)
 
+        self.assertEqual(sut.source.value.text, "The QA interview on 2026-09-17 that elicited this risk.")
         self.assertEqual(sut.more_information.text, "## More Information\n\nFree-form supplementary text.\n")
         self.assertIsNone(sut.owner)
         self.assertIsNone(sut.tags)
+        self.assertEqual(str(sut), text)
+
+
+class TestRiskTagsNotes(unittest.TestCase):
+    """`## Tags` items are `MarkdownListItemWithNotes` (issue #133).
+
+    A loose-list continuation paragraph under a tag (blank line, then a
+    marker-width-indented paragraph) is captured in the item's `notes` --
+    not dropped, not merged into the item text, and not leaked into the
+    following section. Plain single-line tags parse unchanged (the existing
+    fixtures' `[item.text ...]` assertions still hold), and the document
+    round-trips byte-exact.
+    """
+
+    def test_loose_continuation_captured_in_notes(self) -> None:
+        text = format_text(
+            """\
+# R1
+
+## Cause
+
+c
+
+## Trigger
+
+t
+
+## Consequence
+
+k
+
+## Scope
+
+- s1
+
+## Initial Assessment
+
+### Probability 1
+
+### Impact 1
+
+## Strategy
+
+accept
+
+## Mitigation
+
+none
+
+## Residual Assessment
+
+### Probability 1
+
+### Impact 1
+
+## Tags
+
+- security
+
+  Additional context on why this tag applies.
+
+## Source
+
+The QA interview on 2026-09-17 that elicited this risk.
+
+## More Information
+
+Tracked in the incident-response backlog.
+"""
+        )
+
+        sut = Risk.from_text(text)
+
+        self.assertEqual([item.text for item in sut.tags.items], ["security"])
+        item = sut.tags.items[0]
+        self.assertIsNotNone(item.notes)
+        self.assertEqual(len(item.notes), 1)
+        self.assertEqual(item.notes[0].text, "Additional context on why this tag applies.")
+        self.assertEqual(
+            sut.more_information.text, "## More Information\n\nTracked in the incident-response backlog.\n"
+        )
         self.assertEqual(str(sut), text)
 
 

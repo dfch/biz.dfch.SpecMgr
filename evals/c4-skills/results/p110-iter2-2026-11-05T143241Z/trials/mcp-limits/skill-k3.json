@@ -1,0 +1,138 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/mcp-limits/skill-k3.events.ndjson",
+  "event_file_bytes": 112679,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-05T17:49:29Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (1062 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "3/ 3 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "only 0 container(s) in the export JSON",
+      "name": "two_containers",
+      "passed": false
+    },
+    {
+      "detail": "technology on all 3 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "1 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "2 terminal parse call(s)",
+      "name": "parse_called",
+      "passed": true
+    },
+    {
+      "detail": "2 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "2 terminal inspect call(s)",
+      "name": "inspect_called",
+      "passed": true
+    },
+    {
+      "detail": "returned DSL is byte-identical to the validated OK text (the on-disk file)",
+      "name": "validated_before_return",
+      "passed": true
+    },
+    {
+      "detail": "all 4 finding(s) labeled fix/expected/reported",
+      "name": "triage_complete",
+      "passed": true
+    },
+    {
+      "detail": "final text names: !docs, !include",
+      "name": "limits_acknowledged",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 1263.9365712560248,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": "/work/\n\u251c\u2500\u2500 workspace.dsl              # root \u2014 now an inlined single file (see MCP limit below)\n\u251c\u2500\u2500 model/\n\u2502   \u251c\u2500\u2500 elements.dsl           # element declarations\n\u2502   \u2514\u2500\u2500 relationships.dsl      # relationship declarations\n\u251c\u2500\u2500 views/\n\u2502   \u2514\u2500\u2500 views.dsl              # view definitions\n\u2514\u2500\u2500 docs/\n    \u251c\u2500\u2500 README.md              # workspace documentation\n    \u2514\u2500\u2500 SystemContext.md       # per-view documentation\n",
+    "inspect_calls": 2,
+    "inspect_findings": [
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "ERROR: The person named \"Customer\" is not included on any views - add it to a view.",
+      "ERROR: The software system named \"Bookshop Database\" is not included on any views - add it to a view.",
+      "ERROR: The software system named \"Payment Provider\" is not included on any views - add it to a view."
+    ],
+    "inspect_triage": {
+      "ERROR: The person named \"Customer\" is not included on any views - add it to a view.": "fix",
+      "ERROR: The software system named \"Bookshop Database\" is not included on any views - add it to a view.": "fix",
+      "ERROR: The software system named \"Payment Provider\" is not included on any views - add it to a view.": "fix",
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "fix"
+    },
+    "parse_calls": 2,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "structurizr-validate-loop"
+    ],
+    "steps": 17,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 481618,
+      "output": 35612,
+      "reasoning": 0
+    },
+    "tool_calls": 24,
+    "validate_calls": 3,
+    "validate_ok_calls": 2,
+    "validated_before_return": true,
+    "validated_by_file": true,
+    "validated_by_final_text": false,
+    "wall_time_s": 758.766,
+    "workdir_dsl": "workspace \"Bookshop\" \"A simple online bookshop\" {\n    configuration {\n        scope softwaresystem\n    }\n\n    model {\n        customer = person \"Customer\" \"A customer who browses and purchases books\"\n        bookshop = softwareSystem \"Bookshop\" \"An online bookshop where customers can browse and purchase books\"\n        database = softwareSystem \"Bookshop Database\" \"The database that stores book and order data\" {\n            tags \"Database\"\n        }\n        paymentProvider = softwareSystem \"Payment Provider\" \"An external payment provider that processes credit card payments\" {\n            tags \"External\"\n        }\n\n        customer -> bookshop \"Browses and purchases books through\" \"HTTPS\"\n        bookshop -> database \"Stores and retrieves book and order data\" \"SQL\"\n        bookshop -> paymentProvider \"Sends payment details to\" \"REST API\"\n    }\n\n    views {\n        systemContext bookshop \"SystemContext\" \"A system context diagram showing the Bookshop and its users and external systems\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "mcp-limits",
+    "condition": "skill",
+    "k_index": 3
+  },
+  "run_id": "p110-iter2-2026-11-05T143241Z",
+  "skills_installed": [
+    "structurizr-validate-loop"
+  ],
+  "started_at": "2026-11-05T17:36:41Z",
+  "timeout": false,
+  "wall_time_s": 767.580399536062,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/mcp-limits.skill-k3.p110-iter2-2026-11-05T143241Z"
+}

@@ -4,14 +4,16 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Goal (GOL) document by id, using the existing
-``gol/tools/`` surface (``get_gol``, ``validate_gol``) plus the generic
+``gol/tools/`` surface (``get_gol``, generic ``validate`` tool) plus the generic
 ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="gol"``; ``get_gol``'s ``raw=True`` parameter serves the line-range
-flow's line numbers). There is no ``specmgr://gol/{id}`` resource to point at
+flow's line numbers, with ``numbered=True`` additionally printing each
+line's 1-based body-line number, ready to feed into ``update``'s
+``offset``). There is no ``specmgr://gol/{id}`` resource to point at
 -- id-based reads always go through the ``get_gol`` tool only.
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: GOL's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: GOL's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="gol"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="gol"``) -- mirroring

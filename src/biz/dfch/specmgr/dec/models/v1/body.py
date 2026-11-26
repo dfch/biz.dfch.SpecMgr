@@ -20,19 +20,26 @@
 Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
 `MarkdownSection3`/`MarkdownParagraph`/`MarkdownListItem` engine: each class
 below models one markdown heading (`## `/`### `) or list, and `Decision` is
-the top-level H1 container. A `dec` document keeps the ADR's general
+the top-level H1 container. A `dec` document keeps the MADR-style general
 structure (MADR-style headings, an `Options` collection) but is built on the
 generic engine with the simple surface used by GOL/RSK/QA (see
 `.specmgr/feat/feat-21-decision/README.md` Design Notes).
 
-Field declaration order on `Decision`/`DecisionOutcome`/`RelatedArtifacts`/
-`ProsAndCons`/`Updates` enforces markdown order (Context and Problem
-Statement -> Decision Drivers -> Considered Options -> Decision Outcome
-(-> Consequences -> Confirmation) -> Related Artifacts (-> Requirements ->
-Decisions -> Goals -> Acceptance Criteria) -> Pros and Cons (-> Option 1: ->
-Option 2: -> ...) -> More Information -> Updates (-> entry 1 -> entry 2 ->
-...)), since `models.md`'s `MarkdownStr.from_text` distributes text among
-declared fields in that same order.
+Field declaration order on `Decision`/`DecisionOutcome`/`RolesAndResponsibilities`/
+`RelatedArtifacts`/`ProsAndCons`/`Updates` enforces markdown order (Context
+and Problem Statement -> Decision Drivers -> Considered Options -> Decision
+Outcome (-> Consequences -> Confirmation) -> Roles and Responsibilities
+(-> Accountable -> Responsible -> Support -> Consulted -> Informed) -> Tags
+-> Source -> Related Artifacts (-> Requirements -> Decisions -> Goals ->
+Risks) -> Pros and Cons (-> Option 1: -> Option 2: -> ...) ->
+More Information -> Updates (-> entry 1 -> entry 2 -> ...)), since
+`models.md`'s `MarkdownStr.from_text` distributes text among declared fields
+in that same order. `## Roles and Responsibilities` and `## Source` are
+mandatory on every `dec` document (feat-29-dec-source-roles, GitHub issue
+#29) -- a decision must always name an accountable owner and record where it
+originated, unlike `sop`'s own optional `## Roles and Responsibilities`.
+`## Tags` is optional, absorbed from the DEC half of
+`feat-133-tags-dec-rsk` (issue #133).
 """
 
 from __future__ import annotations
@@ -42,15 +49,28 @@ import re
 from pydantic import Field, computed_field, model_validator
 
 from ....models.md import (
-    MarkdownListItem,
+    MarkdownListItemWithNotes,
     MarkdownParagraph,
     MarkdownSection1,
     MarkdownSection2,
     MarkdownSection2WithComment,
     MarkdownSection3,
+    MarkdownStr,
+    AccountableBase,
+    ResponsibleBase,
+    SupportBase,
+    ConsultedBase,
+    InformedBase,
+    DecisionsBase,
+    GoalsBase,
+    RequirementsBase,
+    RisksBase,
+    RolesAndResponsibilitiesBase,
+    SourceBase,
     alias,
     AliasType,
 )
+from ....models.md._markdown import format_text, not_in_mdformat_message, parse
 from ....models.md._ordering import validate_newest_first
 
 
@@ -86,6 +106,138 @@ class Confirmation(MarkdownSection3):
     or will be confirmed. Optional, free-form prose."""
 
 
+#: The four top-level block-start kinds the `OutcomeBlocks` extent accepts at
+#: the head of its own text (feat-247-dec-outcome-blocks, GitHub issue #247,
+#: REQ-001). The shared `MarkdownIt("commonmark")` tokenizer has no table
+#: token, so GFM pipe-table content tokenizes as a plain paragraph and is
+#: accepted with it -- there is no distinct table kind to reject (confirmed
+#: Option A, see the feature's Decisions Made).
+_OUTCOME_ACCEPTED_BLOCK_START_KINDS = frozenset({"paragraph_open", "bullet_list_open", "ordered_list_open", "fence"})
+
+#: Every top-level block-start kind the `OutcomeBlocks` extent walk
+#: recognises as "a new top-level block begins here" (feat-247). Any of
+#: these seen at nesting depth 0 ends the accepted run unless it is also one
+#: of `_OUTCOME_ACCEPTED_BLOCK_START_KINDS` -- in particular every heading of
+#: any level (h1-h6: the `### Consequences`/`### Confirmation` hand-off and
+#: any stray H4+ alike), as do block quotes, HTML comments, horizontal
+#: rules, and (defensively, since `format_text` normalizes indented code
+#: blocks to fences before parsing) `code_block`.
+_OUTCOME_BLOCK_START_KINDS = frozenset(
+    {
+        "paragraph_open",
+        "bullet_list_open",
+        "ordered_list_open",
+        "fence",
+        "heading_open",
+        "blockquote_open",
+        "html_block",
+        "code_block",
+        "hr",
+    }
+)
+
+
+class OutcomeBlocks(MarkdownStr):
+    """Further markdown blocks after `DecisionOutcome`'s mandatory lead paragraph
+    (feat-247-dec-outcome-blocks, GitHub issue #247).
+
+    Leaf class (no declared nested fields, no `@markdown` metadata of its
+    own) mirroring this file's own `UpdateEntryContent` precedent: an
+    internal content-holding leaf that the parent's field loop resolves via
+    `get_extent` and stores verbatim via the base `MarkdownStr` leaf
+    `from_text` (`parse(text)` for the raw-HTML rejection, then `_value =
+    text`) -- which is exactly what makes the round-trip byte-exact
+    (REQ-003).
+
+    Unlike `UpdateEntryContent` -- which is last on its parent and therefore
+    consumes everything remaining -- `OutcomeBlocks` is *not* last: the
+    `### Consequences`/`### Confirmation` H3 sections follow it. Its own
+    `get_extent` therefore bounds the run it claims: it only claims an
+    extent at all when the first token is one of the four accepted
+    block-start kinds (`_OUTCOME_ACCEPTED_BLOCK_START_KINDS`); otherwise it
+    returns `0` (the field is absent) and the H3 fields match exactly where
+    they always matched before a document carries no further blocks (the
+    REQ-004 parity). When it does claim an extent, the run accumulates the
+    accepted blocks and STOPS at the first non-accepted top-level block --
+    in particular at the first heading of any level (h1-h6) -- by returning
+    that block's start line exclusive, so a block quote, an HTML comment, a
+    horizontal rule, or an H4+ heading left after the run is never consumed
+    and fails the parse with the engine's own actionable "text left over
+    after processing all fields" error (REQ-001's rejected-kinds contract,
+    enforced per distinct token kind).
+
+    Adds a `text` computed property (mirroring `UpdateEntryContent`'s own,
+    and `qa`'s `IntroductionBody.text` idiom, feat-114) so this
+    otherwise-private `_value` is reachable through `model_dump()`/
+    `model_dump_json()` (REQ-003).
+    """
+
+    @classmethod
+    def get_extent(cls, text: str) -> int:
+        """Return the extent of the accepted block run parsed from `text`, as a line count.
+
+        Overrides `MarkdownStr.get_extent` (whose base behaviour would
+        consume *everything* remaining -- too greedy for a field that is
+        not last on its parent). After the standard `text ==
+        format_text(text)` precondition and `parse()`, there is an extent at
+        all only if the FIRST token is one of the four accepted block-start
+        kinds (`_OUTCOME_ACCEPTED_BLOCK_START_KINDS`); otherwise this
+        returns `0`, same as the base class's "no extent" case.
+
+        When the run is claimed, the token stream is walked with a depth
+        counter (shifted by every token's own `nesting`, mirroring
+        `MarkdownSection.get_extent`'s own `end_marker` walk): a token
+        counts as a new top-level block when it has a 2-element `.map`, is
+        seen at depth 0 (the depth going into it, before applying its own
+        nesting delta), and has one of the known block-start types
+        (`_OUTCOME_BLOCK_START_KINDS`). The first such block whose kind is
+        not accepted ends the run -- this returns that block's start line
+        (`m[0]`, exclusive); every other token contributes its own line
+        span to the accumulated extent (the max `m[1]` over all mapped
+        tokens, i.e. the end of `text` when the run reaches it).
+
+        Args:
+            text: Markdown source, pre-formatted with `mdformat`.
+
+        Returns:
+            0: `text` does not start with an accepted block (no extent).
+            int > 0: line count (see `MarkdownStr.get_extent`) covered by
+                the accepted block run, stopping before the first
+                non-accepted top-level block or at the end of `text`.
+        """
+        assert isinstance(text, str), type(text)
+        assert text == format_text(text), not_in_mdformat_message(text)
+
+        tokens = parse(text)
+
+        if not tokens or tokens[0].type not in _OUTCOME_ACCEPTED_BLOCK_START_KINDS:
+            return 0
+
+        result: int = 0
+        depth: int = 0
+        for token in tokens:
+            depth_at_entry = depth
+            depth += token.nesting
+
+            token_map = token.map
+            if not token_map or len(token_map) != 2:
+                continue
+
+            if depth_at_entry == 0 and token.type in _OUTCOME_BLOCK_START_KINDS:
+                if token.type not in _OUTCOME_ACCEPTED_BLOCK_START_KINDS:
+                    return token_map[0]
+
+            result = max(result, token_map[1])
+
+        return result
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Return this field's raw markdown text verbatim (or `""` if unset)."""
+        return self._value
+
+
 class DecisionOutcome(MarkdownSection2):
     """`## Decision Outcome` -- the chosen option plus its consequences. Mandatory.
 
@@ -96,6 +248,13 @@ class DecisionOutcome(MarkdownSection2):
         itself (e.g. "We chose option 1 because ..."). Any other block in
         place of a lead paragraph (a bare list, an H3 first, nothing at
         all) is a structural error.
+    further_blocks:
+        Optional further markdown blocks (paragraphs, bullet lists, ordered
+        lists, fenced code blocks) after the lead paragraph and before the
+        first H3 sub-section (feat-247-dec-outcome-blocks, GitHub issue
+        #247). A block quote, an HTML comment, a horizontal rule, or a
+        heading of any level ends the run and stays unconsumed, failing the
+        parse with the engine's own actionable "text left over" error.
     consequences:
         `### Consequences` sub-section. Optional.
     confirmation:
@@ -106,69 +265,190 @@ class DecisionOutcome(MarkdownSection2):
         description="The lead paragraph directly under the H2, before any H3 sub-section -- the "
         "decision outcome itself. Mandatory."
     )
+    further_blocks: OutcomeBlocks | None = Field(
+        default=None,
+        description="Optional further markdown blocks (paragraphs, bullet/ordered lists, fenced code "
+        "blocks) after the lead paragraph and before the first `###` sub-section.",
+    )
     consequences: Consequences | None = Field(default=None, description="`### Consequences` sub-section. Optional.")
     confirmation: Confirmation | None = Field(default=None, description="`### Confirmation` sub-section. Optional.")
 
 
-class Requirements(MarkdownSection3):
-    """`### Requirements` under Related Artifacts -- bullet list of
-    cross-references to requirements, one per line
-    (e.g. "REQ-9687: <title>")."""
+class Accountable(AccountableBase):
+    """`### Accountable` under `## Roles and Responsibilities` -- the single
+    owner ultimately answerable for this decision.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to requirements, one per line "
-        '(e.g. "REQ-9687: <title>"); must contain at least one item.',
+    Subclasses the shared `models.md.AccountableBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    Mandatory: `## Roles and Responsibilities` is itself mandatory on every
+    `dec` document, so every decision always names an accountable owner.
+    """
+
+
+class Responsible(ResponsibleBase):
+    """`### Responsible` under `## Roles and Responsibilities` -- those who
+    carry out the decision or its consequences.
+
+    Subclasses the shared `models.md.ResponsibleBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    """
+
+
+class Support(SupportBase):
+    """`### Support` under `## Roles and Responsibilities` -- those who
+    provide resources or assistance to the responsible parties.
+
+    Subclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    """
+
+
+class Consulted(ConsultedBase):
+    """`### Consulted` under `## Roles and Responsibilities` -- those whose
+    opinions were sought before or during the decision.
+
+    Subclasses the shared `models.md.ConsultedBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    """
+
+
+class Informed(InformedBase):
+    """`### Informed` under `## Roles and Responsibilities` -- those who are
+    kept up to date on the decision or its outcome.
+
+    Subclasses the shared `models.md.InformedBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    """
+
+
+class RolesAndResponsibilities(RolesAndResponsibilitiesBase):
+    """`## Roles and Responsibilities` -- the RASCI responsibility assignment
+    for this decision. Mandatory on every `dec` document (unlike `sop`'s own
+    optional equivalent) -- a decision must always have a named accountable
+    owner. `### Accountable` and `### Responsible` are both mandatory (strict-
+    RACI "always has an owner and a doer"), while `### Support`/
+    `### Consulted`/`### Informed` stay independently optional and MAY each
+    be present with zero list items. See the general `specmgr://rasci`
+    resource for RASCI role definitions.
+
+    Subclasses the shared `models.md.RolesAndResponsibilitiesBase`
+    (feat-29-dec-source-roles), which also carries the `@alias(value="Roles
+    and Responsibilities", ...)` override this class needs -- inherited
+    automatically, not redeclared here. The fields below narrow the base
+    class's field types to `dec`'s own concrete `Accountable`/`Responsible`/
+    `Support`/`Consulted`/`Informed` subclasses declared above.
+
+    Parameters
+    ----------
+    accountable:
+        `### Accountable` sub-section (single paragraph). Mandatory.
+    responsible:
+        `### Responsible` sub-section (bullet list, >=1 item). Mandatory.
+    support:
+        `### Support` sub-section (bullet list, MAY be empty). Optional.
+    consulted:
+        `### Consulted` sub-section (bullet list, MAY be empty). Optional.
+    informed:
+        `### Informed` sub-section (bullet list, MAY be empty). Optional.
+    """
+
+    accountable: Accountable = Field(  # type: ignore
+        description="`### Accountable` sub-section (single paragraph). Mandatory once this container is present."
+    )
+    responsible: Responsible = Field(  # type: ignore
+        description="`### Responsible` sub-section (bullet list, >=1 item). Mandatory once this container is present."
+    )
+    support: Support | None = Field(  # type: ignore
+        default=None, description="`### Support` sub-section. Optional; MAY be empty."
+    )
+    consulted: Consulted | None = Field(  # type: ignore
+        default=None, description="`### Consulted` sub-section. Optional; MAY be empty."
+    )
+    informed: Informed | None = Field(  # type: ignore
+        default=None, description="`### Informed` sub-section. Optional; MAY be empty."
     )
 
 
-class Decisions(MarkdownSection3):
-    """`### Decisions` under Related Artifacts -- bullet list of
-    cross-references to decisions, one per line (e.g. "DEC-2703: <title>")."""
+class Tags(MarkdownSection2):
+    """`## Tags` -- bullet list of free-form labels for grouping/filtering
+    decisions. Optional. Absorbed from the DEC half of
+    `feat-133-tags-dec-rsk` (issue #133), structurally identical to `req`'s
+    existing `Tags` model.
+    """
 
-    items: list[MarkdownListItem] = Field(
+    items: list[MarkdownListItemWithNotes] = Field(
         min_length=1,
-        description="Bullet list of cross-references to decisions, one per line "
-        '(e.g. "DEC-2703: <title>"); must contain at least one item.',
+        description="Bullet list of free-form labels for grouping/filtering decisions; must contain at least one item.",
     )
 
 
-class Goals(MarkdownSection3):
-    """`### Goals` under Related Artifacts -- bullet list of
-    cross-references to goals, one per line (e.g. "GOL-0007: <title>")."""
+class Source(SourceBase):
+    """`## Source` -- single-line value naming the origin/authority of this
+    decision (e.g. an issue, a meeting, a stakeholder request). Mandatory.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to goals, one per line "
-        '(e.g. "GOL-0007: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --
+    the field declaration itself lives there; this class exists so `dec`
+    still declares and owns its own concrete `Source` type. Note: the
+    generated JSON Schema's `value` field description comes from
+    `SourceBase` and is intentionally domain-neutral ("this document"),
+    not the domain-specific "this decision" wording used above -- see
+    `SourceBase`'s own comment for the rationale (REQ-016).
+    """
 
 
-class AcceptanceCriteria(MarkdownSection3):
-    """`### Acceptance Criteria` under Related Artifacts -- bullet list of
-    cross-references to acceptance criteria, one per line
-    (e.g. "ACC-1234: <title>")."""
+class Requirements(RequirementsBase):
+    """`### Requirements` under Related Artifacts -- cross-references to
+    requirements.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to acceptance criteria, one per line "
-        '(e.g. "ACC-1234: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.RequirementsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `dec` still declares and
+    owns its own concrete `Requirements` type.
+    """
+
+
+class Decisions(DecisionsBase):
+    """`### Decisions` under Related Artifacts -- cross-references to
+    decisions.
+
+    Subclasses the shared `models.md.DecisionsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `dec` still declares and
+    owns its own concrete `Decisions` type.
+    """
+
+
+class Goals(GoalsBase):
+    """`### Goals` under Related Artifacts -- cross-references to goals.
+
+    Subclasses the shared `models.md.GoalsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `dec` still declares and
+    owns its own concrete `Goals` type.
+    """
+
+
+class Risks(RisksBase):
+    """`### Risks` under Related Artifacts -- cross-references to risks.
+
+    Subclasses the shared `models.md.RisksBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `dec` still declares and
+    owns its own concrete `Risks` type.
+    """
 
 
 class RelatedArtifacts(MarkdownSection2):
     """`## Related Artifacts` -- container for four independent, all-optional
-    `### ` cross-reference lists (requirements/decisions/goals/acceptance
-    criteria). Optional as a whole; no consistency check is enforced between
-    the sub-lists.
+    `### ` cross-reference lists (requirements/decisions/goals/risks).
+    Optional as a whole; no consistency check is enforced between the
+    sub-lists.
     """
 
     requirements: Requirements | None = Field(default=None, description="`### Requirements` sub-section. Optional.")
     decisions: Decisions | None = Field(default=None, description="`### Decisions` sub-section. Optional.")
     goals: Goals | None = Field(default=None, description="`### Goals` sub-section. Optional.")
-    acceptance_criteria: AcceptanceCriteria | None = Field(
-        default=None, description="`### Acceptance Criteria` sub-section. Optional."
-    )
+    risks: Risks | None = Field(default=None, description="`### Risks` sub-section. Optional.")
 
 
 #: Matches a `### Option {N}: {name}` heading line as retained in a leaf
@@ -255,8 +535,8 @@ class ProsAndCons(MarkdownSection2):
 
     Optional as a whole, but present only if it carries at least one
     `### Option {N}: {name}` entry (``min_length=1``) -- an H2 with zero
-    options is a structural error. The ADR heading "Pros and Cons of the
-    Options" is deliberately NOT accepted (LITERAL alias).
+    options is a structural error. The heading "Pros and Cons of the Options"
+    is deliberately NOT accepted (LITERAL alias).
 
     Parameters
     ----------
@@ -277,44 +557,73 @@ class MoreInformation(MarkdownSection2):
     fixed format. Optional."""
 
 
-#: Matches a `{yyyy-MM-dd or full date+time} ( - | : ) {title}` heading line
-#: as retained in a composite `MarkdownSection3`'s `.text` (which carries the
-#: heading's inline content, no `###` marker), capturing the timestamp
-#: (named group `timestamp`) and the title (named group `title`). Mirrors
-#: `sop.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN`, except the date+time
-#: variant's time-of-day/milliseconds/offset is entirely optional here --
-#: a bare `yyyy-MM-dd` date is also accepted (REQ-004).
+#: Matches a `{full date+time} ( - | : ) {title}` heading line as retained in
+#: a composite `MarkdownSection3`'s `.text` (which carries the heading's
+#: inline content, no `###` marker), capturing the timestamp (named group
+#: `timestamp`) and the title (named group `title`). Mirrors
+#: `sop.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN` exactly.
 _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?)(?: - | : )(?P<title>.+)"
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
 )
 
 
+class UpdateEntryContent(MarkdownStr):
+    """`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.
+
+    Leaf class (no declared fields) applying no `@markdown` type/tag
+    restriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/
+    `MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to
+    the unmodified `MarkdownStr` base implementation, which simply consumes
+    everything remaining in the given text regardless of its shape. Since
+    `content` is the sole (and last) field on `UpdateEntry` -- nothing
+    follows it before the next heading -- "everything remaining" is exactly
+    correct, and no custom stop-condition override is needed.
+
+    Mandatory: `UpdateEntry` declares `content` non-`Optional`, so the
+    engine's existing mandatory-field zero-extent check (the base
+    `MarkdownStr.get_extent` returning `0` for blank text) still rejects a
+    heading with no body content -- no new validator code.
+
+    Adds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`
+    idiom, feat-114) so this otherwise-private `_value` is reachable through
+    `model_dump()`/`model_dump_json()`.
+    """
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Return this update entry's raw markdown text verbatim (or `""` if unset)."""
+        return self._value
+
+
 @alias(
-    value=r"^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$",
+    value=r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$",
     type=AliasType.REGEX,
 )
 class UpdateEntry(MarkdownSection3):
     """`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-    The H3 heading text carries a timestamp and a title, joined by either
-    ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
-    e.g. `### 2026-08-27 - Confirmed` or
-    `### 2026-08-27 14:30:00.000+02:00 : Confirmed`. The em-dash separator
-    is rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
-    full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
-    ``-05:00``) or ``Z`` for UTC variant (REQ-004) -- deliberately **not**
-    the same format as frontmatter ``created``/``updated``; this format is
+    The H3 heading text carries a full date+time timestamp and a title,
+    joined by either ``" - "`` (space, hyphen, space) or ``" : "`` (space,
+    colon, space): e.g. `### 2026-08-27 14:30:00.000+02:00 - Confirmed` or
+    `### 2026-08-27T14:30:00.000+02:00 : Confirmed`. The em-dash separator
+    is rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or
+    space) + ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``,
+    ``-05:00``) or ``Z`` for UTC variant -- the same full format as
+    frontmatter ``created``/``updated`` (both separators accepted, date-only
+    rejected; DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is
     scoped to `## Updates` entry headings only, which are hand/LLM-authored
     body content. Constrained by the regex `@alias` above and enforced by
     `match_alias` (`re.fullmatch`) at parse time -- a heading that does not
-    start with a valid date, an em-dash separator, or a missing
-    `` - ``/`` : `` title all fail the parse eagerly.
+    start with a valid full timestamp (a date-only value fails too), an
+    em-dash separator, or a missing `` - ``/`` : `` title all fail the
+    parse eagerly.
 
     Parameters
     ----------
     content:
-        The lead paragraph right after the H3 heading -- this entry's own
-        update text. Mandatory.
+        This entry's own update text, directly under the H3 heading (any
+        markdown content, not just a single paragraph). Mandatory.
     timestamp:
         Computed. The timestamp carried by the heading, verbatim. Never
         stored separately -- derived from the retained heading text.
@@ -324,14 +633,14 @@ class UpdateEntry(MarkdownSection3):
         retained heading text.
     """
 
-    content: MarkdownParagraph = Field(
-        description="The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+    content: UpdateEntryContent = Field(
+        description="This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."
     )
 
     @computed_field  # type: ignore
     @property
     def timestamp(self) -> str:
-        """The timestamp carried by this heading (e.g. `2026-08-27` or `2026-08-27 14:30:00.000+02:00`).
+        """The timestamp carried by this heading (e.g. `2026-08-27 14:30:00.000+02:00`).
 
         Returns:
             The timestamp string parsed from the retained heading text.
@@ -349,7 +658,7 @@ class UpdateEntry(MarkdownSection3):
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The title carried by this heading (e.g. `Confirmed` for `### 2026-08-27 - Confirmed`).
+        """The title carried by this heading (e.g. `Confirmed` for `### 2026-08-27 14:30:00.000+02:00 - Confirmed`).
 
         Returns:
             The title parsed from the retained heading text (the text
@@ -372,9 +681,8 @@ class Updates(MarkdownSection2WithComment):
     present. May be preceded by an explanatory HTML comment (e.g. an
     ordering hint).
 
-    Mirrors `tsk`'s `RecentUpdates` shape: no dedicated per-entry tools (no
-    `option_create`/`option_list` equivalent) -- entries are prepended
-    (newest-first) by editing the whole body.
+    Mirrors `tsk`'s `RecentUpdates` shape: no dedicated per-entry tools
+    -- entries are prepended (newest-first) by editing the whole body.
 
     Parameters
     ----------
@@ -400,8 +708,8 @@ class Updates(MarkdownSection2WithComment):
         """Reject entries that are not in newest-first order.
 
         Delegates to the shared `models.md._ordering.validate_newest_first`
-        helper (mixed date-only/date+time day-granularity rule, equal
-        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        helper (full date+time aware-datetime comparison, equal values
+        allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
         without duplicating its logic. Raises on the first out-of-order pair.
         """
         validate_newest_first([update.timestamp for update in self.updates], "Updates")
@@ -412,7 +720,7 @@ class Updates(MarkdownSection2WithComment):
 class Decision(MarkdownSection1):
     """The `dec` body: a single H1 section with the fields below.
 
-    The H1 heading text is free-form. Keeps the ADR's general structure
+    The H1 heading text is free-form. Keeps the MADR-style general structure
     (MADR headings + an options collection) on the generic `models.md`
     engine -- see the module docstring.
 
@@ -425,8 +733,17 @@ class Decision(MarkdownSection1):
     considered:
         `## Considered Options`. Optional.
     outcome:
-        `## Decision Outcome` (mandatory lead paragraph + optional
+        `## Decision Outcome` (mandatory lead paragraph, optional further
+        blocks after it -- feat-247 -- + optional
         `### Consequences`/`### Confirmation`). Mandatory.
+    roles_and_responsibilities:
+        `## Roles and Responsibilities` (RASCI composite). Mandatory (unlike
+        `sop`'s own optional equivalent) -- a decision must always have a
+        named accountable owner.
+    tags:
+        `## Tags`. Optional.
+    source:
+        `## Source`. Mandatory.
     related_artifacts:
         `## Related Artifacts` (four all-optional H3 bullet lists). Optional.
     pros_and_cons:
@@ -442,6 +759,11 @@ class Decision(MarkdownSection1):
     drivers: DecisionDrivers | None = Field(default=None, description="`## Decision Drivers` section. Optional.")
     considered: ConsideredOptions | None = Field(default=None, description="`## Considered Options` section. Optional.")
     outcome: DecisionOutcome = Field(description="`## Decision Outcome` section. Mandatory.")
+    roles_and_responsibilities: RolesAndResponsibilities = Field(
+        description="`## Roles and Responsibilities` section (RASCI composite). Mandatory."
+    )
+    tags: Tags | None = Field(default=None, description="`## Tags` section. Optional.")
+    source: Source = Field(description="`## Source` section. Mandatory.")
     related_artifacts: RelatedArtifacts | None = Field(
         default=None, description="`## Related Artifacts` section. Optional."
     )

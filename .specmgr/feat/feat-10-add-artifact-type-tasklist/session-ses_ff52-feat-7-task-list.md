@@ -999,7 +999,7 @@ index ee74269..0fe1dcd 100644
                          characteristics (and sub-characteristics), each with a description.
  
  REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
- through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+ through the ``get_req`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
  UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
 -reads go through the ``get_uc`` tool only.
 +reads go through the ``get_uc`` tool only. TSK has no ``specmgr://tsk/{id}``
@@ -1028,7 +1028,7 @@ index ee74269..0fe1dcd 100644
 +items, and uses the ``question`` tool to resolve ambiguity before proceeding.
  
  Modules are grouped domain-first
- (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+ (DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
  document-type domain"): each document
 -domain (``adr``, ``uc``, ``req``, and later ``ac``) is a top-level package
 +domain (``adr``, ``uc``, ``req``, ``tsk``, and later ``ac``) is a top-level package

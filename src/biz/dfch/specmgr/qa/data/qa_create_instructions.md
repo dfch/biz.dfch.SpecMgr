@@ -18,8 +18,9 @@ step 1 if this is genuinely a new interview.
 ## 1. Structure recap (body markdown only, no frontmatter block)
 - `# {title}` -- H1, mandatory, free-form.
 - `## General` -- mandatory, always present.
-  - `### Introduction` -- mandatory. Free-form prose framing the
-    interview: who was interviewed, when, and why.
+  - `### Introduction` -- mandatory. Free-form markdown (prose, lists,
+    code blocks, ...) framing the interview: who was interviewed, when,
+    and why.
   - `### Raw Requirements` -- mandatory. Free-form, pre-existing raw
     requirement notes (e.g. from a wiki page), preserved verbatim for
     traceability. May simply note there were none.
@@ -40,9 +41,17 @@ step 1 if this is genuinely a new interview.
   any pair. Each pair may optionally include, in this order:
   - an HTML comment (`<!-- ... -->`), giving context (e.g. when/by whom
     this was elicited) for the question that immediately follows it;
-  - `> {the interviewer's question}` as a block quote;
+  - `> **<d>.<NNNN>**: {the interviewer's question}` as a block quote --
+    every question carries its own mandatory, bold number prefix: `<d>` is
+    the category's own fixed digit (0=`Elicitation Context`, then the nine
+    ISO/IEC 25010:2023 characteristics in document order, 1 through 9),
+    and `<NNNN>` a 4-digit zero-padded per-category sequence (start at
+    `0010`, increment by 10 -- a human guideline, never parser-enforced,
+    so gaps and in-between numbers always work; once assigned, a number
+    is permanent, never renumbered or reused);
   - the interviewee's free-form prose answer, as plain paragraphs
-    immediately after the block quote.
+    immediately after the block quote (an unanswered question carries the
+    `TODO: answer pending` placeholder as its answer text).
   All three of comment/question/answer are optional on every Q&A pair --
   include whichever apply.
 - `## More Information` -- optional freeform supplementary text (e.g.
@@ -57,19 +66,20 @@ characteristic-relevant questions and recording the answers. Not every
 category needs a question -- an internal-only change, for example, may
 legitimately leave `Compatibility` empty.
 
-## 3. Use the template/example/schema as references
-Fetch `specmgr://qa/template` or `specmgr://qa/example` as a starting
-point/style reference, then check `specmgr://qa/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there, and do not rename or reorder the ten fixed category headings.
+## 3. Use the template/example tools as references
+Call the `get_qa_template` and `get_qa_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there, and do not rename
+or reorder the ten fixed category headings. Call the `get_qa_schema` tool
+(the generated JSON Schema) only when you are structurally uncertain or
+are resolving a validation error.
 
 ## 4. Tool call sequence
 1. Draft the body-only markdown per the structure above.
 2. Call `create_qa(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
    validation failure raises uncaught and nothing is written.
-3. Optionally call `validate_qa(content, full=False)` first if you want
+3. Optionally call `validate(type="qa", content=content, full=False)` first if you want
    to dry-run the body without writing anything -- `create_qa` already
    performs the same validation internally, so this step is never
    required, only a convenience.

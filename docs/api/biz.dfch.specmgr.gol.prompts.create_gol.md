@@ -5,10 +5,10 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Goal (GOL) document using the existing
 ``gol/tools/``/``gol/resources/`` surface (``list_gol``,
-``specmgr://gol/template``/``specmgr://gol/example``, ``specmgr://gol/schema``,
-``create_gol``, ``validate_gol``).
+``specmgr://gol/template``/``specmgr://gol/example``, ``get_gol_schema``,
+``create_gol``, generic ``validate`` tool).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_gol`` builds the entire GOL frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown.

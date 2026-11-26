@@ -25,7 +25,7 @@ addressable end-to-end (REQ-005). This is the one path that ever changes a
 the initial id, but has no way to fix it later (e.g. once a GitHub issue
 number is known); ``set_feat_id`` is that fix-up path, motivated by the
 ``feat-NNN-slug`` convention where ``NNN`` is meant to be the GitHub issue
-number (ADR e369ee2e-3353-4f92-991c-6367d76d832e).
+number (DEC e369ee2e-3353-4f92-991c-6367d76d832e).
 
 ``new_id`` is validated against the same ``feat-NNN-slug`` shape
 ``create_feat``'s optional ``id`` parameter uses
@@ -53,15 +53,51 @@ re-read via the frontmatter-stripping
 the rename, then written back verbatim under the new frontmatter -- no
 reference to the old id anywhere else in the repository is searched for or
 touched (REQ-008 is explicitly out of scope for this tool).
+
+**Cache-entry move (feat-107-doc-cache Phase 4, Task 4.1a, REQ-004).**
+``feat.tools._cache.move_feat_cache_entry(old_path, new_path)`` is called
+as the *last* step, only after ``write_feat_file(new_path, ...)`` has
+already succeeded -- never at the earlier ``old_path.parent.rename(...)``
+step -- so a failure between the rename and the write never leaves a cache
+entry addressing a file that was never actually written. The feature's own
+embedding-cache entry follows in the same spot (feat-134 Phase 3, Task
+3.6, REQ-008): ``general.tools._embedding_cache.move_embedding_cache(
+"feat", old_path, new_path)``, called only after the write has succeeded
+as well -- the ``feat`` entry moves from the old ``README.md`` path to the
+new one, and its stored hash mismatches the rewritten frontmatter on the
+next read (a guaranteed, harmless miss that self-heals, the same
+``DocCache.move`` semantics ``move_feat_cache_entry`` documents).
+
+**A concurrent, lock-free reader can still race the rename step itself
+(feat-107-doc-cache Phase 6, REQ-012) -- closed on the *reader* side, not
+here.** ``get_feat``/``list_feat`` intentionally take no domain lock (DEC
+33c5ab08-ff58-4c73-8c32-23abaf3838e3), so a call landing in the narrow
+window after ``old_path.parent.rename(new_path.parent)`` above succeeds but
+before :func:`~biz.dfch.specmgr.feat.tools._cache.move_feat_cache_entry`
+runs would, without a fix, see ``old_path`` genuinely absent from disk and
+have its ``FileNotFoundError`` propagate uncaught out of
+``DocCache.read`` -- this window is not eliminated by anything in this
+function (no invalidate-before-rename step was added here, since doing so
+would only narrow, not close, the same race for a reader landing a moment
+earlier or later in the sequence). Instead, every read path that can land
+in this window (:func:`~biz.dfch.specmgr.feat.tools._paths.find_feat_path_by_id`,
+:func:`~biz.dfch.specmgr.feat.tools._io.load_by_id`, and
+:func:`~biz.dfch.specmgr.feat.tools.list_feat.list_feat`'s scan) now catches
+that specific ``FileNotFoundError`` and translates it into the same
+graceful not-found/failed-entry shape it would already produce for a
+genuinely-deleted feature, rather than an uncaught OS-level error -- see
+each of those functions' own docstrings for the detail.
 """
 
 from __future__ import annotations
 
+from ...general.tools._embedding_cache import move_embedding_cache
 from ...general.tools._path_safety import assert_feat_id
 from ...general.tools._splice import body_text
 from ...general.tools._timestamps import now_timestamp
 from ...server import mcp
-from ..models.v1 import FeatDocument, FeatFrontmatter
+from ..models.v1 import FeatFrontmatter
+from ._cache import move_feat_cache_entry, move_feat_dirty_cache_entry
 from ._io import load_by_id
 from ._lock import feat_create_lock, feat_lock
 from ._paths import README_FILENAME, feat_base_dir
@@ -75,10 +111,12 @@ from ._write import write_feat_file
         "Rename an existing feature's id: validates new_id's feat-NNN-slug shape, refuses if "
         "new_id's folder already exists, renames <base>/<id>/ to <base>/<new_id>/, rewrites the "
         "README frontmatter id to new_id, bumps updated, and leaves the body byte-identical. Does "
-        "not update or search for references to the old id in any other document."
+        "not update or search for references to the old id in any other document. Returns the "
+        "renamed document's frontmatter only (no body); use the corresponding `get_feat` tool to "
+        "fetch the full document afterward."
     ),
 )
-def set_feat_id(id: str, new_id: str) -> FeatDocument:
+def set_feat_id(id: str, new_id: str) -> FeatFrontmatter:
     """Rename the feature identified by ``id`` to ``new_id``.
 
     ``new_id`` is validated against the ``feat-NNN-slug`` shape (via
@@ -115,9 +153,10 @@ def set_feat_id(id: str, new_id: str) -> FeatDocument:
 
     Returns
     -------
-    FeatDocument
-        The renamed document, with ``frontmatter.id == new_id`` and a
-        freshly bumped ``frontmatter.updated``.
+    FeatFrontmatter
+        The renamed document's frontmatter only (no body), with ``.id ==
+        new_id`` and a freshly bumped ``.updated``. Use the corresponding
+        ``get_feat`` tool to fetch the full document afterward.
 
     Raises
     ------
@@ -150,7 +189,11 @@ def set_feat_id(id: str, new_id: str) -> FeatDocument:
         fm_data["id"] = new_id
         fm_data["updated"] = now_timestamp()
         new_frontmatter = FeatFrontmatter(**fm_data)
-        new_doc = FeatDocument(frontmatter=new_frontmatter, body=existing.body)
 
         write_feat_file(new_path, new_frontmatter, raw_body)
-    return new_doc
+        move_feat_cache_entry(old_path, new_path)  # feat-107-doc-cache Phase 4, REQ-004: only after the write succeeds
+        move_feat_dirty_cache_entry(old_path, new_path)  # feat-187-list-feat-timeout, Task 110.130
+        move_embedding_cache(
+            "feat", old_path, new_path
+        )  # feat-134 Phase 3, Task 3.6, REQ-008: only after the write succeeds
+    return new_frontmatter

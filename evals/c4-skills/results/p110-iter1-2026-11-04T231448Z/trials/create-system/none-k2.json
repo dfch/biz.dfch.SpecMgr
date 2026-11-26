@@ -1,0 +1,131 @@
+{
+  "cache_reason": "hit",
+  "cached": true,
+  "contended": false,
+  "event_file": "trials/create-system/none-k2.events.ndjson",
+  "event_file_bytes": 23087,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-04T21:29:11Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (740 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "1/ 1 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "2 container(s)",
+      "name": "two_containers",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 2 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "1 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "no terminal parse call in the event stream",
+      "name": "parse_called",
+      "passed": false
+    },
+    {
+      "detail": "1 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "no terminal inspect call in the event stream",
+      "name": "inspect_called",
+      "passed": false
+    },
+    {
+      "detail": "no validate call answered the OK marker with a dsl input",
+      "name": "validated_before_return",
+      "passed": false
+    },
+    {
+      "detail": "3 of 5 finding(s) untriaged: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "name": "triage_complete",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.010249661048874259,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 0,
+    "inspect_findings": [
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The software system \"Bookshop\" has containers, but is missing documentation.",
+      "The software system \"Bookshop\" has containers, but is missing decisions.",
+      "The container named \"Web Store\" is not included on any views - add it to a view.",
+      "The container named \"Order Processor\" is not included on any views - add it to a view."
+    ],
+    "inspect_triage": {
+      "The container named \"Order Processor\" is not included on any views - add it to a view.": "untriaged",
+      "The container named \"Web Store\" is not included on any views - add it to a view.": "untriaged",
+      "The software system \"Bookshop\" has containers, but is missing decisions.": "expected",
+      "The software system \"Bookshop\" has containers, but is missing documentation.": "expected",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+    },
+    "parse_calls": 0,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [],
+    "steps": 7,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 51154,
+      "output": 3154,
+      "reasoning": 0
+    },
+    "tool_calls": 7,
+    "validate_calls": 1,
+    "validate_ok_calls": 1,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 26.865,
+    "workdir_dsl": "workspace \"Bookshop\" \"A simple online bookshop\" {\n\n    model {\n        customer = person \"Customer\" \"A customer who buys books online\"\n\n        bookshop = softwareSystem \"Bookshop\" \"Sells books to customers online\" {\n            webStore = container \"Web Store\" \"Lets customers browse the catalogue and place orders\" \"Web application\"\n            orderProcessor = container \"Order Processor\" \"Processes and fulfils customer orders\" \"Service\"\n\n            customer -> webStore \"Browses books and places orders using\" \"HTTPS/HTML\"\n            webStore -> orderProcessor \"Submits new orders to\" \"gRPC\"\n        }\n    }\n\n    views {\n        systemContext bookshop \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "create-system",
+    "condition": "none",
+    "k_index": 2
+  },
+  "run_id": "p110-prove2-2026-11-04T200612Z",
+  "skills_installed": [],
+  "started_at": "2026-11-04T21:28:43Z",
+  "timeout": false,
+  "wall_time_s": 28.46662726602517,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/create-system.none-k2.p110-prove2-2026-11-04T200612Z"
+}

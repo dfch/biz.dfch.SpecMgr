@@ -1,0 +1,90 @@
+{
+ "run_id": "tsk-update-noprompt-n2",
+ "model": "vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2",
+ "seed_uuid": "9a4493fb-527a-402d-a2c9-37c6c30582b7",
+ "events": 18,
+ "steps": 6,
+ "wall_seconds": 69.7,
+ "input_tokens": 299185,
+ "output_tokens": 861,
+ "total_tool_calls": 5,
+ "specmgr_tool_calls": 5,
+ "non_specmgr_tool_calls": 0,
+ "non_specmgr_tools": [],
+ "failed_or_error_calls": 0,
+ "failed_calls": [],
+ "schema_fetches_tool": [],
+ "schema_fetches_tool_count": 0,
+ "schema_fetches_resource": [],
+ "schema_fetches_resource_count": 0,
+ "schema_fetch_count": 0,
+ "template_fetches": [],
+ "template_fetch_count": 0,
+ "example_fetches": [],
+ "example_fetch_count": 0,
+ "list_mcp_resources_calls": 0,
+ "prompt_calls": [],
+ "validate_calls": 0,
+ "create_call_sequence": [],
+ "create_first_try_success": false,
+ "create_failure_retries": 0,
+ "ordered_tool_calls": [
+  {
+   "n": 1,
+   "tool": "specmgr_list_tsk",
+   "status": "completed",
+   "input": {},
+   "error": ""
+  },
+  {
+   "n": 2,
+   "tool": "specmgr_get_tsk",
+   "status": "completed",
+   "input": {
+    "id": "9a4493fb-527a-402d-a2c9-37c6c30582b7",
+    "raw": true,
+    "numbered": true
+   },
+   "error": ""
+  },
+  {
+   "n": 3,
+   "tool": "specmgr_edit",
+   "status": "completed",
+   "input": {
+    "id": "9a4493fb-527a-402d-a2c9-37c6c30582b7",
+    "type": "tsk",
+    "old_str": "- [ ] Provision the machine",
+    "new_str": "- [x] Provision the machine"
+   },
+   "error": ""
+  },
+  {
+   "n": 4,
+   "tool": "specmgr_edit",
+   "status": "completed",
+   "input": {
+    "id": "9a4493fb-527a-402d-a2c9-37c6c30582b7",
+    "type": "tsk",
+    "old_str": "- [ ] Run a smoke build",
+    "new_str": "- [ ] Run a smoke build\n- [ ] Document the setup"
+   },
+   "error": ""
+  },
+  {
+   "n": 5,
+   "tool": "specmgr_get_tsk",
+   "status": "completed",
+   "input": {
+    "id": "9a4493fb-527a-402d-a2c9-37c6c30582b7",
+    "raw": true
+   },
+   "error": ""
+  }
+ ],
+ "final_text": "\n\nDONE",
+ "files_on_disk": [
+  "docs/tsk/9a4493fb-527a-402d-a2c9-37c6c30582b7.md",
+  "opencode.json"
+ ]
+}

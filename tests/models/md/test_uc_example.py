@@ -33,7 +33,7 @@ attempt to represent structurally:
   understand frontmatter), which breaks `MarkdownStr`'s
   `text == mdformat.text(text)` invariant. `frontmatter.loads(text).content`
   (the `python-frontmatter` package, already a project dependency and
-  already used the same way by `models.adr.v1.parser`/`uc.models.v1.parser`)
+  already used the same way by `uc.models.v1.parser`)
   strips it before any `MarkdownStr` code ever sees the text -- frontmatter
   parsing is a separate concern, out of scope for this generic markdown-body
   framework, so this test only ever looks at `.content`, never `.metadata`.
@@ -210,7 +210,7 @@ class UseCase(MarkdownSection1):
     case's title (`"Buy Goods"` here) is document-specific data, not
     something a reusable template class should pin down to one exact
     string. "No alias at all" defaults to `AliasType.SPACE_SEPARATED`'s
-    derivation of the class name (`"UseCase"` -> `"Use Case"`, ADR
+    derivation of the class name (`"UseCase"` -> `"Use Case"`, DEC
     832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0) -- still a fixed value, not
     "accept anything" -- so accepting arbitrary titles must still be
     declared explicitly via the `.+` regex, same convention as

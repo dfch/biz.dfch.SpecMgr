@@ -13,7 +13,7 @@ one file read. Mirrors ``sop.resources.sop_example``/``vcr.resources.vcr_example
 file-for-file.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://sysrs/schema``'s own precedent.
+``specmgr://sysrs/template``'s own precedent.
 
 ## Functions
 

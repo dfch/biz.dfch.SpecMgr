@@ -17,8 +17,7 @@
 
 """Pydantic model for one line of REQ listing output (Task 3.18).
 
-Mirrors :class:`~biz.dfch.specmgr.models.adr.v1.summary.AdrSummary`
-field-for-field; unfiltered, since characteristics/tags filtering (ACC-002)
+Unfiltered, since characteristics/tags filtering (ACC-002)
 was explicitly deferred during Task 3.9's design discussion. Subclasses
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
 ``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
@@ -49,7 +48,5 @@ class ReqSummary(DocSummary):
         ``"req-<uuid>-a-title"``), deliberately *not* a filename or path --
         callers must not read this off disk themselves, only pass it to
         ``get_req`` alongside (or instead of) ``id``. Named ``ref`` rather
-        than ``filename`` precisely to avoid inviting direct filesystem
-        access (mirrors
-        :class:`~biz.dfch.specmgr.models.adr.v1.summary.AdrSummary`).
+        than ``filename`` precisely to avoid inviting direct filesystem access.
     """

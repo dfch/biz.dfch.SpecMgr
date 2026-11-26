@@ -25,9 +25,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 from biz.dfch.specmgr.sop.models.v1 import SopDocument, SopFrontmatter, parse_sop
 from biz.dfch.specmgr.sop.tools._paths import sop_base_dir
@@ -130,18 +130,32 @@ class TestCreateSop(TempSopDirTestCase):
 
         self.assertTrue(sop_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all."""
-        with self.assertRaises(AssertionError):
-            create_sop(_MALFORMED_BODY)
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110)."""
+        result = create_sop(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("sop create_sop (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(sop_base_dir().exists())
 
-    def test_field_validation_failure_raises_and_writes_nothing(self) -> None:
-        """A field-level validation failure (duplicate `### Step 1` number) must raise, writing nothing."""
-        with self.assertRaises(ValidationError):
-            create_sop(_BAD_STEP_BODY)
+    def test_field_validation_failure_returns_validate_result_and_writes_nothing(self) -> None:
+        """A field-level validation failure (duplicate `### Step 1` number) must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110)."""
+        result = create_sop(_BAD_STEP_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("sop create_sop (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(sop_base_dir().exists())
 
 

@@ -17,36 +17,27 @@
 
 """Pydantic models used by the ``biz-dfch-specmgr`` MCP server."""
 
-from .adr import (
-    CURRENT_SCHEMA_VERSION,
-    SCHEMA_MAJOR_VERSION,
-    Adr,
-    AdrBody,
-    AdrFrontmatter,
-    AdrOption,
-    AdrParseError,
-    AdrSummary,
-    parse_adr,
+from .config_info import (
+    ConfigInfo,
+    DiagramConfig,
+    DomainConfig,
+    PlantumlConfig,
+    PlantumlSourceConfig,
+    SimilarityConfig,
 )
-from .config_info import ConfigInfo, DomainConfig
 from .iso25010 import Characteristic, Iso25010, SubCharacteristic, parse_iso25010
 from .version_info import VersionInfo
 
 __all__ = [
-    "CURRENT_SCHEMA_VERSION",
-    "SCHEMA_MAJOR_VERSION",
-    "Adr",
-    "AdrBody",
-    "AdrFrontmatter",
-    "AdrOption",
-    "AdrParseError",
-    "AdrSummary",
     "Characteristic",
     "ConfigInfo",
+    "DiagramConfig",
     "DomainConfig",
     "Iso25010",
+    "PlantumlConfig",
+    "PlantumlSourceConfig",
+    "SimilarityConfig",
     "SubCharacteristic",
     "VersionInfo",
-    "parse_adr",
     "parse_iso25010",
 ]

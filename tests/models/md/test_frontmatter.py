@@ -26,7 +26,7 @@ from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERS
 
 
 class _UcFrontmatter(MarkdownFrontmatter):
-    """A concrete document-type subclass narrowing `type` to a fixed Literal, per the ADR."""
+    """A concrete document-type subclass narrowing `type` to a fixed Literal, per the decision."""
 
     type: Literal["uc"] = "uc"
 
@@ -81,7 +81,7 @@ class TestMarkdownFrontmatter(unittest.TestCase):
         self.assertEqual(MarkdownFrontmatter.model_validate({"type": "uc", "status": "   "}).status, "draft")
 
     def test_status_accepts_arbitrary_free_form_value(self):
-        """Unlike AdrFrontmatter, status is not restricted to a fixed enum here."""
+        """Unlike a domain frontmatter with a closed status vocabulary, status is not restricted to a fixed enum here."""
         frontmatter = MarkdownFrontmatter(type="uc", status="in-review")
         self.assertEqual(frontmatter.status, "in-review")
 
@@ -104,10 +104,10 @@ class TestMarkdownFrontmatter(unittest.TestCase):
     def test_created_and_updated_accept_explicit_values(self):
         """created/updated must accept explicit conforming date+time strings verbatim."""
         frontmatter = MarkdownFrontmatter(
-            type="uc", created="2026-08-05 00:00:00.000Z", updated="2026-08-11 00:00:00.000Z"
+            type="uc", created="2026-08-05T00:00:00.000Z", updated="2026-08-11T00:00:00.000Z"
         )
-        self.assertEqual(frontmatter.created, "2026-08-05 00:00:00.000Z")
-        self.assertEqual(frontmatter.updated, "2026-08-11 00:00:00.000Z")
+        self.assertEqual(frontmatter.created, "2026-08-05T00:00:00.000Z")
+        self.assertEqual(frontmatter.updated, "2026-08-11T00:00:00.000Z")
 
     def test_blank_created_and_updated_normalize_to_none(self):
         """A whitespace-only created/updated value must normalize to None."""
@@ -125,10 +125,18 @@ class TestMarkdownFrontmatter(unittest.TestCase):
         with self.assertRaises(ValidationError):
             MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.123456Z")
 
-    def test_created_and_updated_reject_t_separator(self):
-        """A ``T``-separated value must be rejected -- only the space separator is accepted."""
-        with self.assertRaises(ValidationError):
-            MarkdownFrontmatter(type="uc", created="2026-08-05T12:00:00.000Z")
+    def test_created_and_updated_accept_t_separator(self):
+        """A ``T``-separated value must be accepted (feat-146) -- it is the machine-written
+        canonical form, and both separators parse."""
+        frontmatter = MarkdownFrontmatter(type="uc", created="2026-08-05T12:00:00.000Z")
+        self.assertEqual(frontmatter.created, "2026-08-05T12:00:00.000Z")
+
+    def test_created_and_updated_accept_space_separator(self):
+        """A space-separated value must still be accepted (feat-146) -- the space separator
+        remains valid; existing space-form values keep parsing until their next write
+        converges them to the ``T`` form."""
+        frontmatter = MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.000Z")
+        self.assertEqual(frontmatter.created, "2026-08-05 12:00:00.000Z")
 
     def test_created_and_updated_reject_timezone_less(self):
         """A value with no ``Z``/offset suffix at all must be rejected."""
@@ -196,7 +204,7 @@ class TestMarkdownFrontmatter(unittest.TestCase):
 
 
 class TestMarkdownFrontmatterSubclassing(unittest.TestCase):
-    """Tests for the document-type subclassing pattern (ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29)."""
+    """Tests for the document-type subclassing pattern (DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29)."""
 
     def test_subclass_defaults_type_to_its_own_literal_value(self):
         """A subclass narrowing `type` to a Literal with a default needs no explicit `type=`."""

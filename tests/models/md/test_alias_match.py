@@ -70,7 +70,7 @@ class TestMatchAlias(unittest.TestCase):
 
     def test_class_with_no_alias_defaults_to_space_separated_class_name_match(self) -> None:
         """No @alias declared defaults to `AliasType.SPACE_SEPARATED`'s derivation
-        of `cls.__name__`, not a literal match against the raw class name (ADR
+        of `cls.__name__`, not a literal match against the raw class name (DEC
         832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0)."""
         self.assertTrue(match_alias(NoAliasMultiWord, "No Alias Multi Word"))
 
@@ -85,7 +85,7 @@ class TestMatchAlias(unittest.TestCase):
         self.assertFalse(match_alias(NoAliasMultiWord, "literally anything"))
 
     def test_regex_alias_accepts_any_non_empty_heading_text(self) -> None:
-        """The `.+` regex opt-out (ADR 832cd6c1 v1.3.1) accepts any non-empty text,
+        """The `.+` regex opt-out (DEC 832cd6c1 v1.3.1) accepts any non-empty text,
         but still rejects an empty heading."""
         self.assertTrue(match_alias(_AcceptAnyNonEmptyHeading, "Buy Goods"))
         self.assertTrue(match_alias(_AcceptAnyNonEmptyHeading, "*Emphasized* Title"))

@@ -3,9 +3,8 @@
 ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 
 Read-only, path-based command mirroring `req.tools.parse_req`'s own
-`Path(path).read_text(...)` -> `parse_req(text)` flow (no id-based lookup:
-REQ has no `_paths.py`/`_io.py` equivalent to ADR's yet, so a raw filesystem
-path is required, not an id).
+`Path(path).read_text(...)` -> `parse_req(text)` flow. It is a
+path-based debug command, so a raw filesystem path is required, not an id.
 
 Two output formats:
 

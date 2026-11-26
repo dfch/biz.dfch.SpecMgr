@@ -22,7 +22,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import frontmatter
+
 from biz.dfch.specmgr.general.tools import _packaged_data
+from biz.dfch.specmgr.models.md._markdown import format_text
+from biz.dfch.specmgr.qa.models.v2.parser import parse_qa
 from biz.dfch.specmgr.qa.resources.qa_template import qa_template
 from biz.dfch.specmgr.qa.tools.get_qa_template import get_qa_template
 
@@ -46,10 +50,22 @@ class TestQaTemplateResource(unittest.TestCase):
         self.assertEqual(qa_template(), get_qa_template())
 
     def test_contains_elicitation_context_section(self):
-        """Confirms the template was updated for v2 (ACC-006), without over-asserting on placeholder prose."""
+        """Confirms the template was updated for v2 (feat-14 ACC-006), without over-asserting on placeholder prose."""
         result = qa_template()
 
         self.assertIn("## Elicitation Context", result)
+
+    def test_parses_successfully_and_round_trips_as_a_v2_document(self):
+        """The packaged template must actually parse as a v2 document (its numbered
+        questions and `TODO: answer pending` placeholders included) and round-trip
+        byte-exact through `parse_qa` (feat-156 ACC-004)."""
+        original = qa_template()
+        result = parse_qa(original)
+
+        self.assertIsNotNone(result.body.elicitation_context)
+        self.assertIsNotNone(result.body.elicitation_context.questions)
+        self.assertGreaterEqual(len(result.body.elicitation_context.questions), 1)
+        self.assertEqual(str(result.body), format_text(frontmatter.loads(original).content))
 
     def test_reads_fresh_on_every_call(self):
         """No in-memory cache -- a second call must reflect an on-disk change since the first."""

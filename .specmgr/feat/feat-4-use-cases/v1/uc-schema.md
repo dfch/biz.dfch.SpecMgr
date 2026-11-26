@@ -77,7 +77,7 @@ Five required keys, no optional ones and no extras allowed
 | `id` | `^uc-[0-9]+$` | e.g. `uc-001` |
 | `version` | `^[0-9]+\.[0-9]+\.[0-9]+$` | schema-instance version, semver |
 | `status` | enum: `draft`, `proposed`, `accepted`, `deprecated`, `superseded` | |
-| `created` | ISO 8601 date | per ADR 23a14195-339c-48af-99d2-97c9964041ae |
+| `created` | ISO 8601 date | per DEC 23a14195-339c-48af-99d2-97c9964041ae |
 | `updated` | ISO 8601 date | same format as `created` |
 
 Unlike ADR's frontmatter, there is currently no server-assigned `id` /
