@@ -32,14 +32,25 @@ Markdown text parsed into token stream.
   remaining).
 
   The not-yet-consumed remainder is tracked as a string (`remaining_text`),
-  re-normalized with `mdformat.text()` after every field is sliced off,
+  re-normalized with `format_text` after every field is sliced off,
   rather than as a line-index `cursor` into the original `text`. A raw
   substring of an already-`mdformat`-compliant document is not itself
   guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -278,7 +289,7 @@ Markdown text parsed into token stream.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -287,7 +298,7 @@ Markdown text parsed into token stream.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -327,14 +338,15 @@ Markdown text parsed into token stream.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -395,14 +407,25 @@ Markdown text parsed into token stream.
   remaining).
 
   The not-yet-consumed remainder is tracked as a string (`remaining_text`),
-  re-normalized with `mdformat.text()` after every field is sliced off,
+  re-normalized with `format_text` after every field is sliced off,
   rather than as a line-index `cursor` into the original `text`. A raw
   substring of an already-`mdformat`-compliant document is not itself
   guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -733,7 +756,7 @@ Markdown text parsed into token stream.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -742,7 +765,7 @@ Markdown text parsed into token stream.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -782,14 +805,15 @@ Markdown text parsed into token stream.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -891,6 +915,9 @@ Args:
     offset: the 0-based line at which `text` (the not-yet-consumed
         remainder) starts, relative to the root document's own
         `mdformat`-normalized body (REQ-002) -- `0` at the very root.
+        For an empty `text` (every line already consumed), `offset + 1`
+        is the line after the last consumed line, which can be one past
+        the end of the body (REQ-003).
     type_: the field's (or, for a list field, the item's) declared
         `MarkdownStr` type.
     text: the not-yet-consumed remainder of the parent's text, in which

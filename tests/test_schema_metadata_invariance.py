@@ -195,7 +195,7 @@ class TestTskCheckboxInvariance(unittest.TestCase):
             Task.from_text(format_text(text))
 
         self.assertIn(
-            "Task > TaskItem (line 2): expected a '- [ ]'/'- [x]' checkbox marker, got '[z] Bad checkbox'",
+            "Task > TaskItem (line 3): expected a '- [ ]'/'- [x]' checkbox marker, got '[z] Bad checkbox'",
             str(ctx.exception),
         )
 
@@ -206,7 +206,7 @@ class TestTskCheckboxInvariance(unittest.TestCase):
             Task.from_text(format_text(text))
 
         self.assertIn(
-            "Task > TaskItem (line 2): expected a '- [ ]'/'- [x]' checkbox marker, got 'foo no marker at all'",
+            "Task > TaskItem (line 3): expected a '- [ ]'/'- [x]' checkbox marker, got 'foo no marker at all'",
             str(ctx.exception),
         )
 

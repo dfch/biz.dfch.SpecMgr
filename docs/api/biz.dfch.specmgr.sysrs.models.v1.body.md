@@ -89,14 +89,17 @@ blocks, e.g. ```mermaid, are accepted verbatim). No 29148 clause
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -345,7 +348,7 @@ blocks, e.g. ```mermaid, are accepted verbatim). No 29148 clause
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -354,7 +357,7 @@ blocks, e.g. ```mermaid, are accepted verbatim). No 29148 clause
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -394,14 +397,15 @@ blocks, e.g. ```mermaid, are accepted verbatim). No 29148 clause
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -465,14 +469,17 @@ blocks, e.g. ```mermaid, are accepted verbatim). No 29148 clause
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -813,7 +820,7 @@ blocks, e.g. ```mermaid, are accepted verbatim). No 29148 clause
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -822,7 +829,7 @@ blocks, e.g. ```mermaid, are accepted verbatim). No 29148 clause
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -862,14 +869,15 @@ blocks, e.g. ```mermaid, are accepted verbatim). No 29148 clause
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -922,14 +930,17 @@ pinned LITERAL to the lowercase "and" the heading actually uses.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -1178,7 +1189,7 @@ pinned LITERAL to the lowercase "and" the heading actually uses.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -1187,7 +1198,7 @@ pinned LITERAL to the lowercase "and" the heading actually uses.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -1227,14 +1238,15 @@ pinned LITERAL to the lowercase "and" the heading actually uses.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -1298,14 +1310,17 @@ pinned LITERAL to the lowercase "and" the heading actually uses.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -1646,7 +1661,7 @@ pinned LITERAL to the lowercase "and" the heading actually uses.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -1655,7 +1670,7 @@ pinned LITERAL to the lowercase "and" the heading actually uses.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -1695,14 +1710,15 @@ pinned LITERAL to the lowercase "and" the heading actually uses.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -1751,14 +1767,17 @@ exist at creation time.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -2007,7 +2026,7 @@ exist at creation time.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -2016,7 +2035,7 @@ exist at creation time.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -2056,14 +2075,15 @@ exist at creation time.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -2127,14 +2147,17 @@ exist at creation time.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -2475,7 +2498,7 @@ exist at creation time.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -2484,7 +2507,7 @@ exist at creation time.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -2524,14 +2547,15 @@ exist at creation time.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -2595,14 +2619,17 @@ problem_statement:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -2851,7 +2878,7 @@ problem_statement:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -2860,7 +2887,7 @@ problem_statement:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -2900,14 +2927,15 @@ problem_statement:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -2971,14 +2999,17 @@ problem_statement:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -3319,7 +3350,7 @@ problem_statement:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -3328,7 +3359,7 @@ problem_statement:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -3368,14 +3399,15 @@ problem_statement:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -3429,14 +3461,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -3685,7 +3720,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -3694,7 +3729,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -3734,14 +3769,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -3805,14 +3841,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -4153,7 +4192,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -4162,7 +4201,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -4202,14 +4241,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -4264,14 +4304,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -4520,7 +4563,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -4529,7 +4572,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -4569,14 +4612,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -4640,14 +4684,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -4988,7 +5035,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -4997,7 +5044,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -5037,14 +5084,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -5096,14 +5144,17 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -5352,7 +5403,7 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -5361,7 +5412,7 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -5401,14 +5452,15 @@ LITERAL to the lowercase "and" the heading actually uses.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -5472,14 +5524,17 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -5820,7 +5875,7 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -5829,7 +5884,7 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -5869,14 +5924,15 @@ LITERAL to the lowercase "and" the heading actually uses.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -5930,14 +5986,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -6186,7 +6245,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -6195,7 +6254,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -6235,14 +6294,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -6306,14 +6366,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -6654,7 +6717,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -6663,7 +6726,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -6703,14 +6766,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -6764,14 +6828,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -7020,7 +7087,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -7029,7 +7096,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -7069,14 +7136,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -7140,14 +7208,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -7488,7 +7559,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -7497,7 +7568,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -7537,14 +7608,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -7598,14 +7670,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -7854,7 +7929,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -7863,7 +7938,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -7903,14 +7978,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -7974,14 +8050,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -8322,7 +8401,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -8331,7 +8410,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -8371,14 +8450,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -8434,14 +8514,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -8690,7 +8773,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -8699,7 +8782,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -8739,14 +8822,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -8810,14 +8894,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -9158,7 +9245,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -9167,7 +9254,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -9207,14 +9294,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -9268,14 +9356,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -9524,7 +9615,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -9533,7 +9624,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -9573,14 +9664,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -9644,14 +9736,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -9992,7 +10087,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -10001,7 +10096,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -10041,14 +10136,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -10102,14 +10198,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -10358,7 +10457,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -10367,7 +10466,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -10407,14 +10506,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -10478,14 +10578,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -10826,7 +10929,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -10835,7 +10938,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -10875,14 +10978,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -10935,14 +11039,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -11191,7 +11298,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -11200,7 +11307,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -11240,14 +11347,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -11311,14 +11419,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -11659,7 +11770,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -11668,7 +11779,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -11708,14 +11819,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -11763,14 +11875,17 @@ Information`.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -12019,7 +12134,7 @@ Information`.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -12028,7 +12143,7 @@ Information`.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -12068,14 +12183,15 @@ Information`.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -12139,14 +12255,17 @@ Information`.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -12487,7 +12606,7 @@ Information`.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -12496,7 +12615,7 @@ Information`.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -12536,14 +12655,15 @@ Information`.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -12601,14 +12721,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -12857,7 +12980,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -12866,7 +12989,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -12906,14 +13029,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -12977,14 +13101,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -13325,7 +13452,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -13334,7 +13461,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -13374,14 +13501,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -13440,14 +13568,17 @@ packaging_handling_shipping_and_transportation:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -13696,7 +13827,7 @@ packaging_handling_shipping_and_transportation:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -13705,7 +13836,7 @@ packaging_handling_shipping_and_transportation:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -13745,14 +13876,15 @@ packaging_handling_shipping_and_transportation:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -13816,14 +13948,17 @@ packaging_handling_shipping_and_transportation:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -14164,7 +14299,7 @@ packaging_handling_shipping_and_transportation:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -14173,7 +14308,7 @@ packaging_handling_shipping_and_transportation:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -14213,14 +14348,15 @@ packaging_handling_shipping_and_transportation:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -14279,14 +14415,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -14535,7 +14674,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -14544,7 +14683,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -14584,14 +14723,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -14655,14 +14795,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -15003,7 +15146,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -15012,7 +15155,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -15052,14 +15195,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -15113,14 +15257,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -15369,7 +15516,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -15378,7 +15525,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -15418,14 +15565,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -15489,14 +15637,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -15837,7 +15988,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -15846,7 +15997,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -15886,14 +16037,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -15947,14 +16099,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -16203,7 +16358,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -16212,7 +16367,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -16252,14 +16407,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -16323,14 +16479,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -16671,7 +16830,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -16680,7 +16839,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -16720,14 +16879,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -16785,14 +16945,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -17041,7 +17204,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -17050,7 +17213,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -17090,14 +17253,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -17161,14 +17325,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -17509,7 +17676,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -17518,7 +17685,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -17558,14 +17725,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -17619,14 +17787,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -17875,7 +18046,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -17884,7 +18055,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -17924,14 +18095,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -17995,14 +18167,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -18343,7 +18518,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -18352,7 +18527,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -18392,14 +18567,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -18457,14 +18633,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -18713,7 +18892,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -18722,7 +18901,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -18762,14 +18941,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -18833,14 +19013,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -19181,7 +19364,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -19190,7 +19373,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -19230,14 +19413,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -19290,14 +19474,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -19546,7 +19733,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -19555,7 +19742,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -19595,14 +19782,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -19666,14 +19854,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -20014,7 +20205,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -20023,7 +20214,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -20063,14 +20254,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -20130,14 +20322,17 @@ flexibility, safety:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -20386,7 +20581,7 @@ flexibility, safety:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -20395,7 +20590,7 @@ flexibility, safety:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -20435,14 +20630,15 @@ flexibility, safety:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -20506,14 +20702,17 @@ flexibility, safety:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -20854,7 +21053,7 @@ flexibility, safety:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -20863,7 +21062,7 @@ flexibility, safety:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -20903,14 +21102,15 @@ flexibility, safety:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -20963,14 +21163,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -21219,7 +21422,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -21228,7 +21431,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -21268,14 +21471,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -21339,14 +21543,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -21687,7 +21894,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -21696,7 +21903,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -21736,14 +21943,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -21797,14 +22005,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -22053,7 +22264,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -22062,7 +22273,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -22102,14 +22313,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -22173,14 +22385,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -22521,7 +22736,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -22530,7 +22745,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -22570,14 +22785,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -22630,14 +22846,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -22886,7 +23105,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -22895,7 +23114,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -22935,14 +23154,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -23006,14 +23226,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -23354,7 +23577,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -23363,7 +23586,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -23403,14 +23626,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -23468,14 +23692,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -23724,7 +23951,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -23733,7 +23960,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -23773,14 +24000,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -23844,14 +24072,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -24192,7 +24423,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -24201,7 +24432,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -24241,14 +24472,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -24338,14 +24570,17 @@ updates:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -24594,7 +24829,7 @@ updates:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -24603,7 +24838,7 @@ updates:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -24643,14 +24878,15 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -24714,14 +24950,17 @@ updates:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -25062,7 +25301,7 @@ updates:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -25071,7 +25310,7 @@ updates:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -25111,14 +25350,15 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -25168,14 +25408,17 @@ verbatim).
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -25424,7 +25667,7 @@ verbatim).
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -25433,7 +25676,7 @@ verbatim).
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -25473,14 +25716,15 @@ verbatim).
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -25544,14 +25788,17 @@ verbatim).
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -25892,7 +26139,7 @@ verbatim).
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -25901,7 +26148,7 @@ verbatim).
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -25941,14 +26188,15 @@ verbatim).
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -25996,14 +26244,17 @@ free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -26252,7 +26503,7 @@ free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -26261,7 +26512,7 @@ free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -26301,14 +26552,15 @@ free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -26372,14 +26624,17 @@ free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -26720,7 +26975,7 @@ free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -26729,7 +26984,7 @@ free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -26769,14 +27024,15 @@ free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -26824,14 +27080,17 @@ Optional, free-form prose. No 29148 clause (specmgr addition).
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -27080,7 +27339,7 @@ Optional, free-form prose. No 29148 clause (specmgr addition).
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -27089,7 +27348,7 @@ Optional, free-form prose. No 29148 clause (specmgr addition).
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -27129,14 +27388,15 @@ Optional, free-form prose. No 29148 clause (specmgr addition).
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -27200,14 +27460,17 @@ Optional, free-form prose. No 29148 clause (specmgr addition).
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -27548,7 +27811,7 @@ Optional, free-form prose. No 29148 clause (specmgr addition).
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -27557,7 +27820,7 @@ Optional, free-form prose. No 29148 clause (specmgr addition).
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -27597,14 +27860,15 @@ Optional, free-form prose. No 29148 clause (specmgr addition).
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -27658,14 +27922,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -27914,7 +28181,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -27923,7 +28190,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -27963,14 +28230,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -28034,14 +28302,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -28382,7 +28653,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -28391,7 +28662,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -28431,14 +28702,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -28490,14 +28762,17 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -28746,7 +29021,7 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -28755,7 +29030,7 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -28795,14 +29070,15 @@ LITERAL to the lowercase "and" the heading actually uses.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -28866,14 +29142,17 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -29214,7 +29493,7 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -29223,7 +29502,7 @@ LITERAL to the lowercase "and" the heading actually uses.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -29263,14 +29542,15 @@ LITERAL to the lowercase "and" the heading actually uses.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -29330,14 +29610,17 @@ system_integration:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -29586,7 +29869,7 @@ system_integration:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -29595,7 +29878,7 @@ system_integration:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -29635,14 +29918,15 @@ system_integration:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -29706,14 +29990,17 @@ system_integration:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -30054,7 +30341,7 @@ system_integration:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -30063,7 +30350,7 @@ system_integration:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -30103,14 +30390,15 @@ system_integration:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -30159,14 +30447,17 @@ fields).
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -30415,7 +30706,7 @@ fields).
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -30424,7 +30715,7 @@ fields).
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -30464,14 +30755,15 @@ fields).
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -30535,14 +30827,17 @@ fields).
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -30883,7 +31178,7 @@ fields).
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -30892,7 +31187,7 @@ fields).
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -30932,14 +31227,15 @@ fields).
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -30986,14 +31282,17 @@ the earlier needs analysis (29148 §9.5.3). Mandatory, free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -31242,7 +31541,7 @@ the earlier needs analysis (29148 §9.5.3). Mandatory, free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -31251,7 +31550,7 @@ the earlier needs analysis (29148 §9.5.3). Mandatory, free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -31291,14 +31590,15 @@ the earlier needs analysis (29148 §9.5.3). Mandatory, free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -31362,14 +31662,17 @@ the earlier needs analysis (29148 §9.5.3). Mandatory, free-form prose.
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -31710,7 +32013,7 @@ the earlier needs analysis (29148 §9.5.3). Mandatory, free-form prose.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -31719,7 +32022,7 @@ the earlier needs analysis (29148 §9.5.3). Mandatory, free-form prose.
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -31759,14 +32062,15 @@ the earlier needs analysis (29148 §9.5.3). Mandatory, free-form prose.
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -31837,14 +32141,17 @@ title:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -32093,7 +32400,7 @@ title:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -32102,7 +32409,7 @@ title:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -32142,14 +32449,15 @@ title:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -32213,14 +32521,17 @@ title:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -32561,7 +32872,7 @@ title:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -32570,7 +32881,7 @@ title:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -32610,14 +32921,15 @@ title:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -32678,14 +32990,25 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
   remaining).
 
   The not-yet-consumed remainder is tracked as a string (`remaining_text`),
-  re-normalized with `mdformat.text()` after every field is sliced off,
+  re-normalized with `format_text` after every field is sliced off,
   rather than as a line-index `cursor` into the original `text`. A raw
   substring of an already-`mdformat`-compliant document is not itself
   guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -32924,7 +33247,7 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -32933,7 +33256,7 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -32973,14 +33296,15 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -33041,14 +33365,25 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
   remaining).
 
   The not-yet-consumed remainder is tracked as a string (`remaining_text`),
-  re-normalized with `mdformat.text()` after every field is sliced off,
+  re-normalized with `format_text` after every field is sliced off,
   rather than as a line-index `cursor` into the original `text`. A raw
   substring of an already-`mdformat`-compliant document is not itself
   guaranteed to be `mdformat`-compliant (e.g. it can start with a blank
   line that `mdformat` would strip), which is exactly what `get_extent`
   requires of its input -- so `remaining_text` is kept compliant by
   construction on every iteration instead of being handed to the next
-  field's `get_extent` unnormalized.
+  field's `get_extent` unnormalized. The step that slices a consumed
+  scalar field off `remaining_text` goes through
+  `consume_leading_lines`, and the running offset of the next field is
+  advanced by the line count that step actually consumed (the
+  before/after line-count delta, which includes the blank separator
+  line the re-normalization removes), never by the field's own
+  `get_extent` (feat-253). A list field's items are sliced off the
+  same way inside `process_list_field`, and this method advances the
+  offset by the before/after delta of the whole list, which equals the
+  sum of those per-item counts. The per-item slice that builds an
+  item's own text in `process_list_field` (its first `get_extent`
+  lines) does not use the helper and does not move the offset.
 
   A field declared `Optional[X]`/`X | None` (see `_unwrap_optional`) is
   allowed a `0` extent: `process_field` reports it as `(0, None)`
@@ -33379,7 +33714,7 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -33388,7 +33723,7 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -33428,14 +33763,15 @@ idiom, feat-114) so this otherwise-private `_value` is reachable through
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -33665,7 +34001,7 @@ updates:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -33674,7 +34010,7 @@ updates:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -33714,14 +34050,15 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -34042,7 +34379,7 @@ updates:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -34051,7 +34388,7 @@ updates:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -34091,14 +34428,15 @@ updates:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -34146,14 +34484,17 @@ user-operator-maintainer classes, numbers, nature of use (29148
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -34402,7 +34743,7 @@ user-operator-maintainer classes, numbers, nature of use (29148
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -34411,7 +34752,7 @@ user-operator-maintainer classes, numbers, nature of use (29148
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -34451,14 +34792,15 @@ user-operator-maintainer classes, numbers, nature of use (29148
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -34522,14 +34864,17 @@ user-operator-maintainer classes, numbers, nature of use (29148
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -34870,7 +35215,7 @@ user-operator-maintainer classes, numbers, nature of use (29148
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -34879,7 +35224,7 @@ user-operator-maintainer classes, numbers, nature of use (29148
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -34919,14 +35264,15 @@ user-operator-maintainer classes, numbers, nature of use (29148
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -34980,14 +35326,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -35236,7 +35585,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -35245,7 +35594,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -35285,14 +35634,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
@@ -35356,14 +35706,17 @@ items:
 
   Otherwise the heading's own line span is stripped off `text` and the
   remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
+  `super()`) for the actual recursive field population, at an offset
+  advanced by the line count actually consumed (the heading plus the
+  blank separator line the re-normalization removes -- see
+  `consume_leading_lines`) -- each child field recursively captures
+  its own full extent this same way, all the way down to whichever
+  leaf(ves) ultimately hold the body text. Since the body is therefore
+  already fully represented by the nested fields, this section's own
+  `_value` only needs the heading's inline content (the `inline`
+  token's text, e.g. `"Characteristic Information"`) so that
+  `__str__` can re-emit the original heading line without duplicating
+  what the children already carry.
 
   Args:
       text: the markdown text to parse.
@@ -35704,7 +36057,7 @@ items:
 
   Repeats `process_field`'s single-item extent/slice/parse step against
   a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
+  `format_text` after every item consumed -- same reasoning as
   `from_text`'s own `remaining_text` handling: a raw substring of an
   already-`mdformat`-compliant document is not itself guaranteed
   `mdformat`-compliant (e.g. it can start with a blank line separating
@@ -35713,7 +36066,7 @@ items:
 
   Unlike `process_field`, this does **not** return a single combined
   line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
+  would silently miscount: every intermediate `format_text`
   renormalization can drop lines (e.g. a blank line separating two
   items) that never show up in any individual item's own `get_extent`
   result, so a caller-side `text.splitlines()[extent:]` computed from a
@@ -35753,14 +36106,15 @@ items:
           (REQ-002) -- `0` at the root. Each matched item's own
           `_offset` is tracked by measuring the actual line-count
           delta of `remaining_text` before/after that item is
-          consumed (not a summed `get_extent`), so per-item blank-line
-          elision from re-normalization (see this docstring's own
-          discussion above) never desynchronizes the running offset.
+          consumed (`consume_leading_lines`, not a summed
+          `get_extent`), so per-item blank-line elision from
+          re-normalization (see this docstring's own discussion
+          above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
       every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
+      re-normalized via `format_text`, ready to be handed directly
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
