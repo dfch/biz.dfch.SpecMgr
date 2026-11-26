@@ -60,13 +60,18 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         byte-unchanged, a full-text validate(full=True) dry-run before the
         write-back, and a confirming get_prb(id) call before proceeding with
         the requested change, in that order (file-read < insert < validate <
-        file-write < confirming get_prb(id)). The negative assertions run on
-        the recovery-block slice only: the rest of the prompt legitimately
-        keeps `update(id, type="prb", content)` and `get_prb(id, raw=True,
-        numbered=True)`."""
+        file-write < confirming get_prb(id)). Both trigger cases are covered:
+        a missing lead paragraph gets the sentence inserted under the H1, and
+        a non-template first paragraph is derive input for the 4 blanks and
+        is replaced by the sentence (never kept as a second paragraph). The
+        negative assertions run on the recovery-block slice only: the rest of
+        the prompt legitimately keeps `update(id, type="prb", content)` and
+        `get_prb(id, raw=True, numbered=True)`. The slice ends at the
+        `## 2. If no change was specified` heading line itself, not at the
+        block's own backticked reference to it."""
         result = update_prb("abc-123")
         start = result.index("**Old-shape recovery.**")
-        end = result.index("## 2. If no change was specified")
+        end = result.index("\n## 2. If no change was specified")
         self.assertLess(result.index("get_prb(id)"), start)
         self.assertLess(start, end)
         block = result[start:end]
@@ -82,15 +87,30 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         self.assertIn("cannot repair one", block)
         self.assertIn("Confirm the repair with a real `get_prb(id)` call -- it must parse", block)
         self.assertIn("which bumps `updated`", block)
+        # The two-case wording is asserted wrap-independently on the whitespace-normalized slice.
+        flat = " ".join(block.split())
+        self.assertIn(
+            "If the first paragraph under the H1 does not match the template, read that existing paragraph "
+            "as well: it is derive input for the same 4 blanks.",
+            flat,
+        )
+        self.assertIn("- If the lead paragraph is missing: Insert the confirmed sentence", flat)
+        self.assertIn(
+            "- If the first paragraph under the H1 does not match the template: replace that paragraph "
+            "with the confirmed sentence. Do not add the sentence as a second paragraph above it.",
+            flat,
+        )
         validate_call = 'validate(type="prb", content=<the full raw file text>, full=True)'
         self.assertIn(validate_call, block)
         file_read = block.index("read the raw file with the host's own file-read tool at")
         insert = block.index("Insert the confirmed sentence as its own paragraph directly under the")
         validate = block.index(validate_call)
+        replace = block.index("replace that paragraph with the confirmed sentence")
         file_write = block.index("file-write tool -- the generic `update`/`edit` tools re-parse the")
         confirm = block.index("Confirm the repair with a real `get_prb(id)` call -- it must parse")
         self.assertLess(file_read, insert)
-        self.assertLess(insert, validate)
+        self.assertLess(insert, replace)
+        self.assertLess(replace, validate)
         self.assertLess(validate, file_write)
         self.assertLess(file_write, confirm)
         self.assertNotIn("get_prb(id, raw=True)", block)
@@ -114,7 +134,8 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         result = update_prb("abc-123")
         self.assertIn("Insert the confirmed sentence as its own paragraph directly under the", result)
         self.assertIn("H1 title", result)
-        self.assertIn("proceeding to step 2 below with the originally requested change", result)
+        self.assertIn("proceeding to `## 2. If no change was specified`", result)
+        self.assertIn("below with the originally requested change", result)
 
     def test_mentions_both_generic_mutation_tools(self):
         """Both the generic `update` (type="prb") and `set_status`

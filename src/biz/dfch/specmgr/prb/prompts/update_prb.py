@@ -45,8 +45,10 @@ recognize that specific parse failure, read the raw file with the host's own
 file-read tool at the ``path`` the parse-failure result carries (no specmgr
 read returns the body of a document that fails to parse), elicit/confirm or
 derive the lead sentence's 4 blanks from the document's own What/Who/Why
-answers (mirroring ``create_prb``'s own derive-then-confirm flow), insert the
-composed sentence directly under the H1 with the frontmatter left
+answers and any existing non-template first paragraph (mirroring
+``create_prb``'s own derive-then-confirm flow), insert the composed sentence
+directly under the H1 when the lead paragraph is missing or replace the
+non-template first paragraph with it, with the frontmatter left
 byte-unchanged, dry-run the full raw text with the generic ``validate`` tool
 (``full=True``) until it is valid, write the file back with the host's own
 file-write tool (the generic ``update``/``edit`` tools cannot repair a

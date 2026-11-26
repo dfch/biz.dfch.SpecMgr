@@ -43,7 +43,9 @@ PACKAGE_ROOT = PurePosixPath("src/biz/dfch/specmgr")
 def _tracked_python_files() -> list[PurePosixPath]:
     """Return every git-tracked ``.py`` file under ``PACKAGE_ROOT``, repo-relative."""
     completed = subprocess.run(
-        ["git", "ls-files", "-z", "--", f"{PACKAGE_ROOT}/*.py"],
+        # The explicit ``:(glob)`` magic makes ``**`` recursive and keeps the file set independent of
+        # ``GIT_GLOB_PATHSPECS``/``GIT_NOGLOB_PATHSPECS`` in the caller's environment.
+        ["git", "ls-files", "-z", "--", f":(glob){PACKAGE_ROOT}/**/*.py"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -57,6 +59,8 @@ def _directories_missing_init(files: list[PurePosixPath], tracked: set[PurePosix
     """Return the sorted package directories (ancestors of ``files``) whose ``__init__.py`` is not in ``tracked``."""
     missing: set[str] = set()
     for file in files:
+        # Bounds the ancestor walk below: a path outside ``PACKAGE_ROOT`` never reaches it and would loop forever.
+        assert file.is_relative_to(PACKAGE_ROOT), f"{file} is not under {PACKAGE_ROOT}"
         directory = file.parent
         while True:
             if directory / "__init__.py" not in tracked:
@@ -109,6 +113,15 @@ class TestNoNamespacePackages(unittest.TestCase):
         missing = _directories_missing_init(files, tracked)
 
         self.assertEqual([f"{PACKAGE_ROOT}/d/models"], missing)
+
+    def test_file_outside_package_root_fails_instead_of_looping(self) -> None:
+        """A path outside ``PACKAGE_ROOT`` fails with a message naming the file, never an endless walk."""
+        outside = PurePosixPath("tests/x/__init__.py")
+
+        with self.assertRaises(AssertionError) as context:
+            _directories_missing_init([outside], set())
+
+        self.assertIn(str(outside), str(context.exception))
 
 
 if __name__ == "__main__":

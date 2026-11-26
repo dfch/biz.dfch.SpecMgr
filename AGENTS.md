@@ -259,8 +259,9 @@ type or cross-cutting:
   paragraph fails `parse_prb`/`get_prb` until it is added, and
   `update_prb`'s prompt instructions guide that recovery (read the raw
   file with the host's file-read tool at the parse-failure result's
-  `path`, derive/confirm the sentence, insert it under the H1 leaving the
-  frontmatter byte-unchanged, dry-run the full raw text with
+  `path`, derive/confirm the sentence, insert it under the H1 (or replace
+  a non-template first paragraph with it) leaving the frontmatter
+  byte-unchanged, dry-run the full raw text with
   `validate(type="prb", full=True)` until valid, write it back with the
   host's file-write tool, confirm with `get_prb(id)`, then proceed)
   (feat-132-prb-update, feat-248-249-stale-docs). Schema at `prb/models/v1/`,

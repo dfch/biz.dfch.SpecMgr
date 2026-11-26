@@ -294,7 +294,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`prb/data/prb_update_instructions.md`) uses the host-file-tool repair
   mechanism: the raw file is read with the host's own file-read tool at
   the `path` the `get_prb(id)` parse-failure result carries, the
-  confirmed lead sentence is inserted under the H1 with the frontmatter
+  confirmed lead sentence is inserted under the H1 (or replaces a
+  non-template first paragraph) with the frontmatter
   (`updated` included) left byte-unchanged, the full raw text is dry-run
   with `validate(type="prb", full=True)` until valid, the file is written back
   with the host's own file-write tool, and a confirming `get_prb(id)` call
