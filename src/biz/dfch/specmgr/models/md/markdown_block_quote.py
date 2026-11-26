@@ -230,6 +230,9 @@ class MarkdownBlockQuote(MarkdownStr):
             instance._line = own_line
             return instance
 
+        # No line is consumed here (the whole quote is body; dedenting keeps
+        # every line), so the children start at this quote's own `_offset`:
+        # the delta-based hand-off of `consume_leading_lines` is `0` (feat-253).
         dedented_text = _dedent_quote_lines(text)
         body_text = format_text(dedented_text) if dedented_text else ""
 

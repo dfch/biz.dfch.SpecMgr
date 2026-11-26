@@ -279,6 +279,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The shared `models/md` engine's actionable error messages and the
+  `_line` of every parsed child now report the correct 1-based line in
+  the mdformat-normalized body. Before, they under-reported by one line
+  per consumed scalar field and per heading/paragraph/list-item
+  hand-off, because the separator line that the re-normalization removes
+  was not counted. Every hand-off now advances the offset by the
+  consumed line delta from the new shared helper
+  `consume_leading_lines` (`models/md/_markdown.py`). Acceptance,
+  exception types, field paths, and cause/fix hints are unchanged, and
+  every domain-level `self._line` message (e.g. `rsk` TARA quadrants)
+  inherits the fix (feat-253-md-line-offset, GitHub issue #253).
 - The `update_prb` prompt's "Old-shape recovery" directive
   (`prb/data/prb_update_instructions.md`) uses the host-file-tool repair
   mechanism: the raw file is read with the host's own file-read tool at
@@ -320,6 +331,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   existing tools-layer consumer is untouched) — importing the model
   module no longer pulls the `mcp` extra into the model import graph
   (feat-255-i18n-typo, GitHub issue #255).
+- A commit that only adds or deletes a test file no longer passes the
+  local pre-commit hooks with a stale test-file count in
+  `docs/GENERATED.md` (previously caught only by the CI `docs/` drift
+  check): the new `specmgr-docs-test-count` hook runs on every commit
+  (pre-commit never passes deleted files to a hook, so no `files:`
+  pattern can catch a deletion) and compares the count with the one
+  `specmgr docs` would write, via `scripts/check_generated_test_count.py`.
+  The `specmgr-docs` hook itself stays scoped to `src/**/*.py`. The
+  development-only evals harness also no longer fails under rootless
+  Docker: its containers run as `--user 0:0` there (the host user) instead
+  of `--user uid:gid`, which made the mounted work dirs unreadable
+  (feat-274-evals-rootless-docker, GitHub issue #274).
 
 ## [0.38.0] - 2026-10-31
 

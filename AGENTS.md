@@ -1342,6 +1342,17 @@ already uses `re.DOTALL` (e.g. `rsk.QuadrantItem`/`MitigationItem`/
 `.specmgr/conventions.md`'s "Markdown Authoring (List Items Must Not
 Soft-Wrap)" section for the full authoring/implementation convention.
 
+`feat-253-md-line-offset` (GitHub issue #253) added the shared hand-off
+helper `consume_leading_lines(text, count) -> (rest, consumed)`
+(`models/md/_markdown.py`), and any `models/md` site that slices consumed
+lines off a text and hands the re-normalized rest on must use it and
+advance its line offset by the returned `consumed` delta (which includes
+the blank separator line the re-normalization removes) -- or, where a site
+already measures the text before and after the hand-off (the list branch of
+`MarkdownStr.from_text`, by decision), an equivalent before/after
+line-count delta -- never by its own `count`/`get_extent`, or every later
+line reference and child `_line` is off by one per hand-off.
+
 `feat-107-doc-cache` (GitHub issue #107) added a process-local,
 per-domain, content-hash-validated in-memory read cache
 (`general/tools/_doc_cache.py`'s `DocCache` class, one module-level
@@ -1617,7 +1628,10 @@ Without `--all-extras` on `uv run`, only base dependencies are installed, causin
 
 `pre-commit install` is one-time per clone (see `.pre-commit-config.yaml`):
 runs `ruff format`/`ruff check`, `vulture`, a local `specmgr docs` hook
-(scoped to `src/**/*.py` changes), a local `specmgr harness-bundle` hook (scoped
+(scoped to `src/**/*.py` changes), a local `specmgr-docs-test-count` hook
+(runs on every commit, since pre-commit never passes deleted files to a hook:
+fails when the test-file count in `docs/GENERATED.md` is stale, via
+`scripts/check_generated_test_count.py`), a local `specmgr harness-bundle` hook (scoped
 to `.opencode/{agent,command,skill}/` markdown changes: regenerate the
 packaged harness bundle
 `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` from the
