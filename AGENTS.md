@@ -262,10 +262,9 @@ type or cross-cutting:
   `path`, derive/confirm the sentence, insert it under the H1 leaving the
   frontmatter byte-unchanged, dry-run the full raw text with
   `validate(type="prb", full=True)` until valid, write it back with the
-  host's file-write tool, confirm with `get_prb(id)`, then proceed) (feat-132-prb-update,
-  feat-248-249-stale-docs). Schema at
-  `prb/models/v1/`, inside the domain package, not top-level
-  `models/`.
+  host's file-write tool, confirm with `get_prb(id)`, then proceed)
+  (feat-132-prb-update, feat-248-249-stale-docs). Schema at `prb/models/v1/`,
+  inside the domain package, not top-level `models/`.
 - **`gol/`** (Goal) — same tools/resources/prompts shape as
   `req/`/`prb/` but for high-level business goals (the strategic
   "what the organization wants to achieve" level that sits above

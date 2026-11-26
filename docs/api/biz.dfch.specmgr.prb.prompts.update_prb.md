@@ -8,9 +8,9 @@ the existing ``prb/tools/`` surface (``get_prb``, generic ``validate`` tool) plu
 the generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="prb"``; ``get_prb``'s ``raw=True`` parameter serves the
 line-range flow's line numbers -- with ``numbered=True`` additionally
-printing each line's 1-based body-line number, ready to feed into
-``update``'s ``offset``). There is no ``specmgr://prb/{id}`` resource to point at -- id-based
-reads always go through the ``get_prb`` tool only.
+printing each line's 1-based body-line number, ready to feed into ``update``'s
+``offset``). There is no ``specmgr://prb/{id}`` resource to point at --
+id-based reads always go through the ``get_prb`` tool only.
 
 There are no fine-grained frontmatter/section mutation tools for
 this domain: PRB's lifecycle surface is deliberately small

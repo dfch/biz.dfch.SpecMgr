@@ -25,9 +25,9 @@ the existing ``prb/tools/`` surface (``get_prb``, generic ``validate`` tool) plu
 the generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="prb"``; ``get_prb``'s ``raw=True`` parameter serves the
 line-range flow's line numbers -- with ``numbered=True`` additionally
-printing each line's 1-based body-line number, ready to feed into
-``update``'s ``offset``). There is no ``specmgr://prb/{id}`` resource to point at -- id-based
-reads always go through the ``get_prb`` tool only.
+printing each line's 1-based body-line number, ready to feed into ``update``'s
+``offset``). There is no ``specmgr://prb/{id}`` resource to point at --
+id-based reads always go through the ``get_prb`` tool only.
 
 There are no fine-grained frontmatter/section mutation tools for
 this domain: PRB's lifecycle surface is deliberately small
@@ -87,13 +87,15 @@ from ...server import mcp
     name="update_prb",
     title="Update a problem statement",
     description=(
-        "Guides the LLM through revising an existing problem statement by id: reading "
-        "current state (if needed, repairing an old-shape document missing the mandatory lead "
-        "sentence with the host's own file-read/file-write tools), showing which of the 7 5W2H questions are answered, "
-        "eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right "
-        "tool, and validating. The structure reference is the `get_prb_schema` tool (the generated "
-        "JSON Schema); the `get_prb_template`/`get_prb_example` tools return the authoring template "
-        "and a complete sample."
+        "Guides the LLM through revising an existing problem statement by "
+        "id: reading current state (if needed, repairing an old-shape "
+        "document missing the mandatory lead sentence with the host's own "
+        "file-read/file-write tools), showing which of the 7 5W2H questions "
+        "are answered, eliciting revisions, re-synthesizing Summary/Gap, "
+        "applying the change with the right tool, and validating. The "
+        "structure reference is the `get_prb_schema` tool (the generated "
+        "JSON Schema); the `get_prb_template`/`get_prb_example` tools "
+        "return the authoring template and a complete sample."
     ),
 )
 def update_prb(id: str, instructions: str | None = None) -> str:

@@ -83,7 +83,12 @@ class TestNoNamespacePackages(unittest.TestCase):
     def test_every_ancestor_directory_has_init(self) -> None:
         """Each directory from a tracked ``.py`` file's parent up to the package root has an ``__init__.py``."""
         files = _tracked_python_files()
-        self.assertTrue(files, f"git ls-files found no .py file under {PACKAGE_ROOT}")
+        if not files:
+            self.skipTest(
+                f"git ls-files found no .py file under {PACKAGE_ROOT}: an unpacked sdist nested in an "
+                "unrelated git work tree yields no tracked file under the package root while git "
+                "itself is available and REPO_ROOT is inside a work tree, so there is nothing to check"
+            )
         # A tracked ``__init__.py`` deleted from the working tree counts as missing too.
         tracked = {file for file in files if (REPO_ROOT / file).is_file()}
 

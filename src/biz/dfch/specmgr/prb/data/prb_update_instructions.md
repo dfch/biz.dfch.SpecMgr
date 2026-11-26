@@ -3,10 +3,10 @@ You are revising an existing Problem Statement (PRB) document, id: $id
 Requested change: $instructions
 
 Follow this sequence exactly. Do not write raw markdown yourself beyond
-the body content you pass to `update` -- every change to the document
-goes through the specmgr MCP tools listed below, with one exception: the
-"Old-shape recovery" block in step 1 repairs a document that fails to
-parse with the host's own file-read/file-write tools and leaves its
+the body content you pass to `update`, and every change to the document
+goes through the specmgr MCP tools listed below -- with one exception:
+the "Old-shape recovery" block in step 1 repairs a document that fails
+to parse with the host's own file-read/file-write tools and leaves its
 frontmatter block byte-for-byte unchanged.
 
 ## 1. Read current state first
@@ -15,10 +15,10 @@ Call `get_prb(id)` to load the document's current frontmatter and body.
 Never assume prior state -- the on-disk file is always the source of
 truth and may have been hand-edited since you last saw it.
 
-**Old-shape recovery.** If `get_prb(id)` returns a parse failure because
-the body is missing the mandatory lead sentence directly under the H1 (a
-document drafted before that field became mandatory), do not treat this
-as a fatal error:
+**Old-shape recovery.** If `get_prb(id)` returns a parse failure whose error
+names the `problem_statement` field (the body is
+missing the mandatory lead sentence directly under the H1, or the first
+paragraph does not match the template), do not treat this as a fatal error:
 
 1. No specmgr read returns the body of a document that fails to parse
    (a `raw=True` read of one returns the parse-failure result, never the

@@ -51,17 +51,19 @@ class TestUpdatePrbPrompt(unittest.TestCase):
 
     def test_mentions_old_shape_recovery_via_host_file_repair(self):
         """The prompt must carry the present-tense recovery directive: a
-        get_prb(id) parse failure naming the missing lead sentence leads to
-        repairing the file with the host's own file-read/file-write tools (no
-        specmgr read returns the body of a document that fails to parse, and
-        the generic update/edit tools cannot repair one), leaving the
-        frontmatter byte-unchanged, a full-text validate(full=True) dry-run
-        before the write-back, and a confirming get_prb(id) call before
-        proceeding with the requested change, in that order (file-read <
-        insert < validate < file-write < confirming get_prb(id)). The negative
-        assertions run on the recovery-block slice only: the rest of the
-        prompt legitimately keeps `update(id, type="prb", content)` and
-        `get_prb(id, raw=True, numbered=True)`."""
+        get_prb(id) parse failure whose error names the `problem_statement`
+        field (the body missing the mandatory lead sentence under the H1, or
+        the first paragraph not matching the template) leads to repairing the
+        file with the host's own file-read/file-write tools (no specmgr read
+        returns the body of a document that fails to parse, and the generic
+        update/edit tools cannot repair one), leaving the frontmatter
+        byte-unchanged, a full-text validate(full=True) dry-run before the
+        write-back, and a confirming get_prb(id) call before proceeding with
+        the requested change, in that order (file-read < insert < validate <
+        file-write < confirming get_prb(id)). The negative assertions run on
+        the recovery-block slice only: the rest of the prompt legitimately
+        keeps `update(id, type="prb", content)` and `get_prb(id, raw=True,
+        numbered=True)`."""
         result = update_prb("abc-123")
         start = result.index("**Old-shape recovery.**")
         end = result.index("## 2. If no change was specified")
@@ -70,6 +72,7 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         block = result[start:end]
         self.assertIn("If `get_prb(id)` returns a parse failure", block)
         self.assertIn("missing the mandatory lead sentence", block)
+        self.assertIn("problem_statement", block)
         self.assertIn("No specmgr read returns the body of a document that fails to parse", block)
         self.assertIn("read the raw file with the host's own file-read tool at", block)
         self.assertIn("the `path` the parse-failure result carries", block)
