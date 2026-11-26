@@ -4,7 +4,7 @@ created: '2026-11-22T15:43:46.858+01:00'
 id: feat-248-249-stale-docs
 status: review
 type: feat
-updated: '2026-11-22T17:41:26.325+01:00'
+updated: '2026-11-26T09:09:25.000+01:00'
 version: 1.0.0
 ---
 
@@ -107,15 +107,30 @@ DEC 9080b37c and DEC b8c9bfea parse cleanly with the worktree code (`specmgr lin
 - [x] Task 130.140: S2 -- explicit `check=False` on the probe `subprocess.run` in `tests/test_no_namespace_packages.py` `setUp`.
 - [x] Task 130.150: Run the phase-end quality gate.
 
+#### Phase 140: Fix phase (review cycle 2: E1/G1/D1/S1/S2/I1/I2)
+
+- [x] Task 140.100: E1 -- the `docs/api/biz.dfch.specmgr.req.models.v1.body.md` and `docs/api/biz.dfch.specmgr.gol.models.v1.body.md` pages carried the pre-feat-253 inherited `models/md` docstring text (`mdformat.text()`) once `dev` was merged; done in the merge commit `01d1722e` (merge of `origin/dev` at `48c5d3e5`, `CHANGELOG.md` conflict resolved by keeping both sides, `specmgr docs` regenerated, both pages hold 0 `mdformat.text()` matches, **Test files** count 509).
+- [ ] Task 140.110: G1 -- record the `dev` merge in this plan: add an Updates entry naming the merge commit `01d1722e`, the `CHANGELOG.md` resolution, the `specmgr docs` regeneration of the two req/gol body pages, and the **Test files** count 509 (502 at base + 6 from `dev` + 1 from this feature); add `01d1722e` to Related PRs / Commits. Leave Task 110.120 and the Phase 110 entry ("502 -> 503") as written -- they are historical.
+- [ ] Task 140.120: D1 -- in `src/biz/dfch/specmgr/prb/data/prb_update_instructions.md`, reword the "Old-shape recovery" trigger ("returns a parse failure because the body is missing the mandatory lead sentence") so it names what the parse-failure `error` actually contains: the `problem_statement` field (actual messages: `Prb > problem_statement: expected MarkdownParagraph, found no match ...` when the lead paragraph is absent, `problem_statement must match the template` when the first paragraph does not follow the template). Model text: the "whose error names the `## Level` value" trigger in `req/data/req_update_instructions.md`. Keep every test-pinned phrase intact; extend `tests/prb/prompts/test_update_prb.py::test_mentions_old_shape_recovery_via_host_file_repair` to assert `problem_statement` on the recovery-block slice. Present tense only.
+- [ ] Task 140.130: S2 -- in the same file's preamble, make the recovery-block exception cover both prohibitions explicitly: "Do not write raw markdown yourself beyond the body content you pass to `update`" and "every change to the document goes through the specmgr MCP tools" (today the exception clause hangs off the second only).
+- [ ] Task 140.140: S1 -- rewrap the overlong physical lines this branch added to match the surrounding wrap width (about 78 columns): the `update_prb` module docstring and MCP `description` in `src/biz/dfch/specmgr/prb/prompts/update_prb.py` (reported at lines 29 and 92), the #248 bullet in `CHANGELOG.md` `[Unreleased]` -> `### Fixed` (the line ending "`tests/prb/prompts/test_update_prb.py` pins the corrected"), and the edited `prb/` bullet in `AGENTS.md` (reported at line 265). Find them via `git diff 9c9d7349..HEAD` on those files; change wrapping only, not wording; do not split a test-pinned phrase.
+- [ ] Task 140.150: I1 -- in `tests/test_no_namespace_packages.py`, `skipTest` (instead of failing `assertTrue(files, ...)`, around line 86) when `git ls-files` returns no tracked file under `src/biz/dfch/specmgr/` (an unpacked sdist nested inside an unrelated git work tree).
+- [ ] Task 140.160: I2 -- in `src/biz/dfch/specmgr/tsk/models/__init__.py` (lines 19-21) and `src/biz/dfch/specmgr/prb/models/__init__.py` (lines 19-22), replace the stale "(in a later phase) the document wrapper and parser" with present-tense wording matching the new `req/models`/`gol/models` docstrings. Regenerate `specmgr docs` afterwards (the docstrings render into `docs/api/`).
+- [ ] Task 140.170: Run the phase-end quality gate: `ruff format --check`, `ruff check`, `vulture`, the full `pytest -n auto` suite, `specmgr docs`/`mcp-docs`/`harness-bundle` with no diff after the commit (`specmgr docs` run once, after Tasks 140.120-140.160), the `specmgr-docs-test-count` hook, and `specmgr lint` on this README; record the results in an Updates entry and update Current Status. Do not push or merge.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-22**: Phases 100-130 committed (`22a84b33`, `232512e1`, `fd41f554`, `142db7c3`); status `review`. PR #271 is open against `dev` and not merged. The same preamble contradiction in `req/data/req_update_instructions.md` is tracked as GitHub issue #273.
+**As of 2026-11-26**: Phases 100-130 committed (`22a84b33`, `232512e1`, `fd41f554`, `142db7c3`); `origin/dev` merged into the branch as `01d1722e` (not pushed). Phase 140 (review cycle 2) is planned, with Task 140.100 done in the merge; Tasks 140.110-140.170 are open. Status `review`. PR #271 is open against `dev` and not merged. The same preamble contradiction in `req/data/req_update_instructions.md` is tracked as GitHub issue #273.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-26T08:09:25.000Z - Phase 140 planned (review cycle 2)
+
+A second feat-reviewer pass over `9c9d7349..d0a185c1` found no defect on the branch itself and reported E1, G1, D1, S1, S2, I1, I2. `origin/dev` (`48c5d3e5`) was merged into the branch as `01d1722e`, which resolves E1 (see Task 140.100). Phase 140 holds one task per remaining finding plus the phase-end gate; Improvements I1/I2 are included, following the cycle-1 decision to fix Improvements too.
 
 #### 2026-11-22T16:41:26.320Z - Plan hygiene
 
@@ -148,6 +163,10 @@ Feature plan created from GitHub issues #248 and #249. Both findings verified ag
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-26T08:09:25.000Z - Review cycle 2 Improvements I1/I2 fixed in Phase 140
+
+The user decided (2026-11-26) that review cycle 2's Improvements are fixed in this feature, as in cycle 1, rather than treated as advisory: I1 (Task 140.150) and I2 (Task 140.160) stay in Phase 140. I2 is not deferred to follow-up issue #273.
 
 #### 2026-11-22T16:41:26.320Z - Skip the suite-running pre-commit hooks for this feature's commits
 
@@ -185,6 +204,7 @@ Both issues are small, independent doc-surface fixes from the same feat-173 retr
 - `232512e1` -- Phase 110, `req`/`gol` models made regular packages (#249).
 - `fd41f554` -- Phase 120, close-out.
 - `142db7c3` -- Phase 130 review fixes.
+- `01d1722e` -- merge of `origin/dev` (`48c5d3e5`) into the branch; `CHANGELOG.md` resolved, `specmgr docs` regenerated (Task 140.100).
 - PR #271 -- this feature into `dev`.
 - Issue #273 -- follow-up for the `req` update-prompt preamble.
 
