@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: review
 type: feat
-updated: '2026-11-27T16:30:00.000+01:00'
+updated: '2026-11-27T17:40:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -201,6 +201,34 @@ Key invariants and rationale:
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-27 16:40:00.000Z - Phase 190 correction: deterministic seed order in test_find_similar_text (CI 3.13)
+
+An order-flaky test, introduced by the Phase 125 re-seed (cc7007cc). The CI build (3.13) on 873d67b5 failed with `Lists differ: ['First Doc', 'Second Doc', '<failed to parse>'] != ['First Doc', '<failed to parse>', 'Second Doc']`, and one unidentified local full-suite run in four failed too.
+
+- Root cause: `tests/general/tools/test_find_similar_text.py::TestFindSimilarTextRanking::test_ranks_by_query_similarity_and_uses_embed_query` pins the corpus-order tie-break between the two 0.0-score candidates: the unparseable marker row comes before "Second Doc". The marker file was seeded as `en/00/zz-broken.md` (the `seed_unparseable_req` default), and "Second Doc" was seeded via `create_req` with a random uuid. When that uuid also falls in shard `00` (~1/256), the file name decides the order inside the shard. `<uuid>-second-doc.md` sorts before `zz-broken.md`, so the order flips.
+- The fix (tests only, no src/): the test seeds the marker with `seed_unparseable_req(filename="00-broken.md")`. This makes the marker the first corpus entry by construction: shard `00` is the lowest shard, and inside it `00-` sorts before every `<uuid>-<slug>.md` name (`-` sorts before every hex digit). The ordered assertion (the corpus-order tie-break) is unchanged, and the test comments are updated. A fixed id for "Second Doc" was not possible without patching, because `create_req` forbids `id` for EN. The shared helper default (`zz-broken.md`) is unchanged. Its two other callers (in `test_find_related`) either order by score or do not depend on order.
+- Flake-class sweep: an AST scan plus manual review of every test function in `tests/` that hand-places a file in a shard dir (or calls `seed_unparseable_req`), also seeds random-id documents, and asserts a position or an order. **1 real instance (the one above), fixed.** Checked and safe:
+  - `test_find_related` ×2: distinct scores put the marker last, or the marker is selected by a filter.
+  - The `get_<d>` `test_broken_document_*` trios (×14 domains): one document, and the failed row is selected by a title filter.
+  - The `list_<d>` broken/malformed-file tests: set-based `ids`/`titles` assertions and `next(... ref == ...)` selection. The paging tests assert only `total`/`error_count`.
+  - The `list_<d>_glob` suites: fixed ids, no random seeds. The `_paths` tests: fixed names only.
+  - The i18n suites (`test_i18n_three_languages`, `test_i18n_en_only_consumers`, `test_sharded_doc_paths`, `test_i18n_all_domains`, `test_i18n_feat_adr_exclusion`, `test_translate_artifact_flow`, `dec/test_i18n_language`, `dec/test_i18n_write`, `dec/test_create_dec`, `test_check_translation_drift`): single-document lists or `sorted()` comparisons.
+  - The `set`/`txt` integration tests: one document.
+  - `list_references`: the order is body first-occurrence and does not depend on the file system.
+  - The diagram tests (`commands/test_diagram*`, `test_get_reference_diagram*`, `test__reference_graph`): hand-seeded fixed ids only.
+  - `test__similarity_ranking`: in-memory keys.
+- Proof: a temporary runner (in the scratchpad, not committed) patched `uuid.uuid4` in `req.tools.create_req` so that every seeded id falls in shard `00`. With the old seed (`git stash`), it reproduces the CI failure exactly (`Lists differ: ['First Doc', 'Second Doc', '<failed to parse>'] != ...`). With the new seed, it passes. `uv run --frozen pytest -q -p no:cacheprovider tests/general/tools/test_find_similar_text.py` run 20× in a shell loop: 20/20 `13 passed, 8 subtests passed`.
+
+**Gate**:
+- `uv run --frozen ruff format --check` → 2397 files already formatted; `uv run --frozen ruff check` → All checks passed.
+- `uv run --frozen vulture src/ whitelist.py --min-confidence 60` → exit 0.
+- `uv run --frozen pytest -n auto -q -p no:cacheprovider` → **6258 passed, 0 failed, 18 skipped, 11592 subtests passed** (the baseline; no new test).
+- `uv run --frozen specmgr docs` → `docs/GENERATED.md` unchanged (no test file added).
+- `uv run --frozen specmgr lint .specmgr/feat/feat-245-shard-docs/README.md` → linted=1 failed=0.
+- `git add -A` + `uv run --frozen pre-commit run --all-files` → all hooks passed.
+
+Frontmatter `updated: '2026-11-27T17:40:00.000+01:00'` ≡ this header; status stays `review`.
 
 #### 2026-11-27 15:30:00.000Z - Phase 190 complete (review cycle 5 fixes)
 

@@ -80,7 +80,11 @@ class TestFindSimilarTextRanking(SimilarityTestCase):
         # embedding text, so a titled "Alpha Doc" would add an extra "alpha" and skew the math.
         self.seed_req("First Doc", "alpha alpha beta")  # 2/sqrt(5) ~ 0.894 against an "alpha" query
         self.seed_req("Second Doc", "beta gamma")  # 0.0 against an "alpha" query
-        self.seed_unparseable_req()  # 0.0 (zero vector), marker row
+        # 0.0 (zero vector), marker row. The file name is pinned so the marker is the very first entry of
+        # the sorted corpus listing: shard "00" is the lowest shard, and within it "00-" sorts before every
+        # "<uuid>-<slug>.md" name ("-" < any hex digit) -- including a randomly id'd "Second Doc" that lands
+        # in shard "00" too (~1/256; the old "zz-broken.md" name then sorted after it, CI 3.13 on 873d67b5).
+        self.seed_unparseable_req(filename="00-broken.md")
         fake = self.install_fake()
 
         hits = find_similar_text(query="alpha")
@@ -89,8 +93,8 @@ class TestFindSimilarTextRanking(SimilarityTestCase):
         for hit in hits:
             self.assertIsInstance(hit, SimilarityHit)
         # Among the two 0.0-score candidates the stable sort keeps the corpus order: the unparseable
-        # marker row sits in the lowest shard ("00", feat-245's seed position for id-less documents),
-        # so it precedes the other document.
+        # marker row is the first corpus entry by construction (shard "00", file name "00-broken.md"),
+        # so it precedes the other document wherever that document's random id shards it.
         self.assertEqual([hit.title for hit in hits], ["First Doc", FAILED_TO_PARSE_MARKER, "Second Doc"])
         self.assertAlmostEqual(hits[0].score, 2.0 / math.sqrt(5.0), places=6)
         self.assertAlmostEqual(hits[1].score, 0.0, places=6)
