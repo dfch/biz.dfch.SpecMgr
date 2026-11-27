@@ -59,13 +59,14 @@ def _directories_missing_init(files: list[PurePosixPath], tracked: set[PurePosix
     """Return the sorted package directories (ancestors of ``files``) whose ``__init__.py`` is not in ``tracked``."""
     missing: set[str] = set()
     for file in files:
-        # Bounds the ancestor walk below: a path outside ``PACKAGE_ROOT`` never reaches it and would loop forever.
+        # Bounds the ancestor walk below: a path outside ``PACKAGE_ROOT`` never reaches it.
         assert file.is_relative_to(PACKAGE_ROOT), f"{file} is not under {PACKAGE_ROOT}"
         directory = file.parent
         while True:
             if directory / "__init__.py" not in tracked:
                 missing.add(str(directory))
-            if directory == PACKAGE_ROOT:
+            # The filesystem-root check ends the walk even under ``python -O``, which strips the assert above.
+            if directory == PACKAGE_ROOT or directory == directory.parent:
                 break
             directory = directory.parent
     result = sorted(missing)

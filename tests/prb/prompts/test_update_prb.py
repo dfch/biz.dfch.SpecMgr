@@ -59,11 +59,15 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         update/edit tools cannot repair one), leaving the frontmatter
         byte-unchanged, a full-text validate(full=True) dry-run before the
         write-back, and a confirming get_prb(id) call before proceeding with
-        the requested change, in that order (file-read < insert < validate <
-        file-write < confirming get_prb(id)). Both trigger cases are covered:
-        a missing lead paragraph gets the sentence inserted under the H1, and
-        a non-template first paragraph is derive input for the 4 blanks and
-        is replaced by the sentence (never kept as a second paragraph). The
+        the requested change, in that order (file-read < insert < replace <
+        validate < file-write < confirming get_prb(id)). Both trigger cases are
+        covered: a missing lead paragraph gets the sentence inserted under the
+        H1, and a non-template first paragraph is derive input for the 4 blanks
+        and, after a `question`-tool check whether its uncaptured content moves
+        to `## More Information`, is replaced by the sentence (never kept as a
+        second paragraph). The frontmatter rule follows the second case bullet
+        after a blank line, indented as a paragraph of sub-step 3, so CommonMark
+        renders it for both cases, not as a lazy continuation of that bullet. The
         negative assertions run on the recovery-block slice only: the rest of
         the prompt legitimately keeps `update(id, type="prb", content)` and
         `get_prb(id, raw=True, numbered=True)`. The slice ends at the
@@ -81,7 +85,12 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         self.assertIn("No specmgr read returns the body of a document that fails to parse", block)
         self.assertIn("read the raw file with the host's own file-read tool at", block)
         self.assertIn("the `path` the parse-failure result carries", block)
-        self.assertIn("Leave the frontmatter block byte-for-byte unchanged", block)
+        self.assertIn("In both cases, leave the frontmatter block byte-for-byte unchanged", block)
+        # A blank line, then a 3-space indent: a paragraph of sub-step 3, outside both nested case bullets.
+        self.assertIn(
+            "sentence as a second paragraph above it.\n\n   In both cases, leave the frontmatter block byte-for-byte",
+            block,
+        )
         self.assertIn("`updated` included: a repair is", block)
         self.assertIn("file-write tool -- the generic `update`/`edit` tools re-parse the", block)
         self.assertIn("cannot repair one", block)
@@ -96,8 +105,11 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         )
         self.assertIn("- If the lead paragraph is missing: Insert the confirmed sentence", flat)
         self.assertIn(
-            "- If the first paragraph under the H1 does not match the template: replace that paragraph "
-            "with the confirmed sentence. Do not add the sentence as a second paragraph above it.",
+            "- If the first paragraph under the H1 does not match the template: first use the `question` tool "
+            "to ask whether content of the existing paragraph that the confirmed sentence does not capture "
+            "moves to the PRB's `## More Information` section (confirm the exact heading with "
+            "`get_prb_schema` or the packaged template first). Then replace that paragraph with the confirmed "
+            "sentence. Do not add the sentence as a second paragraph above it.",
             flat,
         )
         validate_call = 'validate(type="prb", content=<the full raw file text>, full=True)'

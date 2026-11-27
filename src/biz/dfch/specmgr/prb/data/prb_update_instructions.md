@@ -15,8 +15,8 @@ Call `get_prb(id)` to load the document's current frontmatter and body.
 Never assume prior state -- the on-disk file is always the source of
 truth and may have been hand-edited since you last saw it.
 
-**Old-shape recovery.** If `get_prb(id)` returns a parse failure whose
-error names the `problem_statement` field (the body is
+**Old-shape recovery.** If `get_prb(id)` returns a parse failure
+whose error names the `problem_statement` field (the body is
 missing the mandatory lead sentence directly under the H1, or the first
 paragraph does not match the template), do not treat this as a fatal error:
 
@@ -42,10 +42,15 @@ paragraph does not match the template), do not treat this as a fatal error:
      H1 title (after any existing leading comment, before
      `## Current State`).
    - If the first paragraph under the H1 does not match the template:
+     first use the `question` tool to ask whether content of the existing
+     paragraph that the confirmed sentence does not capture moves to the
+     PRB's `## More Information` section (confirm the exact heading with
+     `get_prb_schema` or the packaged template first). Then
      replace that paragraph with the confirmed sentence. Do not add the
      sentence as a second paragraph above it.
-   Leave the frontmatter block byte-for-byte unchanged -- `id`,
-   `created`, `status`, `version`, and `updated` included: a repair is
+
+   In both cases, leave the frontmatter block byte-for-byte unchanged --
+   `id`, `created`, `status`, `version`, and `updated` included: a repair is
    not an edit.
 4. Dry-run the repaired text with
    `validate(type="prb", content=<the full raw file text>, full=True)`
