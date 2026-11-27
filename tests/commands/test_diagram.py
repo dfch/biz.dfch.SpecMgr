@@ -97,9 +97,11 @@ class _DiagramUcTestBase(unittest.TestCase):
 
     def _seed_example_only(self) -> None:
         """Seed only the packaged example UC document (its own ``read_packaged_text`` content),
-        sharded under the legacy id's own shard (feat-245)."""
+        placed in the two-hex shard ``00`` (feat-245): the legacy id ``uc-001`` has no hex prefix, and
+        the read scan lists two-hex shard dirs only (Phase 180, D4), so the document is resolved via
+        the full sharded-listing fallback."""
         uc_dir = self.docs_root / "uc" / "en"
-        target = uc_dir / _EXAMPLE_ID[:2] / f"uc-{_EXAMPLE_ID}-buy-goods.md"
+        target = uc_dir / "00" / f"uc-{_EXAMPLE_ID}-buy-goods.md"
         target.parent.mkdir(parents=True)
         target.write_text(read_packaged_text("uc", "example"), encoding="utf-8")
 

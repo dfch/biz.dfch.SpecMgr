@@ -30,7 +30,7 @@ stay in exactly one place.
 yields every ``(domain name, on-disk path)`` candidate pair across the
 target whole-body domains -- the full registry set (req, uc, tsk, qa,
 prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt, set) by default, a
- caller-supplied, order-preserving, de-duplicated subset otherwise --
+caller-supplied, order-preserving, de-duplicated subset otherwise --
 the sharded domains via the shared ``iter_doc_paths`` and ``feat``'s
 ``<base>/<id>/README.md`` folder shape via its own bespoke
 ``iter_feat_paths`` (DEC 8cf940c5). Every target name is validated up

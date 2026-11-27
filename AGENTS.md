@@ -468,10 +468,10 @@ type or cross-cutting:
   (DEC 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen
   `feat-NNN-slug` — the containing folder's own name, not a
   server-generated UUID — and documents live one-per-folder as
-  `<base>/<id>/README.md` (a fixed filename), not flat files directly
-   under the base directory. This bespoke, folder-per-document addressing
-   is hand-rolled in `feat/tools/_paths.py`, **not** built on the shared
-   flat-file
+  `<base>/<id>/README.md` (a fixed filename), not one `.md` file per
+  document like every other whole-body domain (sharded per language). This
+  bespoke, folder-per-document addressing is hand-rolled in
+  `feat/tools/_paths.py`, **not** built on the shared one-`.md`-per-document
   `general/tools/_doc_paths.py` every other whole-body domain uses;
   `SPECMGR_FEAT_DIR` overrides the base directory (mandatory-in-spirit
   test-isolation env var, same as every other domain's own equivalent).
@@ -930,7 +930,11 @@ type or cross-cutting:
      domains implements a `delete` adapter in that one tool (a future domain
     adds its own adapter there, never a per-domain `delete_<d>` tool),
     resolving by `id`, taking the domain's own lock, and returning the
-    deleted path; `validate`, the generic, disk-free/id-free dry-run
+    deleted path (an emptied shard or language directory is left in place —
+    expected and harmless: git does not track empty directories, every read
+    path treats it as no files, and pruning would race a concurrent
+    `create_<d>` of a different id in the same shard, the locks being per id,
+    not per shard; feat-245 Phase 180); `validate`, the generic, disk-free/id-free dry-run
      content validator for the same whole-body domains (`type` is one of
      req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set) — replacing
      the former per-domain `validate_<d>` tools
@@ -1498,10 +1502,13 @@ permanent "`feat` documents are always English" wording
   (`.opencode/skill/`, `.opencode/command/`).
 - **EN-only consumers (REQ-013, ACC-014)** — `find_related`/
   `find_similar_text`/`list_references`/`get_reference_diagram(_all)` gained
-  nothing and never see a variant: `iter_doc_paths` is a non-recursive
-  `*.md` glob that does not descend into `{language}` subfolders, so every
-  hit and every resolved reference is the EN path by directory layout alone.
-  Never switch it to a recursive glob —
+  nothing and never see a variant: under the uniform sharded layout
+  (feat-245) `iter_doc_paths` is the per-language shard listing
+  (`<lang-dir>/<2-hex>/*.md`), and the EN-only consumers call it rooted at
+  the `en/` directory (the omitted-language base resolves to `en/`, never the
+  domain root), so every hit and every resolved reference is the EN path by
+  directory layout alone. Never root an EN-only scan at the domain directory
+  or switch it to the all-languages union —
   `tests/general/tools/test_i18n_en_only_consumers.py` fails if you do.
 
 The tests: `tests/general/tools/test_i18n_all_domains.py` (all thirteen domains),
@@ -1743,43 +1750,52 @@ extras onto every consumer of the base library.
   path, whose `list_feat` dirty stage (frontmatter+H1 only, DEC 3982712a)
   is precisely the masking that hid the feat-214 defect) and reports every
   unparseable document (path + parse error), each followed by its per-type
-   repair pointer (whole-body domains `/repair {type} {id}`, the id derived
-   from the path — the folder name for feat, the file-name UUID for the
-    others — falling back to `/repair {type}`), plus — for a misplaced
-    docs-domain file (missing language dir, missing shard dir, non-hex
-    shard, or deeper than one shard level) — a blocking layout violation
-    (exit 2, naming the correct path; the file is never parsed), plus one
-    summary (`linted`/`failed`/`skipped`/`layout`). Three scopes, so the cost
+  repair pointer (whole-body domains `/repair {type} {id}`, the id derived
+  from the path — the folder name for feat, the file-name UUID for the
+  others — falling back to `/repair {type}`), plus — for a misplaced
+  docs-domain file (missing language dir, missing shard dir, non-hex
+  shard, or deeper than one shard level) — a blocking layout violation
+  (exit 2, naming the correct path; the file is never parsed), plus one
+  summary (`linted`/`failed`/`skipped`/`layout`). Three scopes, so the cost
   scales with the size of a change and never with the size of the corpus:
-  path mode (the type is inferred from the path layout alone — the
+  path mode (the type is inferred from the path layout alone, four rules in
+  order — the docs-anchored sharded shape `docs/<type>/<lang>/<2-hex>/<file>.md`,
+  the root-name-independent sharded shape `<type>/<lang>/<2-hex>/<file>.md`
+  under a docs root of any name (`specdocs/req/en/ab/x.md`, the parse
+  language derived from that same position, feat-245 Phase 180), the
   containing directory named after a type, or the `feat/{id}/README.md`
-  shape — with the `--type` override and `--skip-unrecognized`; used by
-  the `specmgr-lint` pre-commit hook over the staged in-tree artifacts and
-  by the CI pull-request step over the artifacts changed against the base
-   branch), and the `--type T` sweep (from `--dir` if given, else the
-   domain-wide union of every language directory — EN + every variant
-   language dir — for the sharded domains, the registered base directory
-   for `feat`) and the `--all` sweep (the same per-type enumeration) —
-   both CLI-only in the sense that NO hook/CI/test file invokes `specmgr lint`
-   with a sweep flag at shell level (the change-scoped gates lint staged/changed
-   paths only); the sweeps ARE covered in the test suite via in-process
-   Typer-app invocations (`tests/commands/test_lint.py`, incl. the Phase 150
-   `TestLintSweepAllLanguages`). Exit codes:
-   **0** every document parsed (incl. a run where every path was skipped),
-  **1** at least one document failed to parse or the `mcp` extra is
-  missing (required, like `specmgr diagram`; the decoupling is tracked as
-  issue #238), **2** usage-or-resolution error (no paths and no sweep
-  flag, an unreadable or missing path, an unrecognized layout without
-  `--skip-unrecognized`, `--dir` without `--type` or combined with explicit
-    paths, paths combined with `--all`, an unknown `--type`, `--all`
-     discovering nothing at all -- no document, or a docs-domain file
-     violating the sharded layout — missing language dir, missing shard
-     dir, non-hex shard, deeper than one shard level — reported as a
-     layout violation naming the correct path). Accepted
-   limitation: because the gate is change-scoped, a schema or parser change
-   can break untouched documents without failing any gate — the full sweep
-   (manual, or the follow-up nightly workflow whose issue owns the
-   limitation) finds them.
+  shape — with the `--type` override and `--skip-unrecognized`; the `docs`
+  anchor is a `docs` segment that is the FIRST segment of the path relative
+  to the repo root (nearest `.git` ancestor) or else the working directory,
+  so an ancestor directory merely named `docs` never anchors; a file under a
+  non-domain `docs/<dir>/` (e.g. `docs/archive/`, any depth) is skipped and
+  counted, exit 0 — for a path outside both roots (last-`docs` anchor) only
+  when no other rule matches; used by the `specmgr-lint` pre-commit hook over
+  the staged in-tree artifacts and by the CI pull-request step over the
+  artifacts changed against the base branch), and the `--type T` sweep (from
+  `--dir` if given, else the domain-wide union of every language directory —
+  EN + every variant language dir — for the sharded domains, the registered
+  base directory for `feat`) and the `--all` sweep (the same per-type
+  enumeration) — both CLI-only in the sense that NO hook/CI/test file invokes
+  `specmgr lint` with a sweep flag at shell level (the change-scoped gates
+  lint staged/changed paths only); the sweeps ARE covered in the test suite
+  via in-process Typer-app invocations (`tests/commands/test_lint.py`, incl.
+  the Phase 150 `TestLintSweepAllLanguages`). Exit codes: **0** every
+  document parsed (incl. a run where every path was skipped), **1** at least
+  one document failed to parse or the `mcp` extra is missing (required, like
+  `specmgr diagram`; the decoupling is tracked as issue #238), **2**
+  usage-or-resolution error (no paths and no sweep flag, an unreadable or
+  missing path, an unrecognized layout without `--skip-unrecognized`,
+  `--dir` without `--type` or combined with explicit paths, paths combined
+  with `--all`, an unknown `--type`, `--all` discovering nothing at all — no
+  document) or a docs-domain file violating the sharded layout (missing
+  language dir, missing shard dir, non-hex shard, deeper than one shard
+  level — reported as a layout violation naming the correct path). Accepted
+  limitation: because the gate is change-scoped, a schema or parser change
+  can break untouched documents without failing any gate — the full sweep
+  (manual, or the follow-up nightly workflow whose issue owns the
+  limitation) finds them; the tracked repo tree's sharded shape itself is
+  pinned continuously by `tests/test_repo_doc_layout.py` (feat-245 Phase 180).
 - `specmgr harness-bundle` (feat-167-mcp-lifecycle-commands-2 Phase 130,
   `commands/harness_bundle.py`, `[cli]`-only — no `mcp` import, no server
   import): regenerates the single committed package-data bundle

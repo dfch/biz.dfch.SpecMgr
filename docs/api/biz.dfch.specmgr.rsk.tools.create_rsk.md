@@ -18,7 +18,7 @@ codebase.
 **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/2/5/6).**
 A 1:1 port of ``create_dec``'s ``language``/``id`` handling. ``create_rsk``
 gains two optional parameters, ``language`` (default ``"en"``) and ``id``.
-With ``language`` omitted/``"en"`` the tool is byte-identical to before: it
+With ``language`` omitted/``"en"`` (the default language) the tool
 assigns a fresh id and writes the sharded ``docs/rsk/en/<id[:2]>/<uuid>-<slug>.md`` file
 (and ``id`` must not be given). With a non-default ``language`` the tool
 creates a *translation* of an existing risk: ``id`` -- the shared id of the
@@ -119,7 +119,7 @@ content:
 language:
     The language to create the document in: ``"en"`` (the default)
     creates a new, sharded ``docs/rsk/en/<id[:2]>/<uuid>-<slug>.md`` document with a freshly assigned
-    id -- today's exact behavior; any other ISO 639-1-shaped lowercase
+    id (the default language, ``en``); any other ISO 639-1-shaped lowercase
     two-letter code (e.g. ``"de"``) creates a translation variant of
     an existing EN document in ``docs/rsk/{language}/<id[:2]>/``. Shape-guarded
     (and its heading-mapping table resolved) before any filesystem

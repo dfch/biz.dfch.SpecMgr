@@ -38,7 +38,7 @@ result).
 **Language variants (feat-197-i18n Phase 110, DEC 38efdb66 items 1/6/7).**
 The optional ``language`` parameter (default ``"en"``) selects which
 directory this tool scans: omitted/``"en"`` = the ``docs/dec/en/``
-sharded directory -- today's exact behavior; any other shape-validated code (e.g.
+sharded directory (the default language, ``en``); any other shape-validated code (e.g.
 ``"de"``) = only the ``docs/dec/{language}/`` sharded directory, listing
 exactly the existing variants of that language (ACC-007). There is
 deliberately NO "all languages" mode (the ``DocSummary`` row shape carries
@@ -103,7 +103,7 @@ glob:
 language:
     The language whose directory to list (feat-197-i18n Phase 110, DEC
     38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
-    scans the ``docs/dec/en/`` sharded directory -- today's exact behavior;
+    scans the ``docs/dec/en/`` sharded directory (the default language, ``en``);
     any other ISO 639-1-shaped lowercase two-letter code (e.g.
     ``"de"``) scans only ``docs/dec/{language}/``, listing exactly the
     existing variants of that language (ACC-007). There is deliberately

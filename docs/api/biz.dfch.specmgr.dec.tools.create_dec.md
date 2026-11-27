@@ -17,8 +17,8 @@ codebase.
 
 **Language variants (feat-197-i18n Phase 120, DEC 38efdb66 items 1/2/5/6).**
 ``create_dec`` gains two optional parameters, ``language`` (default
-``"en"``) and ``id``. With ``language`` omitted/``"en"`` the tool is
-byte-identical to before: it assigns a fresh id and writes the sharded
+``"en"``) and ``id``. With ``language`` omitted/``"en"`` (the default language)
+the tool assigns a fresh id and writes the sharded
 ``docs/dec/en/<id[:2]>/<uuid>-<slug>.md`` file (and ``id`` must not be given). With
 a non-default ``language`` the tool creates a *translation* of an existing
 decision: ``id`` -- the shared id of the EN source document (REQ-003, the
@@ -118,7 +118,7 @@ content:
 language:
     The language to create the document in: ``"en"`` (the default)
     creates a new, sharded ``docs/dec/en/<id[:2]>/<uuid>-<slug>.md`` document with a freshly assigned
-    id -- today's exact behavior; any other ISO 639-1-shaped lowercase
+    id (the default language, ``en``); any other ISO 639-1-shaped lowercase
     two-letter code (e.g. ``"de"``) creates a translation variant of
     an existing EN document in ``docs/dec/{language}/<id[:2]>/``. Shape-guarded
     (and its heading-mapping table resolved) before any filesystem

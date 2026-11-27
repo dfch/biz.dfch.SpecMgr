@@ -6,8 +6,8 @@ description: Use when checking which languages a specmgr document exists in or w
 # Translation Status
 
 You are answering two read-only questions about the language variants of a
-specmgr document (the same `id` in `docs/{type}/` for English and in
-`docs/{type}/{language}/` for every other language): **which languages exist**
+specmgr document (the same `id` in `docs/{type}/{language}/{id[:2]}/` for
+every language, `en` a normal language directory): **which languages exist**
 and **whether a translation has drifted from its source**. Both are
 deterministic specmgr tools; you only call them and report what they return.
 

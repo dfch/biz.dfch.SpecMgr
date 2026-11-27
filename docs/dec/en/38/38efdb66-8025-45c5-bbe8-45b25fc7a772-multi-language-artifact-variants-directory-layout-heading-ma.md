@@ -4,7 +4,7 @@ created: '2026-10-30T19:19:11.000+01:00'
 id: 38efdb66-8025-45c5-bbe8-45b25fc7a772
 status: accepted
 type: dec
-updated: '2026-10-30T19:19:11.000+01:00'
+updated: '2026-11-27T12:45:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -138,6 +138,10 @@ GitHub issue #197
 - The `prb` `problem_statement` exemption keeps one sentence English in every language (item 11).
 
 ## Updates
+
+### 2026-11-27T12:45:00.000+01:00 - Item 1 refined by DEC 9abe91e7 (uniform sharded layout)
+
+Item 1's flat-EN location (English directly under `docs/{type}/`) is refined by DEC 9abe91e7-99d2-48ba-9084-6a4da7d1e311 (feat-245-shard-docs, GitHub issue #245): every language, English included, now uses the uniform sharded layout `docs/{type}/{language}/{id[:2]}/{id}-{slug}.md`, `en` being a normal language directory. The remaining items stand unchanged; the variant still takes the EN source's exact basename (item 2), now inside its own language's shard directory.
 
 ### 2026-10-30T19:19:11.000+01:00 - Converted from ADR
 

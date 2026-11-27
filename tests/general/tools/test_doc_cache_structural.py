@@ -225,18 +225,18 @@ class TestAcc008FindDocPathByIdReconcilesForEveryNonFeatDomain(unittest.TestCase
 
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     base_dir = Path(tmp_dir)
-                    # feat-245's shard-only scan: both ids ("id-1"/"id-2") share the two-char shard "id".
-                    shard_dir = base_dir / "id"
+                    # feat-245's shard-only scan: both ids ("ad-1"/"ad-2") share the two-hex shard "ad".
+                    shard_dir = base_dir / "ad"
                     shard_dir.mkdir()
                     template_text = read_packaged_text(domain, "template")
                     kept = shard_dir / "kept.md"
                     dropped = shard_dir / "dropped.md"
-                    kept.write_text(_with_id(template_text, "id-1"), encoding="utf-8")
-                    dropped.write_text(_with_id(template_text, "id-2"), encoding="utf-8")
+                    kept.write_text(_with_id(template_text, "ad-1"), encoding="utf-8")
+                    dropped.write_text(_with_id(template_text, "ad-2"), encoding="utf-8")
 
-                    # Scanning for "id-1" must still touch every candidate file (both are
+                    # Scanning for "ad-1" must still touch every candidate file (both are
                     # warmed), reconciling against the freshly materialized live listing first.
-                    resolved = find_doc_path_by_id(base_dir, "id-1", read_fn, _get_id, reconcile_fn=reconcile_fn)
+                    resolved = find_doc_path_by_id(base_dir, "ad-1", read_fn, _get_id, reconcile_fn=reconcile_fn)
                     self.assertEqual(resolved, kept)
                     entries = cache_singleton._entries  # pylint: disable=protected-access
                     self.assertIn(kept, entries)
@@ -246,7 +246,7 @@ class TestAcc008FindDocPathByIdReconcilesForEveryNonFeatDomain(unittest.TestCase
                     dropped.unlink()
 
                     # The next scan must reconcile the cache against the live listing.
-                    find_doc_path_by_id(base_dir, "id-1", read_fn, _get_id, reconcile_fn=reconcile_fn)
+                    find_doc_path_by_id(base_dir, "ad-1", read_fn, _get_id, reconcile_fn=reconcile_fn)
                     entries = cache_singleton._entries  # pylint: disable=protected-access
                     self.assertIn(kept, entries)
                     self.assertNotIn(dropped, entries)

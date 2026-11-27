@@ -101,8 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `numbered`/`language` + the non-raising `ParseFailureResult` channel,
   `get_set_example`, `get_set_template`, `get_set_schema`; 2 resources:
   `specmgr://set/example`/`specmgr://set/template`; 2 prompts:
-  `create_set`/`update_set`; schema at `set/models/v1/`; flat documents
-  `docs/set/set-{uuid}-{slug}.md`), the `set` entries in every generic
+  `create_set`/`update_set`; schema at `set/models/v1/`; documents in
+  the uniform sharded layout `docs/set/<lang>/<id[:2]>/<uuid>-<slug>.md`
+  of the BREAKING entry under Changed), the `set` entries in every generic
   tool's dispatch table (forced by their import-time asserts), and the
   self-triggering OpenCode skill `specmgr-set` as the host surface (no
   dedicated `/set` command). `set` is the 13th language-aware domain
@@ -171,11 +172,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `<uuid>-<slug>` (`ref` stays opaque and is never an input to
   `get_<d>`); and English moves from `docs/<type>/` into
   `docs/<type>/en/`, retiring DEC
-  38efdb66-8025-45c5-bbe8-45b25fc7a772 item 1's flat-EN special case.
+  38efdb66-8025-45c5-bbe8-45b25fc7a772 item 1's flat-EN special case;
+  accordingly `specmgr://config` now reports each of the thirteen
+  sharded domains' `base_dir` ending in `/en` (the omitted-language
+  directory). Only a shard directory named by exactly two lowercase hex
+  digits is read: a file in any other directory (e.g. `en/zz/`) is as
+  invisible as a flat one.
   The `specmgr lint` gate recognizes the sharded layout and fails with
   exit 2 (naming the correct path) on a file that misses the language
   dir, misses the shard dir, carries a non-hex shard, or sits deeper
-  than one shard level. Id resolution is shard-narrowed with a
+  than one shard level; path mode also recognizes the sharded shape
+  under a docs root of any name (`specdocs/req/en/ab/x.md`, the parse
+  language taken from that position) and takes its `docs` anchor
+  relative to the repo root or working directory, so an ancestor
+  directory merely named `docs` never anchors. Id resolution is shard-narrowed with a
   per-language full-listing fallback, and the 76 in-repo documents
   migrated in the same change (feat-245-shard-docs, GitHub issue #245).
 

@@ -80,14 +80,14 @@ class TestLoadById(unittest.TestCase):
         """load_by_id must return both the resolved path and the parsed document."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            expected_path = base / "th" / "doc.md"
+            expected_path = base / "ef" / "doc.md"
             expected_path.parent.mkdir()
-            expected_path.write_text(_tsk_text("the-id"), encoding="utf-8")
+            expected_path.write_text(_tsk_text("ef-the-id"), encoding="utf-8")
 
-            path, document = load_by_id(base, "the-id")
+            path, document = load_by_id(base, "ef-the-id")
 
             self.assertEqual(path, expected_path)
-            self.assertEqual(document.frontmatter.id, "the-id")
+            self.assertEqual(document.frontmatter.id, "ef-the-id")
 
     def test_raises_not_found_for_unknown_id(self):
         """load_by_id must raise TskNotFoundError for an id with no matching file."""

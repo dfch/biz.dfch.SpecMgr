@@ -164,17 +164,17 @@ class TestFindRskPath(unittest.TestCase):
         """A file whose frontmatter.id matches must be returned."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "ta").mkdir(parents=True)
-            path = base / "ta" / "target.md"
-            path.write_text(_rsk_text("target-id"), encoding="utf-8")
-            self.assertEqual(find_rsk_path(base, "target-id"), path)
+            (base / "ab").mkdir(parents=True)
+            path = base / "ab" / "target.md"
+            path.write_text(_rsk_text("ab-target-id"), encoding="utf-8")
+            self.assertEqual(find_rsk_path(base, "ab-target-id"), path)
 
     def test_raises_not_found_for_unknown_id(self):
         """An id with no matching file must raise RskNotFoundError with the standardized message."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "on").mkdir(parents=True)
-            (base / "on" / "one.md").write_text(_rsk_text("one-id"), encoding="utf-8")
+            (base / "0e").mkdir(parents=True)
+            (base / "0e" / "one.md").write_text(_rsk_text("one-id"), encoding="utf-8")
             with self.assertRaises(RskNotFoundError) as ctx:
                 find_rsk_path(base, "missing-id")
             message = str(ctx.exception)
@@ -187,12 +187,12 @@ class TestFindRskPath(unittest.TestCase):
         """A file that fails to parse must not prevent finding a different, valid id."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "br").mkdir(parents=True)
-            (base / "br" / "broken.md").write_text("not a valid risk file at all, no headings", encoding="utf-8")
-            (base / "go").mkdir(parents=True)
-            good_path = base / "go" / "good.md"
-            good_path.write_text(_rsk_text("good-id"), encoding="utf-8")
-            self.assertEqual(find_rsk_path(base, "good-id"), good_path)
+            (base / "b0").mkdir(parents=True)
+            (base / "b0" / "broken.md").write_text("not a valid risk file at all, no headings", encoding="utf-8")
+            (base / "cd").mkdir(parents=True)
+            good_path = base / "cd" / "good.md"
+            good_path.write_text(_rsk_text("cd-good-id"), encoding="utf-8")
+            self.assertEqual(find_rsk_path(base, "cd-good-id"), good_path)
 
 
 if __name__ == "__main__":

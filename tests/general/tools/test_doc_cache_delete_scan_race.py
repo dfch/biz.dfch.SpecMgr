@@ -148,14 +148,14 @@ class TestAcc016FindDocPathByIdSkipsAFileThatVanishesMidScan(unittest.TestCase):
 
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     base_dir = Path(tmp_dir)
-                    # feat-245's shard-only scan: each file in its id's own shard ("ta"/"vi").
+                    # feat-245's shard-only scan: each file in its id's own shard ("ab"/"cd").
                     template_text = read_packaged_text(domain, "template")
-                    target = base_dir / "ta" / "a-target.md"
-                    victim = base_dir / "vi" / "b-victim.md"
+                    target = base_dir / "ab" / "a-target.md"
+                    victim = base_dir / "cd" / "b-victim.md"
                     target.parent.mkdir(parents=True)
                     victim.parent.mkdir(parents=True)
-                    target.write_text(_with_id(template_text, "target-id"), encoding="utf-8")
-                    victim.write_text(_with_id(template_text, "victim-id"), encoding="utf-8")
+                    target.write_text(_with_id(template_text, "ab-target-id"), encoding="utf-8")
+                    victim.write_text(_with_id(template_text, "cd-victim-id"), encoding="utf-8")
 
                     def _vanish_then_read(path: Path, _victim: Path = victim, _real: Any = real_read_fn) -> Any:
                         if path == _victim:
@@ -163,7 +163,7 @@ class TestAcc016FindDocPathByIdSkipsAFileThatVanishesMidScan(unittest.TestCase):
                         return _real(path)
 
                     resolved = find_doc_path_by_id(
-                        base_dir, "target-id", _vanish_then_read, _get_id, reconcile_fn=reconcile_fn
+                        base_dir, "ab-target-id", _vanish_then_read, _get_id, reconcile_fn=reconcile_fn
                     )
                     self.assertEqual(resolved, target)
 
@@ -191,15 +191,15 @@ class TestAcc017LoadByIdTranslatesAVanishedSecondRead(unittest.TestCase):
 
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     base_dir = Path(tmp_dir)
-                    # feat-245's shard-only scan: the file in its id's own shard ("ta").
+                    # feat-245's shard-only scan: the file in its id's own shard ("ab").
                     template_text = read_packaged_text(domain, "template")
-                    path = base_dir / "ta" / "a.md"
+                    path = base_dir / "ab" / "a.md"
                     path.parent.mkdir(parents=True)
-                    path.write_text(_with_id(template_text, "target-id"), encoding="utf-8")
+                    path.write_text(_with_id(template_text, "ab-target-id"), encoding="utf-8")
 
                     with mock.patch.object(io_module, f"read_{domain}", side_effect=FileNotFoundError("vanished")):
                         with self.assertRaises(not_found_error) as ctx:
-                            io_module.load_by_id(base_dir, "target-id")
+                            io_module.load_by_id(base_dir, "ab-target-id")
                     self.assertIn("could not be read", str(ctx.exception))
 
 
@@ -227,16 +227,16 @@ class TestAcc018ListDomainSilentlyOmitsAVanishedFile(unittest.TestCase):
                     docs_root = Path(tmp_dir)
                     with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(docs_root)}):
                         # feat-245: the list tool scans the domain's sharded ``en/`` directory, each
-                        # file in its id's own shard ("ke"/"va").
+                        # file in its id's own shard ("ef"/"0a").
                         base_dir = docs_root / domain / "en"
                         base_dir.mkdir(parents=True)
                         template_text = read_packaged_text(domain, "template")
-                        kept = base_dir / "ke" / "a-kept.md"
-                        vanished = base_dir / "va" / "b-vanished.md"
+                        kept = base_dir / "ef" / "a-kept.md"
+                        vanished = base_dir / "0a" / "b-vanished.md"
                         kept.parent.mkdir(parents=True)
                         vanished.parent.mkdir(parents=True)
-                        kept.write_text(_with_id(template_text, "kept-id"), encoding="utf-8")
-                        vanished.write_text(_with_id(template_text, "vanished-id"), encoding="utf-8")
+                        kept.write_text(_with_id(template_text, "ef-kept-id"), encoding="utf-8")
+                        vanished.write_text(_with_id(template_text, "0a-vanished-id"), encoding="utf-8")
 
                         def _vanish_then_read(path: Path, _vanished: Path = vanished, _real: Any = real_read_fn) -> Any:
                             if path == _vanished:
@@ -250,7 +250,7 @@ class TestAcc018ListDomainSilentlyOmitsAVanishedFile(unittest.TestCase):
                         self.assertEqual(sut.total, 1)
                         self.assertEqual(sut.error_count, 0)
                         ids = {summary.id for summary in sut.results}
-                        self.assertEqual(ids, {"kept-id"})
+                        self.assertEqual(ids, {"ef-kept-id"})
 
 
 if __name__ == "__main__":

@@ -230,27 +230,27 @@ class TestFindDocPathById(unittest.TestCase):
         the id, feat-245's fast path)."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            path = base / "ta" / "target-id.md"
+            path = base / "ab" / "ab-target-id.md"
             path.parent.mkdir(parents=True)
-            path.write_text("target-id", encoding="utf-8")
-            self.assertEqual(find_doc_path_by_id(base, "target-id", _read_fake, _get_id), path)
+            path.write_text("ab-target-id", encoding="utf-8")
+            self.assertEqual(find_doc_path_by_id(base, "ab-target-id", _read_fake, _get_id), path)
 
     def test_a_document_in_the_wrong_shard_is_still_found_by_the_fallback(self):
         """REQ-004: a file whose shard dir disagrees with its id is still resolved through the
         full sharded-listing fallback (the filesystem remains the sole source of truth)."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            path = base / "ff" / "target-id.md"  # the id "target-id" wants shard "ta"
+            path = base / "ff" / "ab-target-id.md"  # the id "ab-target-id" wants shard "ab"
             path.parent.mkdir(parents=True)
-            path.write_text("target-id", encoding="utf-8")
-            self.assertEqual(find_doc_path_by_id(base, "target-id", _read_fake, _get_id), path)
+            path.write_text("ab-target-id", encoding="utf-8")
+            self.assertEqual(find_doc_path_by_id(base, "ab-target-id", _read_fake, _get_id), path)
 
     def test_raises_not_found_for_unknown_id(self):
         """An id with no matching file must raise DocNotFoundError with the standardized message."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "on" / "one-id.md").parent.mkdir(parents=True)
-            (base / "on" / "one-id.md").write_text("one-id", encoding="utf-8")
+            (base / "0e" / "one-id.md").parent.mkdir(parents=True)
+            (base / "0e" / "one-id.md").write_text("one-id", encoding="utf-8")
             with self.assertRaises(DocNotFoundError) as ctx:
                 find_doc_path_by_id(base, "missing-id", _read_fake, _get_id)
             message = str(ctx.exception)
@@ -269,11 +269,11 @@ class TestFindDocPathById(unittest.TestCase):
         id's own shard, so the fast path exercises the skip)."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "go" / "broken.md").parent.mkdir(parents=True)
-            (base / "go" / "broken.md").write_text("BROKEN", encoding="utf-8")
-            good_path = base / "go" / "good-id.md"
-            good_path.write_text("good-id", encoding="utf-8")
-            self.assertEqual(find_doc_path_by_id(base, "good-id", _read_fake, _get_id), good_path)
+            (base / "cd" / "broken.md").parent.mkdir(parents=True)
+            (base / "cd" / "broken.md").write_text("BROKEN", encoding="utf-8")
+            good_path = base / "cd" / "cd-good-id.md"
+            good_path.write_text("cd-good-id", encoding="utf-8")
+            self.assertEqual(find_doc_path_by_id(base, "cd-good-id", _read_fake, _get_id), good_path)
 
     def test_is_generic_over_doc_type_via_parse_and_get_id_functions(self):
         """A different read_fn/get_id_fn pair must work independently (no cross-domain coupling)."""
@@ -290,34 +290,36 @@ class TestFindDocPathById(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            path = base / "ot" / "other-id.md"
+            path = base / "ef" / "ef-other-id.md"
             path.parent.mkdir(parents=True)
-            path.write_text("other-id", encoding="utf-8")
-            self.assertEqual(find_doc_path_by_id(base, "other-id", _read_other, _get_other_id), path)
+            path.write_text("ef-other-id", encoding="utf-8")
+            self.assertEqual(find_doc_path_by_id(base, "ef-other-id", _read_other, _get_other_id), path)
 
     def test_reconcile_fn_is_called_with_the_materialized_live_path_listing_before_any_per_file_work(self):
         """`reconcile_fn`, when given, is invoked once with the full live path listing."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            path = base / "ta" / "target-id.md"
+            path = base / "ab" / "ab-target-id.md"
             path.parent.mkdir(parents=True)
-            path.write_text("target-id", encoding="utf-8")
+            path.write_text("ab-target-id", encoding="utf-8")
             calls: list[list[Path]] = []
 
             def _reconcile(live_paths):
                 calls.append(list(live_paths))
 
-            self.assertEqual(find_doc_path_by_id(base, "target-id", _read_fake, _get_id, reconcile_fn=_reconcile), path)
+            self.assertEqual(
+                find_doc_path_by_id(base, "ab-target-id", _read_fake, _get_id, reconcile_fn=_reconcile), path
+            )
             self.assertEqual(calls, [[path]])
 
     def test_reconcile_fn_defaults_to_none_and_is_never_called_if_omitted(self):
         """Omitting `reconcile_fn` must not raise -- it defaults to a no-op (None)."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            path = base / "ta" / "target-id.md"
+            path = base / "ab" / "ab-target-id.md"
             path.parent.mkdir(parents=True)
-            path.write_text("target-id", encoding="utf-8")
-            self.assertEqual(find_doc_path_by_id(base, "target-id", _read_fake, _get_id), path)
+            path.write_text("ab-target-id", encoding="utf-8")
+            self.assertEqual(find_doc_path_by_id(base, "ab-target-id", _read_fake, _get_id), path)
 
 
 class TestFindParseFailure(unittest.TestCase):

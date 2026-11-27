@@ -55,6 +55,14 @@ adapter does not catch it); an I/O failure during the actual
 re-raised as :class:`DeleteError` carrying the resolved path and the
 underlying ``OSError`` as ``__cause__``.
 
+Empty directories left behind (feat-245 Phase 180, I2 -- documented, not
+pruned): deleting the last document of a shard (or of a language) leaves
+the empty ``docs/<type>/<lang>/<shard>/`` (or ``<lang>/``) directory in
+place. That is expected and harmless: git does not track empty
+directories, every read path treats an empty directory as no files, and
+pruning would race a concurrent ``create_<d>`` of a DIFFERENT id in the
+same shard (the locks are per id, not per shard).
+
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
 to the builtin shadow.
@@ -600,7 +608,9 @@ def delete(
     except ``feat``) removes its single
     ``*.md`` file; ``feat`` removes its entire ``<base>/<id>/`` folder
     (``README.md``, any ``history.md``, any session transcripts --
-    folder-per-document, DEC 8cf940c5).
+    folder-per-document, DEC 8cf940c5). An emptied shard or language
+    directory is left in place (expected and harmless -- see the module
+    docstring; pruning would race a concurrent create in the same shard).
 
     The ``id`` is validated before any filesystem access: a path-injection
     attempt (``/``, ``\\``, or ``..``) or a wrong-format id (not a canonical

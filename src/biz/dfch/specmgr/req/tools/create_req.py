@@ -35,7 +35,7 @@ state, never an independent fact.
 **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/2/5/6).**
 A 1:1 port of ``create_dec``'s ``language``/``id`` handling. ``create_req``
 gains two optional parameters, ``language`` (default ``"en"``) and ``id``.
-With ``language`` omitted/``"en"`` the tool is byte-identical to before: it
+With ``language`` omitted/``"en"`` (the default language) the tool
 assigns a fresh id and writes the sharded ``docs/req/en/<id[:2]>/<uuid>-<slug>.md`` file
 (and ``id`` must not be given). With a non-default ``language`` the tool
 creates a *translation* of an existing requirement: ``id`` -- the shared id of the
@@ -57,7 +57,7 @@ import uuid
 
 from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import sharded_doc_path, slugify
+from ...general.tools._doc_paths import sharded_doc_path, sharded_variant_path, slugify
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language, validate_id
 from ...general.tools._timestamps import now_timestamp
 from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
@@ -90,7 +90,7 @@ from ._write import write_req_file
         "afterward. "
         "The optional `language` parameter (default 'en', feat-197-i18n) selects the language to create "
         "the document in: omitted/'en' = a new docs/req/en/<id[:2]>/<uuid>-<slug>.md document with a fresh "
-        "id, exactly the default behavior (`id` must then be omitted); a non-default ISO 639-1-shaped "
+        "id, the default language (`id` must then be omitted); a non-default ISO 639-1-shaped "
         "lowercase two-letter code "
         "(e.g. 'de') creates a TRANSLATION of an existing requirement instead: "
         "`id` -- the shared id of the "
@@ -157,7 +157,7 @@ def create_req(  # pylint: disable=too-many-locals
     language:
         The language to create the document in: ``"en"`` (the default)
         creates a new, sharded ``docs/req/en/<id[:2]>/<uuid>-<slug>.md`` document with a freshly assigned
-        id -- today's exact behavior; any other ISO 639-1-shaped lowercase
+        id (the default language, ``en``); any other ISO 639-1-shaped lowercase
         two-letter code (e.g. ``"de"``) creates a translation variant of
         an existing EN document in ``docs/req/{language}/<id[:2]>/``. Shape-guarded
         (and its heading-mapping table resolved) before any filesystem
@@ -292,8 +292,7 @@ def _create_variant(id_: str, language: str, content: str) -> ReqFrontmatter:
                 f"A language variant requires its {DEFAULT_LANGUAGE!r} source "
                 f"-- create the {DEFAULT_LANGUAGE!r} document first, and pass its id."
             ) from ex
-        slug = source_path.name.removeprefix(f"{id_}-").removesuffix(".md")
-        path = sharded_doc_path(ensure_req_base_dir(language), id_, slug)
+        path = sharded_variant_path(ensure_req_base_dir(language), source_path, id_)
         if path.exists():
             raise FileExistsError(
                 f"the {language!r} variant of req {id_!r} already exists at {path}; "

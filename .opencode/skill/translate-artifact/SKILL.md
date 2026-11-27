@@ -7,8 +7,10 @@ description: Use when translating a specmgr document into another language or br
 
 You are producing, or updating, a language variant of a specmgr document: the
 same `id`, the same schema, only the prose (and the fixed-text heading text,
-through the language's heading table) differs. Variants live under
-`docs/{type}/{language}/` with the EN source's exact file name. Translating is
+through the language's heading table) differs. Every language, English
+included, lives under `docs/{type}/{language}/{id[:2]}/` (`en` is a normal
+language directory); a variant takes the EN source's exact file name in its
+own language's shard directory. Translating is
 your judgment work around deterministic specmgr tools; no specmgr tool
 translates for you.
 

@@ -33,8 +33,9 @@ precisely the masking that hid the feat-214 defect for three consecutive
 commits. The content parse of a sharded ``docs/<type>/<lang>/<shard>/``
 file is LANGUAGE-AWARE (feat-245 Phase 120): the language is the path's
 own shape-valid language dir (``en`` = the canonical parse, byte-
-identical to today's EN path) -- derived from the literal ``docs``
-anchor in path mode, and POSITION-RELATIVE to the domain's configured
+identical to today's EN path) -- derived from the ``docs`` anchor or,
+root-name-independently, the sharded shape's own position in path mode
+(feat-245 Phase 180, G2), and POSITION-RELATIVE to the domain's configured
 base directory in sweep mode (root-name-independent: the sweep
 behaves identically under any ``SPECMGR_DOCS_DIR`` root, not only one
 named ``docs`` -- feat-245 Phase 160, D9) -- and a shape-valid language
@@ -48,13 +49,24 @@ the size of the corpus (REQ-004):
 
 * **Path mode** -- explicit ``PATHS`` on the command line. Each path's
   type is inferred from the path layout ALONE (REQ-005), independent of
-  every ``SPECMGR_*_DIR`` variable, with three rules, in order: the
-  sharded valid shape ``docs/<type>/<lang>/<2-hex-shard>/<file>.md``
-  (``type`` one of the thirteen UUID domains -- feat-245 Phase 120,
-  REQ-006); the containing directory named after a type (a non-docs-
+  every ``SPECMGR_*_DIR`` variable, with four rules, in order: the
+  docs-anchored sharded valid shape ``docs/<type>/<lang>/<2-hex-shard>/
+  <file>.md`` (``type`` one of the thirteen UUID domains -- feat-245
+  Phase 120, REQ-006); the root-name-independent sharded shape
+  ``<type>/<lang>/<2-hex>/<file>.md`` by shape alone, under a docs root
+  of ANY name (``specdocs/req/en/ab/x.md`` -- feat-245 Phase 180, G2;
+  the path-mode parse language is derived from that same position, so a
+  table-closed variant parses with its own table, also under
+  ``--type``); the containing directory named after a type (a non-docs-
   anchored position, e.g. ``<base>/req/x.md``); the ``feat/<id>/
   README.md`` shape (unchanged for every position, ``docs/<feat>``
-  anchored included). ``--type`` overrides inference for the parse, but
+  anchored included). The ``docs`` anchor (feat-245 Phase 180, E2) is a
+  ``docs`` segment that is the FIRST segment of the path relative to
+  its root -- the repo root (the nearest ancestor holding ``.git``),
+  else the working directory -- so an ancestor directory that merely
+  happens to be named ``docs`` never anchors; a path outside both keeps
+  the last-``docs`` anchor, and its non-domain skip applies only when no
+  other rule matches. ``--type`` overrides inference for the parse, but
   it never rescues a misplaced ``docs/<type>/`` file -- the placement
   violation stands. A file anchored under ``docs/<uuid-domain>/`` that
   misses the sharded placement (missing language dir, missing or
@@ -83,8 +95,9 @@ the size of the corpus (REQ-004):
   is derived POSITION-RELATIVE to the domain's configured base
   directory (``language_for_doc_path`` over ``doc_domain_base_dir`` --
   root-name-independent, Phase 160, D9: the sweep behaves identically
-  under any ``SPECMGR_DOCS_DIR`` root; path mode keeps its literal-
-  ``docs``-anchor derivation, unchanged). ``--type T`` against an empty
+  under any ``SPECMGR_DOCS_DIR`` root; path mode derives it from the
+  path's own docs anchor or sharded-shape position, root-name-
+  independent too since Phase 180, G2). ``--type T`` against an empty
   or missing base directory exits 0 with a 0-document summary: a
   registered-but-empty domain is not a misconfiguration.
 * **All sweep** -- ``--all`` sweeps every registered type, each with
@@ -188,22 +201,38 @@ _UUID_PATTERN = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-
 #: ``general.tools._path_safety.LANGUAGE_PATTERN``, fullmatch
 #: ``^[a-z]{2}$`` -- the open set the shape guard passes; whether the
 #: language carries a packaged heading table is the CONTENT error's
-#: business, never the placement's).
+#: business, never the placement's). An import-safe mirror (no module-level
+#: specmgr import, see the module docstring), drift-pinned to its source by
+#: ``tests/commands/test_lint.py`` (feat-245 Phase 180, S2).
 _LANG_DIR_PATTERN = re.compile(r"^[a-z]{2}$")
 
-#: The shard-dir shape the sharded placement requires: two lowercase hex
-#: digits (a document uuid's first two characters -- uuid digits are
-#: hex; ``general.tools._doc_paths.SHARD_DIGITS``).
-_SHARD_DIR_PATTERN = re.compile(r"^[0-9a-f]{2}$")
+#: The shard width (the import-safe mirror of ``general.tools._doc_paths.
+#: SHARD_DIGITS``, drift-pinned to it by ``tests/commands/test_lint.py`` --
+#: feat-245 Phase 180, S2): the ONE constant both the shard-dir shape
+#: (:data:`_SHARD_DIR_PATTERN`) and a layout violation's concrete correct
+#: path (:func:`_correct_sharded_path`) derive from, so validation and
+#: correction cannot disagree.
+_SHARD_DIGITS = 2
+
+#: The shard-dir shape the sharded placement requires: exactly
+#: :data:`_SHARD_DIGITS` lowercase hex digits (a document uuid's first
+#: characters -- uuid digits are hex), derived from the mirrored constant.
+_SHARD_DIR_PATTERN = re.compile(rf"^[0-9a-f]{{{_SHARD_DIGITS}}}$")
 
 #: The placeholder a layout violation's correct path uses for the shard
 #: when the file name carries no canonical uuid to make it concrete.
 _SHARD_PLACEHOLDER = "<2-hex-shard>"
 
-#: The default language dir (``general.models.heading_table.
-#: DEFAULT_LANGUAGE``): the fallback a correct path names when the
-#: misplaced file's own path carries no shape-valid language dir.
+#: The default language dir (the import-safe mirror of ``general.models.
+#: heading_table.DEFAULT_LANGUAGE``, drift-pinned to it -- feat-245 Phase
+#: 180, S2): the fallback a correct path names when the misplaced file's
+#: own path carries no shape-valid language dir.
 _DEFAULT_LANGUAGE = "en"
+
+#: The name of the version-control marker whose nearest ancestor directory
+#: is the repo root a docs anchor is taken relative to (feat-245 Phase 180,
+#: E2): a ``.git`` directory, or the ``.git`` file of a worktree.
+_REPO_ROOT_MARKER = ".git"
 
 
 @dataclass(frozen=True)
@@ -224,10 +253,6 @@ class _RegistryBacked:
             UUID_DOMAINS``) -- the domains the sharded placement
             validates (feat-245 Phase 120, REQ-006; ``feat`` keeps its
             folder shape and is never placement-validated).
-        shard_digits:
-            The shard width (``general.tools._doc_paths.SHARD_DIGITS``):
-            a layout violation's concrete correct path takes the shard
-            from the file-name uuid's first ``shard_digits`` characters.
         whole_body_domain:
             The name -> ``WholeBodyDomain`` registry lookup (``general.
             tools._domains.whole_body_domain``) -- the source of each
@@ -259,7 +284,6 @@ class _RegistryBacked:
     feat: str
     all_domains: tuple[str, ...]
     uuid_domains: tuple[str, ...]
-    shard_digits: int
     whole_body_domain: Callable[[str], Any]
     domain_base_dir: Callable[[str], Path]
     iter_all_languages: Callable[[Path], Iterator[Path]]
@@ -287,9 +311,9 @@ class _WorkItem:
         sweep:
             ``True`` for sweep-enumerated items, ``False`` for user-named
             path-mode items (Task 160.100, D9): the two modes derive the
-            parse language differently -- path mode over the literal
-            ``docs`` anchor (:func:`_parse_language`, unchanged), the
-            sweep position-relative to the configured domain base
+            parse language differently -- path mode from the path's own
+            docs anchor or sharded-shape position (:func:`_parse_language`),
+            the sweep position-relative to the configured domain base
             (:func:`_sweep_parse_language`, root-name-independent).
     """
 
@@ -367,7 +391,6 @@ def _registry_backed() -> _RegistryBacked:
     """
     from ..general.models.validate_result import _CAUGHT_EXCEPTIONS  # noqa: PLC0415
     from ..general.tools._doc_paths import (  # noqa: PLC0415
-        SHARD_DIGITS,
         doc_domain_base_dir,
         iter_doc_paths_all_languages,
         language_for_doc_path,
@@ -378,7 +401,6 @@ def _registry_backed() -> _RegistryBacked:
         feat=FEAT,
         all_domains=ALL_DOMAINS,
         uuid_domains=UUID_DOMAINS,
-        shard_digits=SHARD_DIGITS,
         whole_body_domain=whole_body_domain,
         domain_base_dir=doc_domain_base_dir,
         iter_all_languages=iter_doc_paths_all_languages,
@@ -415,21 +437,61 @@ def _is_feat_folder_shape(path: Path, reg: _RegistryBacked) -> bool:
     return result
 
 
+def _anchor_root(path: Path) -> Path | None:
+    """The root a path's docs anchor is taken relative to (feat-245 Phase 180, E2), or ``None``.
+
+    The repo root -- the nearest ancestor directory of the (resolved) path
+    that holds a ``.git`` entry (:data:`_REPO_ROOT_MARKER`; a directory,
+    or a worktree's ``.git`` file) -- else the working directory when the
+    path lies under it, else ``None`` (an un-rooted path: no root to
+    anchor against). Anchoring relative to a root is what keeps an
+    ANCESTOR directory that happens to be named ``docs`` (``/home/u/docs/
+    repo/...``) from being taken for the repo's own ``docs/`` tree.
+
+    Args:
+        path: The document's path (as given; relative to the working
+            directory or absolute).
+
+    Returns:
+        The anchor root, or ``None`` for an un-rooted path.
+    """
+    assert isinstance(path, Path), type(path)
+    resolved = path.resolve()
+    for ancestor in resolved.parents:
+        if (ancestor / _REPO_ROOT_MARKER).exists():
+            result: Path | None = ancestor
+            return result
+    cwd = Path.cwd().resolve()
+    if resolved.is_relative_to(cwd):
+        result = cwd
+        return result
+    result = None
+    return result
+
+
 def _docs_layout(path: Path) -> tuple[str, tuple[str, ...]] | None:
-    """The path's docs anchor: the first segment under the last ``docs`` dir, plus the dir
+    """The path's docs anchor: the first segment under the anchoring ``docs`` dir, plus the dir
     segments between it and the file.
 
-    The placement classifier's own anchor (feat-245 Phase 120, REQ-006):
-    a path is docs-anchored when it carries a segment named ``docs``
-    with at least one directory and the file after it
-    (``docs/<dir>/…/<file>``). A file directly under a ``docs``
-    directory (``docs/x.md``) is NOT anchored -- it keeps the legacy
-    inference rules. The LAST ``docs`` segment anchors (the repo-root
-    ``docs/`` in a relative path, the same directory spelled in an
-    absolute one). The second slot is the tuple of DIRECTORY segments
-    between the anchored directory and the file: ``()`` for a file
-    directly in the anchored directory, ``(lang, shard)`` for the valid
-    sharded placement, longer for the misplaced depths.
+    The placement classifier's own anchor (feat-245 Phase 120, REQ-006;
+    re-anchored in Phase 180, E2): a path is docs-anchored when it carries
+    a ``docs`` directory segment with at least one directory and the file
+    after it (``docs/<dir>/…/<file>``). Which ``docs`` segment anchors
+    (Phase 180, E2): for a ROOTED path (:func:`_anchor_root` -- the repo
+    root, else the working directory) only a ``docs`` segment that is the
+    FIRST segment of the path relative to that root -- an ancestor of the
+    root that happens to be named ``docs`` never anchors (before Phase 180
+    the LAST ``docs`` segment of the path anchored, so ``/home/u/docs/repo/
+    .specmgr/feat/feat-1-x/README.md`` was anchored to ``repo`` and
+    silently skipped). For an UN-ROOTED path (outside any repo and outside
+    the working directory) the last ``docs`` segment anchors as before, and
+    the gate applies the non-domain skip to it only when no other
+    inference rule matches (see :func:`_is_rooted`). A file directly under
+    a ``docs`` directory (``docs/x.md``) is NOT anchored -- it keeps the
+    legacy inference rules. The second slot is the tuple of DIRECTORY
+    segments between the anchored directory and the file: ``()`` for a
+    file directly in the anchored directory, ``(lang, shard)`` for the
+    valid sharded placement, longer for the misplaced depths.
 
     Args:
         path: The document's path (as given).
@@ -439,11 +501,75 @@ def _docs_layout(path: Path) -> tuple[str, tuple[str, ...]] | None:
         ``None`` when the path is not docs-anchored.
     """
     assert isinstance(path, Path), type(path)
+    root = _anchor_root(path)
+    if root is not None:
+        parts = path.resolve().relative_to(root).parts
+        if len(parts) >= 3 and parts[0] == "docs":
+            result: tuple[str, tuple[str, ...]] | None = (parts[1], tuple(parts[2:-1]))
+            return result
+        result = None
+        return result
     parts = path.parts
     for index in range(len(parts) - 3, -1, -1):
         if parts[index] == "docs":
-            result: tuple[str, tuple[str, ...]] | None = (parts[index + 1], tuple(parts[index + 2 : -1]))
+            result = (parts[index + 1], tuple(parts[index + 2 : -1]))
             return result
+    result = None
+    return result
+
+
+def _is_rooted(path: Path) -> bool:
+    """Whether the path's docs anchor (if any) is taken relative to a root (feat-245 Phase 180, E2).
+
+    A rooted anchor is trustworthy: a file under a rooted ``docs/<dir>/``
+    with a non-domain ``<dir>`` is skipped unconditionally (the real
+    ``docs/archive/sop/README.md`` stays skipped even though its parent is
+    named after a type). An un-rooted (last-``docs``) anchor may be an
+    unrelated ancestor, so the gate skips such a file only when no other
+    inference rule matches.
+
+    Args:
+        path: The document's path (as given).
+
+    Returns:
+        ``True`` when :func:`_anchor_root` finds a root for the path.
+    """
+    assert isinstance(path, Path), type(path)
+    result = _anchor_root(path) is not None
+    return result
+
+
+def _sharded_shape(path: Path, reg: _RegistryBacked) -> tuple[str, str] | None:
+    """The root-name-independent sharded shape ``<domain>/<lang>/<2-hex>/<file>.md`` (feat-245 Phase 180, G2).
+
+    Matches the path's last four segments by SHAPE alone -- the domain
+    name one of the registry's thirteen UUID domains, the language dir a
+    shape-valid two-letter code, the shard dir exactly
+    :data:`_SHARD_DIGITS` lowercase hex characters, a ``.md`` file --
+    independent of what the docs root is NAMED (``specdocs/req/en/ab/
+    x.md`` matches like ``docs/req/en/ab/x.md``): the root-name-
+    independence principle of the Phase 160 D9 decision, extended to path
+    mode.
+
+    Args:
+        path: The document's path.
+        reg: The registry-backed names (the UUID-domain set).
+
+    Returns:
+        ``(domain, language)`` when the shape matches, ``None`` otherwise.
+    """
+    assert isinstance(path, Path), type(path)
+    assert isinstance(reg, _RegistryBacked), type(reg)
+    parts = path.parts
+    if (
+        len(parts) >= 4
+        and path.suffix == ".md"
+        and parts[-4] in reg.uuid_domains
+        and _LANG_DIR_PATTERN.fullmatch(parts[-3]) is not None
+        and _SHARD_DIR_PATTERN.fullmatch(parts[-2]) is not None
+    ):
+        result: tuple[str, str] | None = (parts[-4], parts[-3])
+        return result
     result = None
     return result
 
@@ -497,13 +623,12 @@ def _placement_defect(inner: tuple[str, ...]) -> str | None:
     return result
 
 
-def _correct_sharded_path(
-    doc_type: str, inner: tuple[str, ...], file_name: str, doc_id: str | None, reg: _RegistryBacked
-) -> str:
+def _correct_sharded_path(doc_type: str, inner: tuple[str, ...], file_name: str, doc_id: str | None) -> str:
     """The path a misplaced file SHOULD live at (feat-245 REQ-006): the sharded shape under the file's own domain.
 
     Concrete when the file name carries a canonical uuid (the shard is
-    the uuid's first ``shard_digits`` characters, the file name kept
+    the uuid's first :data:`_SHARD_DIGITS` characters -- the same mirrored
+    constant :data:`_SHARD_DIR_PATTERN` is derived from -- the file name kept
     verbatim), shape-level (the ``<2-hex-shard>`` placeholder)
     otherwise. The language is the misplaced path's own shape-valid
     language dir (a ``de/foo.md``-shaped miss keeps ``de``), or the
@@ -515,7 +640,6 @@ def _correct_sharded_path(
         file_name: The file's own name (kept verbatim).
         doc_id: The file-name-derived id (``None`` when the name
             carries no canonical uuid).
-        reg: The registry-backed names (the shard width).
 
     Returns:
         The correct path (``docs/<type>/<lang>/<shard>/<file>.md``).
@@ -524,12 +648,11 @@ def _correct_sharded_path(
     assert isinstance(inner, tuple), type(inner)
     assert isinstance(file_name, str), type(file_name)
     assert doc_id is None or isinstance(doc_id, str), type(doc_id)
-    assert isinstance(reg, _RegistryBacked), type(reg)
     language = inner[0] if inner and _LANG_DIR_PATTERN.fullmatch(inner[0]) is not None else _DEFAULT_LANGUAGE
     if doc_id is None:
         result = f"docs/{doc_type}/{language}/{_SHARD_PLACEHOLDER}/{file_name}"
     else:
-        result = f"docs/{doc_type}/{language}/{doc_id[: reg.shard_digits]}/{file_name}"
+        result = f"docs/{doc_type}/{language}/{doc_id[:_SHARD_DIGITS]}/{file_name}"
     return result
 
 
@@ -559,7 +682,7 @@ def _layout_violation(doc_type: str, path: Path, reg: _RegistryBacked) -> _Layou
             path=path,
             doc_type=doc_type,
             kind=defect,
-            correct_path=_correct_sharded_path(doc_type, inner, path.name, _derive_id(doc_type, path, reg), reg),
+            correct_path=_correct_sharded_path(doc_type, inner, path.name, _derive_id(doc_type, path, reg)),
         )
     return result
 
@@ -567,16 +690,21 @@ def _layout_violation(doc_type: str, path: Path, reg: _RegistryBacked) -> _Layou
 def _infer_type(path: Path, reg: _RegistryBacked) -> str | None:
     """The document type from the path layout ALONE (REQ-005).
 
-    Three rules, in order: (1) the sharded valid shape
+    Four rules, in order: (1) the docs-anchored sharded valid shape
     ``docs/<type>/<lang>/<2-hex>/<file>.md`` (``type`` one of the
     thirteen UUID domains -- feat-245 Phase 120, REQ-006); a
     docs-anchored UUID-domain file that MISSES the sharded placement
     returns ``None`` here -- the gate's placement validator reports it
     as a layout violation (and a docs-anchored NON-domain file is
-    skipped by the gate, both before this function decides the type);
-    (2) the containing directory's name is a member of the registry's
-    ``ALL_DOMAINS`` (a non-docs-anchored position, e.g. ``<base>/req/
-    x.md``); (3) the path has the ``feat/<id>/README.md`` shape (see
+    skipped by the gate, both before this function decides the type,
+    unless -- for an un-rooted anchor only -- a later rule matches);
+    (2) the root-name-independent sharded shape ``<domain>/<lang>/
+    <2-hex>/<file>.md`` by shape alone (:func:`_sharded_shape` --
+    feat-245 Phase 180, G2: ``specdocs/req/en/ab/x.md`` is ``req``
+    under a ``SPECMGR_DOCS_DIR`` root of any name); (3) the containing
+    directory's name is a member of the registry's ``ALL_DOMAINS`` (a
+    non-docs-anchored position, e.g. ``<base>/req/x.md``); (4) the path
+    has the ``feat/<id>/README.md`` shape (see
     :func:`_is_feat_folder_shape`) -- unchanged for every position,
     docs-anchored ``feat`` included. Independent of every
     ``SPECMGR_*_DIR`` variable.
@@ -598,6 +726,10 @@ def _infer_type(path: Path, reg: _RegistryBacked) -> str | None:
             result: str | None = layout[0]
             return result
         result = None
+        return result
+    shape = _sharded_shape(path, reg)
+    if shape is not None:
+        result = shape[0]
         return result
     if path.parent.name in reg.all_domains:
         result = path.parent.name
@@ -700,21 +832,23 @@ def _iter_paths_for(doc_type: str, base_dir: Path, reg: _RegistryBacked) -> Iter
 
 
 def _parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> str | None:
-    """The parse language for one PATH-MODE work item (feat-245 Phase 120, the docs-anchor derivation).
+    """The parse language for one PATH-MODE work item (feat-245 Phase 120; Phase 180, G2).
 
-    The literal-``docs``-anchor derivation (path mode ONLY since
-    Phase 160, D9 -- the anchor also drives the layout inference and
-    the placement validator, which must stay on it; SWEEP work items
-    use :func:`_sweep_parse_language` instead, position-relative to
-    the configured domain base, root-name-independent; the dispatch is
-    :func:`_item_parse_language`). For the thirteen UUID domains: the
-    shape-valid language dir the path sits in when it carries the valid
-    sharded placement under its OWN ``docs/<domain>/`` anchor (``en``
-    resolves to the canonical parse, byte-identical to ``None`` -- the
-    shared table resolver treats the two the same). ``None``
-    otherwise: every ``feat`` item (no language dimension at all), a
-    non-docs-anchored position, a non-sharded position, and a ``--type``
-    override whose value disagrees with the path's own docs anchor.
+    Path mode ONLY since Phase 160, D9 (SWEEP work items use
+    :func:`_sweep_parse_language` instead, position-relative to the
+    configured domain base; the dispatch is :func:`_item_parse_language`).
+    For the thirteen UUID domains: the shape-valid language dir the path
+    sits in when it carries the valid sharded placement under its OWN
+    ``docs/<domain>/`` anchor, else -- root-name-independent (Phase 180,
+    G2, the D9 principle extended to path mode) -- the language dir of
+    the root-name-independent sharded shape ``<domain>/<lang>/<2-hex>/
+    <file>.md`` (:func:`_sharded_shape`) whose domain is the item's own
+    type, so a ``specdocs/dec/de/ab/x.md`` variant parses with the ``de``
+    table, also under ``--type dec`` (``en`` resolves to the canonical
+    parse, byte-identical to ``None`` -- the shared table resolver treats
+    the two the same). ``None`` otherwise: every ``feat`` item (no
+    language dimension at all), a non-sharded position, and a ``--type``
+    override whose value disagrees with the path's own domain segment.
 
     Args:
         doc_type: The item's resolved document type.
@@ -731,10 +865,14 @@ def _parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> str | No
         result: str | None = None
         return result
     layout = _docs_layout(path)
-    if layout is None or layout[0] != doc_type or not _is_valid_sharded_placement(layout[1]):
-        result = None
+    if layout is not None and layout[0] == doc_type and _is_valid_sharded_placement(layout[1]):
+        result = layout[1][0]
         return result
-    result = layout[1][0]
+    shape = _sharded_shape(path, reg)
+    if shape is not None and shape[0] == doc_type:
+        result = shape[1]
+        return result
+    result = None
     return result
 
 
@@ -744,8 +882,9 @@ def _sweep_parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> st
 
     ``language_for_doc_path`` over ``doc_domain_base_dir(doc_type)`` --
     the domain's own base directory under whatever the configured
-    ``SPECMGR_DOCS_DIR`` root is NAMED (root-name-independent, unlike
-    the path-mode docs-anchor derivation of :func:`_parse_language`):
+    ``SPECMGR_DOCS_DIR`` root is NAMED (root-name-independent, like
+    the path-mode derivation of :func:`_parse_language` since Phase 180,
+    G2, which works from the path alone rather than the configured base):
     the path's first subdirectory under the domain base, a shape-valid
     two-letter code (``en`` resolves to the canonical parse via the
     shared table resolver, like ``None``), ``None`` for every other
@@ -777,9 +916,9 @@ def _sweep_parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> st
 def _item_parse_language(item: _WorkItem, reg: _RegistryBacked) -> str | None:
     """The parse language for one work item, by its mode (Task 160.100, D9).
 
-    Path-mode items keep the literal-``docs``-anchor derivation
-    (:func:`_parse_language`, unchanged -- the anchor also drives the
-    placement validator, which must stay on it); sweep items take the
+    Path-mode items take the docs-anchor / sharded-shape derivation
+    (:func:`_parse_language` -- root-name-independent since Phase 180,
+    G2); sweep items take the
     position-relative derivation (:func:`_sweep_parse_language`,
     root-name-independent).
 
@@ -1056,7 +1195,10 @@ def lint(
                     layout_violations.append(violation)
                     continue
                 doc_type = first if type is None else type
-            elif first not in reg.all_domains:
+            elif first not in reg.all_domains and (_is_rooted(path) or _infer_type(path, reg) is None):
+                # The non-domain-dir skip: unconditional under a rooted
+                # anchor; under an un-rooted (last-docs) anchor only when
+                # no other inference rule matches (feat-245 Phase 180, E2).
                 skipped += 1
                 continue
         if doc_type is None:

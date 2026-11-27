@@ -53,7 +53,7 @@ result).
 **Language variants (feat-197-i18n Phase 110, DEC 38efdb66 items 1/6/7).**
 The optional ``language`` parameter (default ``"en"``) selects which
 directory this tool scans: omitted/``"en"`` = the ``docs/dec/en/``
-sharded directory -- today's exact behavior; any other shape-validated code (e.g.
+sharded directory (the default language, ``en``); any other shape-validated code (e.g.
 ``"de"``) = only the ``docs/dec/{language}/`` sharded directory, listing
 exactly the existing variants of that language (ACC-007). There is
 deliberately NO "all languages" mode (the ``DocSummary`` row shape carries
@@ -107,7 +107,7 @@ def _to_failed_summary(path: Path, error: Exception) -> DecSummary:
         "extensionless identifier -- not a filename to read from disk -- for documents that "
         "have no assigned id; use it with the get_dec tool instead. "
         "The optional `language` parameter (default 'en') selects the directory scanned: omitted/'en' "
-        "= the docs/dec/en/ sharded directory (the default behavior, unchanged); any other ISO 639-1-shaped "
+        "= the docs/dec/en/ sharded directory (the default language, en); any other ISO 639-1-shaped "
         "lowercase two-letter code (e.g. 'de') = only that language's docs/dec/{language}/ sharded directory, "
         "listing exactly the existing variants of that language (there is deliberately no "
         "'all languages' mode). The language is shape-validated before any file access (an "
@@ -169,7 +169,7 @@ def list_dec(
     language:
         The language whose directory to list (feat-197-i18n Phase 110, DEC
         38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
-        scans the ``docs/dec/en/`` sharded directory -- today's exact behavior;
+        scans the ``docs/dec/en/`` sharded directory (the default language, ``en``);
         any other ISO 639-1-shaped lowercase two-letter code (e.g.
         ``"de"``) scans only ``docs/dec/{language}/``, listing exactly the
         existing variants of that language (ACC-007). There is deliberately
@@ -207,8 +207,7 @@ def list_dec(
     # longer covers the whole domain, so reconcile against the domain-wide live
     # listing (the union of the sharded listings of en/ plus every {language}
     # subdirectory), never just the scanned directory -- or listing one language
-    # would evict the other languages' cached entries. With no subdirectory present
-    # the union is the scanned listing itself (the pre-i18n behavior, byte-identical).
+    # would evict the other languages' cached entries.
     reconcile_dec_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(DEC_TYPE_NAME))))
     summaries, error_count = build_summaries(paths, read_dec, _to_summary, _to_failed_summary)
 

@@ -34,8 +34,8 @@ codebase.
 
 **Language variants (feat-197-i18n Phase 120, DEC 38efdb66 items 1/2/5/6).**
 ``create_dec`` gains two optional parameters, ``language`` (default
-``"en"``) and ``id``. With ``language`` omitted/``"en"`` the tool is
-byte-identical to before: it assigns a fresh id and writes the sharded
+``"en"``) and ``id``. With ``language`` omitted/``"en"`` (the default language)
+the tool assigns a fresh id and writes the sharded
 ``docs/dec/en/<id[:2]>/<uuid>-<slug>.md`` file (and ``id`` must not be given). With
 a non-default ``language`` the tool creates a *translation* of an existing
 decision: ``id`` -- the shared id of the EN source document (REQ-003, the
@@ -57,7 +57,7 @@ import uuid
 
 from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import sharded_doc_path, slugify
+from ...general.tools._doc_paths import sharded_doc_path, sharded_variant_path, slugify
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language, validate_id
 from ...general.tools._timestamps import now_timestamp
 from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
@@ -89,7 +89,7 @@ from ._write import write_dec_file
         "frontmatter only (no body); use the corresponding `get_dec` tool to fetch the "
         "full document afterward. The optional `language` parameter (default 'en', feat-197-i18n) "
         "selects the language to create the document in: omitted/'en' = a new docs/dec/en/<id[:2]>/<uuid>-<slug>.md "
-        "document with a fresh id, exactly the default behavior (`id` must then be omitted); a non-default "
+        "document with a fresh id, the default language (`id` must then be omitted); a non-default "
         "ISO 639-1-shaped lowercase two-letter code (e.g. 'de') creates a TRANSLATION of an existing "
         "decision instead: `id` -- the shared id of the existing EN source document -- is then "
         "required (no fresh id is assigned; the variant carries the same id), the EN source must "
@@ -155,7 +155,7 @@ def create_dec(  # pylint: disable=too-many-locals
     language:
         The language to create the document in: ``"en"`` (the default)
         creates a new, sharded ``docs/dec/en/<id[:2]>/<uuid>-<slug>.md`` document with a freshly assigned
-        id -- today's exact behavior; any other ISO 639-1-shaped lowercase
+        id (the default language, ``en``); any other ISO 639-1-shaped lowercase
         two-letter code (e.g. ``"de"``) creates a translation variant of
         an existing EN document in ``docs/dec/{language}/<id[:2]>/``. Shape-guarded
         (and its heading-mapping table resolved) before any filesystem
@@ -289,8 +289,7 @@ def _create_variant(id_: str, language: str, content: str) -> DecFrontmatter:
                 f"source document with this id exists. A language variant requires its {DEFAULT_LANGUAGE!r} source "
                 f"-- create the {DEFAULT_LANGUAGE!r} document first, and pass its id."
             ) from ex
-        slug = source_path.name.removeprefix(f"{id_}-").removesuffix(".md")
-        path = sharded_doc_path(ensure_dec_base_dir(language), id_, slug)
+        path = sharded_variant_path(ensure_dec_base_dir(language), source_path, id_)
         if path.exists():
             raise FileExistsError(
                 f"the {language!r} variant of decision {id_!r} already exists at {path}; use the generic "

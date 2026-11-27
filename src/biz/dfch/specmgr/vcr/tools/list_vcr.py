@@ -51,8 +51,8 @@ result).
 **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/6/7).**
 A 1:1 port of ``list_dec``'s ``language`` handling. The optional
 ``language`` parameter (default ``"en"``) selects which directory this tool
-scans: omitted/``"en"`` = the ``docs/vcr/en/`` sharded directory -- today's exact
-behavior; any other shape-validated code (e.g. ``"de"``) = only the
+scans: omitted/``"en"`` = the ``docs/vcr/en/`` sharded directory (the default language,
+``en``); any other shape-validated code (e.g. ``"de"``) = only the
 ``docs/vcr/{language}/`` sharded directory, listing exactly the existing
 variants of that language (ACC-007). There is deliberately NO "all
 languages" mode (the ``DocSummary`` row shape carries no language column
@@ -109,7 +109,7 @@ def _to_failed_summary(path: Path, error: Exception) -> VcrSummary:
         "max_results/offset control paging (default page size 25, capped at 100); "
         "out-of-range values are clamped, not errored. "
         "The optional `language` parameter (default 'en') selects the directory scanned: omitted/'en' "
-        "= the docs/vcr/en/ sharded directory (the default behavior, unchanged); any other ISO 639-1-shaped "
+        "= the docs/vcr/en/ sharded directory (the default language, en); any other ISO 639-1-shaped "
         "lowercase two-letter code (e.g. 'de') = only that language's docs/vcr/{language}/ sharded directory, "
         "listing exactly the existing variants of that language (there is deliberately no "
         "'all languages' mode). The language is shape-validated before any file access (an "
@@ -167,7 +167,7 @@ def list_vcr(
     language:
         The language whose directory to list (feat-197-i18n Phase 125, DEC
         38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
-        scans the ``docs/vcr/en/`` sharded directory -- today's exact behavior;
+        scans the ``docs/vcr/en/`` sharded directory (the default language, ``en``);
         any other ISO 639-1-shaped lowercase two-letter code (e.g.
         ``"de"``) scans only ``docs/vcr/{language}/``, listing exactly the
         existing variants of that language (ACC-007). There is deliberately
@@ -202,8 +202,7 @@ def list_vcr(
     # subfolders, a scan of one language's directory no longer covers the whole domain, so
     # reconcile against the domain-wide live listing (the union of the sharded listings of
     # en/ plus every {language} subdirectory), never just the scanned directory -- or listing
-    # one language would evict the other languages' cached entries. With no subdirectory
-    # present the union is the scanned listing itself (the pre-i18n behavior, byte-identical).
+    # one language would evict the other languages' cached entries.
     reconcile_vcr_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(VCR_TYPE_NAME))))
     summaries, error_count = build_summaries(paths, read_vcr, _to_summary, _to_failed_summary)
 

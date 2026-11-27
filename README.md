@@ -825,7 +825,7 @@ headless CI job — use the CLI client there instead.
 ## Make a Release
 
 The normative release procedure is the SOP
-[Perform a release of biz.dfch.SpecMgr](docs/sop/sop-98537416-0e6e-4a02-925f-974a17bfa10a-perform-a-release-of-biz-dfch-specmgr.md)
+[Perform a release of biz.dfch.SpecMgr](docs/sop/en/98/98537416-0e6e-4a02-925f-974a17bfa10a-perform-a-release-of-biz-dfch-specmgr.md)
 (SOP `98537416`). Where this section, the script, or the command ever
 disagree with the SOP, the SOP wins.
 

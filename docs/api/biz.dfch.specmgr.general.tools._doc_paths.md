@@ -113,7 +113,15 @@ reconcile-on-scan needs once a single language's scan no longer covers the
 whole domain. Languages and shards sit at different path levels, so no
 directory ever plays two roles: the two-letter code that is also a valid
 two-hex shard name (``"de"``) needs no disambiguation (the shard/language
-collision the uniform layout kills).
+collision the uniform layout kills). Only a shard directory named by
+exactly :data:`SHARD_DIGITS` lowercase-hex characters is read (feat-245
+Phase 180, D4): a file in a non-hex directory is as invisible as a flat
+one. An EMPTY shard or language directory -- e.g. the one the generic
+``delete`` tool leaves behind after removing its last document -- is
+expected and harmless (feat-245 Phase 180, I2; documented, not pruned):
+git does not track empty directories, every read path here treats it as
+no files, and pruning would race a concurrent ``create_<d>`` of a
+different id in the same shard (the locks are per id, not per shard).
 
 **A companion :func:`find_parse_failure` surfaces the parse-failure a skipped id
 encodes (feat-150-mcp-lifecycle-commands Phase 1a, DEC
@@ -358,10 +366,15 @@ with no parse cause, path, or line. This function recovers exactly that
 case: it scans the language directory's sharded listing (
 :func:`iter_doc_paths` over ``base_dir``) for the single name-matching
 file -- a stem that carries ``id_`` as a hyphen-bounded token, i.e.
-``f"-{id_}-" in stem`` (the pre-sharding flat-file naming
-``<type>-<id>-<slug>.md``, kept for compatibility) or a ``f"{id_}-"``
-prefix (the prefix-less ``<id>-<slug>.md`` form the sharded layout
-uses) -- shard-narrowed first (the name matches inside the shard
+``f"-{id_}-" in stem`` (the legacy type-prefixed NAME
+``<type>-<id>-<slug>.md`` -- the hard cut-over is about LOCATION, not
+name: such a file moved into its correct shard without renaming (the
+likely downstream migration) already resolves by id (content-based)
+and passes the shape-only placement gate, and this match is what makes
+``get_<d>`` return the real ``ParseFailureResult`` for it when it is
+broken instead of a bare not-found -- feat-245 Phase 180, S3) or a
+``f"{id_}-"`` prefix (the prefix-less ``<id>-<slug>.md`` form the
+sharded layout writes) -- shard-narrowed first (the name matches inside the shard
 derived from ``id_``) with the full listing as the fallback (a
 misplaced broken document still surfaces), attempts the domain's own
 cache-backed ``read_fn`` on it, and returns
@@ -412,21 +425,27 @@ tuple[Path, str] | None
 
 ### `iter_doc_paths(base_dir: 'Path') -> 'Iterator[Path]'`
 
-Yield the sharded listing of ``base_dir``: every ``*.md`` file exactly one subdirectory level below it.
+Yield the sharded listing of ``base_dir``: every ``*.md`` file in a two-hex shard directory directly below it.
 
 The per-language scan primitive (feat-245, REQ-003): called with a
 language's own base directory (``docs/{type}/{language}/`` -- ``en``
-included), it yields ``<base>/*/*.md`` sorted by relative path, i.e. by
-(shard directory, file name) -- which for the prefix-less
+included), it yields ``<base>/<2-hex>/*.md`` sorted by relative path,
+i.e. by (shard directory, file name) -- which for the prefix-less
 ``<uuid>-<slug>.md`` file names equals the lexicographic file-name
 order, so ``list_<d>`` result order and ``ref`` values stay stable
-except the intended prefix removal (REQ-008). Files directly under
-``base_dir`` (missing shard dir) and any deeper nesting (deeper than
-one shard level) are excluded -- the shard-only read is the hard
-cut-over: a misplaced file is invisible to every ``list_<d>``/
-``get_<d>``/id-resolution consumer, and the ``specmgr lint``
-layout-violation gate (feat-245 Phase 120) is what catches it. Yields
-nothing (rather than raising) if ``base_dir`` does not exist.
+except the intended prefix removal (REQ-008). Only a shard directory
+whose name is exactly :data:`SHARD_DIGITS` lowercase-hex characters is
+listed (feat-245 Phase 180, D4 -- the pattern is derived from
+:data:`SHARD_DIGITS`, the same shape the ``specmgr lint`` placement gate
+accepts). Files directly under ``base_dir`` (missing shard dir), files
+in a non-hex directory (e.g. ``zz/``, ``Notes/``), and any deeper
+nesting (deeper than one shard level) are excluded -- the shard-only
+read is the hard cut-over: a misplaced file is invisible to every
+``list_<d>``/``get_<d>``/id-resolution/``find_parse_failure``/
+``list_languages``/similarity-corpus consumer (all of them list through
+this function), and the ``specmgr lint`` layout-violation gate
+(feat-245 Phase 120) is what catches it. Yields nothing (rather than
+raising) if ``base_dir`` does not exist.
 
 The EN-only consumers (each domain's own scan via the omitted-language
 base directory, plus ``list_references``, ``find_related``/
@@ -608,6 +627,42 @@ Returns
 -------
 Path
     ``base_dir / shard_token(id_) / f"{id_}-{slug}.md"``.
+
+
+### `sharded_variant_path(base_dir: 'Path', source_path: 'Path', id_: 'str') -> 'Path'`
+
+Return a language variant's sharded path ``base_dir/{shard}/{source_path.name}``, creating the shard directory.
+
+The single shared write-path helper of every ``create_<d>`` tool's
+*variant* branch (feat-245 Phase 180, E3 -- amending REQ-005's
+single-helper wording: :func:`sharded_doc_path` builds a fresh EN
+document's name, this helper places a variant): DEC 38efdb66 item 2 makes
+the EN source's basename the single filename authority for a variant, so
+the variant's file name is ``source_path.name`` **verbatim** -- never
+rebuilt from a slug. Rebuilding (``removeprefix(f"{id_}-")`` +
+:func:`sharded_doc_path`) would turn an EN source not named
+``<id>-<slug>.md`` (a legacy type-prefixed ``<type>-<id>-<slug>.md`` file
+moved into its shard without renaming, or a hand-named file) into a
+different, doubled ``<id>-<type>-<id>-<slug>.md`` name. ``base_dir`` is
+the variant language's own directory (``doc_base_dir(type, language)``),
+the shard is :func:`shard_token` of ``id_`` (the variant is placed in its
+id's own shard even when the EN source sits in a wrong shard). Creates
+the shard directory (and the language directory, if missing); the
+returned path itself is not created.
+
+Parameters
+----------
+base_dir:
+    The variant language's own base directory, e.g. ``docs/req/de``.
+source_path:
+    The resolved path of the EN source document (its basename is reused).
+id_:
+    The shared document id (the shard is derived from it).
+
+Returns
+-------
+Path
+    ``base_dir / shard_token(id_) / source_path.name``.
 
 
 ### `slugify(title: 'str') -> 'str'`

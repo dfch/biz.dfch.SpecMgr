@@ -3,7 +3,7 @@
 #
 # Deterministic projection of the normative SOP "Perform a release of
 # biz.dfch.SpecMgr" (SOP 98537416-0e6e-4a02-925f-974a17bfa10a,
-# docs/sop/sop-98537416-0e6e-4a02-925f-974a17bfa10a-perform-a-release-of-biz-dfch-specmgr.md).
+# docs/sop/en/98/98537416-0e6e-4a02-925f-974a17bfa10a-perform-a-release-of-biz-dfch-specmgr.md).
 # Where this script and the SOP disagree, the SOP wins: fix the script.
 #
 # Usage: scripts/release.sh <stage> [X.Y.Z | patch | minor | major] [--dry-run]
@@ -1150,7 +1150,7 @@ stage_release_notes() {
   info "  PyPI:            https://pypi.org/project/$REPO_ROOT/$v/"
   info "  TestPyPI:        https://test.pypi.org/project/$REPO_ROOT/$v/"
   info "  MCP Registry:    https://registry.modelcontextprotocol.io/?q=io.github.dfch%2Fbiz-dfch-specmgr"
-  info "  SOP:             docs/sop/sop-$SOP_ID-perform-a-release-of-biz-dfch-specmgr.md"
+  info "  SOP:             docs/sop/en/${SOP_ID:0:2}/$SOP_ID-perform-a-release-of-biz-dfch-specmgr.md"
 }
 
 stage_status() {

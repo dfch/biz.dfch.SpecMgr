@@ -1342,5 +1342,166 @@ class TestLintSweepAllLanguages(_LintTestBase):
         self.assertIn("summary: linted=2 failed=0 skipped=0 layout=0", result.stdout)
 
 
+class TestLintDocsAnchorIsRooted(_LintTestBase):
+    """feat-245 Phase 180 (Task 180.110, E2): path mode must not take an ANCESTOR directory that
+    happens to be named ``docs`` for the repo's own ``docs/`` tree. Before the fix the LAST ``docs``
+    segment of an absolute path anchored, so ``<tmp>/docs/repo/.specmgr/feat/feat-1-x/README.md``
+    was anchored to the non-domain ``repo`` dir and a BROKEN feat README silently passed the gate
+    (skipped, exit 0). Each case runs twice: ROOTED (the temp repo carries a ``.git`` marker, so the
+    anchor is taken relative to the repo root) and UN-ROOTED (no marker, outside the working
+    directory -- the last-``docs`` fallback, whose non-domain skip applies only when no other rule
+    matches)."""
+
+    def _repo(self, rooted: bool) -> Path:
+        """A temp repo under a ``docs``-named ancestor: ``<tmp>/docs/repo-rooted`` (with a ``.git``
+        marker) or ``<tmp>/docs/repo-unrooted`` (none; outside the working directory)."""
+        repo = self.tmp / "docs" / ("repo-rooted" if rooted else "repo-unrooted")
+        repo.mkdir(parents=True, exist_ok=True)
+        if rooted:
+            (repo / ".git").mkdir(exist_ok=True)
+        return repo
+
+    def _doc_id(self) -> str:
+        return whole_body_domain("req").parse_text(read_packaged_text("req", "example")).frontmatter.id
+
+    def test_a_broken_feat_readme_under_a_docs_named_ancestor_fails(self):
+        """(a) the broken feat README is inferred as ``feat`` and fails (exit 1), never skipped."""
+        for rooted in (True, False):
+            with self.subTest(rooted=rooted):
+                path = self._repo(rooted) / ".specmgr" / "feat" / "feat-1-x" / "README.md"
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(_feat214_shaped_text(), encoding="utf-8")
+
+                result = self._invoke(str(path.resolve()))
+
+                self.assertEqual(result.exit_code, 1, result.output)
+                self.assertIn("DecisionsMade", result.stdout)
+                self.assertIn("summary: linted=1 failed=1 skipped=0 layout=0", result.stdout)
+
+    def test_a_valid_sharded_doc_under_a_docs_named_ancestor_is_linted(self):
+        """(b) a valid sharded doc (repo-``docs`` anchored, and root-name-independent outside any
+        ``docs`` dir) is linted, exit 0."""
+        doc_id = self._doc_id()
+        for rooted in (True, False):
+            for rel in (f"docs/req/en/{doc_id[:2]}/{doc_id}-x.md", f"specdocs/req/en/{doc_id[:2]}/{doc_id}-x.md"):
+                with self.subTest(rooted=rooted, rel=rel):
+                    path = self._repo(rooted) / rel
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(_healthy_whole_body_text("req"), encoding="utf-8")
+
+                    result = self._invoke(str(path.resolve()))
+
+                    self.assertEqual(result.exit_code, 0, result.output)
+                    self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
+
+    def test_a_real_non_domain_archive_file_under_a_docs_named_ancestor_is_still_skipped(self):
+        """(c) a real ``docs/archive/`` file (copied from the repo's own archive tree) stays skipped
+        (exit 0). Rooted: every real archive file, ``docs/archive/sop/`` included (the rooted anchor is
+        trustworthy, the skip unconditional); un-rooted: an ``adr`` archive file (no other inference
+        rule matches it)."""
+        archive = _REPO_ROOT / "docs" / "archive"
+        real_files = sorted(path for path in archive.rglob("*.md") if path.is_file())
+        adr_file = next(path for path in real_files if path.parent.name == "adr")
+        for rooted, sources in ((True, real_files), (False, [adr_file])):
+            repo = self._repo(rooted)
+            for source in sources:
+                rel = source.relative_to(_REPO_ROOT)
+                with self.subTest(rooted=rooted, rel=str(rel)):
+                    path = repo / rel
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(source.read_bytes())
+
+                    result = self._invoke(str(path.resolve()))
+
+                    self.assertEqual(result.exit_code, 0, result.output)
+                    self.assertIn("summary: linted=0 failed=0 skipped=1 layout=0", result.stdout)
+
+    def test_a_rooted_misplaced_file_is_still_a_layout_violation(self):
+        """The rooted anchor still drives the placement validator: ``<repo>/docs/req/foo.md`` is the
+        missing-language-dir violation (exit 2)."""
+        repo = self._repo(True)
+        path = repo / "docs" / "req" / "foo.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_healthy_whole_body_text("req"), encoding="utf-8")
+
+        result = self._invoke(str(path.resolve()))
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn("layout violation: missing language directory", result.stdout)
+
+
+class TestLintShardedShapeIsRootNameIndependent(_LintTestBase):
+    """feat-245 Phase 180 (Task 180.140, G2 = Option A): path mode recognises the sharded shape
+    ``<domain>/<lang>/<2-hex>/<file>.md`` by SHAPE, under a ``SPECMGR_DOCS_DIR`` root of any name
+    (``specdocs``) -- before the fix ``specdocs/req/en/ab/x.md`` was an unrecognized layout (exit 2,
+    the parent-name rule saw the shard), and with ``--type`` a variant was canonical-parsed (a false
+    failure, the D9 class Phase 160 fixed for the sweep only). The path-mode parse language is derived
+    from the same position."""
+
+    def _doc_id(self, doc_type: str) -> str:
+        return whole_body_domain(doc_type).parse_text(read_packaged_text(doc_type, "example")).frontmatter.id
+
+    def test_an_en_shard_file_under_an_unnamed_root_is_linted(self):
+        doc_id = self._doc_id("req")
+        path = self._write(f"specdocs/req/en/{doc_id[:2]}/{doc_id}-x.md", _healthy_whole_body_text("req"))
+
+        result = self._invoke(str(path))
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
+
+    def test_a_table_closed_variant_under_an_unnamed_root_parses_with_its_own_table(self):
+        doc_id = self._doc_id("dec")
+        path = self._write(f"specdocs/dec/de/{doc_id[:2]}/{doc_id}-x.md", _de_variant_text("dec"))
+        for args in ((), ("--type", "dec")):
+            with self.subTest(args=args):
+                result = self._invoke(str(path), *args)
+
+                self.assertEqual(result.exit_code, 0, result.output)
+                self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
+
+    def test_a_broken_variant_under_an_unnamed_root_still_fails(self):
+        doc_id = self._doc_id("dec")
+        broken = _de_variant_text("dec").replace("## Quelle", "## Völlig Falsch", 1)
+        self.assertNotEqual(broken, _de_variant_text("dec"))
+        path = self._write(f"specdocs/dec/de/{doc_id[:2]}/{doc_id}-x.md", broken)
+        for args in ((), ("--type", "dec")):
+            with self.subTest(args=args):
+                result = self._invoke(str(path), *args)
+
+                self.assertEqual(result.exit_code, 1, result.output)
+                self.assertIn("summary: linted=1 failed=1 skipped=0 layout=0", result.stdout)
+
+
+class TestLintImportSafeMirrorsMatchTheirSources(unittest.TestCase):
+    """feat-245 Phase 180 (Task 180.210, S2): ``commands/lint.py``'s import-safe mirrors equal their
+    sources (lazy import -- the sources sit behind the ``mcp`` extra), and the shard-dir pattern is
+    derived from the same mirrored shard width the correct-path builder uses."""
+
+    def test_mirrors_equal_their_sources(self):
+        lint = importlib.import_module("biz.dfch.specmgr.commands.lint")
+        from biz.dfch.specmgr.general.models.heading_table import DEFAULT_LANGUAGE  # noqa: PLC0415
+        from biz.dfch.specmgr.general.tools._doc_paths import SHARD_DIGITS  # noqa: PLC0415
+        from biz.dfch.specmgr.general.tools._path_safety import LANGUAGE_PATTERN  # noqa: PLC0415
+
+        self.assertEqual(lint._LANG_DIR_PATTERN.pattern, LANGUAGE_PATTERN.pattern)  # pylint: disable=protected-access
+        self.assertEqual(lint._SHARD_DIGITS, SHARD_DIGITS)  # pylint: disable=protected-access
+        self.assertEqual(lint._DEFAULT_LANGUAGE, DEFAULT_LANGUAGE)  # pylint: disable=protected-access
+
+    def test_the_shard_pattern_and_the_correct_path_derive_from_the_same_width(self):
+        lint = importlib.import_module("biz.dfch.specmgr.commands.lint")
+
+        width = lint._SHARD_DIGITS  # pylint: disable=protected-access
+        pattern = lint._SHARD_DIR_PATTERN  # pylint: disable=protected-access
+        self.assertIsNotNone(pattern.fullmatch("a" * width))
+        self.assertIsNone(pattern.fullmatch("a" * (width + 1)))
+        self.assertIsNone(pattern.fullmatch("a" * (width - 1)))
+        doc_id = "deadbeef-0000-0000-0000-000000000000"
+        correct = lint._correct_sharded_path("req", (), f"{doc_id}-x.md", doc_id)  # pylint: disable=protected-access
+        shard = correct.split("/")[3]
+        self.assertEqual(shard, doc_id[:width])
+        self.assertIsNotNone(pattern.fullmatch(shard))
+
+
 if __name__ == "__main__":
     unittest.main()

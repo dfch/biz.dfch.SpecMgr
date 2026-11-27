@@ -18,8 +18,10 @@
 """Tests for the uniform sharded per-language layout core (feat-245 Phase 100).
 
 Covers the ``general.tools._doc_paths`` primitives reworked by Phase 100 --
-``SHARD_DIGITS``/:func:`shard_token`/:func:`sharded_doc_path`, the shard-only
-:func:`iter_doc_paths` listing (``<base>/*/*.md``, sorted by relative path),
+``SHARD_DIGITS``/:func:`shard_token`/:func:`sharded_doc_path` (plus Phase 180's
+:func:`sharded_variant_path`), the shard-only :func:`iter_doc_paths` listing
+(``<base>/<2-hex>/*.md``, sorted by relative path -- non-hex dirs excluded since
+Phase 180, D4),
 the shard-narrowed :func:`find_doc_path_by_id`/:func:`find_parse_failure`
 with the full per-language listing fallback, the re-rooted
 :func:`doc_base_dir`/:func:`ensure_doc_base_dir`/:func:`doc_domain_base_dir`
@@ -63,6 +65,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import (
     iter_doc_paths_all_languages,
     language_for_doc_path,
     sharded_doc_path,
+    sharded_variant_path,
     shard_token,
 )
 from tests.general.tools.test_i18n_all_domains import SPECS, DomainSpec, translate_to_de
@@ -128,6 +131,20 @@ class TestShardTokenAndShardedDocPath(unittest.TestCase):
             self.assertTrue(result.parent.is_dir())
             self.assertFalse(result.exists())
 
+    def test_sharded_variant_path_reuses_the_en_source_basename_verbatim(self):
+        """feat-245 Phase 180 (E3): the variant's name is the EN source's basename, never rebuilt from a slug --
+        a legacy type-prefixed EN name stays as it is (no doubled ``<id>-req-<id>-...`` name); the shard is the
+        id's own, even when the EN source sits in a wrong shard; the shard dir is created, the file is not."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "req" / "de"  # the language dir is missing on purpose
+            for source_name in (f"{_TARGET_ID}-my-doc.md", f"req-{_TARGET_ID}-my-doc.md", "hand-named.md"):
+                with self.subTest(source_name=source_name):
+                    source = Path(tmp) / "req" / "en" / "ff" / source_name
+                    result = sharded_variant_path(base, source, _TARGET_ID)
+                    self.assertEqual(result, base / "de" / source_name)
+                    self.assertTrue(result.parent.is_dir())
+                    self.assertFalse(result.exists())
+
 
 class TestIterDocPathsSharded(unittest.TestCase):
     """Tests for ``iter_doc_paths``' sharded listing (Task 100.110)."""
@@ -143,14 +160,14 @@ class TestIterDocPathsSharded(unittest.TestCase):
     def test_yields_files_exactly_one_subdirectory_level_below_sorted_by_relative_path(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "zz").mkdir()
+            (base / "ff").mkdir()
             (base / "ab").mkdir()
             (base / "ab" / "b.md").write_text("b", encoding="utf-8")
             (base / "ab" / "a.md").write_text("a", encoding="utf-8")
-            (base / "zz" / "z.md").write_text("z", encoding="utf-8")
-            (base / "zz" / "not-markdown.txt").write_text("x", encoding="utf-8")
+            (base / "ff" / "z.md").write_text("z", encoding="utf-8")
+            (base / "ff" / "not-markdown.txt").write_text("x", encoding="utf-8")
             rel = [str(p.relative_to(base)) for p in iter_doc_paths(base)]
-            self.assertEqual(rel, ["ab/a.md", "ab/b.md", "zz/z.md"])
+            self.assertEqual(rel, ["ab/a.md", "ab/b.md", "ff/z.md"])
 
     def test_listing_order_equals_lexicographic_file_name_order_for_uuid_prefixed_names(self):
         """ACC-002 order identity: the shard is the two-hex uuid prefix and the file name starts with
@@ -184,27 +201,31 @@ class TestIterDocPathsSharded(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             (base / "flat.md").write_text("x", encoding="utf-8")
-            (base / "shard").mkdir()
-            (base / "shard" / "ok.md").write_text("x", encoding="utf-8")
+            (base / "ab").mkdir()
+            (base / "ab" / "ok.md").write_text("x", encoding="utf-8")
             self.assertEqual([p.name for p in iter_doc_paths(base)], ["ok.md"])
 
     def test_deeper_nesting_is_not_yielded(self):
         """ACC-003: a file deeper than one shard level is invisible."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "a" / "b").mkdir(parents=True)
-            (base / "a" / "b" / "deep.md").write_text("x", encoding="utf-8")
-            (base / "a" / "ok.md").write_text("x", encoding="utf-8")
+            (base / "aa" / "bb").mkdir(parents=True)
+            (base / "aa" / "bb" / "deep.md").write_text("x", encoding="utf-8")
+            (base / "aa" / "ok.md").write_text("x", encoding="utf-8")
             self.assertEqual([p.name for p in iter_doc_paths(base)], ["ok.md"])
 
-    def test_the_shard_level_is_shape_agnostic_on_the_read_path(self):
-        """A non-hex shard dir is still yielded on read (the lint gate, Phase 120, flags it); only the
-        depth is structural."""
+    def test_a_non_hex_shard_dir_is_not_yielded_on_the_read_path(self):
+        """feat-245 Phase 180 (D4 = Option A): only a shard dir named by exactly ``SHARD_DIGITS``
+        lowercase-hex characters is read -- a non-hex (``zz``), upper-case (``AB``), too-short
+        (``a``) or too-long (``abc``) dir is invisible, the same shape the lint gate accepts."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "zz").mkdir()
-            (base / "zz" / "x.md").write_text("x", encoding="utf-8")
-            self.assertEqual([p.name for p in iter_doc_paths(base)], ["x.md"])
+            for name in ("zz", "AB", "a", "abc", "Notes"):
+                (base / name).mkdir()
+                (base / name / "x.md").write_text("x", encoding="utf-8")
+            (base / "0f").mkdir()
+            (base / "0f" / "ok.md").write_text("x", encoding="utf-8")
+            self.assertEqual([str(p.relative_to(base)) for p in iter_doc_paths(base)], ["0f/ok.md"])
 
 
 class TestFindDocPathByIdSharded(unittest.TestCase):
