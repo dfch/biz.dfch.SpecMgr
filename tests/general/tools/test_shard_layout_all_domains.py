@@ -22,6 +22,8 @@
   non-hex shard dir (``docs/<type>/<lang>/zz/``) is absent from ``list_<d>`` (EN and ``language="de"``), ``get_<d>``
   raises the domain's not-found error, and ``list_languages`` does not report it; a BROKEN file at the same positions
   is not surfaced as a ``ParseFailureResult`` either (the ``find_parse_failure`` probe reads the sharded listing only).
+  Phase 190 (Task 190.120): with the EN document correctly sharded, a misplaced ``de`` variant alone is invisible
+  (``list_languages`` -> ``["en"]``, ``get_<d>(language="de")`` not-found, ``list_<d>(language="de")`` empty).
 - **E3 (Task 180.120)** -- a language variant's basename is the EN source's basename verbatim (DEC 38efdb66 item 2),
   even for an EN source not named ``<id>-<slug>.md``, through the shared ``sharded_variant_path`` helper.
 - **S3 (Task 180.220)** -- a broken legacy-named ``<type>-<uuid>-<slug>.md`` file inside its correct shard makes
@@ -91,6 +93,35 @@ class TestAcc003MisplacedFilesAreInvisibleAllDomains(_TempDocsMixin):
                     doc_id = self._seed_and_move(spec, en_target, de_target)
                     self.assertTrue(en_target.is_file(), en_target)
                     self._assert_invisible(spec, doc_id)
+
+    def test_a_misplaced_variant_beside_a_correctly_sharded_en_document_is_invisible(self):
+        """Phase 190 (Task 190.120, G1 of review cycle 5): the EN document stays correctly sharded, only the
+        ``de`` variant is misplaced (flat directly under ``docs/<d>/de/``, or in the non-hex ``docs/<d>/de/zz/``):
+        ``list_languages`` reports ``["en"]`` only, ``get_<d>(language="de")`` raises not-found, and
+        ``list_<d>(language="de")`` is empty -- while the EN document stays fully visible."""
+        for spec in SPECS:
+            domain_dir = self.docs_root / spec.d
+            for case, shard in (("missing shard dir", None), ("non-hex shard dir", "zz")):
+                with self.subTest(domain=spec.d, case=case):
+                    shutil.rmtree(domain_dir, ignore_errors=True)
+                    doc_id, en_file, de_file = self.seed(spec)
+                    de_dir = domain_dir / "de" if shard is None else domain_dir / "de" / shard
+                    de_target = de_dir / de_file.name
+                    de_target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(de_file, de_target)
+                    spec.reset_cache()
+                    self.assertTrue(en_file.is_file(), en_file)
+                    self.assertTrue(de_target.is_file(), de_target)
+
+                    languages = list_languages(spec.d, doc_id)
+                    self.assertEqual(languages.languages, ["en"])
+                    self.assertEqual([Path(entry.path) for entry in languages.entries], [en_file.resolve()])
+                    with self.assertRaises(spec.not_found_error()):
+                        spec.fn("get")(doc_id, language="de")
+                    listed_de = spec.fn("list")(language="de")
+                    self.assertEqual(listed_de.total, 0, listed_de)
+                    self.assertEqual(listed_de.results, [])
+                    self.assertEqual(spec.fn("list")(language="en").total, 1)
 
     def test_a_broken_misplaced_file_is_not_surfaced_as_a_parse_failure(self):
         for spec in SPECS:

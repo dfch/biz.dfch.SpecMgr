@@ -450,8 +450,8 @@ Replace the status of an existing document, across every domain.
        language:
            The language variant to act on (feat-197-i18n Phase 120, DEC
            38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
-           it) acts on the default-language document in the ``en/`` sharded directory -- today's exact
-           behavior; any other ISO 639-1-shaped lowercase two-letter code
+           it) acts on the document of the default language (``en``), in the
+           ``docs/<type>/en/<shard>/`` directory; any other ISO 639-1-shaped lowercase two-letter code
            (e.g. ``"de"``) acts on that language's variant, located by
            id-scan of ``docs/<type>/{language}/`` (the variant's basename is
            never re-derived); only that one file is touched: the EN

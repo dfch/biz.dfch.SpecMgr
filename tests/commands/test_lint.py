@@ -90,6 +90,7 @@ static and drift pins that keep the command import-safe and derived:
 from __future__ import annotations
 
 import ast
+import contextlib
 import importlib
 import importlib.util
 import os
@@ -1430,6 +1431,120 @@ class TestLintDocsAnchorIsRooted(_LintTestBase):
         self.assertIn("layout violation: missing language directory", result.stdout)
 
 
+class TestLintDocsAnchorNestedProject(_LintTestBase):
+    """feat-245 Phase 190 (Task 190.110, G2 of review cycle 5; E1): the docs anchor of a path is a ``docs``
+    segment that is the FIRST segment relative to EITHER the working directory (when the path lies under it
+    and the working directory is inside the repo) OR the repo root (the nearest ``.git``). Before the fix the
+    repo root ALWAYS won over the working directory, so in a nested project (``mono/.git``, docs at
+    ``mono/proj/docs/``, run from ``mono/proj``) ``docs/req/foo.md`` was not anchored, inferred by its parent
+    name and linted (exit 0, ``linted=1``) instead of the Phase 120 layout violation (exit 2), and a real
+    ``docs/archive/sop/README.md`` there was linted as ``sop`` instead of skipped."""
+
+    def _nested(self) -> tuple[Path, Path]:
+        """``<tmp>/mono`` (with a ``.git`` marker) and its nested project ``<tmp>/mono/proj``."""
+        mono = self.tmp / "mono"
+        (mono / ".git").mkdir(parents=True, exist_ok=True)
+        proj = mono / "proj"
+        proj.mkdir(parents=True, exist_ok=True)
+        return mono, proj
+
+    def _doc_id(self) -> str:
+        return whole_body_domain("req").parse_text(read_packaged_text("req", "example")).frontmatter.id
+
+    def test_a_misplaced_file_in_a_nested_project_is_a_layout_violation(self):
+        """(a) ``docs/req/<file>.md`` run from the nested project is the missing-language-dir violation
+        (exit 2), naming the correct ``docs/req/en/<shard>/<file>.md`` path."""
+        _mono, proj = self._nested()
+        doc_id = self._doc_id()
+        self.enterContext(contextlib.chdir(proj))
+        for name, correct in (
+            ("foo.md", "docs/req/en/<2-hex-shard>/foo.md"),
+            (f"{doc_id}-x.md", f"docs/req/en/{doc_id[:2]}/{doc_id}-x.md"),
+        ):
+            with self.subTest(name=name):
+                path = proj / "docs" / "req" / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(_healthy_whole_body_text("req"), encoding="utf-8")
+
+                result = self._invoke(f"docs/req/{name}")
+
+                self.assertEqual(result.exit_code, 2, result.output)
+                self.assertIn("layout violation: missing language directory", result.stdout)
+                self.assertIn(f"correct path: {correct}", result.stdout)
+                self.assertIn("summary: linted=0 failed=0 skipped=0 layout=1", result.stdout)
+
+    def test_a_valid_sharded_doc_in_a_nested_project_is_linted(self):
+        """(b) a valid sharded doc under the nested project's ``docs/`` is linted (exit 0)."""
+        _mono, proj = self._nested()
+        doc_id = self._doc_id()
+        rel = f"docs/req/en/{doc_id[:2]}/{doc_id}-x.md"
+        path = proj / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_healthy_whole_body_text("req"), encoding="utf-8")
+        self.enterContext(contextlib.chdir(proj))
+
+        result = self._invoke(rel)
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("summary: linted=1 failed=0 skipped=0 layout=0", result.stdout)
+
+    def test_a_real_non_domain_archive_file_in_a_nested_project_is_skipped(self):
+        """(c) every real ``docs/archive/`` file (copied from the repo's own archive tree, the
+        ``docs/archive/sop/`` files included) under the nested project is skipped (exit 0)."""
+        _mono, proj = self._nested()
+        archive = _REPO_ROOT / "docs" / "archive"
+        real_files = sorted(path for path in archive.rglob("*.md") if path.is_file())
+        self.assertTrue(any(path.parent.name == "sop" for path in real_files), real_files)
+        self.enterContext(contextlib.chdir(proj))
+        for source in real_files:
+            rel = source.relative_to(_REPO_ROOT)
+            with self.subTest(rel=str(rel)):
+                path = proj / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(source.read_bytes())
+
+                result = self._invoke(str(rel))
+
+                self.assertEqual(result.exit_code, 0, result.output)
+                self.assertIn("summary: linted=0 failed=0 skipped=1 layout=0", result.stdout)
+
+    def test_docs_directly_under_the_repo_root_stay_anchored_from_a_subdirectory(self):
+        """(d) the working directory is a subdirectory of the repo root and the docs sit directly under
+        the repo root: the repo-root anchor still applies (absolute and ``../``-relative paths)."""
+        mono, _proj = self._nested()
+        sub = mono / "sub"
+        sub.mkdir()
+        path = mono / "docs" / "req" / "foo.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_healthy_whole_body_text("req"), encoding="utf-8")
+        self.enterContext(contextlib.chdir(sub))
+        for given in (str(path.resolve()), "../docs/req/foo.md"):
+            with self.subTest(given=given):
+                result = self._invoke(given)
+
+                self.assertEqual(result.exit_code, 2, result.output)
+                self.assertIn("layout violation: missing language directory", result.stdout)
+                self.assertIn("correct path: docs/req/en/<2-hex-shard>/foo.md", result.stdout)
+
+    def test_a_working_directory_above_the_repo_never_anchors_a_docs_named_ancestor(self):
+        """(e) the working directory sits ABOVE the repo, at the parent of an ancestor named ``docs``
+        (``<tmp>`` over ``<tmp>/docs/repo/.git``): the working directory is no root candidate (it is
+        outside the repo), so ``docs/repo/.specmgr/feat/feat-1-x/README.md`` is not anchored to the
+        non-domain ``repo`` dir -- the broken feat README is inferred as ``feat`` and fails (exit 1),
+        the Phase 180 E2 case kept closed (Decisions Made 2026-11-27, Phase 190)."""
+        repo = self.tmp / "docs" / "repo"
+        (repo / ".git").mkdir(parents=True)
+        path = repo / ".specmgr" / "feat" / "feat-1-x" / "README.md"
+        path.parent.mkdir(parents=True)
+        path.write_text(_feat214_shaped_text(), encoding="utf-8")
+        self.enterContext(contextlib.chdir(self.tmp))
+
+        result = self._invoke("docs/repo/.specmgr/feat/feat-1-x/README.md")
+
+        self.assertEqual(result.exit_code, 1, result.output)
+        self.assertIn("summary: linted=1 failed=1 skipped=0 layout=0", result.stdout)
+
+
 class TestLintShardedShapeIsRootNameIndependent(_LintTestBase):
     """feat-245 Phase 180 (Task 180.140, G2 = Option A): path mode recognises the sharded shape
     ``<domain>/<lang>/<2-hex>/<file>.md`` by SHAPE, under a ``SPECMGR_DOCS_DIR`` root of any name
@@ -1487,6 +1602,20 @@ class TestLintImportSafeMirrorsMatchTheirSources(unittest.TestCase):
         self.assertEqual(lint._LANG_DIR_PATTERN.pattern, LANGUAGE_PATTERN.pattern)  # pylint: disable=protected-access
         self.assertEqual(lint._SHARD_DIGITS, SHARD_DIGITS)  # pylint: disable=protected-access
         self.assertEqual(lint._DEFAULT_LANGUAGE, DEFAULT_LANGUAGE)  # pylint: disable=protected-access
+
+    def test_the_two_shard_dir_patterns_accept_and_reject_the_same_samples(self):
+        """feat-245 Phase 190 (Task 190.170, I1): ``lint.py``'s import-safe ``_SHARD_DIR_PATTERN`` and the read
+        scan's own ``general/tools/_doc_paths._SHARD_DIR_PATTERN`` (both used with ``fullmatch``) agree on every
+        sample, so the lint placement gate and the read scan cannot disagree on what a shard dir is."""
+        lint = importlib.import_module("biz.dfch.specmgr.commands.lint")
+        doc_paths = importlib.import_module("biz.dfch.specmgr.general.tools._doc_paths")
+        lint_pattern = lint._SHARD_DIR_PATTERN  # pylint: disable=protected-access
+        read_pattern = doc_paths._SHARD_DIR_PATTERN  # pylint: disable=protected-access
+        expected = {"ab": True, "0f": True, "00": True, "AB": False, "zz": False, "a": False, "abc": False}
+        for sample, accepted in expected.items():
+            with self.subTest(sample=sample):
+                self.assertEqual(lint_pattern.fullmatch(sample) is not None, accepted)
+                self.assertEqual(read_pattern.fullmatch(sample) is not None, accepted)
 
     def test_the_shard_pattern_and_the_correct_path_derive_from_the_same_width(self):
         lint = importlib.import_module("biz.dfch.specmgr.commands.lint")

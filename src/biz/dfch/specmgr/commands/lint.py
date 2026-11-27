@@ -60,13 +60,17 @@ the size of the corpus (REQ-004):
   ``--type``); the containing directory named after a type (a non-docs-
   anchored position, e.g. ``<base>/req/x.md``); the ``feat/<id>/
   README.md`` shape (unchanged for every position, ``docs/<feat>``
-  anchored included). The ``docs`` anchor (feat-245 Phase 180, E2) is a
-  ``docs`` segment that is the FIRST segment of the path relative to
-  its root -- the repo root (the nearest ancestor holding ``.git``),
-  else the working directory -- so an ancestor directory that merely
-  happens to be named ``docs`` never anchors; a path outside both keeps
-  the last-``docs`` anchor, and its non-domain skip applies only when no
-  other rule matches. ``--type`` overrides inference for the parse, but
+  anchored included). The ``docs`` anchor (feat-245 Phase 180, E2;
+  final rule Phase 190, E1) is a ``docs`` segment that is the FIRST
+  segment of the path relative to EITHER root candidate -- the working
+  directory (when the path lies under it and the working directory is
+  inside the repo, or no repo exists), else the repo root (the nearest
+  ancestor holding ``.git``) -- so a nested project's own ``docs/``
+  (``mono/.git``, run from ``mono/proj``) anchors while an ancestor
+  directory that merely happens to be named ``docs`` never does; a
+  rooted anchor's non-domain skip is unconditional, and a path outside
+  every root keeps the last-``docs`` anchor, whose non-domain skip
+  applies only when no other rule matches. ``--type`` overrides inference for the parse, but
   it never rescues a misplaced ``docs/<type>/`` file -- the placement
   violation stands. A file anchored under ``docs/<uuid-domain>/`` that
   misses the sharded placement (missing language dir, missing or
@@ -315,12 +319,17 @@ class _WorkItem:
             docs anchor or sharded-shape position (:func:`_parse_language`),
             the sweep position-relative to the configured domain base
             (:func:`_sweep_parse_language`, root-name-independent).
+        anchor:
+            The path-mode item's docs anchor, computed once per path
+            during resolution and reused for the parse-language
+            derivation (feat-245 Phase 190, S1). ``None`` for sweep items.
     """
 
     path: Path
     doc_type: str
     text: str | None
     sweep: bool
+    anchor: _Anchor | None = None
 
 
 @dataclass(frozen=True)
@@ -437,105 +446,111 @@ def _is_feat_folder_shape(path: Path, reg: _RegistryBacked) -> bool:
     return result
 
 
-def _anchor_root(path: Path) -> Path | None:
-    """The root a path's docs anchor is taken relative to (feat-245 Phase 180, E2), or ``None``.
+@dataclass(frozen=True)
+class _Anchor:
+    """A path-mode path's docs anchor, computed ONCE per path (feat-245 Phase 180, E2; Phase 190, E1/S1).
 
-    The repo root -- the nearest ancestor directory of the (resolved) path
-    that holds a ``.git`` entry (:data:`_REPO_ROOT_MARKER`; a directory,
-    or a worktree's ``.git`` file) -- else the working directory when the
-    path lies under it, else ``None`` (an un-rooted path: no root to
-    anchor against). Anchoring relative to a root is what keeps an
-    ANCESTOR directory that happens to be named ``docs`` (``/home/u/docs/
-    repo/...``) from being taken for the repo's own ``docs/`` tree.
+    The placement classifier's own anchor (feat-245 Phase 120, REQ-006):
+    a path is docs-anchored when it carries a ``docs`` directory segment
+    with at least one directory and the file after it
+    (``docs/<dir>/…/<file>``). Which ``docs`` segment anchors (Phase 190,
+    E1 -- the final rule): for a ROOTED path, a ``docs`` segment that is
+    the FIRST segment of the path relative to EITHER root candidate (see
+    :func:`_anchor_roots`) -- the working directory, when the path lies
+    under it and the working directory is inside the repo (or there is no
+    repo), checked first; then the repo root (the nearest ancestor holding
+    ``.git``) -- so in a nested project (``mono/.git``, docs at
+    ``mono/proj/docs/``, run from ``mono/proj``) ``docs/req/foo.md`` is
+    anchored and the missing-language-dir violation fires, while an
+    ancestor that merely happens to be named ``docs`` (``/home/u/docs/
+    repo/...``) never anchors. For an UN-ROOTED path (outside any repo and
+    outside the working directory) the LAST ``docs`` segment anchors, and
+    the gate applies the non-domain skip to it only when no other
+    inference rule matches. A file directly under a ``docs`` directory
+    (``docs/x.md``) is NOT anchored -- it keeps the legacy inference rules.
+
+    Attributes:
+        layout:
+            ``(first segment, inner directory segments)`` -- the first
+            segment under the anchoring ``docs`` dir plus the tuple of
+            DIRECTORY segments between it and the file (``()`` for a file
+            directly in the anchored directory, ``(lang, shard)`` for the
+            valid sharded placement, longer for the misplaced depths) --
+            or ``None`` when the path is not docs-anchored.
+        rooted:
+            Whether the anchor (if any) is taken relative to a root (at
+            least one root candidate exists). A rooted anchor is
+            trustworthy: a file under a rooted ``docs/<dir>/`` with a
+            non-domain ``<dir>`` is skipped unconditionally (the real
+            ``docs/archive/sop/README.md`` stays skipped even though its
+            parent is named after a type). An un-rooted (last-``docs``)
+            anchor may be an unrelated ancestor, so the gate skips such a
+            file only when no other inference rule matches -- by design
+            the un-rooted fallback therefore accepts
+            ``docs/archive/sop/README.md`` as ``sop`` (its parent-name
+            rule matches; Decisions Made 2026-11-27).
+    """
+
+    layout: tuple[str, tuple[str, ...]] | None
+    rooted: bool
+
+
+def _anchor_roots(resolved: Path) -> tuple[Path, ...]:
+    """The root candidates a resolved path's docs anchor is taken relative to (feat-245 Phase 190, E1).
+
+    In order: the working directory -- when the path lies under it AND
+    the working directory is inside the repo root (or no repo root
+    exists), so a working directory ABOVE the repo never re-admits an
+    ancestor named ``docs`` (the Phase 180 E2 case) -- then the repo root
+    (the nearest ancestor directory of the path that holds a ``.git``
+    entry, :data:`_REPO_ROOT_MARKER`; a directory, or a worktree's
+    ``.git`` file). Empty for an un-rooted path.
+
+    Args:
+        resolved: The document's resolved (absolute) path.
+
+    Returns:
+        The root candidates, most specific first (no duplicates).
+    """
+    assert isinstance(resolved, Path), type(resolved)
+    repo_root = next((ancestor for ancestor in resolved.parents if (ancestor / _REPO_ROOT_MARKER).exists()), None)
+    cwd = Path.cwd().resolve()
+    roots: list[Path] = []
+    if resolved.is_relative_to(cwd) and (repo_root is None or cwd.is_relative_to(repo_root)):
+        roots.append(cwd)
+    if repo_root is not None and repo_root not in roots:
+        roots.append(repo_root)
+    result = tuple(roots)
+    return result
+
+
+def _docs_anchor(path: Path) -> _Anchor:
+    """The path's docs anchor (see :class:`_Anchor` for the rule), computed once per path-mode path.
 
     Args:
         path: The document's path (as given; relative to the working
             directory or absolute).
 
     Returns:
-        The anchor root, or ``None`` for an un-rooted path.
+        The :class:`_Anchor` (its ``layout`` and ``rooted`` flag).
     """
     assert isinstance(path, Path), type(path)
     resolved = path.resolve()
-    for ancestor in resolved.parents:
-        if (ancestor / _REPO_ROOT_MARKER).exists():
-            result: Path | None = ancestor
-            return result
-    cwd = Path.cwd().resolve()
-    if resolved.is_relative_to(cwd):
-        result = cwd
-        return result
-    result = None
-    return result
-
-
-def _docs_layout(path: Path) -> tuple[str, tuple[str, ...]] | None:
-    """The path's docs anchor: the first segment under the anchoring ``docs`` dir, plus the dir
-    segments between it and the file.
-
-    The placement classifier's own anchor (feat-245 Phase 120, REQ-006;
-    re-anchored in Phase 180, E2): a path is docs-anchored when it carries
-    a ``docs`` directory segment with at least one directory and the file
-    after it (``docs/<dir>/…/<file>``). Which ``docs`` segment anchors
-    (Phase 180, E2): for a ROOTED path (:func:`_anchor_root` -- the repo
-    root, else the working directory) only a ``docs`` segment that is the
-    FIRST segment of the path relative to that root -- an ancestor of the
-    root that happens to be named ``docs`` never anchors (before Phase 180
-    the LAST ``docs`` segment of the path anchored, so ``/home/u/docs/repo/
-    .specmgr/feat/feat-1-x/README.md`` was anchored to ``repo`` and
-    silently skipped). For an UN-ROOTED path (outside any repo and outside
-    the working directory) the last ``docs`` segment anchors as before, and
-    the gate applies the non-domain skip to it only when no other
-    inference rule matches (see :func:`_is_rooted`). A file directly under
-    a ``docs`` directory (``docs/x.md``) is NOT anchored -- it keeps the
-    legacy inference rules. The second slot is the tuple of DIRECTORY
-    segments between the anchored directory and the file: ``()`` for a
-    file directly in the anchored directory, ``(lang, shard)`` for the
-    valid sharded placement, longer for the misplaced depths.
-
-    Args:
-        path: The document's path (as given).
-
-    Returns:
-        The ``(first segment, inner directory segments)`` pair, or
-        ``None`` when the path is not docs-anchored.
-    """
-    assert isinstance(path, Path), type(path)
-    root = _anchor_root(path)
-    if root is not None:
-        parts = path.resolve().relative_to(root).parts
-        if len(parts) >= 3 and parts[0] == "docs":
-            result: tuple[str, tuple[str, ...]] | None = (parts[1], tuple(parts[2:-1]))
-            return result
-        result = None
+    roots = _anchor_roots(resolved)
+    if roots:
+        for root in roots:
+            parts = resolved.relative_to(root).parts
+            if len(parts) >= 3 and parts[0] == "docs":
+                result = _Anchor(layout=(parts[1], tuple(parts[2:-1])), rooted=True)
+                return result
+        result = _Anchor(layout=None, rooted=True)
         return result
     parts = path.parts
     for index in range(len(parts) - 3, -1, -1):
         if parts[index] == "docs":
-            result = (parts[index + 1], tuple(parts[index + 2 : -1]))
+            result = _Anchor(layout=(parts[index + 1], tuple(parts[index + 2 : -1])), rooted=False)
             return result
-    result = None
-    return result
-
-
-def _is_rooted(path: Path) -> bool:
-    """Whether the path's docs anchor (if any) is taken relative to a root (feat-245 Phase 180, E2).
-
-    A rooted anchor is trustworthy: a file under a rooted ``docs/<dir>/``
-    with a non-domain ``<dir>`` is skipped unconditionally (the real
-    ``docs/archive/sop/README.md`` stays skipped even though its parent is
-    named after a type). An un-rooted (last-``docs``) anchor may be an
-    unrelated ancestor, so the gate skips such a file only when no other
-    inference rule matches.
-
-    Args:
-        path: The document's path (as given).
-
-    Returns:
-        ``True`` when :func:`_anchor_root` finds a root for the path.
-    """
-    assert isinstance(path, Path), type(path)
-    result = _anchor_root(path) is not None
+    result = _Anchor(layout=None, rooted=False)
     return result
 
 
@@ -656,12 +671,13 @@ def _correct_sharded_path(doc_type: str, inner: tuple[str, ...], file_name: str,
     return result
 
 
-def _layout_violation(doc_type: str, path: Path, reg: _RegistryBacked) -> _LayoutViolation | None:
+def _layout_violation(doc_type: str, path: Path, anchor: _Anchor, reg: _RegistryBacked) -> _LayoutViolation | None:
     """The layout violation for a docs-anchored UUID-domain file (feat-245 REQ-006), or ``None`` when valid.
 
     Args:
         doc_type: The registered UUID domain the file is anchored under.
         path: The file's path (as given).
+        anchor: The path's docs anchor (computed once per path, Phase 190, S1).
         reg: The registry-backed names.
 
     Returns:
@@ -670,8 +686,9 @@ def _layout_violation(doc_type: str, path: Path, reg: _RegistryBacked) -> _Layou
     """
     assert isinstance(doc_type, str), type(doc_type)
     assert isinstance(path, Path), type(path)
+    assert isinstance(anchor, _Anchor), type(anchor)
     assert isinstance(reg, _RegistryBacked), type(reg)
-    layout = _docs_layout(path)
+    layout = anchor.layout
     assert layout is not None and layout[0] == doc_type, (layout, doc_type)
     inner = layout[1]
     defect = _placement_defect(inner)
@@ -687,7 +704,7 @@ def _layout_violation(doc_type: str, path: Path, reg: _RegistryBacked) -> _Layou
     return result
 
 
-def _infer_type(path: Path, reg: _RegistryBacked) -> str | None:
+def _infer_type(path: Path, anchor: _Anchor, reg: _RegistryBacked) -> str | None:
     """The document type from the path layout ALONE (REQ-005).
 
     Four rules, in order: (1) the docs-anchored sharded valid shape
@@ -711,6 +728,7 @@ def _infer_type(path: Path, reg: _RegistryBacked) -> str | None:
 
     Args:
         path: The document's path.
+        anchor: The path's docs anchor (computed once per path, Phase 190, S1).
         reg: The registry-backed names (the domain membership sets, the
             ``feat`` domain name).
 
@@ -719,8 +737,9 @@ def _infer_type(path: Path, reg: _RegistryBacked) -> str | None:
         unrecognized-layout case, or the misplaced-docs-domain case).
     """
     assert isinstance(path, Path), type(path)
+    assert isinstance(anchor, _Anchor), type(anchor)
     assert isinstance(reg, _RegistryBacked), type(reg)
-    layout = _docs_layout(path)
+    layout = anchor.layout
     if layout is not None and layout[0] in reg.uuid_domains:
         if _is_valid_sharded_placement(layout[1]):
             result: str | None = layout[0]
@@ -831,7 +850,7 @@ def _iter_paths_for(doc_type: str, base_dir: Path, reg: _RegistryBacked) -> Iter
     return result
 
 
-def _parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> str | None:
+def _parse_language(doc_type: str, path: Path, anchor: _Anchor, reg: _RegistryBacked) -> str | None:
     """The parse language for one PATH-MODE work item (feat-245 Phase 120; Phase 180, G2).
 
     Path mode ONLY since Phase 160, D9 (SWEEP work items use
@@ -853,6 +872,7 @@ def _parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> str | No
     Args:
         doc_type: The item's resolved document type.
         path: The item's on-disk path.
+        anchor: The item's docs anchor (computed once per path, Phase 190, S1).
         reg: The registry-backed names (the UUID-domain set).
 
     Returns:
@@ -860,11 +880,12 @@ def _parse_language(doc_type: str, path: Path, reg: _RegistryBacked) -> str | No
     """
     assert isinstance(doc_type, str), type(doc_type)
     assert isinstance(path, Path), type(path)
+    assert isinstance(anchor, _Anchor), type(anchor)
     assert isinstance(reg, _RegistryBacked), type(reg)
     if doc_type not in reg.uuid_domains:
         result: str | None = None
         return result
-    layout = _docs_layout(path)
+    layout = anchor.layout
     if layout is not None and layout[0] == doc_type and _is_valid_sharded_placement(layout[1]):
         result = layout[1][0]
         return result
@@ -934,7 +955,8 @@ def _item_parse_language(item: _WorkItem, reg: _RegistryBacked) -> str | None:
     if item.sweep:
         result: str | None = _sweep_parse_language(item.doc_type, item.path, reg)
     else:
-        result = _parse_language(item.doc_type, item.path, reg)
+        assert item.anchor is not None, item
+        result = _parse_language(item.doc_type, item.path, item.anchor, reg)
     return result
 
 
@@ -1186,23 +1208,25 @@ def lint(
             path_errors.append(f"{path_str}: no such file or not a regular file")
             continue
         doc_type: str | None = None
-        layout = _docs_layout(path)
-        if layout is not None:
-            first, _inner = layout
+        # the docs anchor, computed ONCE per path and passed down
+        # (feat-245 Phase 190, S1)
+        anchor = _docs_anchor(path)
+        if anchor.layout is not None:
+            first, _inner = anchor.layout
             if first in reg.uuid_domains:
-                violation = _layout_violation(first, path, reg)
+                violation = _layout_violation(first, path, anchor, reg)
                 if violation is not None:
                     layout_violations.append(violation)
                     continue
                 doc_type = first if type is None else type
-            elif first not in reg.all_domains and (_is_rooted(path) or _infer_type(path, reg) is None):
+            elif first not in reg.all_domains and (anchor.rooted or _infer_type(path, anchor, reg) is None):
                 # The non-domain-dir skip: unconditional under a rooted
                 # anchor; under an un-rooted (last-docs) anchor only when
                 # no other inference rule matches (feat-245 Phase 180, E2).
                 skipped += 1
                 continue
         if doc_type is None:
-            doc_type = type if type is not None else _infer_type(path, reg)
+            doc_type = type if type is not None else _infer_type(path, anchor, reg)
             if doc_type is None:
                 if skip_unrecognized:
                     skipped += 1
@@ -1221,7 +1245,7 @@ def lint(
         except UnicodeDecodeError as ex:
             pre_failures.append(_Failure(path, doc_type, f"not valid {_ENCODING}: {ex}"))
             continue
-        items.append(_WorkItem(path, doc_type, text, sweep=False))
+        items.append(_WorkItem(path, doc_type, text, sweep=False, anchor=anchor))
     if path_errors:
         _fail_usage(path_errors)
 

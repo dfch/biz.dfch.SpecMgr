@@ -136,12 +136,14 @@ class TestShardTokenAndShardedDocPath(unittest.TestCase):
         a legacy type-prefixed EN name stays as it is (no doubled ``<id>-req-<id>-...`` name); the shard is the
         id's own, even when the EN source sits in a wrong shard; the shard dir is created, the file is not."""
         with tempfile.TemporaryDirectory() as tmp:
-            base = Path(tmp) / "req" / "de"  # the language dir is missing on purpose
+            # a non-``de`` language (feat-245 Phase 190, S2): ``_TARGET_ID``'s shard is ``de``, so a ``de``
+            # language dir would make the shard visually indistinguishable from the language
+            base = Path(tmp) / "req" / "fr"  # the language dir is missing on purpose
             for source_name in (f"{_TARGET_ID}-my-doc.md", f"req-{_TARGET_ID}-my-doc.md", "hand-named.md"):
                 with self.subTest(source_name=source_name):
                     source = Path(tmp) / "req" / "en" / "ff" / source_name
                     result = sharded_variant_path(base, source, _TARGET_ID)
-                    self.assertEqual(result, base / "de" / source_name)
+                    self.assertEqual(result, base / _TARGET_ID[:2] / source_name)
                     self.assertTrue(result.parent.is_dir())
                     self.assertFalse(result.exists())
 

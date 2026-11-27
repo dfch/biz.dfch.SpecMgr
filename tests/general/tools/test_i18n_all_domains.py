@@ -18,16 +18,17 @@
 """Parametrized i18n tests over all thirteen language-aware domains (feat-197-i18n Phase 125).
 
 Phase 125 rolled the ``dec`` pilot's read/write ``language`` plumbing out to the remaining ten i18n-eligible
-domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``); ``txt`` (feat-229-txt) joined
-them as the twelfth. The ``dec`` pilot keeps its
+domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``); ``txt`` (feat-229-txt) and ``set``
+(feat-173) joined them, for thirteen in all. The ``dec`` pilot keeps its
 own deep test modules (``tests/dec/tools/test_i18n_language.py``/``test_i18n_write.py``); this module drives *every*
 language-aware domain, ``dec`` included, through the same behaviors, so a regression in any one domain's port is caught
 here at a pragmatic depth:
 
-- **ACC-001 x12** -- ``create_<d>(language=...)``/``get_<d>(language=...)`` resolve a non-EN variant to
-  ``docs/{type}/{language}/<EN basename>`` while EN stays at ``docs/{type}/``;
+- **ACC-001 x13** -- ``create_<d>(language=...)``/``get_<d>(language=...)`` resolve a non-EN variant to
+  ``docs/{type}/{language}/<id[:2]>/<EN basename>`` while EN lives at ``docs/{type}/en/<id[:2]>/`` (the uniform
+  sharded layout, feat-245);
 - **ACC-003/REQ-003** -- the variant carries the shared id;
-- **ACC-004/ACC-011 x12** -- a German-translated version of each domain's packaged *example* and *template* documents
+- **ACC-004/ACC-011 x13** -- a German-translated version of each domain's packaged *example* and *template* documents
   (derived from ``de.json`` by reverse-mapping the fixed-text headings) parses via ``parse_<d>(..., language="de")`` to
   a document structurally equal to the EN parse -- the evidence that ``de.json`` covers every domain's heading set;
 - **ACC-012 unit pin** -- every data-carrying heading (the ``de.json``-less tokens) and every frontmatter value stays

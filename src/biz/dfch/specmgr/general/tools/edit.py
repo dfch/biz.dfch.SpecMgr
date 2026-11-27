@@ -1189,8 +1189,8 @@ def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     language:
         The language variant to edit (feat-197-i18n Phase 120, DEC
         38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
-        it) edits the default-language document in the ``en/`` sharded directory -- today's exact
-        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        it) edits the document of the default language (``en``), in the
+        ``docs/<type>/en/<shard>/`` directory; any other ISO 639-1-shaped lowercase two-letter code
         (e.g. ``"de"``) edits that language's variant, located by id-scan
         of ``docs/<type>/{language}/``: ``old_str`` is matched against that
         variant's own on-disk body, the edited body is validated through

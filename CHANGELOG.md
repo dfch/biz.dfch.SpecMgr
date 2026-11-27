@@ -183,9 +183,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dir, misses the shard dir, carries a non-hex shard, or sits deeper
   than one shard level; path mode also recognizes the sharded shape
   under a docs root of any name (`specdocs/req/en/ab/x.md`, the parse
-  language taken from that position) and takes its `docs` anchor
-  relative to the repo root or working directory, so an ancestor
-  directory merely named `docs` never anchors. Id resolution is shard-narrowed with a
+  language taken from that position) and takes its `docs` anchor as a
+  `docs` segment that is the first segment of the path relative to
+  either the working directory (when the path lies under it and it is
+  inside the repo) or the repo root (nearest `.git`), so a nested
+  project's own `docs/` anchors while an ancestor directory merely
+  named `docs` never does. Id resolution is shard-narrowed with a
   per-language full-listing fallback, and the 76 in-repo documents
   migrated in the same change (feat-245-shard-docs, GitHub issue #245).
 

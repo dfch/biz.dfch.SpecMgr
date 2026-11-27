@@ -1766,11 +1766,14 @@ extras onto every consumer of the base library.
   containing directory named after a type, or the `feat/{id}/README.md`
   shape — with the `--type` override and `--skip-unrecognized`; the `docs`
   anchor is a `docs` segment that is the FIRST segment of the path relative
-  to the repo root (nearest `.git` ancestor) or else the working directory,
-  so an ancestor directory merely named `docs` never anchors; a file under a
-  non-domain `docs/<dir>/` (e.g. `docs/archive/`, any depth) is skipped and
-  counted, exit 0 — for a path outside both roots (last-`docs` anchor) only
-  when no other rule matches; used by the `specmgr-lint` pre-commit hook over
+  to EITHER the working directory (when the path lies under it and the
+  working directory is inside the repo, or no repo exists) OR the repo root
+  (nearest `.git` ancestor), so a nested project's own `docs/` (`mono/.git`,
+  run from `mono/proj`) anchors while an ancestor directory merely named
+  `docs` never does (feat-245 Phase 190); a file under a non-domain
+  `docs/<dir>/` (e.g. `docs/archive/`, any depth) is skipped and counted,
+  exit 0 — unconditionally under a rooted anchor, and for a path outside
+  every root (last-`docs` anchor) only when no other rule matches; used by the `specmgr-lint` pre-commit hook over
   the staged in-tree artifacts and by the CI pull-request step over the
   artifacts changed against the base branch), and the `--type T` sweep (from
   `--dir` if given, else the domain-wide union of every language directory —

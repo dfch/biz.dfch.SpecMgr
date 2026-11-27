@@ -631,8 +631,8 @@ def delete(
     language:
         The language variant to delete (feat-197-i18n Phase 120, DEC
         38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
-        it) deletes the default-language document in the ``en/`` sharded directory -- today's exact
-        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        it) deletes the document of the default language (``en``), in the
+        ``docs/<type>/en/<shard>/`` directory; any other ISO 639-1-shaped lowercase two-letter code
         (e.g. ``"de"``) deletes that language's variant, located by
         id-scan of ``docs/<type>/{language}/`` (the variant's basename is
         never re-derived); only that one variant file is removed (and
