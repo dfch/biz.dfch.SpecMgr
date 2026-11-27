@@ -25,10 +25,9 @@ the existing ``prb/tools/`` surface (``get_prb``, generic ``validate`` tool) plu
 the generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="prb"``; ``get_prb``'s ``raw=True`` parameter serves the
 line-range flow's line numbers -- with ``numbered=True`` additionally
-printing each line's 1-based body-line number, ready to feed into
-``update``'s ``offset`` -- and also serves the old-shape recovery flow
-below). There is no ``specmgr://prb/{id}`` resource to point at -- id-based
-reads always go through the ``get_prb`` tool only.
+printing each line's 1-based body-line number, ready to feed into ``update``'s
+``offset``). There is no ``specmgr://prb/{id}`` resource to point at --
+id-based reads always go through the ``get_prb`` tool only.
 
 There are no fine-grained frontmatter/section mutation tools for
 this domain: PRB's lifecycle surface is deliberately small
@@ -37,21 +36,29 @@ this domain: PRB's lifecycle surface is deliberately small
 ``set_status`` tool with ``type="prb"``) -- mirroring
 ``tsk.prompts.update_task``/``qa.prompts.update_qa``.
 
-**Old-shape recovery (feat-132-prb-update, REQ-008).** A PRB drafted before
-the mandatory ``problem_statement`` lead paragraph was added will fail to
-parse via ``get_prb(id)`` -- the paragraph is a mandatory field now, so a
-document missing it raises an ``AssertionError``. This prompt instructs the
-LLM to recognize that specific failure, re-read the raw body via
-``get_prb(id, raw=True)`` (which never parses, so it always succeeds),
-elicit/confirm or derive the lead sentence's 4 blanks from the document's
-own What/Who/Why answers (mirroring ``create_prb``'s own derive-then-confirm
-flow), insert the composed sentence directly under the H1, and only then
+**Old-shape recovery (feat-132-prb-update, REQ-008).** The
+``problem_statement`` lead paragraph is a mandatory field, so a PRB drafted
+before it became mandatory fails to parse: ``get_prb(id)`` returns the
+non-raising ``ParseFailureResult`` for it (DEC
+9080b37c-82b3-4f63-81f1-79641d0bf14c). This prompt instructs the LLM to
+recognize that specific parse failure, read the raw file with the host's own
+file-read tool at the ``path`` the parse-failure result carries (no specmgr
+read returns the body of a document that fails to parse), elicit/confirm or
+derive the lead sentence's 4 blanks from the document's own What/Who/Why
+answers and any existing non-template first paragraph (mirroring
+``create_prb``'s own derive-then-confirm flow), insert the composed sentence
+directly under the H1 when the lead paragraph is missing or replace the
+non-template first paragraph with it, with the frontmatter left
+byte-unchanged, dry-run the full raw text with the generic ``validate`` tool
+(``full=True``) until it is valid, write the file back with the host's own
+file-write tool (the generic ``update``/``edit`` tools cannot repair a
+document that fails to parse), confirm with ``get_prb(id)``, and only then
 proceed with whatever change was originally requested.
 
 This prompt only ever *narrates* a 9-step revision flow (reading current
 state via `get_prb` -- with a nested recovery sub-flow for an old-shape
-document that fails to parse, re-reading it via `get_prb(id, raw=True)`
-instead -- showing which of the 7 questions are already answered,
+document that fails to parse, repairing it with the host's own file
+tools -- showing which of the 7 questions are already answered,
 eliciting revisions via the `question` tool, re-synthesizing `Summary` and
 `Gap`, optionally revising `Impact`/`Future State`/`References`/
 `More Information`, then calling the generic `update` tool with
@@ -82,13 +89,15 @@ from ...server import mcp
     name="update_prb",
     title="Update a problem statement",
     description=(
-        "Guides the LLM through revising an existing problem statement by id: reading "
-        "current state (recovering an old-shape document missing the mandatory lead sentence "
-        "via a raw re-read if needed), showing which of the 7 5W2H questions are answered, "
-        "eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right "
-        "tool, and validating. The structure reference is the `get_prb_schema` tool (the generated "
-        "JSON Schema); the `get_prb_template`/`get_prb_example` tools return the authoring template "
-        "and a complete sample."
+        "Guides the LLM through revising an existing problem statement by "
+        "id: reading current state (if needed, repairing an old-shape "
+        "document missing the mandatory lead sentence with the host's own "
+        "file-read/file-write tools), showing which of the 7 5W2H questions "
+        "are answered, eliciting revisions, re-synthesizing Summary/Gap, "
+        "applying the change with the right tool, and validating. The "
+        "structure reference is the `get_prb_schema` tool (the generated "
+        "JSON Schema); the `get_prb_template`/`get_prb_example` tools "
+        "return the authoring template and a complete sample."
     ),
 )
 def update_prb(id: str, instructions: str | None = None) -> str:

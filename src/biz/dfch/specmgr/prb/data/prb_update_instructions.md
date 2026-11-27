@@ -3,8 +3,11 @@ You are revising an existing Problem Statement (PRB) document, id: $id
 Requested change: $instructions
 
 Follow this sequence exactly. Do not write raw markdown yourself beyond
-the body content you pass to `update` -- every change to the document
-goes through the specmgr MCP tools listed below.
+the body content you pass to `update`, and every change to the document
+goes through the specmgr MCP tools listed below -- with one exception:
+the "Old-shape recovery" block in step 1 repairs a document that fails
+to parse with the host's own file-read/file-write tools and leaves its
+frontmatter block byte-for-byte unchanged.
 
 ## 1. Read current state first
 
@@ -12,30 +15,60 @@ Call `get_prb(id)` to load the document's current frontmatter and body.
 Never assume prior state -- the on-disk file is always the source of
 truth and may have been hand-edited since you last saw it.
 
-**Old-shape recovery.** If this call fails to parse because the body is
-missing the mandatory lead sentence directly under the H1 (a document
-drafted before that field became mandatory), do not treat this as a
-fatal error:
+**Old-shape recovery.** If `get_prb(id)` returns a parse failure
+whose error names the `problem_statement` field (the body is
+missing the mandatory lead sentence directly under the H1, or the first
+paragraph does not match the template), do not treat this as a fatal error:
 
-1. Re-read the body verbatim via `get_prb(id, raw=True)` -- this never
-   parses the body, so it always succeeds even for an old-shape
-   document.
+1. No specmgr read returns the body of a document that fails to parse
+   (a `raw=True` read of one returns the parse-failure result, never the
+   body text) -- read the raw file with the host's own file-read tool at
+   the `path` the parse-failure result carries. The raw file text starts
+   with the YAML frontmatter block, followed by the body.
 2. Look at the document's own `### What Is the Problem?`,
    `### Who Is Impacted?`, and `### Why Is It a Problem?` answers (if
-   present) under `## Current State`. Derive a first draft of the lead
-   sentence's 4 blanks from them the same way `create_prb`'s own
-   derive-then-confirm flow does: `What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`.
+   present) under `## Current State`. If the first paragraph under the H1
+   does not match the template, read that existing paragraph as well: it
+   is derive input for the same 4 blanks. Derive a first draft of the lead
+   sentence's 4 blanks from those answers (and, in the mismatch case, that
+   paragraph) the same way `create_prb`'s own derive-then-confirm flow does:
+   `What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`.
    For any blank with no answer to derive from, use the `question` tool
    to ask for it directly. Then show the fully composed sentence --
-   `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` -- to the user and use
-   the `question` tool to confirm or refine it.
-3. Insert the confirmed sentence as its own paragraph directly under the
-   H1 title (after any existing leading comment, before `## Current State`) into the raw body text from step 1.
-4. Call `update(id, type="prb", content)` with that spliced body (a
-   whole-body replace, since the insertion touches line numbers you have
-   not yet re-counted) so the document becomes parseable again, then
-   call `get_prb(id)` once more -- it must now succeed -- before
-   proceeding to step 2 below with the originally requested change.
+   `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`
+   -- to the user and use the `question` tool to confirm or refine it.
+3. Put the confirmed sentence into the raw file text from sub-step 1 above:
+   - If the lead paragraph is missing:
+     Insert the confirmed sentence as its own paragraph directly under the
+     H1 title (after any existing leading comment, before
+     `## Current State`).
+   - If the first paragraph under the H1 does not match the template:
+     First use the `question` tool to ask whether content of
+     the existing paragraph that the confirmed sentence does not capture
+     moves to the PRB's `## More Information` section (confirm
+     the exact heading with `get_prb_schema` or `get_prb_template` first).
+     Then replace that paragraph with the confirmed sentence. Do not add the
+     sentence as a second paragraph above it. On a yes to that question,
+     append that content under `## More Information`, adding the heading as
+     the last section of the body (after `## References`) if the PRB has none,
+     in the same raw-file edit and before the sub-step 4 `validate` dry-run.
+
+   In both cases, leave the frontmatter block byte-for-byte unchanged --
+   `id`, `created`, `status`, `version`, and `updated` included: a repair is
+   not an edit.
+4. Dry-run the repaired text with
+   `validate(type="prb", content=<the full raw file text>, full=True)`
+   -- `full=True` because the text includes the frontmatter block, not
+   just the body. While it returns `valid: false`, read the
+   `errors[].message`, apply the smallest fix, and call `validate`
+   again, until it returns `valid: true`.
+5. Write the `validate`-green text back to the same `path` with the host's own
+   file-write tool -- the generic `update`/`edit` tools re-parse the
+   existing document before writing and cannot repair one.
+6. Confirm the repair with a real `get_prb(id)` call -- it must parse
+   successfully -- before proceeding to `## 2. If no change was specified`
+   below with the originally requested change. That change goes through
+   `update` as usual, which bumps `updated` itself.
 
 ## 2. If no change was specified
 

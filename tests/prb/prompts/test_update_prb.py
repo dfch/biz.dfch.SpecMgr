@@ -49,14 +49,89 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         self.assertIn("get_prb(id)", result)
         self.assertLess(result.index("get_prb(id)"), result.index('update(id, type="prb", content)'))
 
-    def test_mentions_old_shape_recovery_via_raw_reread(self):
-        """The prompt must instruct recognizing the missing-lead-paragraph parse
-        error from get_prb(id) and recovering via get_prb(id, raw=True) (REQ-008)."""
+    def test_mentions_old_shape_recovery_via_host_file_repair(self):
+        """The prompt must carry the present-tense recovery directive: a
+        get_prb(id) parse failure whose error names the `problem_statement`
+        field (the body missing the mandatory lead sentence under the H1, or
+        the first paragraph not matching the template) leads to repairing the
+        file with the host's own file-read/file-write tools (no specmgr read
+        returns the body of a document that fails to parse, and the generic
+        update/edit tools cannot repair one), leaving the frontmatter
+        byte-unchanged, a full-text validate(full=True) dry-run before the
+        write-back, and a confirming get_prb(id) call before proceeding with
+        the requested change, in that order (file-read < insert < replace <
+        validate < file-write < confirming get_prb(id)). Both trigger cases are
+        covered: a missing lead paragraph gets the sentence inserted under the
+        H1, and a non-template first paragraph is derive input for the 4 blanks
+        and, after a `question`-tool check whether its uncaptured content moves
+        to `## More Information`, is replaced by the sentence (never kept as a
+        second paragraph). The frontmatter rule follows the second case bullet
+        after a blank line, indented as a paragraph of sub-step 3, so CommonMark
+        renders it for both cases, not as a lazy continuation of that bullet. The
+        negative assertions run on the recovery-block slice only: the rest of
+        the prompt legitimately keeps `update(id, type="prb", content)` and
+        `get_prb(id, raw=True, numbered=True)`. The slice ends at the
+        `## 2. If no change was specified` heading line itself, not at the
+        block's own backticked reference to it."""
         result = update_prb("abc-123")
-        self.assertIn("Old-shape recovery", result)
-        self.assertIn("missing the mandatory lead sentence", result)
-        self.assertIn("get_prb(id, raw=True)", result)
-        self.assertLess(result.index("get_prb(id)"), result.index("Old-shape recovery"))
+        start = result.index("**Old-shape recovery.**")
+        end = result.index("\n## 2. If no change was specified")
+        self.assertLess(result.index("get_prb(id)"), start)
+        self.assertLess(start, end)
+        block = result[start:end]
+        self.assertIn("If `get_prb(id)` returns a parse failure", block)
+        self.assertIn("missing the mandatory lead sentence", block)
+        self.assertIn("problem_statement", block)
+        self.assertIn("No specmgr read returns the body of a document that fails to parse", block)
+        self.assertIn("read the raw file with the host's own file-read tool at", block)
+        self.assertIn("the `path` the parse-failure result carries", block)
+        self.assertIn("In both cases, leave the frontmatter block byte-for-byte unchanged", block)
+        # A blank line, then a 3-space indent: a paragraph of sub-step 3, outside both nested case bullets.
+        self.assertIn(
+            "before the sub-step 4 `validate` dry-run.\n\n   In both cases, leave the frontmatter block byte-for-byte",
+            block,
+        )
+        self.assertIn("`updated` included: a repair is", block)
+        self.assertIn("file-write tool -- the generic `update`/`edit` tools re-parse the", block)
+        self.assertIn("cannot repair one", block)
+        self.assertIn("Confirm the repair with a real `get_prb(id)` call -- it must parse", block)
+        self.assertIn("which bumps `updated`", block)
+        # The two-case wording is asserted wrap-independently on the whitespace-normalized slice.
+        flat = " ".join(block.split())
+        self.assertIn(
+            "If the first paragraph under the H1 does not match the template, read that existing paragraph "
+            "as well: it is derive input for the same 4 blanks.",
+            flat,
+        )
+        self.assertIn("- If the lead paragraph is missing: Insert the confirmed sentence", flat)
+        self.assertIn(
+            "- If the first paragraph under the H1 does not match the template: First use the `question` tool "
+            "to ask whether content of the existing paragraph that the confirmed sentence does not capture "
+            "moves to the PRB's `## More Information` section (confirm the exact heading with "
+            "`get_prb_schema` or `get_prb_template` first). Then replace that paragraph with the confirmed "
+            "sentence. Do not add the sentence as a second paragraph above it. On a yes to that question, append "
+            "that content under `## More Information`, adding the heading as the last section of the body (after "
+            "`## References`) if the PRB has none, in the same raw-file edit and before the sub-step 4 `validate` "
+            "dry-run.",
+            flat,
+        )
+        validate_call = 'validate(type="prb", content=<the full raw file text>, full=True)'
+        self.assertIn(validate_call, block)
+        file_read = block.index("read the raw file with the host's own file-read tool at")
+        insert = block.index("Insert the confirmed sentence as its own paragraph directly under the")
+        validate = block.index(validate_call)
+        replace = block.index("replace that paragraph with the confirmed sentence")
+        move = block.index("append that content under `## More Information`")
+        file_write = block.index("file-write tool -- the generic `update`/`edit` tools re-parse the")
+        confirm = block.index("Confirm the repair with a real `get_prb(id)` call -- it must parse")
+        self.assertLess(file_read, insert)
+        self.assertLess(insert, replace)
+        self.assertLess(replace, move)
+        self.assertLess(move, validate)
+        self.assertLess(validate, file_write)
+        self.assertLess(file_write, confirm)
+        self.assertNotIn("get_prb(id, raw=True)", block)
+        self.assertNotIn('update(id, type="prb", content)', block)
 
     def test_mentions_deriving_or_eliciting_lead_sentence_blanks(self):
         """The recovery flow must instruct deriving/confirming (or eliciting)
@@ -76,7 +151,8 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         result = update_prb("abc-123")
         self.assertIn("Insert the confirmed sentence as its own paragraph directly under the", result)
         self.assertIn("H1 title", result)
-        self.assertIn("proceeding to step 2 below with the originally requested change", result)
+        self.assertIn("proceeding to `## 2. If no change was specified`", result)
+        self.assertIn("below with the originally requested change", result)
 
     def test_mentions_both_generic_mutation_tools(self):
         """Both the generic `update` (type="prb") and `set_status`

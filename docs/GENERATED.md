@@ -174,6 +174,7 @@ First-line docstrings from each module, organized by domain:
 **gol/**
 
 - `gol/__init__.py` — Goal (GOL) domain -- high-level business goal specifications.
+- `gol/models/__init__.py` — Goal (GOL) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - `gol/models/v1/__init__.py` — Goal (GOL) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - `gol/models/v1/_util.py` — Shared, private constants for the ``gol.models.v1`` subpackage.
 - `gol/models/v1/body.py` — Goal (GOL) models: whole-section fields under a single H1.
@@ -316,6 +317,7 @@ First-line docstrings from each module, organized by domain:
 **req/**
 
 - `req/__init__.py` — Requirement (REQ) domain -- requirement specifications.
+- `req/models/__init__.py` — Requirement (REQ) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - `req/models/v1/__init__.py` — Requirement (REQ) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - `req/models/v1/_util.py` — Shared, private constants for the ``req.models.v1`` subpackage.
 - `req/models/v1/body.py` — Requirement (REQ) models: whole-section fields under a single H1.
@@ -628,4 +630,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 508
+**Test files**: 509
