@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-22T15:43:46.858+01:00'
 id: feat-248-249-stale-docs
-status: progress
+status: review
 type: feat
-updated: '2026-11-27T07:22:30.400+01:00'
+updated: '2026-11-27T07:26:56.933+01:00'
 version: 1.0.0
 ---
 
