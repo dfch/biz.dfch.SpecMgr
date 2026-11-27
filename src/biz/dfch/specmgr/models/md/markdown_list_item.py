@@ -25,7 +25,7 @@ from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
 from .markdown_paragraph import MarkdownParagraph
-from ._markdown import format_text, not_in_mdformat_message, parse
+from ._markdown import consume_leading_lines, format_text, not_in_mdformat_message, parse
 
 #: The two markdown-it block-container token types a list item can be nested under.
 #: `MarkdownListItem` is deliberately shared between bullet (`ul`) and ordered (`ol`)
@@ -162,11 +162,14 @@ class MarkdownListItem(MarkdownStr):
         off `text`, the remainder is dedented (`mdformat` dedents an
         indented sub-block automatically once it is renormalized on its own)
         and delegated to `MarkdownStr.from_text` (via `super()`) for the
-        declared fields' population. `_value` is set to the leading
-        paragraph's own lines verbatim, *marker included* -- unlike
-        `MarkdownParagraph`, whose marker-free `_value` needs no
-        reconstruction, an item cannot reconstruct its own marker from class
-        metadata alone (see the class docstring), so it is kept as-is instead.
+        declared fields' population, at an offset advanced by the line count
+        actually consumed (the leading paragraph plus the blank separator
+        line the re-normalization removes -- see `consume_leading_lines`).
+        `_value` is set to the leading paragraph's own lines verbatim,
+        *marker included* -- unlike `MarkdownParagraph`, whose marker-free
+        `_value` needs no reconstruction, an item cannot reconstruct its own
+        marker from class metadata alone (see the class docstring), so it is
+        kept as-is instead.
 
         Args:
             text: the markdown text to parse.
@@ -223,10 +226,12 @@ class MarkdownListItem(MarkdownStr):
         own_lines = own_map[1]
 
         lines = text.splitlines()
-        body_lines = lines[own_lines:]
-        body_text = format_text("\n".join(body_lines)) if body_lines else ""
+        # Hand the rest on at the actually-consumed line count (feat-253): the
+        # re-normalization also removes the blank line after the item's own
+        # paragraph, so `own_lines` alone would start every note one line too low.
+        body_text, consumed = consume_leading_lines(text, own_lines)
 
-        instance = super().from_text(body_text, _path=own_path, _offset=_offset + own_lines)
+        instance = super().from_text(body_text, _path=own_path, _offset=_offset + consumed)
         instance._value = "\n".join(lines[:own_lines])
         instance._path = own_path
         instance._line = own_line
