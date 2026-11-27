@@ -59,13 +59,15 @@ def _directories_missing_init(files: list[PurePosixPath], tracked: set[PurePosix
     """Return the sorted package directories (ancestors of ``files``) whose ``__init__.py`` is not in ``tracked``."""
     missing: set[str] = set()
     for file in files:
-        # Bounds the ancestor walk below: a path outside ``PACKAGE_ROOT`` never reaches it.
-        assert file.is_relative_to(PACKAGE_ROOT), f"{file} is not under {PACKAGE_ROOT}"
+        # Bounds the ancestor walk below: a path outside ``PACKAGE_ROOT`` never reaches it. An explicit raise, not an
+        # assert, so the guard also holds under ``python -O``.
+        if not file.is_relative_to(PACKAGE_ROOT):
+            raise ValueError(f"{file} is not under {PACKAGE_ROOT}")
         directory = file.parent
         while True:
             if directory / "__init__.py" not in tracked:
                 missing.add(str(directory))
-            # The filesystem-root check ends the walk even under ``python -O``, which strips the assert above.
+            # The filesystem-root check is a second bound: the walk ends even if the guard above is bypassed.
             if directory == PACKAGE_ROOT or directory == directory.parent:
                 break
             directory = directory.parent
@@ -119,7 +121,7 @@ class TestNoNamespacePackages(unittest.TestCase):
         """A path outside ``PACKAGE_ROOT`` fails with a message naming the file, never an endless walk."""
         outside = PurePosixPath("tests/x/__init__.py")
 
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             _directories_missing_init([outside], set())
 
         self.assertIn(str(outside), str(context.exception))

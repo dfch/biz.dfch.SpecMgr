@@ -30,8 +30,9 @@ paragraph does not match the template), do not treat this as a fatal error:
    present) under `## Current State`. If the first paragraph under the H1
    does not match the template, read that existing paragraph as well: it
    is derive input for the same 4 blanks. Derive a first draft of the lead
-   sentence's 4 blanks from them the same way `create_prb`'s own
-   derive-then-confirm flow does: `What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`.
+   sentence's 4 blanks from those answers (and, in the mismatch case, that
+   paragraph) the same way `create_prb`'s own derive-then-confirm flow does:
+   `What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`.
    For any blank with no answer to derive from, use the `question` tool
    to ask for it directly. Then show the fully composed sentence --
    `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`
@@ -42,12 +43,15 @@ paragraph does not match the template), do not treat this as a fatal error:
      H1 title (after any existing leading comment, before
      `## Current State`).
    - If the first paragraph under the H1 does not match the template:
-     first use the `question` tool to ask whether content of the existing
-     paragraph that the confirmed sentence does not capture moves to the
-     PRB's `## More Information` section (confirm the exact heading with
-     `get_prb_schema` or the packaged template first). Then
-     replace that paragraph with the confirmed sentence. Do not add the
-     sentence as a second paragraph above it.
+     First use the `question` tool to ask whether content of
+     the existing paragraph that the confirmed sentence does not capture
+     moves to the PRB's `## More Information` section (confirm
+     the exact heading with `get_prb_schema` or `get_prb_template` first).
+     Then replace that paragraph with the confirmed sentence. Do not add the
+     sentence as a second paragraph above it. On a yes to that question,
+     append that content under `## More Information`, adding the heading as
+     the last section of the body (after `## References`) if the PRB has none,
+     in the same raw-file edit and before the sub-step 4 `validate` dry-run.
 
    In both cases, leave the frontmatter block byte-for-byte unchanged --
    `id`, `created`, `status`, `version`, and `updated` included: a repair is

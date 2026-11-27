@@ -311,14 +311,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pins the corrected wording on the recovery-block slice
   (feat-248-249-stale-docs, GitHub issue #248).
 - `req/models/` and `gol/models/` are regular packages (docstring-only
-  `__init__.py`, no import), so `specmgr docs` emits the 16 previously
-  missing `docs/api/` pages for `biz.dfch.specmgr.{req,gol}.models`,
-  `.models.v1`, and
-  `.models.v1.{_util,body,document,frontmatter,parser,summary}`.
-  The new `tests/test_no_namespace_packages.py` guard fails if any
-  directory between `src/biz/dfch/specmgr/` and a git-tracked `.py` file
-  under it lacks an `__init__.py` (feat-248-249-stale-docs, GitHub issue
-  #249).
+  `__init__.py`, no import), so `specmgr docs` emits the 16 previously missing
+  `docs/api/` pages for `biz.dfch.specmgr.{req,gol}.models`, `.models.v1`, and
+  `.models.v1.{_util,body,document,frontmatter,parser,summary}`. The new
+  `tests/test_no_namespace_packages.py` guard fails if any directory between
+  `src/biz/dfch/specmgr/` and a git-tracked `.py` file under it lacks an
+  `__init__.py` (feat-248-249-stale-docs, GitHub issue #249).
 - The `specmgr://i18n` resource's §5.1 11-tag reference-vocabulary
   correction in the packaged data file `general/data/general_i18n.md`:
   the stale `SOP` tag (not a reference tag) is replaced by `TXT`

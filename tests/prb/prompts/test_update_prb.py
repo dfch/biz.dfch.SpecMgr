@@ -88,7 +88,7 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         self.assertIn("In both cases, leave the frontmatter block byte-for-byte unchanged", block)
         # A blank line, then a 3-space indent: a paragraph of sub-step 3, outside both nested case bullets.
         self.assertIn(
-            "sentence as a second paragraph above it.\n\n   In both cases, leave the frontmatter block byte-for-byte",
+            "before the sub-step 4 `validate` dry-run.\n\n   In both cases, leave the frontmatter block byte-for-byte",
             block,
         )
         self.assertIn("`updated` included: a repair is", block)
@@ -105,11 +105,14 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         )
         self.assertIn("- If the lead paragraph is missing: Insert the confirmed sentence", flat)
         self.assertIn(
-            "- If the first paragraph under the H1 does not match the template: first use the `question` tool "
+            "- If the first paragraph under the H1 does not match the template: First use the `question` tool "
             "to ask whether content of the existing paragraph that the confirmed sentence does not capture "
             "moves to the PRB's `## More Information` section (confirm the exact heading with "
-            "`get_prb_schema` or the packaged template first). Then replace that paragraph with the confirmed "
-            "sentence. Do not add the sentence as a second paragraph above it.",
+            "`get_prb_schema` or `get_prb_template` first). Then replace that paragraph with the confirmed "
+            "sentence. Do not add the sentence as a second paragraph above it. On a yes to that question, append "
+            "that content under `## More Information`, adding the heading as the last section of the body (after "
+            "`## References`) if the PRB has none, in the same raw-file edit and before the sub-step 4 `validate` "
+            "dry-run.",
             flat,
         )
         validate_call = 'validate(type="prb", content=<the full raw file text>, full=True)'
@@ -118,11 +121,13 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         insert = block.index("Insert the confirmed sentence as its own paragraph directly under the")
         validate = block.index(validate_call)
         replace = block.index("replace that paragraph with the confirmed sentence")
+        move = block.index("append that content under `## More Information`")
         file_write = block.index("file-write tool -- the generic `update`/`edit` tools re-parse the")
         confirm = block.index("Confirm the repair with a real `get_prb(id)` call -- it must parse")
         self.assertLess(file_read, insert)
         self.assertLess(insert, replace)
-        self.assertLess(replace, validate)
+        self.assertLess(replace, move)
+        self.assertLess(move, validate)
         self.assertLess(validate, file_write)
         self.assertLess(file_write, confirm)
         self.assertNotIn("get_prb(id, raw=True)", block)
