@@ -55,7 +55,7 @@ import uuid
 
 from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import sharded_doc_path, sharded_variant_path, slugify
+from ...general.tools._doc_paths import assert_variant_absent, sharded_doc_path, sharded_variant_path, slugify
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language, validate_id
 from ...general.tools._timestamps import now_timestamp
 from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
@@ -274,7 +274,7 @@ def _create_variant(id_: str, language: str, content: str) -> RskFrontmatter:
     RskNotFoundError
         No EN source document with ``id_`` exists.
     FileExistsError
-        The variant file already exists.
+        The variant already exists, in any shard of the language directory (guarded by id).
     """
     assert isinstance(id_, str), type(id_)
     assert id_.strip()
@@ -291,12 +291,9 @@ def _create_variant(id_: str, language: str, content: str) -> RskFrontmatter:
                 f"A language variant requires its {DEFAULT_LANGUAGE!r} source "
                 f"-- create the {DEFAULT_LANGUAGE!r} document first, and pass its id."
             ) from ex
-        path = sharded_variant_path(ensure_rsk_base_dir(language), source_path, id_)
-        if path.exists():
-            raise FileExistsError(
-                f"the {language!r} variant of rsk {id_!r} already exists at {path}; "
-                f"use the generic `update`/`edit` tools with language={language!r} to change it"
-            )
+        variant_base_dir = ensure_rsk_base_dir(language)
+        path = sharded_variant_path(variant_base_dir, source_path, id_)
+        assert_variant_absent(variant_base_dir, id_, language, "rsk", path, find_rsk_path, read_rsk)
         now = now_timestamp()
         new_frontmatter = RskFrontmatter(
             id=id_,

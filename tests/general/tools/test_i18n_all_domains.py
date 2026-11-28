@@ -270,6 +270,66 @@ class TestAcc001PathResolutionAllDomains(_TempDocsMixin):
                 self.assertEqual(spec.fn("list")(), spec.fn("list")(language="en"))
 
 
+class TestVariantExistsGuardIsByIdAllDomains(_TempDocsMixin):
+    """feat-245 Phase 210 (CR2): a variant in ANOTHER shard still exists -- `create_<d>` never writes a second one."""
+
+    def _move_to_another_shard(self, de_file: Path) -> Path:
+        other = "00" if de_file.parent.name != "00" else "01"
+        result = de_file.parent.parent / other / de_file.name
+        result.parent.mkdir(parents=True, exist_ok=True)
+        de_file.rename(result)
+        return result
+
+    def test_a_variant_moved_to_another_shard_blocks_a_second_create(self):
+        for spec in SPECS:
+            with self.subTest(domain=spec.d):
+                spec.reset_cache()
+                doc_id, _en_file, de_file = self.seed(spec)
+                moved = self._move_to_another_shard(de_file)
+                original = moved.read_bytes()
+                self.assertEqual(spec.fn("get")(doc_id, language="de").frontmatter.id, doc_id)  # still resolved
+
+                with self.assertRaises(FileExistsError) as ctx:
+                    spec.fn("create")(spec.de_body(), language="de", id=doc_id)
+
+                self.assertIn(f"already exists at {moved}", str(ctx.exception))
+                self.assertIn(
+                    "use the generic `update`/`edit` tools with language='de' to change it", str(ctx.exception)
+                )
+                self.assertEqual(list(spec.base_dir("de").rglob("*.md")), [moved])
+                self.assertEqual(spec.fn("list")(language="de").total, 1)
+                self.assertEqual(moved.read_bytes(), original)
+                self.assertEqual(Path(spec.fn("list")(language="de").results[0].path), moved.resolve())
+                self.assertEqual(spec.fn("get")(doc_id, language="de").frontmatter.id, doc_id)
+
+    def test_an_unparseable_variant_in_another_shard_blocks_a_second_create(self):
+        for spec in SPECS:
+            with self.subTest(domain=spec.d):
+                spec.reset_cache()
+                doc_id, _en_file, de_file = self.seed(spec)
+                moved = self._move_to_another_shard(de_file)
+                moved.write_text("not a document\n", encoding="utf-8")
+
+                with self.assertRaises(FileExistsError) as ctx:
+                    spec.fn("create")(spec.de_body(), language="de", id=doc_id)
+
+                self.assertIn(f"already exists at {moved}", str(ctx.exception))
+                self.assertEqual(list(spec.base_dir("de").rglob("*.md")), [moved])
+
+    def test_the_en_create_path_and_a_first_variant_create_are_unchanged(self):
+        for spec in SPECS:
+            with self.subTest(domain=spec.d):
+                spec.reset_cache()
+                doc_id, en_file, de_file = self.seed(spec)
+                self.assertTrue(de_file.is_file(), de_file)
+                self.assertEqual(de_file.parent.name, doc_id[:2])
+                self.assertEqual(en_file.parent.name, doc_id[:2])
+                second = spec.fn("create")(spec.en_body())  # EN create: a fresh id, never guarded by another document
+                assert not isinstance(second, ValidateResult), second
+                self.assertNotEqual(second.id, doc_id)
+                self.assertEqual(spec.fn("list")().total, 2)
+
+
 class TestAcc004Acc011HeadingTableCoversEveryDomain(unittest.TestCase):
     """ACC-004/ACC-011 evidence per domain: the translated example/template parse to the EN document."""
 

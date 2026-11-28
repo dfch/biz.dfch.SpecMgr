@@ -187,6 +187,7 @@ __all__ = [
     "DOCS_DIR_ENV_VAR",
     "DocNotFoundError",
     "SHARD_DIGITS",
+    "assert_variant_absent",
     "doc_base_dir",
     "doc_domain_base_dir",
     "ensure_doc_base_dir",
@@ -539,6 +540,88 @@ def sharded_variant_path(base_dir: Path, source_path: Path, id_: str) -> Path:
     shard_dir.mkdir(parents=True, exist_ok=True)
     result = shard_dir / source_path.name
     return result
+
+
+def assert_variant_absent(
+    base_dir: Path,
+    id_: str,
+    language: str,
+    label: str,
+    target_path: Path,
+    find_path_fn: Callable[[Path, str], Path],
+    read_fn: Callable[[Path], _DocT],
+) -> None:
+    """Raise ``FileExistsError`` when the ``language`` variant of document ``id_`` already exists, in ANY shard.
+
+    The single shared variant-exists guard of every ``create_<d>`` tool's
+    *variant* branch (feat-245 Phase 210, CR2). The guard is by **id**, not
+    by the computed target path: every read path resolves a document whose
+    placement disagrees with its id through the full sharded-listing
+    fallback (REQ-004), so a variant sitting in another shard than
+    ``id_[:2]`` exists for ``get_<d>``/``list_<d>`` -- and a guard on the
+    computed ``<language>/<id[:2]>/<EN file name>`` path alone would write a
+    second file with the same id and language beside it. Three conditions
+    count as "exists", checked in this order:
+
+    1. ``find_path_fn(base_dir, id_)`` resolves (the domain's own
+       cache-backed ``find_<d>_path`` -- the same id lookup ``get_<d>``
+       uses, shard-narrowed first, full listing as the fallback);
+    2. :func:`find_parse_failure` reports an existing-but-unparseable
+       variant whose file name carries ``id_``;
+    3. ``target_path`` itself exists (a file at the computed path that
+       neither lookup attributes to ``id_`` -- it is never overwritten).
+
+    Must be called under the variant's own per-language lock, so the guard
+    and the following write are atomic with respect to every other mutation
+    of this variant.
+
+    Parameters
+    ----------
+    base_dir:
+        The variant language's own base directory, e.g. ``docs/req/de``.
+    id_:
+        The shared document id.
+    language:
+        The variant's language code (named in the error message).
+    label:
+        The document noun of the error message (the domain name, or
+        ``decision`` for ``dec``).
+    target_path:
+        The computed path the variant would be written to.
+    find_path_fn:
+        The domain's ``find_<d>_path(base_dir, id_)``; raises a
+        ``LookupError`` subclass when no parseable document has ``id_``.
+    read_fn:
+        The domain's cache-backed ``read_<d>`` (for :func:`find_parse_failure`).
+
+    Raises
+    ------
+    FileExistsError
+        The variant already exists; the message names the path of the file
+        that exists.
+    """
+    assert isinstance(base_dir, Path), type(base_dir)
+    assert isinstance(id_, str), type(id_)
+    assert id_.strip()
+    assert isinstance(language, str), type(language)
+    assert isinstance(label, str), type(label)
+    assert label.strip()
+    assert isinstance(target_path, Path), type(target_path)
+
+    existing: Path | None = None
+    try:
+        existing = find_path_fn(base_dir, id_)
+    except LookupError:
+        parse_failure = find_parse_failure(base_dir, id_, read_fn)
+        if parse_failure is not None:
+            existing = parse_failure[0]
+    if existing is None and target_path.exists():
+        existing = target_path
+    if existing is not None:
+        raise FileExistsError(
+            f"the {language!r} variant of {label} {id_!r} already exists at {existing}; use the generic "
+            f"`update`/`edit` tools with language={language!r} to change it"
+        )
 
 
 def iter_doc_paths(base_dir: Path) -> Iterator[Path]:

@@ -99,7 +99,7 @@ non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
 ``XNotFoundError``: the adapter catches the ``load_by_id`` failure (inside
 the domain lock, before the match stage ever runs), probes the domain's
 existing parse-failure lookup (:func:`general.tools._doc_paths.
-find_parse_failure` for the 13 sharded domains, called with the domain's
+find_parse_failure` for every whole-body domain except ``feat``, called with the domain's
 own cache-backed ``read_<d>`` as ``read_fn``;
 :func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
 returns the result when the probe finds a name-matching broken file (the

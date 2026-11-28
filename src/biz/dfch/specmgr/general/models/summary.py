@@ -56,7 +56,7 @@ class DocSummary(BaseModel):
         that failed to parse (``error`` is set).
     ref:
         The document's extensionless base name (e.g.
-        ``"req-<uuid>-a-title"``), deliberately *not* a filename or path --
+        ``"<uuid>-a-title"``), deliberately *not* a filename or path --
         pass it to the matching domain's ``get_<domain>`` tool alongside
         (or instead of) ``id``. Named ``ref`` rather than ``filename`` for
         that reason, even though ``path`` (below) does now expose the real

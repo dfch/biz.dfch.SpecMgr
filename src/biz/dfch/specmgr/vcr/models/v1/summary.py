@@ -49,7 +49,7 @@ class VcrSummary(DocSummary):
         The verification case record's ``frontmatter.status`` value, verbatim.
     ref:
         The document's extensionless base name (e.g.
-        ``"vcr-<uuid>-a-title"``), deliberately *not* a filename or path --
+        ``"<uuid>-a-title"``), deliberately *not* a filename or path --
         callers must not read this off disk themselves, only pass it to
         ``get_vcr`` alongside (or instead of) ``id``. Named ``ref`` rather
         than ``filename`` precisely to avoid inviting direct filesystem

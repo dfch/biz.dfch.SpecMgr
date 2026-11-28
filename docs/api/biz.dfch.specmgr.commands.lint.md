@@ -34,10 +34,12 @@ the size of the corpus (REQ-004):
 
 * **Path mode** -- explicit ``PATHS`` on the command line. Each path's
   type is inferred from the path layout ALONE (REQ-005), independent of
-  every ``SPECMGR_*_DIR`` variable, with four rules, in order: the
+  every ``SPECMGR_*_DIR`` variable (the one configuration input of path
+  mode is the configured docs root as a PLACEMENT anchor -- feat-245
+  Phase 210, CR6), with four rules, in order: the
   docs-anchored sharded valid shape ``docs/<type>/<lang>/<2-hex-shard>/
-  <file>.md`` (``type`` one of the thirteen UUID domains -- feat-245
-  Phase 120, REQ-006); the root-name-independent sharded shape
+  <file>.md`` (``type`` one of the UUID domains, i.e. every whole-body
+  domain except ``feat`` -- feat-245 Phase 120, REQ-006); the root-name-independent sharded shape
   ``<type>/<lang>/<2-hex>/<file>.md`` by shape alone, under a docs root
   of ANY name (``specdocs/req/en/ab/x.md`` -- feat-245 Phase 180, G2;
   the path-mode parse language is derived from that same position, so a
@@ -45,35 +47,54 @@ the size of the corpus (REQ-004):
   ``--type``); the containing directory named after a type (a non-docs-
   anchored position, e.g. ``<base>/req/x.md``); the ``feat/<id>/
   README.md`` shape (unchanged for every position, ``docs/<feat>``
-  anchored included). The ``docs`` anchor (final rule, feat-245 Phase 200)
-  is a pure function of the resolved path, the resolved working directory
-  and the path's repo roots (EVERY ancestor directory that holds a
-  ``.git`` entry, not only the nearest). (1) Root candidates, in order:
-  the working directory -- only when the path lies under it and it is
-  inside one of those repo roots, or no repo exists -- then every repo
-  root, from the outermost inward; a candidate anchors the path when
-  ``docs`` is the FIRST segment of the path relative to it. (2) A
-  candidate's anchor is ROOTED unless another repo root lies strictly
-  inside the anchoring ``docs`` directory (a repo cloned or vendored into
-  a docs tree; a ``docs`` directory that is itself a repo root stays
-  rooted); the first rooted anchor wins, and an anchor that is not rooted
-  is taken only when no later candidate gives a rooted one. (3) When no
-  candidate anchors, the LAST ``docs`` segment anchors, un-rooted --
-  searched inside the outermost repo root, or over the whole path when no
-  repo exists. A registered UUID domain under ANY anchor is
-  placement-validated; a rooted anchor's non-domain skip is unconditional,
-  an un-rooted anchor's applies only when no other rule matches.
+  anchored included). The ``docs`` anchor (final rule, feat-245 Phase 210)
+  is a pure function of the resolved path, the resolved working directory,
+  the path's repo roots (EVERY ancestor directory that holds a ``.git``
+  entry, not only the nearest) and the configured docs root. One precedence
+  principle: the file's own nearest repo decides whether the file is under a
+  docs directory; an outer repo's docs directory may only ADD placement
+  gating for the UUID domains, never an unconditional non-domain skip. (1)
+  Anchoring directories, in order: the configured docs root
+  (``SPECMGR_DOCS_DIR``, whatever it is named, when it is not the default
+  ``docs``) when the path lies under it; then the ``docs`` directory of each
+  root candidate -- the working directory, only when the path lies under it
+  and it is inside one of those repo roots, or no repo exists, then every
+  repo root, from the outermost inward -- when ``docs`` is the FIRST segment
+  of the path relative to the candidate. (2) An anchoring directory is
+  ROOTED unless a repo root lies at or inside it (the directory is itself a
+  repo root, or a repo is cloned or vendored into it); the first rooted
+  anchor wins, and an anchor that is not rooted is taken only when no later
+  anchoring directory gives a rooted one. (3) When nothing anchors, the LAST
+  ``docs`` segment anchors, un-rooted -- searched inside the outermost repo
+  root, or over the whole path when no repo exists. A registered UUID domain
+  under ANY anchor is placement-validated; a rooted anchor's non-domain skip
+  is unconditional, an un-rooted anchor's applies only when no other rule
+  matches, and no non-domain skip applies when ``--type`` is given.
   Consequences: a working directory above every repo and a ``docs``-named
-  directory above the outermost repo root never anchor; a ``docs`` tree
-  that is itself a repo (a submodule) and a vendored repo's own ``docs/``
-  are gated; a nested project (``mono/.git``, docs at ``mono/proj/docs/``)
-  is placement-gated from every working directory, but its non-domain
-  ``docs/<dir>/`` files are skipped unconditionally only when lint runs
-  from inside the project -- from ``mono/``,
-  ``proj/docs/archive/sop/README.md`` is linted as ``sop`` (its
-  parent-name rule matches); without any repo, a ``docs``-named ancestor
-  of the project can anchor (nothing marks where the project starts).
-  ``--type`` overrides inference for the parse, but
+  directory above the outermost repo root never anchor; a ``docs`` tree that
+  is itself a repo (a submodule, or a spec repo whose root directory is
+  named ``docs``) and a vendored repo's own ``docs/`` are placement-gated,
+  and the feature READMEs of such a repo are linted; a misplaced document
+  under a configured docs root of any name (``specdocs/req/x.md``) is a
+  layout violation; a nested project (``mono/.git``, docs at
+  ``mono/proj/docs/``) is placement-gated from every working directory, but
+  its non-domain ``docs/<dir>/`` files are skipped unconditionally only when
+  lint runs from inside the project -- from ``mono/``,
+  ``proj/docs/archive/sop/README.md`` is linted as ``sop`` (its parent-name
+  rule matches). Known limitations: (a) a symlinked ``docs`` directory is
+  judged by its resolved location, so placement under the link is not gated
+  by the ``docs`` rules (unreachable for the hook and CI: git does not track
+  files through a symlinked directory); (b) a repo whose directory is named
+  after a UUID domain inside an outer repo's ``docs`` tree
+  (``super/docs/req/.git``) has its files placement-validated by the outer
+  anchor -- run lint without the outer repo, or rename the directory; (c)
+  with no repo at all, nothing marks where the project starts: a
+  ``docs``-named ancestor of the project can anchor, and from the directory
+  directly above such an ancestor the anchor is rooted, so the non-domain
+  files below it, feature READMEs included, are skipped. ``--type``
+  overrides inference for the parse and always forces it (a
+  ``docs/<non-domain>/`` file is linted, not skipped -- feat-245 Phase 210,
+  CR1), but
   it never rescues a misplaced ``docs/<type>/`` file -- the placement
   violation stands. A file anchored under ``docs/<uuid-domain>/`` that
   misses the sharded placement (missing language dir, missing or
@@ -90,15 +111,26 @@ the size of the corpus (REQ-004):
   a usage error (exit 2) unless ``--skip-unrecognized`` is given, in
   which case the path is skipped and counted.
 * **Type sweep** -- ``--type T`` with no paths sweeps every document of
-  that type: for the thirteen sharded UUID domains, the domain-wide
+  that type: for the sharded UUID domains, the domain-wide
   union of every language directory's sharded listing (``en/`` plus
   every variant ``{language}/`` directory under the domain's base --
   Task 150.155: a variant document is linted exactly like its EN file);
   for ``feat``, its registered base directory's folder-per-document
   listing (unchanged -- the single-language domain). The explicit
   ``--dir`` argument (valid with ``--type`` ONLY, and without explicit
-  paths) narrows the sweep to exactly that one directory's sharded (or
-  ``feat`` folder) listing (REQ-006). Each sweep item's parse language
+  paths) sweeps that directory instead (REQ-006). For a sharded domain
+  it is classified by its OWN content, independent of its name and of
+  the configured docs root (feat-245 Phase 210, CR4 + CR5): a directory
+  that holds language directories (shape-valid two-letter names that
+  hold two-hex shard directories) is swept as a DOMAIN directory, every
+  language, each file parsed with its language directory's code; a
+  directory that holds two-hex shard directories is swept as ONE
+  language directory, whose language is its own name when shape-valid
+  (``en`` = canonical), else canonical; a ``--dir`` that holds ``.md``
+  files at any depth but yields no document is a usage error (exit 2),
+  never a green ``linted=0``; an empty or missing ``--dir`` exits 0 with
+  a 0-document summary. For ``feat`` it is that directory's folder
+  listing. Each default-sweep item's parse language
   is derived POSITION-RELATIVE to the domain's configured base
   directory (``language_for_doc_path`` over ``doc_domain_base_dir`` --
   root-name-independent, Phase 160, D9: the sweep behaves identically
@@ -109,7 +141,7 @@ the size of the corpus (REQ-004):
   registered-but-empty domain is not a misconfiguration.
 * **All sweep** -- ``--all`` sweeps every registered type, each with
   the same default enumeration as its ``--type`` sweep (the all-
-  languages union for the thirteen sharded UUID domains, the folder
+  languages union for the sharded UUID domains, the folder
   listing for ``feat``). Explicit paths combined with ``--all`` is a
   usage error; ``--all`` that discovers no document at all is a
   probable misconfiguration (exit 2).
@@ -145,7 +177,8 @@ Exit codes (pinned, REQ-008 -- the plantuml-check family):
   ``--skip-unrecognized``; ``--dir`` without ``--type``; ``--dir``
   combined with explicit paths; explicit paths combined with ``--all``;
   an unknown ``--type``; ``--all`` that discovers no document at all;
-  at least one LAYOUT VIOLATION (a file anchored under a registered
+  a ``--dir`` that holds ``.md`` files but no document in the sharded
+  layout; at least one LAYOUT VIOLATION (a file anchored under a registered
   UUID domain's ``docs`` directory that misses the sharded placement --
   feat-245 Phase 120, REQ-006's own exit-2 member; it outranks a parse
   failure in the same run, which is reported too).
@@ -154,7 +187,16 @@ Report: the layout violations first (one block each: the file named with
 ``layout violation: <defect>; correct path: <path>`` -- the correct path
 is concrete, ``docs/<type>/<lang>/<shard>/<file>.md``, when the file
 name carries a canonical uuid, shape-level with the ``<2-hex-shard>``
-placeholder otherwise -- followed by the file's own repair pointer),
+placeholder otherwise -- followed by the move instruction, ``move it:
+git mv <path> <correct path>``, the target in the form of the path as
+given; a misplaced file gets no ``/repair`` pointer, which could not find
+it. In the one AMBIGUOUS case -- exactly one directory between the domain
+directory and the file, which is both a shape-valid language code and the
+file name's own uuid prefix (``docs/req/de/deadbeef-...-x.md``) -- both
+lines name both readings: an ``en`` document whose language directory is
+missing (``docs/req/en/de/...``), or a ``de`` variant whose shard
+directory is missing (``docs/req/de/de/...``) -- feat-245 Phase 210, CR3
++ CR7),
 then every failing ``(path, error)`` pair is printed (the error is the
 caught exception's own text, verbatim), each followed by its repair
 pointer: ``/repair {type} {id}`` with the id derived from the path (the
@@ -172,14 +214,15 @@ violations (never parsed, never in ``linted``).
 
 ### `_Anchor`
 
-A path-mode path's docs anchor, computed ONCE per path (feat-245 Phase 180, E2; Phase 190, S1; Phase 200).
+A path-mode path's docs anchor, computed ONCE per path (feat-245 Phases 180, 190, 200 and 210).
 
 The placement classifier's own anchor (feat-245 Phase 120, REQ-006):
 a path is docs-anchored when it carries a ``docs`` directory segment
 with at least one directory and the file after it
-(``docs/<dir>/…/<file>``). WHICH ``docs`` segment anchors, and whether
+(``docs/<dir>/…/<file>``), or lies under the configured docs root
+(whatever that root is named). WHICH directory anchors, and whether
 the anchor is rooted, is decided by :func:`_anchor_rule` (the final
-rule, Phase 200 -- stated in full in the module docstring). A file
+rule, Phase 210 -- stated in full in the module docstring). A file
 directly under a ``docs`` directory (``docs/x.md``) is NOT anchored --
 it keeps the legacy inference rules.
 
@@ -192,21 +235,28 @@ Attributes:
         valid sharded placement, longer for the misplaced depths) --
         or ``None`` when the path is not docs-anchored.
     rooted:
-        Whether the anchor is a ROOTED one: ``docs`` is the first
-        segment relative to a root candidate (the working directory
-        or a repo root) and no other repo root lies strictly inside
-        that ``docs`` directory. A rooted anchor is trustworthy: a
+        Whether the anchor is a ROOTED one: the anchoring directory
+        is the configured docs root or the ``docs`` directory of a
+        root candidate (the working directory or a repo root), and no
+        repo root lies at or inside it -- the file's own nearest repo
+        contains the anchoring directory. A rooted anchor is trustworthy: a
         file under a rooted ``docs/<dir>/`` with a non-domain
         ``<dir>`` is skipped unconditionally (the real
         ``docs/archive/sop/README.md`` stays skipped even though its
-        parent is named after a type). An un-rooted anchor (a
-        candidate's ``docs`` directory that holds a nested repo, or
-        the last-``docs`` fallback) may be an unrelated directory, so
+        parent is named after a type). An un-rooted anchor (an
+        anchoring directory that is itself a repo root or holds a
+        nested repo, or the last-``docs`` fallback) may be an
+        unrelated directory, so
         the gate skips such a file only when no other inference rule
         matches -- by design an un-rooted anchor therefore accepts
         ``docs/archive/sop/README.md`` as ``sop`` (its parent-name
         rule matches; Decisions Made 2026-11-27). Always ``False``
         when ``layout`` is ``None``.
+    root_name:
+        The name of the anchoring directory: ``docs``, or the name of
+        the configured docs root when that root anchors (feat-245
+        Phase 210, CR6). A layout violation's correct path starts
+        with it.
 
 
 ### `_Failure`
@@ -249,6 +299,21 @@ Attributes:
         (``docs/<type>/<lang>/<shard>/<file>.md``) when the file name
         carries a canonical uuid, shape-level (the
         ``<2-hex-shard>`` placeholder) otherwise.
+    move_target:
+        ``correct_path`` in the form of ``path`` itself (the same
+        relative or absolute prefix), the target of the report's
+        ``git mv`` line (feat-245 Phase 210, CR7).
+    variant_language:
+        ``None`` in every unambiguous case. In the one AMBIGUOUS case
+        (feat-245 Phase 210, CR3 -- see :func:`_ambiguous_language`)
+        the language code of the second reading; ``correct_path`` and
+        ``move_target`` then hold the first reading (an English
+        document whose language directory is missing).
+    variant_correct_path:
+        The second reading's correct path (a ``variant_language``
+        variant whose shard directory is missing), or ``None``.
+    variant_move_target:
+        The second reading's ``git mv`` target, or ``None``.
 
 
 ### `_RegistryBacked`
@@ -265,7 +330,8 @@ Attributes:
         ALL_DOMAINS``: the whole-body domains) -- the ``--type``
         acceptance set, derived, never hand-listed.
     uuid_domains:
-        The thirteen UUID-shaped domains (``general.tools._domains.
+        The UUID-shaped domains, every whole-body domain except
+        ``feat`` (``general.tools._domains.
         UUID_DOMAINS``) -- the domains the sharded placement
         validates (feat-245 Phase 120, REQ-006; ``feat`` keeps its
         folder shape and is never placement-validated).
@@ -295,6 +361,11 @@ Attributes:
         The whole-body parse-failure channels (``general.models.
         validate_result._CAUGHT_EXCEPTIONS``: ``AssertionError``,
         ``pydantic.ValidationError``, ``yaml.YAMLError``).
+    default_docs_root:
+        The default docs root (``general.tools._doc_paths.
+        DEFAULT_DOCS_ROOT``, the relative ``docs``): a configured root
+        equal to it is no anchor of its own
+        (:func:`_configured_docs_root`).
 
 
 ### `_WorkItem`
@@ -325,6 +396,14 @@ Attributes:
         The path-mode item's docs anchor, computed once per path
         during resolution and reused for the parse-language
         derivation (feat-245 Phase 190, S1). ``None`` for sweep items.
+    dir_sweep:
+        ``True`` for an item of the ``--dir`` sweep (feat-245 Phase
+        210, CR4 + CR5): its parse language is ``language``, decided
+        by the swept directory's own content, never by the configured
+        docs root.
+    language:
+        The parse language of a ``--dir`` sweep item (``None`` = the
+        canonical parse). Unused for every other item.
 
 
 ## Functions
@@ -352,13 +431,33 @@ single-language) never takes this path.
 
 Args:
     doc_type: The sharded document type to enumerate (one of the
-        thirteen UUID domains).
+        UUID domains).
     reg: The registry-backed names.
 
 Returns:
     The iterator over the type's document paths across every
     language directory (sorted by path; empty for a missing base
     directory).
+
+
+### `_ambiguous_language(inner: 'tuple[str, ...]', doc_id: 'str | None') -> 'str | None'`
+
+The language code of the ONE ambiguous misplacement (feat-245 Phase 210, CR3), or ``None``.
+
+A file with exactly ONE directory between the domain directory and the
+file, where that directory is both a shape-valid language code and the
+file name's own uuid prefix (``docs/req/de/deadbeef-...-x.md``), has two
+readings: an English document in its shard ``de`` whose language
+directory is missing, or a ``de`` variant whose shard directory is
+missing. The path alone cannot decide, so the report names both.
+
+Args:
+    inner: The docs anchor's inner directory segments.
+    doc_id: The file-name-derived id (``None`` when the name carries
+        no canonical uuid).
+
+Returns:
+    The one directory's name in the ambiguous case, ``None`` otherwise.
 
 
 ### `_anchor_layout(parts: 'tuple[str, ...]', index: 'int') -> 'tuple[str, tuple[str, ...]]'`
@@ -374,30 +473,41 @@ Returns:
     ``(first segment, inner directory segments)``.
 
 
-### `_anchor_rule(resolved: 'Path', cwd: 'Path', git_roots: 'frozenset[Path]') -> '_Anchor'`
+### `_anchor_rule(resolved: 'Path', cwd: 'Path', git_roots: 'frozenset[Path]', docs_root: 'Path | None' = None) -> '_Anchor'`
 
-The docs-anchor rule (feat-245 Phase 200 -- the final rule), a PURE function of its three arguments.
+The docs-anchor rule (feat-245 Phase 210 -- the final rule), a PURE function of its four arguments.
 
-No filesystem access and no working-directory read: the rule is
-decided from the resolved path, the resolved working directory and the
-path's repo roots alone, so every layout is one row of the table test
-(``tests/commands/test_lint.py``). In order:
+No filesystem access, no working-directory read and no environment
+read: the rule is decided from the resolved path, the resolved working
+directory, the path's repo roots and the configured docs root alone, so
+every layout is one row of the table test
+(``tests/commands/test_lint.py``).
 
-1. **Root candidates**: the working directory -- only when the path
-   lies under it AND it is inside one of the repo roots (or no repo
-   exists), so a working directory ABOVE every repo is never a root
-   (the Phase 180 E2 case) -- then EVERY repo root, from the outermost
-   inward. A candidate anchors the path when ``docs`` is the first
-   segment of the path relative to it, with at least one directory
-   and the file after it.
-2. **Rooted or not**: a candidate's anchor is ROOTED unless another
-   repo root lies strictly inside the anchoring ``docs`` directory (a
-   repo cloned or vendored into a docs tree, e.g. a dotfiles
-   ``~/.git`` above ``~/docs/repo/.git``; a ``docs`` directory that is
-   itself a repo root stays rooted). The first rooted anchor in
-   candidate order wins; a candidate anchor that is not rooted is
-   taken, un-rooted, only when no later candidate gives a rooted one.
-3. **Fallback**: when no candidate anchors, the LAST ``docs`` segment
+ONE precedence principle: **the file's own nearest repo decides whether
+the file is under a docs directory; an outer repo's docs directory may
+only ADD placement gating for the uuid domains, never an unconditional
+non-domain skip.** An anchoring directory is therefore ROOTED exactly
+when no repo root lies at or inside it on the way to the file -- the
+file's nearest repo then contains the anchoring directory (or no repo
+exists). In order:
+
+1. **Anchoring directories**: the configured docs root, when one is
+   given and the path lies under it with at least one directory and
+   the file after it (whatever the root is NAMED -- CR6); then the
+   ``docs`` directory of each root candidate: the working directory --
+   only when the path lies under it AND it is inside one of the repo
+   roots (or no repo exists), so a working directory ABOVE every repo
+   is never a root (the Phase 180 E2 case) -- then EVERY repo root,
+   from the outermost inward. A candidate's ``docs`` directory anchors
+   when ``docs`` is the first segment of the path relative to the
+   candidate, with at least one directory and the file after it.
+2. **Rooted or not**: an anchoring directory is ROOTED unless a repo
+   root lies at or inside it (the directory is itself a repo root, or
+   a repo is cloned or vendored into it, e.g. a dotfiles ``~/.git``
+   above ``~/docs/repo/.git``). The first rooted anchor in the order
+   of 1 wins; an anchor that is not rooted is taken, un-rooted, only
+   when no later anchoring directory gives a rooted one.
+3. **Fallback**: when nothing anchors, the LAST ``docs`` segment
    anchors, un-rooted -- searched inside the outermost repo root (a
    ``docs``-named directory above every repo never anchors), or over
    the whole path when no repo exists.
@@ -407,9 +517,14 @@ Args:
     cwd: The resolved working directory of the ``lint`` invocation.
     git_roots: The path's ancestor directories that hold a ``.git``
         entry (:func:`_git_ancestors`).
+    docs_root: The resolved configured docs root
+        (:func:`_configured_docs_root`), or ``None`` when no root other
+        than the default ``docs`` is configured (then only the ``docs``
+        rules apply).
 
 Returns:
-    The :class:`_Anchor` (its ``layout`` and ``rooted`` flag).
+    The :class:`_Anchor` (its ``layout``, ``rooted`` flag and
+    ``root_name``).
 
 
 ### `_base_dir_for(doc_type: 'str', reg: '_RegistryBacked') -> 'Path'`
@@ -417,7 +532,7 @@ Returns:
 The sweep base directory for the ``feat`` type (REQ-006: the registered resolver).
 
 Since Task 150.155, only ``feat``'s default sweep takes this path:
-the thirteen sharded domains' default sweep is the all-languages
+the sharded domains' default sweep is the all-languages
 union of :func:`_all_languages_paths_for` instead (their registered
 ``base_dir`` adapter resolves the ``en/`` directory only, which
 would make the sweep language-blind again).
@@ -431,17 +546,36 @@ Returns:
     ``SPECMGR_*_DIR`` env var with its own default).
 
 
-### `_correct_sharded_path(doc_type: 'str', inner: 'tuple[str, ...]', file_name: 'str', doc_id: 'str | None') -> 'str'`
+### `_configured_docs_root(reg: '_RegistryBacked', cwd: 'Path') -> 'Path | None'`
+
+The configured docs root as an anchor input of :func:`_anchor_rule` (feat-245 Phase 210, CR6).
+
+The parent of a registered uuid domain's base directory
+(``doc_domain_base_dir`` -- the registry reads ``SPECMGR_DOCS_DIR``),
+resolved against the working directory. Read once per ``lint``
+invocation by the path-mode loop, never at import time. ``None`` when
+the configured root is the default one (the relative ``docs``): the
+default follows the working directory, which the ``docs`` rules of
+:func:`_anchor_rule` already admit under their own protections (a
+working directory above every repo is no root), so only a root the
+user configured explicitly is an anchor of its own. ``None`` too when
+resolving the root fails -- lint keeps working, that anchor is absent.
+
+Args:
+    reg: The registry-backed names.
+    cwd: The resolved working directory of the ``lint`` invocation.
+
+Returns:
+    The resolved configured docs root, or ``None``.
+
+
+### `_correct_sharded_path(doc_type: 'str', inner: 'tuple[str, ...]', file_name: 'str', doc_id: 'str | None', root_name: 'str' = 'docs', language: 'str | None' = None) -> 'str'`
 
 The path a misplaced file SHOULD live at (feat-245 REQ-006): the sharded shape under the file's own domain.
 
-Concrete when the file name carries a canonical uuid (the shard is
-the uuid's first :data:`_SHARD_DIGITS` characters -- the same mirrored
-constant :data:`_SHARD_DIR_PATTERN` is derived from -- the file name kept
-verbatim), shape-level (the ``<2-hex-shard>`` placeholder)
-otherwise. The language is the misplaced path's own shape-valid
-language dir (a ``de/foo.md``-shaped miss keeps ``de``), or the
-default language when the path carries none.
+``<root>/<type>/`` plus :func:`_sharded_tail`; ``<root>`` is the
+anchoring directory's name (``docs``, or the configured docs root's
+name -- feat-245 Phase 210, CR6).
 
 Args:
     doc_type: The registered UUID domain the file is anchored under.
@@ -449,6 +583,10 @@ Args:
     file_name: The file's own name (kept verbatim).
     doc_id: The file-name-derived id (``None`` when the name
         carries no canonical uuid).
+    root_name: The anchoring directory's name.
+    language: The language directory to name, overriding the
+        derivation from ``inner`` (the two readings of the ambiguous
+        case).
 
 Returns:
     The correct path (``docs/<type>/<lang>/<shard>/<file>.md``).
@@ -473,7 +611,36 @@ Returns:
     pointer falls back to ``/repair {type}``).
 
 
-### `_docs_anchor(path: 'Path', cwd: 'Path') -> '_Anchor'`
+### `_dir_sweep_paths(doc_type: 'str', directory: 'Path', reg: '_RegistryBacked') -> 'list[tuple[Path, str | None]] | None'`
+
+The ``--dir`` sweep of one sharded domain: ``(path, parse language)`` pairs (feat-245 Phase 210, CR4 + CR5).
+
+``--dir`` is classified by its OWN content, independent of its name
+and of the configured docs root:
+
+* a directory that holds language directories (shape-valid two-letter
+  names that hold two-hex shard directories) is swept as a DOMAIN
+  directory: every language directory's sharded listing, each file
+  parsed with its language directory's code;
+* else a directory that holds two-hex shard directories is swept as
+  ONE language directory, whose language is its own name when that is
+  a shape-valid language code (``en`` resolves to the canonical
+  parse), else canonical.
+
+Args:
+    doc_type: The sharded document type to enumerate (every
+        whole-body domain except ``feat``).
+    directory: The ``--dir`` argument.
+    reg: The registry-backed names.
+
+Returns:
+    The documents with their parse languages (empty for an empty or
+    missing directory), or ``None`` when the directory holds ``.md``
+    files at some depth but yields no document (the caller's usage
+    error -- never a green ``linted=0``).
+
+
+### `_docs_anchor(path: 'Path', cwd: 'Path', docs_root: 'Path | None' = None) -> '_Anchor'`
 
 The path's docs anchor (see :func:`_anchor_rule` for the rule), computed once per path-mode path.
 
@@ -487,9 +654,30 @@ Args:
     cwd: The resolved working directory, read ONCE per ``lint``
         invocation by the path-mode loop and passed down (feat-245
         Phase 200, I1).
+    docs_root: The resolved configured docs root, read ONCE per
+        ``lint`` invocation (:func:`_configured_docs_root`), or
+        ``None``.
 
 Returns:
-    The :class:`_Anchor` (its ``layout`` and ``rooted`` flag).
+    The :class:`_Anchor` (its ``layout``, ``rooted`` flag and
+    ``root_name``).
+
+
+### `_domain_dir(path: 'Path', inner: 'tuple[str, ...]') -> 'Path'`
+
+The domain directory of a docs-anchored file, in the form of the path as given (feat-245 Phase 210, CR7).
+
+``len(inner)`` directories lie between the domain directory and the
+file. The walk is lexical over the path as given, so a relative path
+yields a relative ``git mv`` target; a path that is too short for the
+walk or carries a ``..`` segment is resolved first.
+
+Args:
+    path: The file's path (as given).
+    inner: The docs anchor's inner directory segments.
+
+Returns:
+    The domain directory (``.../docs/<type>``).
 
 
 ### `_fail_usage(errors: 'list[str]') -> 'None'`
@@ -524,7 +712,7 @@ The document type from the path layout ALONE (REQ-005).
 
 Four rules, in order: (1) the docs-anchored sharded valid shape
 ``docs/<type>/<lang>/<2-hex>/<file>.md`` (``type`` one of the
-thirteen UUID domains -- feat-245 Phase 120, REQ-006); a
+UUID domains -- feat-245 Phase 120, REQ-006); a
 docs-anchored UUID-domain file that MISSES the sharded placement
 returns ``None`` here -- the gate's placement validator reports it
 as a layout violation (and a docs-anchored NON-domain file is
@@ -591,7 +779,8 @@ Path-mode items take the docs-anchor / sharded-shape derivation
 (:func:`_parse_language` -- root-name-independent since Phase 180,
 G2); sweep items take the
 position-relative derivation (:func:`_sweep_parse_language`,
-root-name-independent).
+root-name-independent); ``--dir`` sweep items carry their own language,
+decided by the swept directory's content (:func:`_dir_sweep_paths`).
 
 Args:
     item: The work item.
@@ -612,7 +801,7 @@ language directory) for every domain other than ``feat``, the
 Task 150.155 this is the sweep's enumeration for the ``--dir``
 override (which narrows a sharded domain's sweep to exactly that
 one directory's sharded listing) and for ``feat``'s default sweep
-(its registered base directory); the thirteen sharded domains'
+(its registered base directory); the sharded domains'
 default sweep (no ``--dir``) is the all-languages union of
 :func:`_all_languages_paths_for` instead.
 
@@ -638,8 +827,26 @@ Args:
     reg: The registry-backed names.
 
 Returns:
-    The violation (the defect kind plus the correct path), or
-    ``None`` for the valid sharded placement.
+    The violation (the defect kind, the correct path and the move
+    target; both readings in the ambiguous case of
+    :func:`_ambiguous_language`), or ``None`` for the valid sharded
+    placement.
+
+
+### `_layout_violation_lines(violation: '_LayoutViolation') -> 'tuple[str, str]'`
+
+The two report lines of one layout violation (feat-245 REQ-006; Phase 210, CR3 + CR7).
+
+Line 1 names the defect and the correct path; line 2 is the move
+instruction (``git mv``) -- a misplaced file is not repaired by
+``/repair``, which cannot find it. In the ambiguous case
+(:func:`_ambiguous_language`) both lines name both readings.
+
+Args:
+    violation: The layout violation.
+
+Returns:
+    ``(line 1, line 2)``.
 
 
 ### `_parse_document(doc_type: 'str', text: 'str', language: 'str | None', reg: '_RegistryBacked') -> 'None'`
@@ -679,7 +886,7 @@ The parse language for one PATH-MODE work item (feat-245 Phase 120; Phase 180, G
 Path mode ONLY since Phase 160, D9 (SWEEP work items use
 :func:`_sweep_parse_language` instead, position-relative to the
 configured domain base; the dispatch is :func:`_item_parse_language`).
-For the thirteen UUID domains: the shape-valid language dir the path
+For the UUID domains: the shape-valid language dir the path
 sits in when it carries the valid sharded placement under its OWN
 ``docs/<domain>/`` anchor, else -- root-name-independent (Phase 180,
 G2, the D9 principle extended to path mode) -- the language dir of
@@ -749,9 +956,9 @@ Returns:
 The repair-pointer line for one failing document (REQ-008).
 
 ``/repair {type} {id}`` with the path-derived id, falling back to
-``/repair {type}`` when none can be derived. Shared by the parse-
-failure report and the layout-violation report (feat-245 Phase 120),
-so the two blocks can never drift apart.
+``/repair {type}`` when none can be derived. Parse failures only: a
+layout violation prints its move instruction instead
+(:func:`_layout_violation_lines` -- feat-245 Phase 210, CR7).
 
 Args:
     doc_type: The document's resolved type.
@@ -762,12 +969,23 @@ Returns:
     The pointer line (indented to follow its failure line).
 
 
+### `_shard_dirs(directory: 'Path') -> 'list[Path]'`
+
+The two-hex shard directories directly inside ``directory``, sorted by name (empty for a missing directory).
+
+Args:
+    directory: The directory to list.
+
+Returns:
+    The subdirectories whose name is a shard name (:data:`_SHARD_DIR_PATTERN`).
+
+
 ### `_sharded_shape(path: 'Path', reg: '_RegistryBacked') -> 'tuple[str, str] | None'`
 
 The root-name-independent sharded shape ``<domain>/<lang>/<2-hex>/<file>.md`` (feat-245 Phase 180, G2).
 
 Matches the path's last four segments by SHAPE alone -- the domain
-name one of the registry's thirteen UUID domains, the language dir a
+name one of the registry's UUID domains, the language dir a
 shape-valid two-letter code, the shard dir exactly
 :data:`_SHARD_DIGITS` lowercase hex characters, a ``.md`` file --
 independent of what the docs root is NAMED (``specdocs/req/en/ab/
@@ -781,6 +999,31 @@ Args:
 
 Returns:
     ``(domain, language)`` when the shape matches, ``None`` otherwise.
+
+
+### `_sharded_tail(inner: 'tuple[str, ...]', file_name: 'str', doc_id: 'str | None', language: 'str | None' = None) -> 'str'`
+
+The ``<lang>/<shard>/<file>`` tail of a misplaced file's correct path (feat-245 REQ-006).
+
+Concrete when the file name carries a canonical uuid (the shard is
+the uuid's first :data:`_SHARD_DIGITS` characters -- the same mirrored
+constant :data:`_SHARD_DIR_PATTERN` is derived from -- the file name kept
+verbatim), shape-level (the ``<2-hex-shard>`` placeholder)
+otherwise. The language is ``language`` when given, else the misplaced
+path's own shape-valid language dir (a ``de/foo.md``-shaped miss keeps
+``de``), or the default language when the path carries none.
+
+Args:
+    inner: The docs anchor's inner directory segments.
+    file_name: The file's own name (kept verbatim).
+    doc_id: The file-name-derived id (``None`` when the name
+        carries no canonical uuid).
+    language: The language directory to name, overriding the
+        derivation from ``inner`` (the two readings of the ambiguous
+        case).
+
+Returns:
+    The tail ``<lang>/<shard>/<file>.md``.
 
 
 ### `_sweep_parse_language(doc_type: 'str', path: 'Path', reg: '_RegistryBacked') -> 'str | None'`
@@ -812,7 +1055,7 @@ Returns:
     The parse language, or ``None`` for the canonical parse.
 
 
-### `lint(paths: 'Annotated[list[str] | None, typer.Argument(help="Document paths to lint (path mode). Each path\'s type is inferred from its layout unless --type is given (which overrides the parse); a docs/<type>/ file missing the sharded placement is a layout violation (exit 2, the correct path named); docs/<non-domain>/ files are skipped and counted; other unrecognized layouts are a usage error unless --skip-unrecognized is given. Linted regardless of any SPECMGR_*_DIR variable.")]' = None, type: 'Annotated[str | None, typer.Option(\'--type\', help="The document type (one of the registered domains -- a plain value validated at run time, not a fixed choice list). With paths: overrides the per-path layout inference. Without paths: sweeps every document of that type -- for the sharded domains, every language directory (EN + every variant); --dir narrows the sweep to that one directory\'s sharded listing (feat: its registered base directory\'s folder listing).")]' = None, all: "Annotated[bool, typer.Option('--all', help='Sweep every registered document type (for the sharded domains, every language directory -- EN + every variant). Cannot be combined with explicit paths; exits 2 when nothing at all is discovered (a probable misconfiguration).')]" = False, dir: 'Annotated[Path | None, typer.Option(\'--dir\', help="The directory to sweep instead of the default: narrows the sweep to exactly that one directory\'s sharded listing (for sharded domains, whose default sweep is the all-language directories; feat keeps its folder listing). Valid only with --type and without explicit paths: it applies to the --type sweep only.")]' = None, skip_unrecognized: "Annotated[bool, typer.Option('--skip-unrecognized', help='Skip (and count in the summary) paths whose layout matches no type, instead of a usage error.')]" = False) -> 'None'`
+### `lint(paths: 'Annotated[list[str] | None, typer.Argument(help="Document paths to lint (path mode). Each path\'s type is inferred from its layout unless --type is given (which overrides the parse); a docs/<type>/ file missing the sharded placement is a layout violation (exit 2, the correct path and the git mv command named); docs/<non-domain>/ files are skipped and counted (linted when --type is given); other unrecognized layouts are a usage error unless --skip-unrecognized is given. A docs root configured with SPECMGR_DOCS_DIR is placement-checked like docs/, whatever its name.")]' = None, type: 'Annotated[str | None, typer.Option(\'--type\', help="The document type (one of the registered domains -- a plain value validated at run time, not a fixed choice list). With paths: overrides the per-path layout inference. With paths it always forces the parse (a docs/<non-domain>/ file is linted, not skipped), but never rescues a misplaced docs/<type>/ file. Without paths: sweeps every document of that type -- for the sharded domains, every language directory (EN + every variant); --dir sweeps that directory instead (feat: its registered base directory\'s folder listing).")]' = None, all: "Annotated[bool, typer.Option('--all', help='Sweep every registered document type (for the sharded domains, every language directory -- EN + every variant). Cannot be combined with explicit paths; exits 2 when nothing at all is discovered (a probable misconfiguration).')]" = False, dir: "Annotated[Path | None, typer.Option('--dir', help='The directory to sweep instead of the default. For a sharded domain it is classified by its own content: a domain directory (<dir>/<lang>/<2-hex-shard>/) is swept in every language, one language directory (<dir>/<2-hex-shard>/) in the language its name gives (canonical when the name is no language code); a directory that holds .md files but no document in that layout is a usage error. feat keeps its folder listing. Valid only with --type and without explicit paths: it applies to the --type sweep only.')]" = None, skip_unrecognized: "Annotated[bool, typer.Option('--skip-unrecognized', help='Skip (and count in the summary) paths whose layout matches no type, instead of a usage error.')]" = False) -> 'None'`
 
 Lint specmgr artifacts: the model-level full parse, every failure reported.
 
@@ -820,7 +1063,8 @@ Runs the document's own domain's model-level parser (REQ-003: full
 parses only, never the listing/cache path) over the given paths
 (path mode), every document of ``--type T`` (type sweep), or every
 registered type (``--all``). Reports every layout violation (the
-defect plus the correct path, feat-245 Phase 120) and every failing
+defect plus the correct path, then the ``git mv`` instruction --
+feat-245 Phase 120; Phase 210) and every failing
 ``(path, error)`` pair with its repair pointer and one summary:
 ``summary: linted=N failed=N skipped=N layout=N``.
 

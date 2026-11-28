@@ -65,7 +65,7 @@ Raises
 GolNotFoundError
     No EN source document with ``id_`` exists.
 FileExistsError
-    The variant file already exists.
+    The variant already exists, in any shard of the language directory (guarded by id).
 
 
 ### `create_gol(content: 'str', language: 'str' = 'en', id: 'str | None' = None) -> 'GolFrontmatter | ValidateResult'`
