@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: review
 type: feat
-updated: '2026-11-28T08:35:00.000+01:00'
+updated: '2026-11-28T09:30:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -206,11 +206,40 @@ Key invariants and rationale:
 
 ### Current Status
 
-**As of 2026-11-28 07:35Z**: Phases 100–200 are implemented. Phase 190 was committed as 0f905fda and its correction (the deterministic seed order in `test_find_similar_text`, CI 3.13) as **8d3025e8**. Phase 200 (review cycle 6 fixes over 8d3025e8, no user decision needed) is complete and uncommitted: the lint path-mode `docs` anchor is now one PURE function, `_anchor_rule(resolved path, resolved working directory, the path's `.git`-bearing ancestors)`, table-tested row by row (I1). Every `.git`-bearing ancestor is a root candidate (E1: a repo nested in the docs tree and a vendored repo keep the placement gate), the last-`docs` fallback applies whenever no candidate anchors (G1: no repo, working directory above the project; G2: a nested project is placement-gated from every working directory), and the rule is stated once, identically, in the `lint.py` module docstring, `CHANGELOG.md` and `AGENTS.md` (D1, S1). Full suite green: **6266 passed / 0 failed / 18 skipped / 11682 subtests** (6258 + 8 new tests); `specmgr lint --all` → linted=183 failed=0 skipped=0 layout=0. ACC-001–ACC-009 stay ticked. Status `review`.
+**As of 2026-11-28 07:35Z**: Phases 100–200 are implemented. Phase 190 was committed as 0f905fda and its correction (the deterministic seed order in `test_find_similar_text`, CI 3.13) as **8d3025e8**. Phase 200 (review cycle 6 fixes over 8d3025e8, no user decision needed) is complete and uncommitted: the lint path-mode `docs` anchor is now one PURE function, `_anchor_rule(resolved path, resolved working directory, the path's `.git`-bearing ancestors)`, table-tested row by row (I1). Every `.git`-bearing ancestor is a root candidate (E1: a repo nested in the docs tree and a vendored repo keep the placement gate), the last-`docs` fallback applies whenever no candidate anchors (G1: no repo, working directory above the project; G2: a nested project is placement-gated from every working directory), and the rule is stated once, identically, in the `lint.py` module docstring, `CHANGELOG.md` and `AGENTS.md` (D1, S1). Full suite green: **6266 passed / 0 failed / 18 skipped / 11682 subtests** (6258 + 8 new tests); `specmgr lint --all` → linted=183 failed=0 skipped=0 layout=0. ACC-001–ACC-009 stay ticked. Phase 200 was committed as **ed1f005c**; a Phase 200 correction (2026-11-28 08:30Z, tests only, uncommitted) replaces a path-substring language assertion in `test_i18n_en_only_consumers.py` with a positional one (a random uuid shard named `de` made it fail ~1 run in 256); the suite count is unchanged. Status `review`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-28 08:30:00.000Z - Phase 200 correction: language asserted by position in the EN-only consumer tests (shard `de` collision)
+
+A flaky test, introduced by the feat-245 re-seed of the EN-only consumer suite. A local pre-commit full-suite run on 2026-11-28 failed with `AssertionError: '/de/' unexpectedly found in '/tmp/tmpv32u9iml/req/en/de/debe0a58-270b-403a-84df-6673fc9a12ae-target-en-requirement.md'`.
+
+- Root cause: `tests/general/tools/test_i18n_en_only_consumers.py::TestListReferencesStaysEnOnly::test_a_reference_resolves_to_the_en_variant_path_and_title` asserted the language with a path substring test (`assertNotIn("/de/", Path(rows[0].path).as_posix())`). In the layout `docs/<type>/<lang>/<id[:2]>/<file>` the shard is the first two hex characters of a random uuid, and `de` is a valid shard (~1 run in 256). The reported path is a correct English path (`req/en/de/...`: language `en`, shard `de`). The assertion was wrong; the code is correct. This is the test-side form of the shard/language collision in the Design Notes.
+- The fix (tests only, no `src/` change): the assertion is now `assertEqual(language_for_doc_path(doc_domain_base_dir("req"), Path(rows[0].path)), "en")`. The language is the first directory under the domain base directory (the production helper of `general/tools/_doc_paths.py`), never a substring. The intent of the test is unchanged: the consumer returns the EN file, never the `de` variant. The exact-path assertion (`== self.req_b_en`) above it is unchanged.
+- Flake-class sweep (static): an AST scan of every `tests/**/*.py` file for (1) `in`/`not in`/`assertIn`/`assertNotIn` with a two-letter literal or a literal that contains a two-letter path segment, (2) `==`/`assertEqual` between a two-letter literal and a path expression, (3) `count`/`index`/`find`/`startswith`/`endswith`/`split`/`glob`/`rglob`/regex calls with such a literal, (4) every `.parts` use; plus `grep` passes for f-string forms (`/{language}/`), `"/" + language`, `os.sep`, `parent.name`/`parent.parent`, `/ "de"`-style joins and `exists()`/`is_dir()`/`iterdir()` on language-named paths. **1 real instance (the one above), fixed.** No production code path derives a language from a substring (`src/` scan: the only derivation is `language_for_doc_path`, by position). Checked and safe:
+  - `test_i18n_en_only_consumers.py` lines 118, 159, 288 (`.parent.parent == <domain>/en`): position from the leaf (file, shard, language directory), a full-path equality.
+  - `test_check_translation_drift.py` 585–586 and `test_i18n_three_languages.py` 90–93 (`.parent.parent.name == "de"`/`"fr"`/`{"en", "de", "fr"}`; `.parent.name` is compared to the EN shard): position from the leaf, never a search.
+  - `general/resources/test_config.py` 596–597 (`Path(base_dir).name == "en"`): the base directory itself, no shard level in the path.
+  - `test_sharded_doc_paths.py` 489–535 and `test__doc_paths.py` 499–534 (`language_for_doc_path(...) == "de"`/`"en"`): the positional helper itself. `test_sharded_doc_paths.py` 519–523 seeds `en/de/x.md` **on purpose** (`test_a_shard_named_like_a_language_is_never_derived`); left unchanged.
+  - `test_sharded_doc_paths.py` 124–410 and `test__doc_paths.py` 334–401 (`base / "de" / "deadbeef-…"`): `de` is there the **shard** of the fixed id `deadbeef-…` under a language base, on purpose; left unchanged.
+  - Every `<root> / <type> / "en"|"de"|"fr"` join and every `spec.base_dir("de")`/`doc_domain_base_dir(...) / "de"` use (`exists()`, `rglob("*.md")`, seeds; `test_i18n_all_domains`, `dec/test_i18n_write`, `dec/test_i18n_language`, `test_list_languages`, `test_translate_artifact_flow`, `test_i18n_closed_vocabulary`, `test_shard_layout_all_domains`, the `list_<d>_glob` suites, the `_paths` suites, `commands/test_lint.py`, the diagram and reference-graph fixtures): the language segment is joined directly under the domain base, so it is positional by construction.
+  - `commands/test_lint.py` 885, 1188 (`.parts` length; `"__pycache__" not in path.parts`): not a language test. 1534, 1787 and `general/resources/test_i18n.py` 125: substring tests on a fixed message or a resource text, not on a random path.
+  - `test_heading_table_drift.py` 167, `test_list_languages.py` 160, `test_cli.py` 158, `test__path_safety.py` 179: membership in a list of codes or a pattern test, no path.
+  - `test_i18n_feat_adr_exclusion.py` 254–309: relative-path sets under the `feat` directory (no shards, fixed ids).
+- Flake-class sweep (dynamic): a temporary pytest plugin (in the scratchpad, not committed) replaced `uuid.uuid4` in every worker so that **every** generated id starts with `de`. `de` is the only language code in `tests/` that is also a valid shard (`fr`, `en`, `pt` are not hex). With the HEAD test file: exactly `1 failed, 16 passed` in `test_i18n_en_only_consumers.py`, the failure above (`'/de/' unexpectedly found in '/tmp/…/req/en/de/ded59801-…-target-en-requirement.md'`). With the fix, the full suite under the forced shard: **6266 passed, 0 failed, 18 skipped, 11682 subtests passed**. No other test depends on the shard not being `de`.
+- Proof: a temporary runner (in the scratchpad, not committed) patched `uuid` in `req.tools.create_req` (the technique of the Phase 190 correction) so that the seeded requirement id starts with `de`. The old assertion fails (`'/de/' unexpectedly found in '/tmp/tmpuu593l4g/req/en/de/de8fb690-…-target-en-requirement.md'`); the new test and its sibling `test_the_de_variant_of_a_referenced_requirement_is_never_the_resolution_target` pass. `uv run --frozen pytest -q -p no:cacheprovider tests/general/tools/test_i18n_en_only_consumers.py` run 10× in a shell loop: 10/10 `17 passed, 54 subtests passed`.
+
+**Gate**:
+- `uv run --frozen ruff format --check` → 2397 files already formatted; `uv run --frozen ruff check` → All checks passed.
+- `uv run --frozen vulture src/ whitelist.py --min-confidence 60` → exit 0.
+- `uv run --frozen pytest -n auto -q -p no:cacheprovider` → **6266 passed, 0 failed, 18 skipped, 11682 subtests passed** (the baseline; no new test).
+- `uv run --frozen specmgr docs` → `docs/GENERATED.md` unchanged (no test file added).
+- `uv run --frozen specmgr lint .specmgr/feat/feat-245-shard-docs/README.md` → linted=1 failed=0.
+- `git add -A` + `uv run --frozen pre-commit run --all-files` → all hooks passed.
+
+Frontmatter `updated: '2026-11-28T09:30:00.000+01:00'` ≡ this header; status stays `review`.
 
 #### 2026-11-28 07:35:00.000Z - Phase 200 complete (review cycle 6 fixes)
 

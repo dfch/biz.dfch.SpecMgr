@@ -42,7 +42,12 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.models import ValidateResult
-from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR, iter_doc_paths
+from biz.dfch.specmgr.general.tools._doc_paths import (
+    DOCS_DIR_ENV_VAR,
+    doc_domain_base_dir,
+    iter_doc_paths,
+    language_for_doc_path,
+)
 from biz.dfch.specmgr.general.tools.find_related import find_related
 from biz.dfch.specmgr.general.tools.find_similar_text import find_similar_text
 from biz.dfch.specmgr.general.tools.get_reference_diagram import get_reference_diagram
@@ -268,7 +273,9 @@ class TestListReferencesStaysEnOnly(_ReferenceFixtureTestCase):
         self.assertEqual(Path(rows[0].path).resolve(), self.req_b_en)
         self.assertEqual(rows[0].title, "Target EN Requirement")
         self.assertIsNone(rows[0].error)
-        self.assertNotIn("/de/", Path(rows[0].path).as_posix())
+        # The language is asserted by POSITION (the first directory under the domain base), never by a path
+        # substring: a random uuid's shard may itself be named ``de`` (``req/en/de/<id>-...md`` is an EN path).
+        self.assertEqual(language_for_doc_path(doc_domain_base_dir("req"), Path(rows[0].path)), "en")
 
     def test_the_references_of_the_german_variant_are_not_reported(self):
         """The DE variant of the goal also references C; the EN source's references never include it."""
