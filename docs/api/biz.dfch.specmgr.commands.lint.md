@@ -45,17 +45,35 @@ the size of the corpus (REQ-004):
   ``--type``); the containing directory named after a type (a non-docs-
   anchored position, e.g. ``<base>/req/x.md``); the ``feat/<id>/
   README.md`` shape (unchanged for every position, ``docs/<feat>``
-  anchored included). The ``docs`` anchor (feat-245 Phase 180, E2;
-  final rule Phase 190, E1) is a ``docs`` segment that is the FIRST
-  segment of the path relative to EITHER root candidate -- the working
-  directory (when the path lies under it and the working directory is
-  inside the repo, or no repo exists), else the repo root (the nearest
-  ancestor holding ``.git``) -- so a nested project's own ``docs/``
-  (``mono/.git``, run from ``mono/proj``) anchors while an ancestor
-  directory that merely happens to be named ``docs`` never does; a
-  rooted anchor's non-domain skip is unconditional, and a path outside
-  every root keeps the last-``docs`` anchor, whose non-domain skip
-  applies only when no other rule matches. ``--type`` overrides inference for the parse, but
+  anchored included). The ``docs`` anchor (final rule, feat-245 Phase 200)
+  is a pure function of the resolved path, the resolved working directory
+  and the path's repo roots (EVERY ancestor directory that holds a
+  ``.git`` entry, not only the nearest). (1) Root candidates, in order:
+  the working directory -- only when the path lies under it and it is
+  inside one of those repo roots, or no repo exists -- then every repo
+  root, from the outermost inward; a candidate anchors the path when
+  ``docs`` is the FIRST segment of the path relative to it. (2) A
+  candidate's anchor is ROOTED unless another repo root lies strictly
+  inside the anchoring ``docs`` directory (a repo cloned or vendored into
+  a docs tree; a ``docs`` directory that is itself a repo root stays
+  rooted); the first rooted anchor wins, and an anchor that is not rooted
+  is taken only when no later candidate gives a rooted one. (3) When no
+  candidate anchors, the LAST ``docs`` segment anchors, un-rooted --
+  searched inside the outermost repo root, or over the whole path when no
+  repo exists. A registered UUID domain under ANY anchor is
+  placement-validated; a rooted anchor's non-domain skip is unconditional,
+  an un-rooted anchor's applies only when no other rule matches.
+  Consequences: a working directory above every repo and a ``docs``-named
+  directory above the outermost repo root never anchor; a ``docs`` tree
+  that is itself a repo (a submodule) and a vendored repo's own ``docs/``
+  are gated; a nested project (``mono/.git``, docs at ``mono/proj/docs/``)
+  is placement-gated from every working directory, but its non-domain
+  ``docs/<dir>/`` files are skipped unconditionally only when lint runs
+  from inside the project -- from ``mono/``,
+  ``proj/docs/archive/sop/README.md`` is linted as ``sop`` (its
+  parent-name rule matches); without any repo, a ``docs``-named ancestor
+  of the project can anchor (nothing marks where the project starts).
+  ``--type`` overrides inference for the parse, but
   it never rescues a misplaced ``docs/<type>/`` file -- the placement
   violation stands. A file anchored under ``docs/<uuid-domain>/`` that
   misses the sharded placement (missing language dir, missing or
@@ -154,26 +172,16 @@ violations (never parsed, never in ``linted``).
 
 ### `_Anchor`
 
-A path-mode path's docs anchor, computed ONCE per path (feat-245 Phase 180, E2; Phase 190, E1/S1).
+A path-mode path's docs anchor, computed ONCE per path (feat-245 Phase 180, E2; Phase 190, S1; Phase 200).
 
 The placement classifier's own anchor (feat-245 Phase 120, REQ-006):
 a path is docs-anchored when it carries a ``docs`` directory segment
 with at least one directory and the file after it
-(``docs/<dir>/…/<file>``). Which ``docs`` segment anchors (Phase 190,
-E1 -- the final rule): for a ROOTED path, a ``docs`` segment that is
-the FIRST segment of the path relative to EITHER root candidate (see
-:func:`_anchor_roots`) -- the working directory, when the path lies
-under it and the working directory is inside the repo (or there is no
-repo), checked first; then the repo root (the nearest ancestor holding
-``.git``) -- so in a nested project (``mono/.git``, docs at
-``mono/proj/docs/``, run from ``mono/proj``) ``docs/req/foo.md`` is
-anchored and the missing-language-dir violation fires, while an
-ancestor that merely happens to be named ``docs`` (``/home/u/docs/
-repo/...``) never anchors. For an UN-ROOTED path (outside any repo and
-outside the working directory) the LAST ``docs`` segment anchors, and
-the gate applies the non-domain skip to it only when no other
-inference rule matches. A file directly under a ``docs`` directory
-(``docs/x.md``) is NOT anchored -- it keeps the legacy inference rules.
+(``docs/<dir>/…/<file>``). WHICH ``docs`` segment anchors, and whether
+the anchor is rooted, is decided by :func:`_anchor_rule` (the final
+rule, Phase 200 -- stated in full in the module docstring). A file
+directly under a ``docs`` directory (``docs/x.md``) is NOT anchored --
+it keeps the legacy inference rules.
 
 Attributes:
     layout:
@@ -184,17 +192,21 @@ Attributes:
         valid sharded placement, longer for the misplaced depths) --
         or ``None`` when the path is not docs-anchored.
     rooted:
-        Whether the anchor (if any) is taken relative to a root (at
-        least one root candidate exists). A rooted anchor is
-        trustworthy: a file under a rooted ``docs/<dir>/`` with a
-        non-domain ``<dir>`` is skipped unconditionally (the real
+        Whether the anchor is a ROOTED one: ``docs`` is the first
+        segment relative to a root candidate (the working directory
+        or a repo root) and no other repo root lies strictly inside
+        that ``docs`` directory. A rooted anchor is trustworthy: a
+        file under a rooted ``docs/<dir>/`` with a non-domain
+        ``<dir>`` is skipped unconditionally (the real
         ``docs/archive/sop/README.md`` stays skipped even though its
-        parent is named after a type). An un-rooted (last-``docs``)
-        anchor may be an unrelated ancestor, so the gate skips such a
-        file only when no other inference rule matches -- by design
-        the un-rooted fallback therefore accepts
+        parent is named after a type). An un-rooted anchor (a
+        candidate's ``docs`` directory that holds a nested repo, or
+        the last-``docs`` fallback) may be an unrelated directory, so
+        the gate skips such a file only when no other inference rule
+        matches -- by design an un-rooted anchor therefore accepts
         ``docs/archive/sop/README.md`` as ``sop`` (its parent-name
-        rule matches; Decisions Made 2026-11-27).
+        rule matches; Decisions Made 2026-11-27). Always ``False``
+        when ``layout`` is ``None``.
 
 
 ### `_Failure`
@@ -349,23 +361,55 @@ Returns:
     directory).
 
 
-### `_anchor_roots(resolved: 'Path') -> 'tuple[Path, ...]'`
+### `_anchor_layout(parts: 'tuple[str, ...]', index: 'int') -> 'tuple[str, tuple[str, ...]]'`
 
-The root candidates a resolved path's docs anchor is taken relative to (feat-245 Phase 190, E1).
+The :attr:`_Anchor.layout` of the ``docs`` segment at ``parts[index]``.
 
-In order: the working directory -- when the path lies under it AND
-the working directory is inside the repo root (or no repo root
-exists), so a working directory ABOVE the repo never re-admits an
-ancestor named ``docs`` (the Phase 180 E2 case) -- then the repo root
-(the nearest ancestor directory of the path that holds a ``.git``
-entry, :data:`_REPO_ROOT_MARKER`; a directory, or a worktree's
-``.git`` file). Empty for an un-rooted path.
+Args:
+    parts: The path segments (the file name last).
+    index: The index of the anchoring ``docs`` segment (at least one
+        directory and the file follow it).
+
+Returns:
+    ``(first segment, inner directory segments)``.
+
+
+### `_anchor_rule(resolved: 'Path', cwd: 'Path', git_roots: 'frozenset[Path]') -> '_Anchor'`
+
+The docs-anchor rule (feat-245 Phase 200 -- the final rule), a PURE function of its three arguments.
+
+No filesystem access and no working-directory read: the rule is
+decided from the resolved path, the resolved working directory and the
+path's repo roots alone, so every layout is one row of the table test
+(``tests/commands/test_lint.py``). In order:
+
+1. **Root candidates**: the working directory -- only when the path
+   lies under it AND it is inside one of the repo roots (or no repo
+   exists), so a working directory ABOVE every repo is never a root
+   (the Phase 180 E2 case) -- then EVERY repo root, from the outermost
+   inward. A candidate anchors the path when ``docs`` is the first
+   segment of the path relative to it, with at least one directory
+   and the file after it.
+2. **Rooted or not**: a candidate's anchor is ROOTED unless another
+   repo root lies strictly inside the anchoring ``docs`` directory (a
+   repo cloned or vendored into a docs tree, e.g. a dotfiles
+   ``~/.git`` above ``~/docs/repo/.git``; a ``docs`` directory that is
+   itself a repo root stays rooted). The first rooted anchor in
+   candidate order wins; a candidate anchor that is not rooted is
+   taken, un-rooted, only when no later candidate gives a rooted one.
+3. **Fallback**: when no candidate anchors, the LAST ``docs`` segment
+   anchors, un-rooted -- searched inside the outermost repo root (a
+   ``docs``-named directory above every repo never anchors), or over
+   the whole path when no repo exists.
 
 Args:
     resolved: The document's resolved (absolute) path.
+    cwd: The resolved working directory of the ``lint`` invocation.
+    git_roots: The path's ancestor directories that hold a ``.git``
+        entry (:func:`_git_ancestors`).
 
 Returns:
-    The root candidates, most specific first (no duplicates).
+    The :class:`_Anchor` (its ``layout`` and ``rooted`` flag).
 
 
 ### `_base_dir_for(doc_type: 'str', reg: '_RegistryBacked') -> 'Path'`
@@ -429,13 +473,20 @@ Returns:
     pointer falls back to ``/repair {type}``).
 
 
-### `_docs_anchor(path: 'Path') -> '_Anchor'`
+### `_docs_anchor(path: 'Path', cwd: 'Path') -> '_Anchor'`
 
-The path's docs anchor (see :class:`_Anchor` for the rule), computed once per path-mode path.
+The path's docs anchor (see :func:`_anchor_rule` for the rule), computed once per path-mode path.
+
+The thin filesystem half of the rule: resolves the path and collects
+its repo roots (:func:`_git_ancestors`), then defers to the pure
+:func:`_anchor_rule`.
 
 Args:
     path: The document's path (as given; relative to the working
         directory or absolute).
+    cwd: The resolved working directory, read ONCE per ``lint``
+        invocation by the path-mode loop and passed down (feat-245
+        Phase 200, I1).
 
 Returns:
     The :class:`_Anchor` (its ``layout`` and ``rooted`` flag).
@@ -447,6 +498,24 @@ Report usage/resolution errors (stderr, one line each) and exit 2.
 
 Args:
     errors: The usage-error messages (without the ``error: `` prefix).
+
+
+### `_git_ancestors(resolved: 'Path') -> 'frozenset[Path]'`
+
+Every ancestor directory of a resolved path that holds a ``.git`` entry (feat-245 Phase 200, E1).
+
+The one filesystem read of the docs-anchor rule, kept apart from the
+pure rule itself (:func:`_anchor_rule`): EVERY such ancestor is a repo
+root, not only the nearest -- a superproject above a submodule or a
+vendored repo included (:data:`_REPO_ROOT_MARKER`: a directory, or the
+``.git`` file of a worktree or submodule).
+
+Args:
+    resolved: The document's resolved (absolute) path.
+
+Returns:
+    The repo roots among the path's ancestor directories (empty when
+    the path is in no repo).
 
 
 ### `_infer_type(path: 'Path', anchor: '_Anchor', reg: '_RegistryBacked') -> 'str | None'`

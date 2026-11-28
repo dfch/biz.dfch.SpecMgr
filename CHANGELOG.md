@@ -181,14 +181,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The `specmgr lint` gate recognizes the sharded layout and fails with
   exit 2 (naming the correct path) on a file that misses the language
   dir, misses the shard dir, carries a non-hex shard, or sits deeper
-  than one shard level; path mode also recognizes the sharded shape
-  under a docs root of any name (`specdocs/req/en/ab/x.md`, the parse
-  language taken from that position) and takes its `docs` anchor as a
-  `docs` segment that is the first segment of the path relative to
-  either the working directory (when the path lies under it and it is
-  inside the repo) or the repo root (nearest `.git`), so a nested
-  project's own `docs/` anchors while an ancestor directory merely
-  named `docs` never does. Id resolution is shard-narrowed with a
+  than one shard level; path mode also recognizes the sharded shape under
+  a docs root of any name (`specdocs/req/en/ab/x.md`, the parse language
+  taken from that position). The `docs` anchor (final rule, feat-245 Phase
+  200) is a pure function of the resolved path, the resolved working
+  directory and the path's repo roots (EVERY ancestor directory that holds
+  a `.git` entry, not only the nearest). (1) Root candidates, in order:
+  the working directory -- only when the path lies under it and it is
+  inside one of those repo roots, or no repo exists -- then every repo
+  root, from the outermost inward; a candidate anchors the path when
+  `docs` is the FIRST segment of the path relative to it. (2) A
+  candidate's anchor is ROOTED unless another repo root lies strictly
+  inside the anchoring `docs` directory (a repo cloned or vendored into a
+  docs tree; a `docs` directory that is itself a repo root stays rooted);
+  the first rooted anchor wins, and an anchor that is not rooted is taken
+  only when no later candidate gives a rooted one. (3) When no candidate
+  anchors, the LAST `docs` segment anchors, un-rooted -- searched inside
+  the outermost repo root, or over the whole path when no repo exists. A
+  registered UUID domain under ANY anchor is placement-validated; a rooted
+  anchor's non-domain skip is unconditional, an un-rooted anchor's applies
+  only when no other rule matches. Consequences: a working directory above
+  every repo and a `docs`-named directory above the outermost repo root
+  never anchor; a `docs` tree that is itself a repo (a submodule) and a
+  vendored repo's own `docs/` are gated; a nested project (`mono/.git`,
+  docs at `mono/proj/docs/`) is placement-gated from every working
+  directory, but its non-domain `docs/<dir>/` files are skipped
+  unconditionally only when lint runs from inside the project -- from
+  `mono/`, `proj/docs/archive/sop/README.md` is linted as `sop` (its
+  parent-name rule matches); without any repo, a `docs`-named ancestor of
+  the project can anchor (nothing marks where the project starts). Id
+  resolution is shard-narrowed with a
   per-language full-listing fallback, and the 76 in-repo documents
   migrated in the same change (feat-245-shard-docs, GitHub issue #245).
 

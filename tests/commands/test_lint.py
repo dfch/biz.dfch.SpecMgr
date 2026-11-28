@@ -85,6 +85,13 @@ static and drift pins that keep the command import-safe and derived:
    misplaced flat variant directly inside a language dir stays
    invisible to the sweep (shard-only; the placement gate remains
    path mode's job).
+ * feat-245 Phase 200 (Task 200.130, review cycle 6) -- the docs-anchor
+   rule as a pure function (_anchor_rule): the table test, one row
+   per layout (no chdir, no real .git), plus the CLI-level
+   regression pins for E1 (a repo nested in the docs tree, a vendored
+   repo), G1 (no repo, the working directory above the project), G2 (a
+   nested project from the repo root) and the E2 case under a
+   superproject.
 """
 
 from __future__ import annotations
@@ -1543,6 +1550,353 @@ class TestLintDocsAnchorNestedProject(_LintTestBase):
 
         self.assertEqual(result.exit_code, 1, result.output)
         self.assertIn("summary: linted=1 failed=1 skipped=0 layout=0", result.stdout)
+
+
+class TestLintAnchorRuleTable(unittest.TestCase):
+    """feat-245 Phase 200 (Task 200.130; E1, G1, G2, I1 of review cycle 6): the docs-anchor rule is a PURE
+    function of ``(resolved path, resolved working directory, the path's ``.git``-bearing ancestors)`` --
+    ``commands.lint._anchor_rule`` -- so every layout is one table row here: no ``chdir``, no real ``.git``,
+    no filesystem access at all. A new edge is a new row, not a new review cycle. Each row is
+    ``(label, path, cwd, repo roots, expected layout, expected rooted)``."""
+
+    _FEAT = (".specmgr", "feat", "feat-1-x")
+
+    _ROWS: tuple[tuple[str, str, str, tuple[str, ...], tuple[str, tuple[str, ...]] | None, bool], ...] = (
+        # --- one repo
+        ("repo root with docs, misplaced", "/w/repo/docs/req/foo.md", "/w/repo", ("/w/repo",), ("req", ()), True),
+        (
+            "repo root with docs, valid shard",
+            "/w/repo/docs/req/en/ab/x.md",
+            "/w/repo",
+            ("/w/repo",),
+            ("req", ("en", "ab")),
+            True,
+        ),
+        ("a file directly under docs is not anchored", "/w/repo/docs/x.md", "/w/repo", ("/w/repo",), None, False),
+        (
+            "a feat README is not anchored",
+            "/w/repo/.specmgr/feat/feat-1-x/README.md",
+            "/w/repo",
+            ("/w/repo",),
+            None,
+            False,
+        ),
+        (
+            "cwd in a subdirectory, docs at repo root",
+            "/w/mono/docs/req/foo.md",
+            "/w/mono/sub",
+            ("/w/mono",),
+            ("req", ()),
+            True,
+        ),
+        (
+            "cwd outside the repo, docs at repo root",
+            "/w/mono/docs/req/foo.md",
+            "/elsewhere",
+            ("/w/mono",),
+            ("req", ()),
+            True,
+        ),
+        # --- nested project inside one repo (G2: the documented cwd dependence is the rooted flag only)
+        (
+            "nested project, cwd at project",
+            "/w/mono/proj/docs/req/foo.md",
+            "/w/mono/proj",
+            ("/w/mono",),
+            ("req", ()),
+            True,
+        ),
+        (
+            "nested project, cwd at repo root (G2)",
+            "/w/mono/proj/docs/req/foo.md",
+            "/w/mono",
+            ("/w/mono",),
+            ("req", ()),
+            False,
+        ),
+        (
+            "nested project, cwd inside its docs",
+            "/w/mono/proj/docs/req/foo.md",
+            "/w/mono/proj/docs",
+            ("/w/mono",),
+            ("req", ()),
+            False,
+        ),
+        ("nested project, cwd above the repo", "/w/mono/proj/docs/req/foo.md", "/w", ("/w/mono",), ("req", ()), False),
+        (
+            "nested project archive, cwd at project: rooted (unconditional skip)",
+            "/w/mono/proj/docs/archive/sop/README.md",
+            "/w/mono/proj",
+            ("/w/mono",),
+            ("archive", ("sop",)),
+            True,
+        ),
+        (
+            "nested project archive, cwd at repo root (G2): un-rooted (conditional skip)",
+            "/w/mono/proj/docs/archive/sop/README.md",
+            "/w/mono",
+            ("/w/mono",),
+            ("archive", ("sop",)),
+            False,
+        ),
+        # --- the Phase 180 E2 protection: a docs-named directory above the repo never anchors
+        (
+            "cwd above the repo (E2 pin e)",
+            "/w/docs/repo/.specmgr/feat/feat-1-x/README.md",
+            "/w",
+            ("/w/docs/repo",),
+            None,
+            False,
+        ),
+        (
+            "a docs-named ancestor above the repo, feat README, cwd at the repo (E2)",
+            "/home/u/docs/repo/.specmgr/feat/feat-1-x/README.md",
+            "/home/u/docs/repo",
+            ("/home/u/docs/repo",),
+            None,
+            False,
+        ),
+        (
+            "a docs-named ancestor above a repo named after a domain (E2)",
+            "/home/u/docs/req/.specmgr/feat/feat-1-x/README.md",
+            "/home/u",
+            ("/home/u/docs/req",),
+            None,
+            False,
+        ),
+        (
+            "the repo's own docs under a docs-named ancestor",
+            "/w/docs/repo/docs/req/foo.md",
+            "/w",
+            ("/w/docs/repo",),
+            ("req", ()),
+            True,
+        ),
+        # --- more than one repo root (E1)
+        (
+            "docs tree that is itself a repo (E1)",
+            "/w/super/docs/req/foo.md",
+            "/w/super",
+            ("/w/super", "/w/super/docs"),
+            ("req", ()),
+            True,
+        ),
+        (
+            "docs tree that is itself a repo, cwd inside it (E1)",
+            "/w/super/docs/req/foo.md",
+            "/w/super/docs",
+            ("/w/super", "/w/super/docs"),
+            ("req", ()),
+            True,
+        ),
+        (
+            "docs tree that is itself a repo, archive file: rooted (E1)",
+            "/w/super/docs/archive/sop/README.md",
+            "/w/super",
+            ("/w/super", "/w/super/docs"),
+            ("archive", ("sop",)),
+            True,
+        ),
+        (
+            "vendored repo under a superproject, its own docs",
+            "/w/super/vendor/lib/docs/req/foo.md",
+            "/w/super",
+            ("/w/super", "/w/super/vendor/lib"),
+            ("req", ()),
+            True,
+        ),
+        (
+            "vendored repo inside the superproject's docs domain dir (E1)",
+            "/w/super/docs/req/vend/x.md",
+            "/w/super",
+            ("/w/super", "/w/super/docs/req/vend"),
+            ("req", ("vend",)),
+            False,
+        ),
+        (
+            "a repo inside a superproject's docs tree, feat README (E2 under a dotfiles repo)",
+            "/home/u/docs/repo/.specmgr/feat/feat-1-x/README.md",
+            "/home/u",
+            ("/home/u", "/home/u/docs/repo"),
+            ("repo", _FEAT),
+            False,
+        ),
+        (
+            "a repo inside a superproject's docs tree, its own docs: the inner rooted anchor wins",
+            "/home/u/docs/repo/docs/req/foo.md",
+            "/home/u",
+            ("/home/u", "/home/u/docs/repo"),
+            ("req", ()),
+            True,
+        ),
+        # --- no repo at all (G1)
+        ("no repo, cwd at project", "/w/proj/docs/req/foo.md", "/w/proj", (), ("req", ()), True),
+        ("no repo, cwd above the project (G1)", "/w/proj/docs/req/foo.md", "/w", (), ("req", ()), False),
+        ("no repo, absolute path with cwd / (G1)", "/w/proj/docs/req/foo.md", "/", (), ("req", ()), False),
+        ("no repo, path outside the cwd", "/w/proj/docs/req/foo.md", "/elsewhere", (), ("req", ()), False),
+        (
+            "no repo, a docs-named ancestor with a feat README: un-rooted (conditional skip, E2)",
+            "/w/docs/repo/.specmgr/feat/feat-1-x/README.md",
+            "/elsewhere",
+            (),
+            ("repo", _FEAT),
+            False,
+        ),
+        ("no repo, no docs segment", "/w/specdocs/req/en/ab/x.md", "/w", (), None, False),
+    )
+
+    def test_every_layout_row(self):
+        lint = importlib.import_module("biz.dfch.specmgr.commands.lint")
+        for label, path, cwd, roots, layout, rooted in self._ROWS:
+            with self.subTest(label=label):
+                anchor = lint._anchor_rule(  # pylint: disable=protected-access
+                    Path(path), Path(cwd), frozenset(Path(root) for root in roots)
+                )
+
+                self.assertEqual((anchor.layout, anchor.rooted), (layout, rooted))
+
+    def test_the_rule_reads_the_working_directory_once_per_invocation(self):
+        """I1: the one ``Path.cwd()`` read sits in the ``lint`` command body (resolved once, passed down);
+        the rule and its helpers carry none."""
+        tree = ast.parse(_LINT_PY.read_text(encoding="utf-8"))
+        owners = [
+            node.name
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef)
+            and any(isinstance(sub, ast.Attribute) and sub.attr == "cwd" for sub in ast.walk(node))
+        ]
+
+        self.assertEqual(owners, ["lint"])
+
+
+class TestLintDocsAnchorReviewCycle6(_LintTestBase):
+    """feat-245 Phase 200 (Task 200.130): the CLI-level regression pins of review cycle 6, in the style of
+    :class:`TestLintDocsAnchorNestedProject` (real directories, a real ``.git`` marker, ``chdir``). Before
+    the fix (8d3025e8) only the NEAREST ``.git`` ancestor was a root and a path with a root candidate never
+    took the last-``docs`` fallback, so E1, G1 and G2 below all exited 0 with ``linted=1``."""
+
+    def _misplaced(self, base: Path) -> Path:
+        path = base / "docs" / "req" / "foo.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_healthy_whole_body_text("req"), encoding="utf-8")
+        return path
+
+    def _assert_violation(self, result: Result) -> None:
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn("layout violation: missing language directory", result.stdout)
+        self.assertIn("correct path: docs/req/en/<2-hex-shard>/foo.md", result.stdout)
+        self.assertIn("summary: linted=0 failed=0 skipped=0 layout=1", result.stdout)
+
+    def _superproject(self, marker_is_file: bool) -> Path:
+        """``<tmp>/super`` (a ``.git`` dir) whose ``docs`` tree is itself a repo: a submodule's ``.git``
+        FILE, or a nested clone's ``.git`` DIRECTORY."""
+        root = self.tmp / "super"
+        (root / ".git").mkdir(parents=True, exist_ok=True)
+        docs = root / "docs"
+        docs.mkdir(exist_ok=True)
+        if marker_is_file:
+            (docs / ".git").write_text("gitdir: ../.git/modules/docs\n", encoding="utf-8")
+        else:
+            (docs / ".git").mkdir()
+        return root
+
+    def test_e1_a_docs_tree_that_is_itself_a_repo_keeps_the_placement_gate(self):
+        """E1: ``<super>/.git`` + ``<super>/docs/.git``, run from ``<super>``: ``docs/req/foo.md`` is the
+        missing-language-dir violation (exit 2), for a ``.git`` file and a ``.git`` directory, relative
+        and absolute."""
+        for marker_is_file in (True, False):
+            with tempfile.TemporaryDirectory() as tmp:
+                self.tmp = Path(tmp)
+                root = self._superproject(marker_is_file)
+                path = self._misplaced(root)
+                with contextlib.chdir(root):
+                    for given in ("docs/req/foo.md", str(path.resolve())):
+                        with self.subTest(marker_is_file=marker_is_file, given=given):
+                            self._assert_violation(self._invoke(given))
+
+    def test_e1_a_real_archive_file_in_a_docs_tree_that_is_itself_a_repo_is_skipped(self):
+        """E1: the superproject's rooted anchor still skips the real ``docs/archive/`` files
+        unconditionally (``docs/archive/sop/`` included)."""
+        root = self._superproject(True)
+        archive = _REPO_ROOT / "docs" / "archive"
+        real_files = sorted(path for path in archive.rglob("*.md") if path.is_file())
+        self.assertTrue(any(path.parent.name == "sop" for path in real_files), real_files)
+        self.enterContext(contextlib.chdir(root))
+        for source in real_files:
+            rel = source.relative_to(_REPO_ROOT)
+            with self.subTest(rel=str(rel)):
+                path = root / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(source.read_bytes())
+
+                result = self._invoke(str(rel))
+
+                self.assertEqual(result.exit_code, 0, result.output)
+                self.assertIn("summary: linted=0 failed=0 skipped=1 layout=0", result.stdout)
+
+    def test_e1_a_vendored_repo_under_a_superproject_keeps_the_placement_gate(self):
+        """E1: ``<super>/.git`` + ``<super>/vendor/lib/.git``, run from ``<super>``: the vendored repo's own
+        ``docs/req/foo.md`` is the violation; so is a file of a repo vendored INTO the superproject's
+        ``docs/req/`` (``missing (valid) language directory``)."""
+        root = self.tmp / "super"
+        (root / ".git").mkdir(parents=True)
+        lib = root / "vendor" / "lib"
+        (lib / ".git").mkdir(parents=True)
+        self._misplaced(lib)
+        vend = root / "docs" / "req" / "vend"
+        (vend / ".git").mkdir(parents=True)
+        (vend / "x.md").write_text(_healthy_whole_body_text("req"), encoding="utf-8")
+        self.enterContext(contextlib.chdir(root))
+
+        self._assert_violation(self._invoke("vendor/lib/docs/req/foo.md"))
+        result = self._invoke("docs/req/vend/x.md")
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn("layout violation: missing (valid) language directory", result.stdout)
+
+    def test_g1_without_a_repo_the_gate_holds_from_above_the_project(self):
+        """G1: no ``.git`` anywhere; the misplaced ``<proj>/docs/req/foo.md`` is the violation from the
+        project, from its parent (relative path), and as an absolute path from ``/``."""
+        proj = self.tmp / "norepo" / "proj"
+        path = self._misplaced(proj)
+        for cwd, given in (
+            (proj, "docs/req/foo.md"),
+            (proj.parent, "proj/docs/req/foo.md"),
+            (Path(path.anchor), str(path.resolve())),
+        ):
+            with self.subTest(cwd=str(cwd), given=given), contextlib.chdir(cwd):
+                self._assert_violation(self._invoke(given))
+
+    def test_g2_a_nested_project_is_placement_gated_from_the_repo_root(self):
+        """G2: ``<mono>/.git``, docs at ``<mono>/proj/docs/``: the misplaced file is the violation from
+        ``<mono>`` too (the un-rooted last-``docs`` anchor inside the repo), not only from ``<mono>/proj``."""
+        mono = self.tmp / "mono"
+        (mono / ".git").mkdir(parents=True)
+        path = self._misplaced(mono / "proj")
+        for cwd, given in ((mono, "proj/docs/req/foo.md"), (mono / "proj", "docs/req/foo.md"), (self.tmp, str(path))):
+            with self.subTest(cwd=str(cwd), given=given), contextlib.chdir(cwd):
+                self._assert_violation(self._invoke(given))
+
+    def test_e2_stays_closed_under_a_superproject(self):
+        """The Phase 180 E2 case with a repo ABOVE the ``docs``-named ancestor (a dotfiles ``<home>/.git``
+        over ``<home>/docs/repo/.git``), run from ``<home>``: the outer anchor holds a nested repo, so it is
+        un-rooted -- the broken feat README is inferred as ``feat`` and fails (exit 1), never skipped -- and
+        the inner repo's own misplaced ``docs/req/foo.md`` is the violation."""
+        home = self.tmp / "home"
+        (home / ".git").mkdir(parents=True)
+        repo = home / "docs" / "repo"
+        (repo / ".git").mkdir(parents=True)
+        readme = repo / ".specmgr" / "feat" / "feat-1-x" / "README.md"
+        readme.parent.mkdir(parents=True)
+        readme.write_text(_feat214_shaped_text(), encoding="utf-8")
+        self._misplaced(repo)
+        self.enterContext(contextlib.chdir(home))
+
+        result = self._invoke("docs/repo/.specmgr/feat/feat-1-x/README.md")
+
+        self.assertEqual(result.exit_code, 1, result.output)
+        self.assertIn("summary: linted=1 failed=1 skipped=0 layout=0", result.stdout)
+        self._assert_violation(self._invoke("docs/repo/docs/req/foo.md"))
 
 
 class TestLintShardedShapeIsRootNameIndependent(_LintTestBase):

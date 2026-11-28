@@ -1764,16 +1764,35 @@ extras onto every consumer of the base library.
   under a docs root of any name (`specdocs/req/en/ab/x.md`, the parse
   language derived from that same position, feat-245 Phase 180), the
   containing directory named after a type, or the `feat/{id}/README.md`
-  shape — with the `--type` override and `--skip-unrecognized`; the `docs`
-  anchor is a `docs` segment that is the FIRST segment of the path relative
-  to EITHER the working directory (when the path lies under it and the
-  working directory is inside the repo, or no repo exists) OR the repo root
-  (nearest `.git` ancestor), so a nested project's own `docs/` (`mono/.git`,
-  run from `mono/proj`) anchors while an ancestor directory merely named
-  `docs` never does (feat-245 Phase 190); a file under a non-domain
-  `docs/<dir>/` (e.g. `docs/archive/`, any depth) is skipped and counted,
-  exit 0 — unconditionally under a rooted anchor, and for a path outside
-  every root (last-`docs` anchor) only when no other rule matches; used by the `specmgr-lint` pre-commit hook over
+  shape — with the `--type` override and `--skip-unrecognized`. The `docs`
+  anchor (final rule, feat-245 Phase 200) is a pure function of the resolved
+  path, the resolved working directory and the path's repo roots (EVERY
+  ancestor directory that holds a `.git` entry, not only the nearest). (1)
+  Root candidates, in order: the working directory -- only when the path lies
+  under it and it is inside one of those repo roots, or no repo exists -- then
+  every repo root, from the outermost inward; a candidate anchors the path
+  when `docs` is the FIRST segment of the path relative to it. (2) A
+  candidate's anchor is ROOTED unless another repo root lies strictly inside
+  the anchoring `docs` directory (a repo cloned or vendored into a docs tree;
+  a `docs` directory that is itself a repo root stays rooted); the first
+  rooted anchor wins, and an anchor that is not rooted is taken only when no
+  later candidate gives a rooted one. (3) When no candidate anchors, the LAST
+  `docs` segment anchors, un-rooted -- searched inside the outermost repo
+  root, or over the whole path when no repo exists. A registered UUID domain
+  under ANY anchor is placement-validated; a rooted anchor's non-domain skip
+  is unconditional, an un-rooted anchor's applies only when no other rule
+  matches. Consequences: a working directory above every repo and a
+  `docs`-named directory above the outermost repo root never anchor; a `docs`
+  tree that is itself a repo (a submodule) and a vendored repo's own `docs/`
+  are gated; a nested project (`mono/.git`, docs at `mono/proj/docs/`) is
+  placement-gated from every working directory, but its non-domain
+  `docs/<dir>/` files are skipped unconditionally only when lint runs from
+  inside the project -- from `mono/`, `proj/docs/archive/sop/README.md` is
+  linted as `sop` (its parent-name rule matches); without any repo, a
+  `docs`-named ancestor of the project can anchor (nothing marks where the
+  project starts). A file under a non-domain `docs/<dir>/` (e.g.
+  `docs/archive/`, any depth) that is skipped is counted, exit 0. Path mode is
+  used by the `specmgr-lint` pre-commit hook over
   the staged in-tree artifacts and by the CI pull-request step over the
   artifacts changed against the base branch), and the `--type T` sweep (from
   `--dir` if given, else the domain-wide union of every language directory —
