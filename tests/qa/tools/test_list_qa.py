@@ -143,7 +143,8 @@ class TestListQa(unittest.TestCase):
         second = create_qa(_OTHER_BODY)
 
         base_dir = ensure_qa_base_dir()
-        broken_path = base_dir / "broken.md"
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        broken_path = base_dir / "00" / "broken.md"
         broken_path.write_text("not a valid QA document, no headings at all", encoding="utf-8")
 
         sut = list_qa()
@@ -179,7 +180,8 @@ class TestListQa(unittest.TestCase):
         second = create_qa(_OTHER_BODY)
 
         base_dir = ensure_qa_base_dir()
-        unnumbered_path = base_dir / "unnumbered.md"
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        unnumbered_path = base_dir / "00" / "unnumbered.md"
         unnumbered_path.write_text(_UNNUMBERED_QUESTION_FILE, encoding="utf-8")
 
         sut = list_qa()
@@ -275,7 +277,8 @@ class TestListQa(unittest.TestCase):
         for i in range(5):
             create_qa(_body_with_title(f"Title {i}"))
         base_dir = ensure_qa_base_dir()
-        (base_dir / "broken.md").write_text("not a valid QA document, no headings at all", encoding="utf-8")
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        (base_dir / "00" / "broken.md").write_text("not a valid QA document, no headings at all", encoding="utf-8")
 
         sut = list_qa(max_results=1, offset=1)
 

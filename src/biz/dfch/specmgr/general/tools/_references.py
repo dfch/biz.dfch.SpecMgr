@@ -361,7 +361,8 @@ def _load_txt(ref_id: str) -> tuple[str, Path]:
 
     Same as :func:`_load_gol`, for the ``txt`` domain: the free-form
     catch-all document type reads through its own cache-backed
-    ``load_by_id`` like every other flat target domain, and ``title`` is
+    ``load_by_id`` like every other one-`.md`-per-document target domain,
+    and ``title`` is
     the referenced document's own ``# {title}`` H1 (``doc.body.text``).
     ``TxtNotFoundError`` propagates unchanged (caught by
     :func:`resolve_reference`).
@@ -431,8 +432,8 @@ def _load_feat(ref_id: str) -> tuple[str, Path]:
 #: for one reference id and propagates the domain's own ``XNotFoundError``
 #: (a ``LookupError``) if the target is absent on disk. Every target
 #: domain reads through its own cache-backed ``load_by_id`` (feat-107-
-#: doc-cache; ``feat`` is folder-per-document rather than flat-file -- see
-#: :func:`_load_feat`).
+#: doc-cache; ``feat`` is folder-per-document rather than
+#: one-`.md`-per-document -- see :func:`_load_feat`).
 _TARGET_RESOLVERS: dict[str, Callable[[str], tuple[str, Path]]] = {
     "gol": _load_gol,
     "prb": _load_prb,

@@ -38,8 +38,8 @@ class LanguageEntry(BaseModel):
     Parameters
     ----------
     language:
-        The language code (``"en"`` for the flat default-language document, otherwise the ISO 639-1-shaped
-        ``{language}`` subdirectory name).
+        The language code (``"en"`` for the default-language document in the ``en/`` sharded directory, otherwise the
+        ``{language}`` directory name).
     path:
         The absolute, resolved on-disk path of this language's document.
     parseable:

@@ -71,7 +71,8 @@ class TestListTsk(unittest.TestCase):
         second = create_tsk(_OTHER_BODY)
 
         base_dir = ensure_tsk_base_dir()
-        broken_path = base_dir / "broken.md"
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        broken_path = base_dir / "00" / "broken.md"
         broken_path.write_text("not a valid task list, no headings at all", encoding="utf-8")
 
         sut = list_tsk()
@@ -175,7 +176,8 @@ class TestListTsk(unittest.TestCase):
         for i in range(5):
             create_tsk(_body_with_title(f"Title {i}"))
         base_dir = ensure_tsk_base_dir()
-        (base_dir / "broken.md").write_text("not a valid task list, no headings at all", encoding="utf-8")
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        (base_dir / "00" / "broken.md").write_text("not a valid task list, no headings at all", encoding="utf-8")
 
         sut = list_tsk(max_results=1, offset=1)
 

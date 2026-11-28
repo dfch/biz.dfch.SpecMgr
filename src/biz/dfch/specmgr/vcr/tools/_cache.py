@@ -64,7 +64,7 @@ from functools import partial
 from pathlib import Path
 
 from ...general.tools._doc_cache import DocCache
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ..models.v1 import VcrDocument, parse_vcr
 
 __all__ = ["invalidate_vcr_cache", "read_vcr", "reconcile_vcr_cache", "reset_vcr_cache"]
@@ -104,10 +104,10 @@ def read_vcr(path: Path) -> VcrDocument:
 
     **Language-aware (feat-197-i18n Phase 125).** The effective language is
     derived from the file's own position relative to the verification case record base
-    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
-    directly in the flat ``docs/vcr/`` directory parses canonical/EN, a file
-    directly in ``docs/vcr/{language}/`` parses in that language, anything
-    else canonical), never from a caller argument: the location *is* the
+    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file in the
+    ``docs/vcr/en/`` directory parses canonical/EN, a file in
+    ``docs/vcr/{language}/`` parses in that language, anything else
+    canonical), never from a caller argument: the location *is* the
     language encoding (DEC 38efdb66 item 1), so every consumer of this
     reader (``find_vcr_path``'s scan, ``list_vcr``'s rows, ``load_by_id``'s
     second read, the generic tools' own vcr adapters) parses a variant file
@@ -129,9 +129,9 @@ def read_vcr(path: Path) -> VcrDocument:
     # ``read_vcr``/``reconcile_vcr_cache`` at module level (the
     # ``_io.py -> _paths.py -> _io.py`` cycle the module docstring describes),
     # so a module-level import back into it would be a circular import.
-    from ._paths import vcr_base_dir  # pylint: disable=import-outside-toplevel
+    from ._paths import VCR_TYPE_NAME  # pylint: disable=import-outside-toplevel
 
-    language = language_for_doc_path(vcr_base_dir(), path)
+    language = language_for_doc_path(doc_domain_base_dir(VCR_TYPE_NAME), path)
     result = _cache.read(path, partial(_parse, language=language))
     return result
 

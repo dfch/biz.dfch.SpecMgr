@@ -310,10 +310,11 @@ class _FlatDomainWiringTestCase(unittest.TestCase):
             _reset_cache(domain)
 
     def _write_flat_fixture(self, domain: str, fixture_id: str) -> Path:
-        """Write ``domain``'s FULL packaged template (only its frontmatter ``id`` line substituted) to disk; return its path."""
+        """Write ``domain``'s FULL packaged template (only its frontmatter ``id`` line substituted) to disk,
+        sharded under the fixture id's own shard (feat-245's uniform layout); return its path."""
         base_dir = doc_base_dir(domain)
-        base_dir.mkdir(parents=True, exist_ok=True)
-        path = base_dir / f"{domain}-{fixture_id}.md"
+        path = base_dir / fixture_id[:2] / f"{domain}-{fixture_id}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(_with_id(read_packaged_text(domain, "template"), fixture_id), encoding="utf-8")
         return path
 
@@ -359,7 +360,7 @@ class TestAcc001CreateWarmForEveryFlatDomain(_FlatDomainWiringTestCase):
     def _sole_written_path(self, domain: str, doc_id: str) -> Path:
         """The sole ``*.md`` carrying ``doc_id`` in the domain's base dir -- the create row's written path."""
         base_dir = doc_base_dir(domain)
-        matches = [path for path in base_dir.glob("*.md") if doc_id in path.name]
+        matches = [path for path in base_dir.rglob("*.md") if doc_id in path.name]
         self.assertEqual(len(matches), 1)
         return matches[0]
 

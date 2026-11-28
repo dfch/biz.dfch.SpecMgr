@@ -119,10 +119,14 @@ class TestI18nDescribesTheImplementedLayout(unittest.TestCase):
     def test_layout_and_basename_rule(self):
         layout = _section(i18n(), "## 2. Directory layout and basename rule")
 
-        self.assertIn("docs/{type}/<type>-<id>-<slug>.md", layout)
-        self.assertIn("docs/{type}/{L}/<type>-<id>-<slug>.md", layout)
-        self.assertIn("byte-identical to the EN source's file name", layout)
-        self.assertIn("slug always derives from the EN title", layout)
+        self.assertIn("English included", layout)
+        self.assertIn("docs/{type}/{L}/<id[:2]>/", layout)
+        self.assertIn("first two hex digits of the document's id", layout)
+        self.assertIn("docs/{type}/en/", layout)
+        self.assertIn("<id>-<slug>.md", layout)
+        self.assertIn("no type prefix", layout)
+        self.assertIn("byte-identical to the EN source's file", layout)
+        self.assertIn("derives from the EN title, never from the translated title", layout)
         self.assertIn("same `id`", layout)
         self.assertIn("EN source (same `id`) exists", layout)
 

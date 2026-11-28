@@ -30,13 +30,13 @@ the path is needed), takes the domain's own per-id lock around the whole
 resolve-then-delete sequence (the very lock the generic ``update`` and
 ``set_status`` tools take for the same id, so a concurrent same-id mutation
 cannot interleave with the delete), and hard-deletes the document from
-disk: the single ``*.md`` file for every flat domain (i.e. every
+disk: the single ``*.md`` file for every single-file domain (i.e. every
 whole-body domain except ``feat``)
 (``Path.unlink``), or the entire ``<base>/<id>/`` folder for ``feat``
 (``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and any
 session transcripts in that folder; ``feat`` is folder-per-document, DEC
 8cf940c5). On success the adapter returns the deleted path as a ``str``
-(the file path for the flat domains, the folder path for ``feat``).
+(the file path for the single-file domains, the folder path for ``feat``).
 
 Safety (REQ-003): the public :func:`delete` validates ``id`` via
 :func:`_path_safety.validate_id` (no ``/``, no ``\\``, no ``..``, plus the
@@ -54,6 +54,14 @@ adapter does not catch it); an I/O failure during the actual
 ``unlink``/``rmtree`` (``OSError``/``PermissionError``/race) is caught and
 re-raised as :class:`DeleteError` carrying the resolved path and the
 underlying ``OSError`` as ``__cause__``.
+
+Empty directories left behind (feat-245 Phase 180, I2 -- documented, not
+pruned): deleting the last document of a shard (or of a language) leaves
+the empty ``docs/<type>/<lang>/<shard>/`` (or ``<lang>/``) directory in
+place. That is expected and harmless: git does not track empty
+directories, every read path treats an empty directory as no files, and
+pruning would race a concurrent ``create_<d>`` of a DIFFERENT id in the
+same shard (the locks are per id, not per shard).
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
@@ -567,7 +575,7 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
         "Permanently delete an existing document from disk across the whole-body "
         f"domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}). Resolves "
         "the document by `id`, takes the domain lock, "
-        "and removes it: the single `*.md` file for every flat domain (every whole-body domain "
+        "and removes it: the single `*.md` file for every single-file domain (every whole-body domain "
         "except `feat`), or the entire "
         "`<base>/<id>/` folder for `feat`. Returns the deleted path as a string. "
         "An invalid `id` (path-injection attempt or wrong format) is a `ValueError` "
@@ -575,10 +583,10 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
         "`XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole "
         "delete entry point -- the former per-domain `delete_<d>` tools are removed. "
         "The optional `language` parameter (default 'en', feat-197-i18n) selects the language variant to "
-        "delete: omitted/'en' = the flat default-language document, exactly the default behavior; a "
-        "non-default ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
-        "docs/<type>/{language}/ (found by id-scan of that subdirectory), deleting that variant file ONLY "
-        "-- the EN file stays untouched. "
+        "delete: omitted/'en' = the default-language document in the `en/` sharded directory, exactly "
+        "the default behavior; a non-default ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = "
+        "that language's variant in its own docs/<type>/{language}/ sharded directory (found by id-scan "
+        "of that directory), deleting that variant file ONLY -- the EN file stays untouched. "
         "Every whole-body type except `feat` supports a non-default language; for `feat` (always "
         "English) a non-default `language` raises a `ValueError`, as does a malformed `language` or "
         "one with no packaged heading-mapping table -- all raised before any file access."
@@ -596,11 +604,13 @@ def delete(
     ``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``); dispatches on ``type`` to the domain's own
     private adapter (same id resolution via the domain's ``load_by_id``,
     same per-id domain lock around the whole resolve-then-delete sequence,
-    same domain not-found error). Every flat domain (every whole-body domain
+    same domain not-found error). Every single-file domain (every whole-body domain
     except ``feat``) removes its single
     ``*.md`` file; ``feat`` removes its entire ``<base>/<id>/`` folder
     (``README.md``, any ``history.md``, any session transcripts --
-    folder-per-document, DEC 8cf940c5).
+    folder-per-document, DEC 8cf940c5). An emptied shard or language
+    directory is left in place (expected and harmless -- see the module
+    docstring; pruning would race a concurrent create in the same shard).
 
     The ``id`` is validated before any filesystem access: a path-injection
     attempt (``/``, ``\\``, or ``..``) or a wrong-format id (not a canonical
@@ -621,8 +631,8 @@ def delete(
     language:
         The language variant to delete (feat-197-i18n Phase 120, DEC
         38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
-        it) deletes the flat default-language document -- today's exact
-        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        it) deletes the document of the default language (``en``), in the
+        ``docs/<type>/en/<shard>/`` directory; any other ISO 639-1-shaped lowercase two-letter code
         (e.g. ``"de"``) deletes that language's variant, located by
         id-scan of ``docs/<type>/{language}/`` (the variant's basename is
         never re-derived); only that one variant file is removed (and
@@ -635,7 +645,7 @@ def delete(
     Returns
     -------
     str
-        The deleted path: the ``*.md`` file path for every flat domain
+        The deleted path: the ``*.md`` file path for every single-file domain
         (every whole-body domain except ``feat``), the folder path for ``feat``.
 
     Raises

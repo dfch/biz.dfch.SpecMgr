@@ -215,7 +215,7 @@ class TestGetReferenceDiagramSourceMissing(_SeededRegistryTestCase):
     ``XNotFoundError``, identical to ``get_<d>``/``list_references`` -- for every one of the 15
     domains."""
 
-    SEEDS = (("cycle/req-c001.md", f"docs/req/{_C001}.md"),)
+    SEEDS = (("cycle/req-c001.md", f"docs/req/en/{_C001[:2]}/{_C001}.md"),)
 
     def test_a_well_formed_but_missing_source_id_raises_the_domain_not_found_error(self) -> None:
         cases: list[tuple[str, str, type[Exception]]] = [
@@ -249,7 +249,7 @@ class TestGetReferenceDiagramBrokenSource(_SeededRegistryTestCase):
     9080b37c); for ``feat`` (folder-per-document) the result carries the broken file's
     resolved path and the domain's own parse-error text."""
 
-    SEEDS = (("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),)
+    SEEDS = (("wide/dec-d002.md", f"docs/dec/en/{_D002[:2]}/dec-{_D002}-broken.md"),)
 
     def test_broken_dec_source_returns_parse_failure_result_byte_identical_to_list_dec(self) -> None:
         from biz.dfch.specmgr.dec.tools.list_dec import list_dec
@@ -259,7 +259,9 @@ class TestGetReferenceDiagramBrokenSource(_SeededRegistryTestCase):
         self.assertIsInstance(result, ParseFailureResult)
         self.assertNotIsInstance(result, str)
         self.assertEqual(result.id, _D002)
-        self.assertEqual(result.path, str((self.docs_root / "dec" / f"dec-{_D002}-broken.md").resolve()))
+        self.assertEqual(
+            result.path, str((self.docs_root / "dec" / "en" / _D002[:2] / f"dec-{_D002}-broken.md").resolve())
+        )
         self.assertTrue(result.error)
 
         listing = list_dec()
@@ -306,8 +308,8 @@ class TestTxtNodeDiagram(_SeededRegistryTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        (self.docs_root / "txt").mkdir(parents=True)
-        (self.docs_root / "txt" / f"{self._TXT_ID}.md").write_text(
+        (self.docs_root / "txt" / "en" / self._TXT_ID[:2]).mkdir(parents=True)
+        (self.docs_root / "txt" / "en" / self._TXT_ID[:2] / f"{self._TXT_ID}.md").write_text(
             "---\n"
             f"id: {self._TXT_ID}\n"
             "type: txt\n"
@@ -328,8 +330,8 @@ class TestTxtNodeDiagram(_SeededRegistryTestCase):
             "First entry of the fixture document.\n",
             encoding="utf-8",
         )
-        (self.docs_root / "req").mkdir(parents=True)
-        (self.docs_root / "req" / f"{self._REQ_ID}.md").write_text(
+        (self.docs_root / "req" / "en" / self._REQ_ID[:2]).mkdir(parents=True)
+        (self.docs_root / "req" / "en" / self._REQ_ID[:2] / f"{self._REQ_ID}.md").write_text(
             "---\n"
             f"id: {self._REQ_ID}\n"
             "type: req\n"
@@ -409,8 +411,8 @@ class TestCycleRegistryTool(_SeededRegistryTestCase):
     pin + checker-clean over the tool's actual return (the full path end-to-end)."""
 
     SEEDS = (
-        ("cycle/req-c001.md", f"docs/req/{_C001}.md"),
-        ("cycle/req-c002.md", f"docs/req/{_C002}.md"),
+        ("cycle/req-c001.md", f"docs/req/en/{_C001[:2]}/{_C001}.md"),
+        ("cycle/req-c002.md", f"docs/req/en/{_C002[:2]}/{_C002}.md"),
     )
 
     def test_depth1_golden(self):
@@ -436,9 +438,9 @@ class TestChainRegistryTool(_SeededRegistryTestCase):
     H1 (the diagram title is untruncated, the node label truncates at the default 40)."""
 
     SEEDS = (
-        ("chain/req-h001.md", f"docs/req/{_H001}.md"),
-        ("chain/gol-g001.md", f"docs/gol/{_G001}.md"),
-        ("chain/rsk-k001.md", f"docs/rsk/{_K001}.md"),
+        ("chain/req-h001.md", f"docs/req/en/{_H001[:2]}/{_H001}.md"),
+        ("chain/gol-g001.md", f"docs/gol/en/{_G001[:2]}/{_G001}.md"),
+        ("chain/rsk-k001.md", f"docs/rsk/en/{_K001[:2]}/{_K001}.md"),
     )
 
     def test_depth1_golden(self):
@@ -467,8 +469,8 @@ class TestReverseRegistryTool(_SeededRegistryTestCase):
     defaults to keeping them)."""
 
     SEEDS = (
-        ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
-        ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
+        ("reverse/req-r001.md", f"docs/req/en/{_R001[:2]}/{_R001}.md"),
+        ("reverse/dec-d001.md", f"docs/dec/en/{_D001[:2]}/{_D001}.md"),
         ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
     )
 
@@ -505,9 +507,9 @@ class TestReverseFeatSourceRegistryTool(_SeededRegistryTestCase):
     reverse scan over this seed set)."""
 
     SEEDS = (
-        ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
-        ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
-        ("reverse/dec-b001.md", f"docs/dec/{_B001}.md"),
+        ("reverse/req-r001.md", f"docs/req/en/{_R001[:2]}/{_R001}.md"),
+        ("reverse/dec-d001.md", f"docs/dec/en/{_D001[:2]}/{_D001}.md"),
+        ("reverse/dec-b001.md", f"docs/dec/en/{_B001[:2]}/{_B001}.md"),
         ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
     )
 
@@ -524,7 +526,7 @@ class TestNoFeatRegistryTool(_SeededRegistryTestCase):
     ``include_feat=False`` goldens (the source exception: the requested feat node stays)."""
 
     SEEDS = (
-        ("no-feat/req-n001.md", f"docs/req/{_N001}.md"),
+        ("no-feat/req-n001.md", f"docs/req/en/{_N001[:2]}/{_N001}.md"),
         ("no-feat/feat-7-no-feat", "feat/feat-7-no-feat"),
         ("no-feat/feat-8-no-feat-two", "feat/feat-8-no-feat-two"),
     )
@@ -558,10 +560,10 @@ class TestWideRegistryTool(_SeededRegistryTestCase):
     as a scanned-but-skipped document)."""
 
     SEEDS = (
-        ("wide/req-w001.md", f"docs/req/{_W001}.md"),
-        ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
-        ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-        ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
+        ("wide/req-w001.md", f"docs/req/en/{_W001[:2]}/{_W001}.md"),
+        ("wide/uc-u001.md", f"docs/uc/en/{_U001[:2]}/{_U001}.md"),
+        ("wide/gol-g001.md", f"docs/gol/en/{_WG001[:2]}/{_WG001}.md"),
+        ("wide/dec-d002.md", f"docs/dec/en/{_D002[:2]}/dec-{_D002}-broken.md"),
     )
 
     def test_scoped_reverse_golden(self):
@@ -576,7 +578,7 @@ class TestGetReferenceDiagramTitleOverride(_SeededRegistryTestCase):
     """The ``title`` override: it replaces the graph's title before rendering -- sanitized (an
     embedded ``"`` becomes ``#quot;``) but NEVER truncated, even past the label limit."""
 
-    SEEDS = (("chain/req-h001.md", f"docs/req/{_H001}.md"),)
+    SEEDS = (("chain/req-h001.md", f"docs/req/en/{_H001[:2]}/{_H001}.md"),)
 
     def test_a_long_title_stays_whole_on_the_startuml_line(self):
         long_title = "A very long custom diagram title well over forty characters long"
@@ -603,9 +605,9 @@ class TestGetReferenceDiagramEnvVar(_SeededRegistryTestCase):
     default 40 (the golden again), and the title is never affected."""
 
     SEEDS = (
-        ("chain/req-h001.md", f"docs/req/{_H001}.md"),
-        ("chain/gol-g001.md", f"docs/gol/{_G001}.md"),
-        ("chain/rsk-k001.md", f"docs/rsk/{_K001}.md"),
+        ("chain/req-h001.md", f"docs/req/en/{_H001[:2]}/{_H001}.md"),
+        ("chain/gol-g001.md", f"docs/gol/en/{_G001[:2]}/{_G001}.md"),
+        ("chain/rsk-k001.md", f"docs/rsk/en/{_K001[:2]}/{_K001}.md"),
     )
 
     def test_a_custom_limit_truncates_the_labels(self):
@@ -638,22 +640,22 @@ class TestGetReferenceDiagramGoldenRoundTrip(_SeededRegistryTestCase):
     the full MCP path is pinned to the Phase 110 library's byte-stable output."""
 
     SEEDS = (
-        ("cycle/req-c001.md", f"docs/req/{_C001}.md"),
-        ("cycle/req-c002.md", f"docs/req/{_C002}.md"),
-        ("chain/req-h001.md", f"docs/req/{_H001}.md"),
-        ("chain/gol-g001.md", f"docs/gol/{_G001}.md"),
-        ("chain/rsk-k001.md", f"docs/rsk/{_K001}.md"),
-        ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
-        ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
-        ("reverse/dec-b001.md", f"docs/dec/{_B001}.md"),
+        ("cycle/req-c001.md", f"docs/req/en/{_C001[:2]}/{_C001}.md"),
+        ("cycle/req-c002.md", f"docs/req/en/{_C002[:2]}/{_C002}.md"),
+        ("chain/req-h001.md", f"docs/req/en/{_H001[:2]}/{_H001}.md"),
+        ("chain/gol-g001.md", f"docs/gol/en/{_G001[:2]}/{_G001}.md"),
+        ("chain/rsk-k001.md", f"docs/rsk/en/{_K001[:2]}/{_K001}.md"),
+        ("reverse/req-r001.md", f"docs/req/en/{_R001[:2]}/{_R001}.md"),
+        ("reverse/dec-d001.md", f"docs/dec/en/{_D001[:2]}/{_D001}.md"),
+        ("reverse/dec-b001.md", f"docs/dec/en/{_B001[:2]}/{_B001}.md"),
         ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
-        ("no-feat/req-n001.md", f"docs/req/{_N001}.md"),
+        ("no-feat/req-n001.md", f"docs/req/en/{_N001[:2]}/{_N001}.md"),
         ("no-feat/feat-7-no-feat", "feat/feat-7-no-feat"),
         ("no-feat/feat-8-no-feat-two", "feat/feat-8-no-feat-two"),
-        ("wide/req-w001.md", f"docs/req/{_W001}.md"),
-        ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
-        ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-        ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
+        ("wide/req-w001.md", f"docs/req/en/{_W001[:2]}/{_W001}.md"),
+        ("wide/uc-u001.md", f"docs/uc/en/{_U001[:2]}/{_U001}.md"),
+        ("wide/gol-g001.md", f"docs/gol/en/{_WG001[:2]}/{_WG001}.md"),
+        ("wide/dec-d002.md", f"docs/dec/en/{_D002[:2]}/dec-{_D002}-broken.md"),
     )
 
     def test_every_scoped_golden_is_reachable_through_the_tool(self):

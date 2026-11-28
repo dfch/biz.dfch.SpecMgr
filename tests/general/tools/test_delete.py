@@ -636,19 +636,20 @@ class TempDeleteDirTestCase(unittest.TestCase):
         result = case.create(case.minimal_body)
         return result
 
-    def _flat_path(self, case: _Case) -> Path:
-        """The single on-disk document file seeded for the flat domain ``case``."""
-        matches = list((self.docs_root / case.doc_type).glob("*.md"))
+    def _doc_path(self, case: _Case) -> Path:
+        """The single on-disk document file seeded for ``case`` (the sharded
+        ``<docs_root>/<doc_type>/<lang>/<shard>/`` file, feat-245's uniform layout)."""
+        matches = list((self.docs_root / case.doc_type).rglob("*.md"))
         self.assertEqual(len(matches), 1)
         result = matches[0]
         return result
 
     def _target(self, case: _Case, doc_id: str) -> Path:
-        """The deletion target: the ``*.md`` file for the flat domains, the folder for ``feat``."""
+        """The deletion target: the sharded ``*.md`` file for the UUID domains, the folder for ``feat``."""
         if case.doc_type == FEAT:
             result = feat_base_dir() / doc_id
         else:
-            result = self._flat_path(case)
+            result = self._doc_path(case)
         return result
 
 
@@ -737,7 +738,7 @@ class TestDeleteIoFailure(TempDeleteDirTestCase):
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
                 doc_id = created.id
-                path = self._flat_path(case)
+                path = self._doc_path(case)
                 failure = OSError("simulated I/O failure")
 
                 with mock.patch.object(Path, "unlink", side_effect=failure):

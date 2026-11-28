@@ -61,14 +61,18 @@ _DE_OUTCOME_NEW = "Wir haben die Datenbank gew\u00e4hlt."
 
 
 def _seed(docs_root: Path) -> tuple[str, Path, Path]:
-    """Create the EN document and its DE variant, both through ``create_dec``; return (id, en_path, de_path)."""
+    """Create the EN document and its DE variant, both through ``create_dec`` (both sharded, feat-245);
+    return (id, en_path, de_path)."""
     created = create_dec(_EN_BODY)
     assert isinstance(created, DecFrontmatter)
     assert created.id is not None
     variant = create_dec(_DE_BODY, language="de", id=created.id)
     assert isinstance(variant, DecFrontmatter)
-    en_path = next((docs_root / "dec").glob("*.md"))
-    de_path = docs_root / "dec" / "de" / en_path.name
+    # Scope the selection to the EN language dir: an rglob over the DOMAIN dir would span en/ + de/
+    # (both hold the same basename), and pathlib's traversal order is Python-version-dependent
+    # (3.11 yields the variant first) -- next() must never pick the variant as the EN path.
+    en_path = next((docs_root / "dec" / "en").rglob("*.md"))
+    de_path = docs_root / "dec" / "de" / en_path.parent.name / en_path.name
     return created.id, en_path, de_path
 
 
@@ -99,11 +103,12 @@ class TestCreateDecVariant(_TempDocsTestCase):
     """create_dec(language=..., id=...) (ACC-006 create, ACC-007 write half, REQ-003, DEC 38efdb66 item 2)."""
 
     def test_variant_is_written_under_the_en_basename_in_the_language_subfolder(self):
-        """The DE variant must live at docs/dec/de/ under the EN source's exact basename (DEC 38efdb66 item 2)."""
+        """The DE variant must live at docs/dec/de/{shard}/ under the EN source's exact shard directory and
+        basename (DEC 38efdb66 item 2, refined by feat-245's uniform sharded layout)."""
         self.assertTrue(self.de_path.exists())
-        self.assertEqual(self.de_path.parent, dec_base_dir("de"))
+        self.assertEqual(self.de_path.parent, dec_base_dir("de") / self.doc_id[:2])
         self.assertEqual(self.de_path.name, self.en_path.name)
-        self.assertEqual([p.name for p in (self.docs_root / "dec" / "de").glob("*.md")], [self.en_path.name])
+        self.assertEqual([p.name for p in (self.docs_root / "dec" / "de").rglob("*.md")], [self.en_path.name])
 
     def test_variant_carries_the_shared_id_and_introduces_no_duplicate(self):
         """The DE frontmatter id must equal the EN id (REQ-003); the EN dir still holds one document,
@@ -113,7 +118,7 @@ class TestCreateDecVariant(_TempDocsTestCase):
         assert isinstance(de_doc, DecDocument) and isinstance(en_doc, DecDocument)
         self.assertEqual(de_doc.frontmatter.id, self.doc_id)
         self.assertEqual(en_doc.frontmatter.id, self.doc_id)
-        self.assertEqual(len(list((self.docs_root / "dec").glob("*.md"))), 1)
+        self.assertEqual(len(list(dec_base_dir().rglob("*.md"))), 1)
         en_rows = list_dec()
         de_rows = list_dec(language="de")
         self.assertEqual((en_rows.total, de_rows.total), (1, 1))
@@ -136,11 +141,11 @@ class TestCreateDecVariant(_TempDocsTestCase):
 
     def test_invalid_variant_content_is_a_non_raising_validate_result(self):
         """A body whose headings neither translate nor match canonical keys is a non-raising ValidateResult, nothing written."""
-        before = sorted(p.name for p in (self.docs_root / "dec" / "de").glob("*.md"))
+        before = sorted(p.name for p in (self.docs_root / "dec" / "de").rglob("*.md"))
         other = create_dec("# T\n\nJust a paragraph.\n", language="de", id=self.doc_id)
         self.assertIsInstance(other, ValidateResult)
         self.assertFalse(other.valid)
-        self.assertEqual(sorted(p.name for p in (self.docs_root / "dec" / "de").glob("*.md")), before)
+        self.assertEqual(sorted(p.name for p in (self.docs_root / "dec" / "de").rglob("*.md")), before)
 
     def test_existing_variant_is_never_overwritten(self):
         """A second create of the same id+language must raise FileExistsError and leave the file byte-identical."""
@@ -154,11 +159,11 @@ class TestCreateDecVariant(_TempDocsTestCase):
         with self.assertRaises(DecNotFoundError) as ctx:
             create_dec(_DE_BODY, language="de", id=_MISSING_UUID)
         self.assertIn("requires its 'en' source", str(ctx.exception))
-        self.assertEqual(len(list((self.docs_root / "dec" / "de").glob("*.md"))), 1)
+        self.assertEqual(len(list((self.docs_root / "dec" / "de").rglob("*.md"))), 1)
 
     def test_variant_requires_the_en_source_even_if_a_variant_exists(self):
-        """Only the flat EN directory counts as the source: once the EN file is gone, the existing DE
-        variant cannot stand in for it (the source lookup runs before the existing-variant guard)."""
+        """Only the EN (sharded ``en/``) directory counts as the source: once the EN file is gone, the existing
+        DE variant cannot stand in for it (the source lookup runs before the existing-variant guard)."""
         delete(self.doc_id, "dec")  # remove the EN file; the DE variant stays
         with self.assertRaises(DecNotFoundError):
             create_dec(_DE_BODY, language="de", id=self.doc_id)
@@ -179,7 +184,7 @@ class TestCreateDecVariant(_TempDocsTestCase):
                 self.assertIn("non-default language", str(ctx.exception))
         with self.assertRaises(ValueError):
             create_dec(_EN_BODY, id=self.doc_id)
-        self.assertEqual(len(list((self.docs_root / "dec").glob("*.md"))), 1)
+        self.assertEqual(len(list(dec_base_dir().rglob("*.md"))), 1)
 
     def test_malformed_variant_id_is_rejected_before_any_filesystem_access(self):
         """A path-injection-shaped id is a ValueError before any FS access."""
@@ -206,11 +211,12 @@ class TestCreateDecVariant(_TempDocsTestCase):
         self.assertFalse((self.docs_root / "dec" / "fr").exists())
 
     def test_default_create_is_unchanged(self):
-        """create_dec(content) without language/id assigns a fresh id and writes the flat file as before."""
+        """create_dec(content) without language/id assigns a fresh id and writes the sharded EN file
+        (feat-245: ``docs/dec/en/{shard}/``)."""
         created = create_dec(_EN_BODY)
         assert isinstance(created, DecFrontmatter)
         self.assertNotEqual(created.id, self.doc_id)
-        self.assertEqual(len(list((self.docs_root / "dec").glob("*.md"))), 2)
+        self.assertEqual(len(list(dec_base_dir().rglob("*.md"))), 2)
 
     def test_create_variant_uses_a_fixed_timestamp_for_created_and_updated(self):
         """created/updated of a variant come from the shared now_timestamp (same ms) like any create."""
@@ -384,7 +390,7 @@ class TestWriteToolsActOnTheDeVariantOnly(_TempDocsTestCase):
         self.assertIsInstance(get_dec(self.doc_id, language="de"), DecDocument)
 
     def test_omitted_and_explicit_en_language_target_the_en_file(self):
-        """language omitted and language='en' are interchangeable and act on the flat EN file only."""
+        """language omitted and language='en' are interchangeable and act on the EN file only."""
         de_bytes = self.de_path.read_bytes()
         set_classification(self.doc_id, "dec", "oeffentlich")
         set_classification(self.doc_id, "dec", "public", language="en")
@@ -538,11 +544,11 @@ class TestSharedIdEndToEnd(_TempDocsTestCase):
         de_ids = [row.id for row in list_dec(language="de").results]
         self.assertEqual(en_ids, [self.doc_id])
         self.assertEqual(de_ids, [self.doc_id])
-        self.assertEqual(len(list((self.docs_root / "dec").glob("*.md"))), 1)
-        self.assertEqual(len(list((self.docs_root / "dec" / "de").glob("*.md"))), 1)
+        self.assertEqual(len(list(dec_base_dir().rglob("*.md"))), 1)
+        self.assertEqual(len(list((self.docs_root / "dec" / "de").rglob("*.md"))), 1)
         self.assertEqual(
-            sorted(p.name for p in (self.docs_root / "dec").glob("*.md")),
-            sorted(p.name for p in (self.docs_root / "dec" / "de").glob("*.md")),
+            sorted(p.name for p in dec_base_dir().rglob("*.md")),
+            sorted(p.name for p in (self.docs_root / "dec" / "de").rglob("*.md")),
         )
 
     def test_the_variant_frontmatter_id_survives_every_write_tool(self):

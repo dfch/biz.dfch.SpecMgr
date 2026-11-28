@@ -138,9 +138,10 @@ def default_failed_summary(
     error:
         The exception caught while parsing ``path``.
     ref:
-        The entry's ``ref`` value. Defaults to ``path.stem`` (every flat-file
-        domain's own successful-entry derivation); pass e.g.
-        ``path.parent.name`` for a folder-per-document domain like ``feat``.
+        The entry's ``ref`` value. Defaults to ``path.stem`` (every
+        one-`.md`-per-document domain's own successful-entry derivation);
+        pass e.g. ``path.parent.name`` for a folder-per-document domain
+        like ``feat``.
 
     Returns
     -------

@@ -194,7 +194,8 @@ Parameters
 language:
     The effective language of the parse: the tool's explicit
     ``language`` parameter, or the language a path-based parse derived
-    from the document's position (``None`` = flat/default).
+    from the document's position (``None`` = the omitted language,
+    which resolves to the ``en/`` sharded directory).
 
 Returns
 -------

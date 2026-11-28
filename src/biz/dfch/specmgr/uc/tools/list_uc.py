@@ -51,9 +51,9 @@ result).
 **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/6/7).**
 A 1:1 port of ``list_dec``'s ``language`` handling. The optional
 ``language`` parameter (default ``"en"``) selects which directory this tool
-scans: omitted/``"en"`` = the flat ``docs/uc/`` directory -- today's exact
-behavior; any other shape-validated code (e.g. ``"de"``) = only the
-``docs/uc/{language}/`` subdirectory, listing exactly the existing
+scans: omitted/``"en"`` = the ``docs/uc/en/`` sharded directory (the default language,
+``en``); any other shape-validated code (e.g. ``"de"``) = only the
+``docs/uc/{language}/`` sharded directory, listing exactly the existing
 variants of that language (ACC-007). There is deliberately NO "all
 languages" mode (the ``DocSummary`` row shape carries no language column
 and would repeat ids). The language is shape-guarded before any filesystem
@@ -68,7 +68,7 @@ from pathlib import Path
 
 from ...general.models import PagedResult
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import iter_doc_paths_all_languages
+from ...general.tools._doc_paths import doc_domain_base_dir, iter_doc_paths_all_languages
 from ...general.tools._listing import build_summaries, default_failed_summary, filter_summaries_by_glob
 from ...general.tools._paging import normalize_paging, paginate
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language
@@ -76,7 +76,7 @@ from ...server import mcp
 from ..models.v2 import UcDocument, UcSummary
 from ._cache import reconcile_uc_cache
 from ._io import read_uc
-from ._paths import iter_uc_paths, uc_base_dir
+from ._paths import UC_TYPE_NAME, iter_uc_paths
 
 
 def _to_summary(doc: UcDocument, path: Path) -> UcSummary:
@@ -109,8 +109,8 @@ def _to_failed_summary(path: Path, error: Exception) -> UcSummary:
         "max_results/offset control paging (default page size 25, capped at 100); "
         "out-of-range values are clamped, not errored. "
         "The optional `language` parameter (default 'en') selects the directory scanned: omitted/'en' "
-        "= the flat docs/uc/ directory (the default behavior, unchanged); any other ISO 639-1-shaped "
-        "lowercase two-letter code (e.g. 'de') = only that language's docs/uc/{language}/ subdirectory, "
+        "= the docs/uc/en/ sharded directory (the default language, en); any other ISO 639-1-shaped "
+        "lowercase two-letter code (e.g. 'de') = only that language's docs/uc/{language}/ sharded directory, "
         "listing exactly the existing variants of that language (there is deliberately no "
         "'all languages' mode). The language is shape-validated before any file access (an "
         "invalid-shaped value is a ValueError, like an invalid id), and a shape-valid language without "
@@ -167,7 +167,7 @@ def list_uc(
     language:
         The language whose directory to list (feat-197-i18n Phase 125, DEC
         38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
-        scans the flat ``docs/uc/`` directory -- today's exact behavior;
+        scans the ``docs/uc/en/`` sharded directory (the default language, ``en``);
         any other ISO 639-1-shaped lowercase two-letter code (e.g.
         ``"de"``) scans only ``docs/uc/{language}/``, listing exactly the
         existing variants of that language (ACC-007). There is deliberately
@@ -200,11 +200,10 @@ def list_uc(
     paths = list(iter_uc_paths(language))
     # feat-107-doc-cache REQ-005 -- and feat-197-i18n (DEC 38efdb66 item 9): with {language}
     # subfolders, a scan of one language's directory no longer covers the whole domain, so
-    # reconcile against the domain-wide live listing (flat EN files plus every {language}
-    # subdirectory's files), never just the scanned directory -- or listing one language would
-    # evict the other languages' cached entries. With no subdirectory present the union is the
-    # scanned listing itself (the pre-i18n behavior, byte-identical).
-    reconcile_uc_cache(list(iter_doc_paths_all_languages(uc_base_dir())))
+    # reconcile against the domain-wide live listing (the union of the sharded listings of
+    # en/ plus every {language} subdirectory), never just the scanned directory -- or listing
+    # one language would evict the other languages' cached entries.
+    reconcile_uc_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(UC_TYPE_NAME))))
     summaries, error_count = build_summaries(paths, read_uc, _to_summary, _to_failed_summary)
 
     # feat-200-list, Task 110.100 (REQ-002/REQ-003): the id-glob filter runs between the row build

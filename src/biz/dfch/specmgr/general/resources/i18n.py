@@ -71,10 +71,10 @@ from ..tools._path_safety import DEFAULT_LANGUAGE, assert_language
     name="i18n",
     title="Multi-Language Artifact Variants (i18n) Guidance",
     description=(
-        "How language variants of the same artifact are stored and translated: the "
-        "docs/{type}/{language}/ layout and the EN-slug basename rule, the language vocabulary and "
-        "per-language heading tables, the tool surface honoring `language`, the exact "
-        "never-translate list per domain (closed-vocabulary/schema-constant tokens, the prb "
+        "How language variants of the same artifact are stored and translated: the uniform sharded "
+        "docs/{type}/{language}/<id[:2]>/ layout (English included) and the EN-slug basename rule, the "
+        "language vocabulary and per-language heading tables, the tool surface honoring `language`, "
+        "the exact never-translate list per domain (closed-vocabulary/schema-constant tokens, the prb "
         "problem_statement exemption), how to translate headings, the create-versus-update "
         "decision, and the guard/error semantics (feat is always English) -- raw "
         "markdown domain-knowledge guidance."

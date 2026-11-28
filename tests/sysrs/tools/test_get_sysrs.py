@@ -111,7 +111,7 @@ class TestGetSysrs(unittest.TestCase):  # pylint: disable=too-many-public-method
 
     def _doc_path(self) -> Path:
         """The single on-disk document file seeded for this test."""
-        matches = list((self.docs_root / "sysrs").glob("*.md"))
+        matches = list((self.docs_root / "sysrs").rglob("*.md"))
         self.assertEqual(len(matches), 1)
         result = matches[0]
         return result

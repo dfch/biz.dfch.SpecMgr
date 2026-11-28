@@ -110,17 +110,22 @@ class TestCreateSysrs(TempSysrsDirTestCase):
         self.assertEqual(fetched.body.text, "System Requirements Specification: Sample Document")
 
     def test_writes_expected_filename(self) -> None:
-        """create_sysrs must write f'sysrs-{id}-{slug}.md' under the System Requirements Specification base dir."""
+        """create_sysrs must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/sysrs/en/,
+        leaving nothing directly under docs/sysrs/ or docs/sysrs/en/ (feat-245, ACC-001)."""
         result = create_sysrs(_MINIMAL_BODY)
 
-        expected_path = sysrs_base_dir() / f"sysrs-{result.id}-system-requirements-specification-sample-document.md"
+        filename = f"{result.id}-system-requirements-specification-sample-document.md"
+        expected_path = sysrs_base_dir("en") / result.id[:2] / filename
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "sysrs").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "sysrs" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_sysrs(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_sysrs(_MINIMAL_BODY)
 
-        expected_path = sysrs_base_dir() / f"sysrs-{result.id}-system-requirements-specification-sample-document.md"
+        filename = f"{result.id}-system-requirements-specification-sample-document.md"
+        expected_path = sysrs_base_dir("en") / result.id[:2] / filename
         on_disk = parse_sysrs(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

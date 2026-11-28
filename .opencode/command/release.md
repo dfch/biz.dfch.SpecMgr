@@ -2,7 +2,7 @@
 description: Run the release SOP — version bump, changelog, dev→main PR, tag, and publish — by driving scripts/release.sh stages.
 ---
 
-Execute the release SOP (`docs/sop/sop-98537416-0e6e-4a02-925f-974a17bfa10a-perform-a-release-of-biz-dfch-specmgr.md`) by driving the `scripts/release.sh` stages from the repo root. The script is the single source of truth for release mechanics; the SOP is the single source of truth for the procedure. My input: $ARGUMENTS
+Execute the release SOP (`docs/sop/en/98/98537416-0e6e-4a02-925f-974a17bfa10a-perform-a-release-of-biz-dfch-specmgr.md`) by driving the `scripts/release.sh` stages from the repo root. The script is the single source of truth for release mechanics; the SOP is the single source of truth for the procedure. My input: $ARGUMENTS
 
 Follow these steps in order:
 

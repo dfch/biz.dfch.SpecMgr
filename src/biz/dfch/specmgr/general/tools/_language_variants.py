@@ -20,9 +20,10 @@
 The shared, private, ``mcp``-free helper behind the ``list_languages`` and ``check_translation_drift`` tools: given a
 document ``type``/``id`` it finds the on-disk document of one *language* (or of every language) without ever
 touching the EN-only scans of the other generic tools (REQ-013) -- it resolves each language's own directory through
-the domain's own ``<d>_base_dir(language)`` (DEC 38efdb66 item 1: EN = the flat ``docs/{type}/``, any other validated
-code = ``docs/{type}/{language}/``), reads through the domain's own cache-backed ``load_by_id``/``read_<d>``
-(a variant is parsed through its language's heading table, derived from its path position), and discovers the
+the domain's own ``<d>_base_dir(language)`` (DEC 38efdb66 item 1, refined by feat-245-shard-docs: every language, EN
+included = the sharded ``docs/{type}/{language}/`` directory), reads through the domain's own cache-backed
+``load_by_id``/``read_<d>`` (a variant is parsed through its language's heading table, derived from its path
+position), and discovers the
 language directories of a domain through the shared :func:`~biz.dfch.specmgr.general.tools._doc_paths.
 iter_language_dirs`. Nothing here writes, creates, or invalidates anything.
 
@@ -49,7 +50,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from ..models.language_list_result import LanguageEntry, LanguageListResult
-from ._doc_paths import doc_base_dir, find_parse_failure, iter_language_dirs
+from ._doc_paths import doc_domain_base_dir, find_parse_failure, iter_language_dirs
 from ._language_guard import LANGUAGE_AWARE_DOMAINS
 from ._path_safety import DEFAULT_LANGUAGE, assert_within
 
@@ -72,7 +73,7 @@ class Location:
     Attributes
     ----------
     language:
-        The language code of the variant (``"en"`` for the flat default-language document).
+        The language code of the variant (``"en"`` for the default-language document in the ``en/`` sharded directory).
     path:
         The resolved on-disk path.
     parseable:
@@ -140,7 +141,7 @@ def locate(type_: str, id_: str, language: str) -> Location:
     id_:
         The document id (shared by every language variant).
     language:
-        The language to locate; ``"en"`` = the flat directory.
+        The language to locate; ``"en"`` = the ``en/`` sharded directory.
 
     Returns
     -------
@@ -179,12 +180,15 @@ def locate(type_: str, id_: str, language: str) -> Location:
 def list_language_variants(type_: str, id_: str) -> LanguageListResult:
     """List every language the document ``id_`` of ``type_`` exists in (REQ-012, ACC-008).
 
-    Probes the flat EN directory and then every shape-valid ``{language}`` subdirectory of the domain's base
-    directory (:func:`~biz.dfch.specmgr.general.tools._doc_paths.iter_language_dirs`), each through :func:`locate`.
-    ``"en"`` leads the result when the EN source exists and is never invented when it does not; the other languages
-    follow sorted by code. A variant that exists but fails to parse is listed with ``parseable=False``. Only ``.md``
-    documents participate (the domains' own scans are ``*.md`` globs), so a non-``.md`` sibling asset or a
-    shape-invalid directory name is never reported.
+    Probes the EN directory explicitly and then every OTHER shape-valid ``{language}`` subdirectory of the domain's
+    base directory (:func:`~biz.dfch.specmgr.general.tools._doc_paths.iter_language_dirs` -- in feat-245's uniform
+    sharded layout the loop also yields the ``en/`` directory itself, which is skipped because the explicit probe
+    above already covered it, the same ``DEFAULT_LANGUAGE`` skip :func:`~biz.dfch.specmgr.general.tools._doc_paths.
+    iter_doc_paths_all_languages` carries), each through :func:`locate`. ``"en"`` leads the result when the EN
+    source exists and is never invented when it does not; the other languages follow sorted by code. A variant
+    that exists but fails to parse is listed with ``parseable=False``. Only ``.md`` documents participate (the
+    domains' own scans are ``*.md`` globs), so a non-``.md`` sibling asset or a shape-invalid directory name is
+    never reported.
 
     Parameters
     ----------
@@ -214,7 +218,9 @@ def list_language_variants(type_: str, id_: str) -> LanguageListResult:
         locations.append(locate(type_, id_, DEFAULT_LANGUAGE))
     except LookupError as ex:
         missing_en = ex
-    for language, _directory in iter_language_dirs(doc_base_dir(type_)):
+    for language, _directory in iter_language_dirs(doc_domain_base_dir(type_)):
+        if language == DEFAULT_LANGUAGE:
+            continue  # the explicit probe above already covered EN (feat-245: `en/` is a language dir now)
         try:
             locations.append(locate(type_, id_, language))
         except LookupError:

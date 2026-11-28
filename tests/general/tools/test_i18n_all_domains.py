@@ -18,16 +18,17 @@
 """Parametrized i18n tests over all thirteen language-aware domains (feat-197-i18n Phase 125).
 
 Phase 125 rolled the ``dec`` pilot's read/write ``language`` plumbing out to the remaining ten i18n-eligible
-domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``); ``txt`` (feat-229-txt) joined
-them as the twelfth. The ``dec`` pilot keeps its
+domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``); ``txt`` (feat-229-txt) and ``set``
+(feat-173) joined them, for thirteen in all. The ``dec`` pilot keeps its
 own deep test modules (``tests/dec/tools/test_i18n_language.py``/``test_i18n_write.py``); this module drives *every*
 language-aware domain, ``dec`` included, through the same behaviors, so a regression in any one domain's port is caught
 here at a pragmatic depth:
 
-- **ACC-001 x12** -- ``create_<d>(language=...)``/``get_<d>(language=...)`` resolve a non-EN variant to
-  ``docs/{type}/{language}/<EN basename>`` while EN stays at ``docs/{type}/``;
+- **ACC-001 x13** -- ``create_<d>(language=...)``/``get_<d>(language=...)`` resolve a non-EN variant to
+  ``docs/{type}/{language}/<id[:2]>/<EN basename>`` while EN lives at ``docs/{type}/en/<id[:2]>/`` (the uniform
+  sharded layout, feat-245);
 - **ACC-003/REQ-003** -- the variant carries the shared id;
-- **ACC-004/ACC-011 x12** -- a German-translated version of each domain's packaged *example* and *template* documents
+- **ACC-004/ACC-011 x13** -- a German-translated version of each domain's packaged *example* and *template* documents
   (derived from ``de.json`` by reverse-mapping the fixed-text headings) parses via ``parse_<d>(..., language="de")`` to
   a document structurally equal to the EN parse -- the evidence that ``de.json`` covers every domain's heading set;
 - **ACC-012 unit pin** -- every data-carrying heading (the ``de.json``-less tokens) and every frontmatter value stays
@@ -188,14 +189,20 @@ class _TempDocsMixin(unittest.TestCase):
             spec.reset_cache()
 
     def seed(self, spec: DomainSpec) -> tuple[str, Path, Path]:
-        """Create the EN document and its DE variant through the tools; return (id, EN file, DE file)."""
+        """Create the EN document and its DE variant through the tools; return (id, EN file, DE file).
+
+        Both files are sharded (feat-245's uniform layout): the EN document at
+        ``docs/{type}/en/{shard}/<uuid>-<slug>.md`` and the DE variant under the
+        same shard directory and the EN source's exact basename at
+        ``docs/{type}/de/{shard}/<uuid>-<slug>.md``.
+        """
         created = spec.fn("create")(spec.en_body())
         assert not isinstance(created, ValidateResult), created
         assert created.id is not None
         variant = spec.fn("create")(spec.de_body(), language="de", id=created.id)
         assert not isinstance(variant, ValidateResult), variant
-        en_file = next(spec.base_dir().glob("*.md"))
-        de_file = spec.base_dir("de") / en_file.name
+        en_file = next(spec.base_dir().rglob("*.md"))
+        de_file = spec.base_dir("de") / en_file.relative_to(spec.base_dir())
         return created.id, en_file, de_file
 
 
@@ -209,7 +216,8 @@ class TestEveryAwareDomainIsCovered(unittest.TestCase):
 
 
 class TestAcc001PathResolutionAllDomains(_TempDocsMixin):
-    """ACC-001/ACC-003: a variant lives at docs/{type}/{language}/<EN basename> with the shared id; EN is unchanged."""
+    """ACC-001/ACC-003: a variant lives at docs/{type}/{language}/{shard}/<EN basename> with the shared id; EN is
+    unchanged."""
 
     def test_create_and_get_resolve_the_variant_under_the_language_subfolder(self):
         for spec in SPECS:
@@ -217,7 +225,7 @@ class TestAcc001PathResolutionAllDomains(_TempDocsMixin):
                 spec.reset_cache()
                 created = spec.fn("create")(spec.en_body())
                 assert not isinstance(created, ValidateResult), created
-                en_files = list((self.docs_root / spec.d).glob("*.md"))
+                en_files = list((self.docs_root / spec.d).rglob("*.md"))
                 self.assertEqual(len(en_files), 1)
                 en_file = en_files[0]
                 en_bytes_before = en_file.read_bytes()
@@ -225,7 +233,7 @@ class TestAcc001PathResolutionAllDomains(_TempDocsMixin):
                 variant = spec.fn("create")(spec.de_body(), language="de", id=created.id)
                 assert not isinstance(variant, ValidateResult), variant
 
-                de_file = self.docs_root / spec.d / "de" / en_file.name
+                de_file = self.docs_root / spec.d / "de" / en_file.parent.name / en_file.name
                 self.assertTrue(de_file.is_file(), de_file)
                 self.assertEqual(en_file.read_bytes(), en_bytes_before)
                 # ACC-003: the shared id
@@ -260,6 +268,66 @@ class TestAcc001PathResolutionAllDomains(_TempDocsMixin):
                 doc_id, _en_file, _de_file = self.seed(spec)
                 self.assertEqual(spec.fn("get")(doc_id), spec.fn("get")(doc_id, language="en"))
                 self.assertEqual(spec.fn("list")(), spec.fn("list")(language="en"))
+
+
+class TestVariantExistsGuardIsByIdAllDomains(_TempDocsMixin):
+    """feat-245 Phase 210 (CR2): a variant in ANOTHER shard still exists -- `create_<d>` never writes a second one."""
+
+    def _move_to_another_shard(self, de_file: Path) -> Path:
+        other = "00" if de_file.parent.name != "00" else "01"
+        result = de_file.parent.parent / other / de_file.name
+        result.parent.mkdir(parents=True, exist_ok=True)
+        de_file.rename(result)
+        return result
+
+    def test_a_variant_moved_to_another_shard_blocks_a_second_create(self):
+        for spec in SPECS:
+            with self.subTest(domain=spec.d):
+                spec.reset_cache()
+                doc_id, _en_file, de_file = self.seed(spec)
+                moved = self._move_to_another_shard(de_file)
+                original = moved.read_bytes()
+                self.assertEqual(spec.fn("get")(doc_id, language="de").frontmatter.id, doc_id)  # still resolved
+
+                with self.assertRaises(FileExistsError) as ctx:
+                    spec.fn("create")(spec.de_body(), language="de", id=doc_id)
+
+                self.assertIn(f"already exists at {moved}", str(ctx.exception))
+                self.assertIn(
+                    "use the generic `update`/`edit` tools with language='de' to change it", str(ctx.exception)
+                )
+                self.assertEqual(list(spec.base_dir("de").rglob("*.md")), [moved])
+                self.assertEqual(spec.fn("list")(language="de").total, 1)
+                self.assertEqual(moved.read_bytes(), original)
+                self.assertEqual(Path(spec.fn("list")(language="de").results[0].path), moved.resolve())
+                self.assertEqual(spec.fn("get")(doc_id, language="de").frontmatter.id, doc_id)
+
+    def test_an_unparseable_variant_in_another_shard_blocks_a_second_create(self):
+        for spec in SPECS:
+            with self.subTest(domain=spec.d):
+                spec.reset_cache()
+                doc_id, _en_file, de_file = self.seed(spec)
+                moved = self._move_to_another_shard(de_file)
+                moved.write_text("not a document\n", encoding="utf-8")
+
+                with self.assertRaises(FileExistsError) as ctx:
+                    spec.fn("create")(spec.de_body(), language="de", id=doc_id)
+
+                self.assertIn(f"already exists at {moved}", str(ctx.exception))
+                self.assertEqual(list(spec.base_dir("de").rglob("*.md")), [moved])
+
+    def test_the_en_create_path_and_a_first_variant_create_are_unchanged(self):
+        for spec in SPECS:
+            with self.subTest(domain=spec.d):
+                spec.reset_cache()
+                doc_id, en_file, de_file = self.seed(spec)
+                self.assertTrue(de_file.is_file(), de_file)
+                self.assertEqual(de_file.parent.name, doc_id[:2])
+                self.assertEqual(en_file.parent.name, doc_id[:2])
+                second = spec.fn("create")(spec.en_body())  # EN create: a fresh id, never guarded by another document
+                assert not isinstance(second, ValidateResult), second
+                self.assertNotEqual(second.id, doc_id)
+                self.assertEqual(spec.fn("list")().total, 2)
 
 
 class TestAcc004Acc011HeadingTableCoversEveryDomain(unittest.TestCase):
@@ -391,8 +459,9 @@ class TestAcc007ListAllDomains(_TempDocsMixin):
                 self.assertEqual(result.total, 0)
                 self.assertEqual(result.results, [])
 
-    def test_the_flat_scan_never_descends_into_language_subfolders(self):
-        """ACC-014 unit pin per domain: iter_<d>_paths() is non-recursive."""
+    def test_the_en_scan_never_descends_into_language_subfolders(self):
+        """ACC-014 unit pin per domain: iter_<d>_paths() is the sharded listing of its own language directory only
+        (feat-245: the EN scan is re-rooted at ``docs/{type}/en/`` and never sees a variant file)."""
         for spec in SPECS:
             with self.subTest(domain=spec.d):
                 spec.reset_cache()
@@ -646,14 +715,16 @@ class TestCreateVariantContractAllDomains(_TempDocsMixin):
                 self.assertFalse(result.valid)
                 self.assertFalse((self.docs_root / spec.d / "de").exists())
 
-    def test_en_create_is_unchanged_fresh_id_flat_file(self):
+    def test_en_create_is_unchanged_fresh_id_sharded_file(self):
         for spec in SPECS:
             with self.subTest(domain=spec.d):
                 spec.reset_cache()
                 created = spec.fn("create")(spec.en_body())
-                files = list((self.docs_root / spec.d).glob("*.md"))
+                files = list((self.docs_root / spec.d).rglob("*.md"))
                 self.assertEqual(len(files), 1)
-                self.assertTrue(files[0].name.startswith(f"{spec.d}-{created.id}-"))
+                # REQ-002 (feat-245): the file name carries no type prefix, and the EN document is sharded.
+                self.assertTrue(files[0].name.startswith(f"{created.id}-"))
+                self.assertEqual(files[0].parent.name, created.id[:2])
                 self.assertEqual(created.status, spec.status)
                 self.assertFalse((self.docs_root / spec.d / "de").exists())
 

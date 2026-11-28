@@ -314,7 +314,7 @@ jobs:
         BASE_REF: ${{ github.base_ref }}
         PR_NUMBER: ${{ github.event.number }}
       run: |
-        artifact_pattern='^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$'
+        artifact_pattern='^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/.+\.md)$'
         # Both fetches are plain: in a shallow PR checkout a plain fetch of
         # a ref not in the shallow set brings that ref's full history (the
         # clone stays shallow), in a complete checkout a plain fetch is just

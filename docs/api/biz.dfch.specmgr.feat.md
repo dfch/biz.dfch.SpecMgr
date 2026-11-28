@@ -9,10 +9,10 @@ artifacts in ``.specmgr`` with feature-driven work units") and
 used by hand 17+ times before this package existed. ``feat`` is deliberately
 special among domains: ``id`` is ``feat-NNN-slug`` (the containing folder's
 own name), not a server-generated UUID, and documents live one-per-folder
-as ``<base>/<id>/README.md`` (a fixed filename), not flat files directly
-under the base directory -- see ``feat/tools/_paths.py`` (added in Phase 2)
-for the bespoke addressing this requires, in contrast to every other
-domain's shared ``general/tools/_doc_paths.py``.
+as ``<base>/<id>/README.md`` (a fixed filename), not one-`.md`-per-document
+(the other domains' sharded language-dir files) -- see ``feat/tools/_paths.py``
+(added in Phase 2) for the bespoke addressing this requires, in contrast to
+every other domain's shared ``general/tools/_doc_paths.py``.
 
 **Current status: Phase 4 (prompts) complete.**
 ``models/v1/`` (Phase 1), ``tools/`` (Phase 2), ``data/`` and ``resources``

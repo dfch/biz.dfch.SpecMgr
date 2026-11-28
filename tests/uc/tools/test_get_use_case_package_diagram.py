@@ -67,7 +67,7 @@ class TestGetUseCasePackageDiagram(unittest.TestCase):
 
     def _seed_package_fixtures(self) -> None:
         """Seed the four committed package fixture documents under the isolated docs root,
-        each named ``<id>.md`` (the flat-file form ``find_uc_path``'s id scan resolves)."""
+        each at ``en/<id[:2]>/<id>.md`` (the sharded form ``find_uc_path``'s id scan resolves)."""
         uc_dir = self.docs_root / "uc"
         uc_dir.mkdir()
         for name, doc_id in (
@@ -76,7 +76,9 @@ class TestGetUseCasePackageDiagram(unittest.TestCase):
             ("refund-order.md", _REFUND),
             ("broken.md", _BROKEN),
         ):
-            shutil.copy(_FIXTURES / name, uc_dir / f"{doc_id}.md")
+            target = uc_dir / "en" / doc_id[:2] / f"{doc_id}.md"
+            target.parent.mkdir(parents=True)
+            shutil.copy(_FIXTURES / name, target)
 
     def test_ids_none_matches_the_phase_110_golden(self):
         """ids=None = every UC in list_uc order (filename-sorted for this fixture set = the
@@ -152,7 +154,7 @@ class TestGetUseCasePackageDiagram(unittest.TestCase):
     def test_ids_none_with_no_documents_renders_the_empty_package(self):
         """An empty docs directory (list_uc rows: none) is the same deterministic empty package."""
         uc_dir = self.docs_root / "uc"
-        for path in uc_dir.glob("*.md"):
+        for path in uc_dir.rglob("*.md"):
             path.unlink()
 
         result = get_use_case_package_diagram()

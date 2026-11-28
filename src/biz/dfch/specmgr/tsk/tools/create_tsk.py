@@ -45,14 +45,14 @@ state, never an independent fact.
 **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/2/5/6).**
 A 1:1 port of ``create_dec``'s ``language``/``id`` handling. ``create_tsk``
 gains two optional parameters, ``language`` (default ``"en"``) and ``id``.
-With ``language`` omitted/``"en"`` the tool is byte-identical to before: it
-assigns a fresh id and writes the flat ``docs/tsk/tsk-<id>-<slug>.md`` file
+With ``language`` omitted/``"en"`` (the default language) the tool
+assigns a fresh id and writes the sharded ``docs/tsk/en/<id[:2]>/<uuid>-<slug>.md`` file
 (and ``id`` must not be given). With a non-default ``language`` the tool
 creates a *translation* of an existing task list: ``id`` -- the shared id of the
 EN source document (REQ-003, the id is never language-qualified and is never
 freshly assigned for a variant) -- is then **required**, the EN source must
 already exist on disk (DEC 38efdb66 item 2: the EN slug is the single filename
-authority), and the variant is written to ``docs/tsk/{language}/`` under the
+authority), and the variant is written to ``docs/tsk/{language}/<id[:2]>/`` under the
 EN source's exact basename with the shared id as its frontmatter ``id``
 (fresh ``created``/``updated``, ``status="draft"`` -- this domain's create
 status, as on every create). The body is validated through the variant's
@@ -67,7 +67,7 @@ import uuid
 
 from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import slugify
+from ...general.tools._doc_paths import assert_variant_absent, sharded_doc_path, sharded_variant_path, slugify
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language, validate_id
 from ...general.tools._timestamps import now_timestamp
 from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
@@ -99,13 +99,14 @@ from ._write import write_tsk_file
         "only (no body); use the corresponding `get_tsk` tool to fetch the full document "
         "afterward. "
         "The optional `language` parameter (default 'en', feat-197-i18n) selects the language to create "
-        "the document in: omitted/'en' = a new flat docs/tsk/ document with a fresh id, exactly the default "
-        "behavior (`id` must then be omitted); a non-default ISO 639-1-shaped lowercase two-letter code "
+        "the document in: omitted/'en' = a new docs/tsk/en/<id[:2]>/<uuid>-<slug>.md document with a fresh "
+        "id, the default language (`id` must then be omitted); a non-default ISO 639-1-shaped "
+        "lowercase two-letter code "
         "(e.g. 'de') creates a TRANSLATION of an existing task list instead: "
         "`id` -- the shared id of the "
         "existing EN source document -- is then required (no fresh id is assigned; the variant carries the "
         "same id), the EN source must exist (else `TskNotFoundError`), and the variant is written to "
-        "docs/tsk/{language}/ under the EN source's exact file name with `status` draft; `content` is "
+        "docs/tsk/{language}/<id[:2]>/ under the EN source's exact file name with `status` draft; `content` is "
         "validated through that language's heading-mapping table (translated headings are accepted) and "
         "persisted verbatim. An existing variant of that id and language is never overwritten "
         "(`FileExistsError`). A malformed `language`, one with no packaged heading-mapping table, a missing "
@@ -155,7 +156,7 @@ def create_tsk(  # pylint: disable=too-many-locals
     shared ``id`` of the EN source is a required argument (the variant's
     frontmatter ``id`` is that same id, never a fresh one, REQ-003), the EN
     source must exist, and the variant is written to
-    ``docs/tsk/{language}/`` under the EN source's exact basename
+    ``docs/tsk/{language}/<id[:2]>/`` under the EN source's exact basename
     (DEC 38efdb66 item 2). ``content`` is validated through the variant's
     heading-mapping table, and the existing-variant guard
     (``FileExistsError``) runs under the variant's own per-language lock.
@@ -168,10 +169,10 @@ def create_tsk(  # pylint: disable=too-many-locals
         headings may be translated per that language's table).
     language:
         The language to create the document in: ``"en"`` (the default)
-        creates a new, flat ``docs/tsk/`` document with a freshly assigned
-        id -- today's exact behavior; any other ISO 639-1-shaped lowercase
+        creates a new, sharded ``docs/tsk/en/<id[:2]>/<uuid>-<slug>.md`` document with a freshly assigned
+        id (the default language, ``en``); any other ISO 639-1-shaped lowercase
         two-letter code (e.g. ``"de"``) creates a translation variant of
-        an existing EN document in ``docs/tsk/{language}/``. Shape-guarded
+        an existing EN document in ``docs/tsk/{language}/<id[:2]>/``. Shape-guarded
         (and its heading-mapping table resolved) before any filesystem
         access.
     id:
@@ -252,9 +253,7 @@ def create_tsk(  # pylint: disable=too-many-locals
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    filename = f"tsk-{new_id}-{slugify(body.text)}.md"
-    base_dir = ensure_tsk_base_dir()
-    path = base_dir / filename
+    path = sharded_doc_path(ensure_tsk_base_dir(), new_id, slugify(body.text))
     write_tsk_file(path, new_frontmatter, content)
     read_tsk(path)  # warm the cache with this write's own validated content (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
@@ -263,8 +262,8 @@ def create_tsk(  # pylint: disable=too-many-locals
 def _create_variant(id_: str, language: str, content: str) -> TskFrontmatter:
     """Create the ``language`` variant of the existing EN ``tsk`` document ``id_`` (DEC 38efdb66 item 2).
 
-    Resolves the EN source's path (the flat directory's id-scan), reuses its
-    exact basename inside ``docs/tsk/{language}/``, and writes the
+    Resolves the EN source's path (the ``en/`` directory's shard-narrowed id-scan), reuses its
+    exact basename inside ``docs/tsk/{language}/<id[:2]>/``, and writes the
     already-validated ``content`` byte-for-byte with a frontmatter carrying
     the shared id (REQ-003). Runs under the variant's own per-language lock
     so the existence guard and the write are atomic with respect to every
@@ -289,7 +288,7 @@ def _create_variant(id_: str, language: str, content: str) -> TskFrontmatter:
     TskNotFoundError
         No EN source document with ``id_`` exists.
     FileExistsError
-        The variant file already exists.
+        The variant already exists, in any shard of the language directory (guarded by id).
     """
     assert isinstance(id_, str), type(id_)
     assert id_.strip()
@@ -306,12 +305,9 @@ def _create_variant(id_: str, language: str, content: str) -> TskFrontmatter:
                 f"A language variant requires its {DEFAULT_LANGUAGE!r} source "
                 f"-- create the {DEFAULT_LANGUAGE!r} document first, and pass its id."
             ) from ex
-        path = ensure_tsk_base_dir(language) / source_path.name
-        if path.exists():
-            raise FileExistsError(
-                f"the {language!r} variant of tsk {id_!r} already exists at {path}; "
-                f"use the generic `update`/`edit` tools with language={language!r} to change it"
-            )
+        variant_base_dir = ensure_tsk_base_dir(language)
+        path = sharded_variant_path(variant_base_dir, source_path, id_)
+        assert_variant_absent(variant_base_dir, id_, language, "tsk", path, find_tsk_path, read_tsk)
         now = now_timestamp()
         new_frontmatter = TskFrontmatter(
             id=id_,

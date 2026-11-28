@@ -541,11 +541,12 @@ class TempFsmDocsDirTestCase(unittest.TestCase):
 
     def _path_for(self, spec: _FsmDomainSpec, doc_id: str) -> Path:
         """The on-disk file of the spec's document with ``doc_id`` (``feat``: its folder's
-        ``README.md``; every other domain: the flat ``<docs_root>/<doc_type>/`` file)."""
+        ``README.md``; every other domain: the sharded ``<docs_root>/<doc_type>/<lang>/<shard>/``
+        file, feat-245's uniform layout)."""
         if spec.doc_type == "feat":
             result = self.feat_dir / doc_id / "README.md"
         else:
-            matches = list((self.docs_root / spec.doc_type).glob("*.md"))
+            matches = list((self.docs_root / spec.doc_type).rglob("*.md"))
             result = next(path for path in matches if doc_id in path.name)
         return result
 

@@ -90,7 +90,7 @@ class TestGetDec(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def _doc_path(self) -> Path:
         """The single on-disk document file seeded for this test."""
-        matches = list((self.docs_root / "dec").glob("*.md"))
+        matches = list((self.docs_root / "dec").rglob("*.md"))
         self.assertEqual(len(matches), 1)
         result = matches[0]
         return result

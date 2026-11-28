@@ -132,9 +132,9 @@ def _broken_source_failure(type_: str, id_: str) -> ParseFailureResult | None:
     counterpart -- its ``error`` is byte-identical to ``list_feat``'s own
     failed row for the same file once that file's clean stage has converged,
     time-qualified by DEC 3982712a), every other domain through the shared
-    flat-file ``find_parse_failure`` name-match scan called with the
-    domain's own ``read_<d>`` leg (cache-backed for the 11 flat-file
-    whole-body domains, whose ``list_<d>`` failed row reads with the same
+    ``find_parse_failure`` name-match scan called with the
+    domain's own ``read_<d>`` leg (cache-backed for every whole-body
+    domain except ``feat``, whose ``list_<d>`` failed row reads with the same
     ``read_fn``, so the captured ``str(exc)`` is byte-identical to that
     row's ``error`` -- DEC 9080b37c). The probed path
     passes the same ``assert_within`` guard every ``get_<d>``/``update``

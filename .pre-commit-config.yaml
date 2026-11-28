@@ -361,7 +361,7 @@ repos:
         language: system
         pass_filenames: true
         require_serial: true
-        files: ^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$
+        files: ^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/.+\.md)$
 
       - id: pytest
         name: pytest

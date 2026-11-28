@@ -97,8 +97,8 @@ class TestCycleRegistry(_SeededRegistryTestCase):
     where the cycle is not yet complete (no red edge)."""
 
     SEEDS = (
-        ("cycle/req-c001.md", f"docs/req/{_C001}.md"),
-        ("cycle/req-c002.md", f"docs/req/{_C002}.md"),
+        ("cycle/req-c001.md", f"docs/req/en/{_C001[:2]}/{_C001}.md"),
+        ("cycle/req-c002.md", f"docs/req/en/{_C002[:2]}/{_C002}.md"),
     )
 
     def test_depth1_golden(self):
@@ -139,9 +139,9 @@ class TestChainRegistry(_SeededRegistryTestCase):
     (the diagram title is untruncated, the node label is truncated at the default 40)."""
 
     SEEDS = (
-        ("chain/req-h001.md", f"docs/req/{_H001}.md"),
-        ("chain/gol-g001.md", f"docs/gol/{_G001}.md"),
-        ("chain/rsk-k001.md", f"docs/rsk/{_K001}.md"),
+        ("chain/req-h001.md", f"docs/req/en/{_H001[:2]}/{_H001}.md"),
+        ("chain/gol-g001.md", f"docs/gol/en/{_G001[:2]}/{_G001}.md"),
+        ("chain/rsk-k001.md", f"docs/rsk/en/{_K001[:2]}/{_K001}.md"),
     )
 
     def test_depth1_golden(self):
@@ -172,8 +172,8 @@ class TestReverseRegistry(_SeededRegistryTestCase):
     reverse-scanned dec's own dangling reference never surfaces)."""
 
     SEEDS = (
-        ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
-        ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
+        ("reverse/req-r001.md", f"docs/req/en/{_R001[:2]}/{_R001}.md"),
+        ("reverse/dec-d001.md", f"docs/dec/en/{_D001[:2]}/{_D001}.md"),
         ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
     )
 
@@ -222,9 +222,9 @@ class TestReverseFeatSourceRegistry(_SeededRegistryTestCase):
     ``feat-43`` node, no ``feat-43`` edge)."""
 
     SEEDS = (
-        ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
-        ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
-        ("reverse/dec-b001.md", f"docs/dec/{_B001}.md"),
+        ("reverse/req-r001.md", f"docs/req/en/{_R001[:2]}/{_R001}.md"),
+        ("reverse/dec-d001.md", f"docs/dec/en/{_D001[:2]}/{_D001}.md"),
+        ("reverse/dec-b001.md", f"docs/dec/en/{_B001[:2]}/{_B001}.md"),
         ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
     )
 
@@ -287,10 +287,10 @@ class TestVanishedFiles(_SeededRegistryTestCase):
     raises ``FileNotFoundError``."""
 
     SEEDS = (
-        ("cycle/req-c001.md", f"docs/req/{_C001}.md"),
-        ("cycle/req-c002.md", f"docs/req/{_C002}.md"),
-        ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
-        ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
+        ("cycle/req-c001.md", f"docs/req/en/{_C001[:2]}/{_C001}.md"),
+        ("cycle/req-c002.md", f"docs/req/en/{_C002[:2]}/{_C002}.md"),
+        ("reverse/req-r001.md", f"docs/req/en/{_R001[:2]}/{_R001}.md"),
+        ("reverse/dec-d001.md", f"docs/dec/en/{_D001[:2]}/{_D001}.md"),
         ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
     )
 
@@ -312,7 +312,7 @@ class TestVanishedFiles(_SeededRegistryTestCase):
         # (c001 -> c002 + the dangling DEC d900) -- c002's own outgoing
         # references (c002 -> c001, the c002 self-loop) are never read, so
         # the 2-cycle is incomplete: no red edge
-        self._vanish((self.docs_root / "req" / f"{_C002}.md").resolve())
+        self._vanish((self.docs_root / "req" / "en" / _C002[:2] / f"{_C002}.md").resolve())
         graph = build_source_graph("req", _C001, depth=2)
 
         edges = {(edge.source_type, edge.source_id, edge.target_type, edge.target_id) for edge in graph.edges}
@@ -331,7 +331,7 @@ class TestVanishedFiles(_SeededRegistryTestCase):
         # source and d001 would appear as node + incoming edge (and the raw
         # FileNotFoundError would propagate); WITH it, d001 is absent from
         # both
-        self._vanish((self.docs_root / "dec" / f"{_D001}.md").resolve())
+        self._vanish((self.docs_root / "dec" / "en" / _D001[:2] / f"{_D001}.md").resolve())
         graph = build_source_graph("req", _R001, depth=1, reverse=True)
 
         node_keys = {(node.type, node.id) for node in graph.nodes}
@@ -356,7 +356,7 @@ class TestVanishedFiles(_SeededRegistryTestCase):
         # build succeeds, d001 is absent as a node, and its extracted
         # references (REQ r001 + the dangling GOL g900) are absent as edges
         # (and g900 therefore never becomes an unresolved node either)
-        self._vanish((self.docs_root / "dec" / f"{_D001}.md").resolve())
+        self._vanish((self.docs_root / "dec" / "en" / _D001[:2] / f"{_D001}.md").resolve())
         graph = build_registry_graph()
 
         node_keys = {(node.type, node.id) for node in graph.nodes}
@@ -395,7 +395,7 @@ class TestNoFeatRegistry(_SeededRegistryTestCase):
     registry-wide default title (``Reference Graph`` vs the scoped source's H1)."""
 
     SEEDS = (
-        ("no-feat/req-n001.md", f"docs/req/{_N001}.md"),
+        ("no-feat/req-n001.md", f"docs/req/en/{_N001[:2]}/{_N001}.md"),
         ("no-feat/feat-7-no-feat", "feat/feat-7-no-feat"),
         ("no-feat/feat-8-no-feat-two", "feat/feat-8-no-feat-two"),
     )
@@ -448,10 +448,10 @@ class TestWideRegistry(_SeededRegistryTestCase):
     though its raw text carries a live-looking reference)."""
 
     SEEDS = (
-        ("wide/req-w001.md", f"docs/req/{_W001}.md"),
-        ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
-        ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-        ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
+        ("wide/req-w001.md", f"docs/req/en/{_W001[:2]}/{_W001}.md"),
+        ("wide/uc-u001.md", f"docs/uc/en/{_U001[:2]}/{_U001}.md"),
+        ("wide/gol-g001.md", f"docs/gol/en/{_WG001[:2]}/{_WG001}.md"),
+        ("wide/dec-d002.md", f"docs/dec/en/{_D002[:2]}/dec-{_D002}-broken.md"),
     )
 
     def test_registry_all_golden(self):
@@ -476,7 +476,7 @@ class TestBuilderErrorContract(_SeededRegistryTestCase):
     non-raising ``ParseFailureResult`` is the Phase 120 tool layer's conversion, not the
     builder's)."""
 
-    SEEDS = (("cycle/req-c001.md", f"docs/req/{_C001}.md"),)
+    SEEDS = (("cycle/req-c001.md", f"docs/req/en/{_C001[:2]}/{_C001}.md"),)
 
     def test_missing_source_raises_the_domain_not_found_error(self):
         with self.assertRaises(ReqNotFoundError):
@@ -488,10 +488,12 @@ class TestBuilderErrorContract(_SeededRegistryTestCase):
         with self.assertRaises(TxtNotFoundError):
             build_source_graph("txt", _MISSING_UUID)
 
-    def test_broken_flat_source_raises_the_domain_parse_error(self):
-        # the broken dec fixture re-used as a req file: parse_req rejects the
-        # foreign frontmatter type -- a genuine parse error (ValidationError)
-        broken = self.docs_root / "req" / f"req-{_D002}-broken.md"
+    def test_broken_source_raises_the_domain_parse_error(self):
+        # the broken dec fixture re-used as a req file (sharded under the id's own shard,
+        # feat-245): parse_req rejects the foreign frontmatter type -- a genuine parse error
+        # (ValidationError)
+        broken = self.docs_root / "req" / "en" / _D002[:2] / f"req-{_D002}-broken.md"
+        broken.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(_FIXTURES / "wide" / "dec-d002.md", broken)
         with self.assertRaises((AssertionError, ValidationError, yaml.YAMLError)):
             build_source_graph("req", _D002)

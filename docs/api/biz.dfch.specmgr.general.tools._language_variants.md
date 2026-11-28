@@ -5,9 +5,10 @@ Per-language document location for the read-only translation tools (feat-197-i18
 The shared, private, ``mcp``-free helper behind the ``list_languages`` and ``check_translation_drift`` tools: given a
 document ``type``/``id`` it finds the on-disk document of one *language* (or of every language) without ever
 touching the EN-only scans of the other generic tools (REQ-013) -- it resolves each language's own directory through
-the domain's own ``<d>_base_dir(language)`` (DEC 38efdb66 item 1: EN = the flat ``docs/{type}/``, any other validated
-code = ``docs/{type}/{language}/``), reads through the domain's own cache-backed ``load_by_id``/``read_<d>``
-(a variant is parsed through its language's heading table, derived from its path position), and discovers the
+the domain's own ``<d>_base_dir(language)`` (DEC 38efdb66 item 1, refined by feat-245-shard-docs: every language, EN
+included = the sharded ``docs/{type}/{language}/`` directory), reads through the domain's own cache-backed
+``load_by_id``/``read_<d>`` (a variant is parsed through its language's heading table, derived from its path
+position), and discovers the
 language directories of a domain through the shared :func:`~biz.dfch.specmgr.general.tools._doc_paths.
 iter_language_dirs`. Nothing here writes, creates, or invalidates anything.
 
@@ -32,7 +33,7 @@ A language variant of a document that exists on disk.
 Attributes
 ----------
 language:
-    The language code of the variant (``"en"`` for the flat default-language document).
+    The language code of the variant (``"en"`` for the default-language document in the ``en/`` sharded directory).
 path:
     The resolved on-disk path.
 parseable:
@@ -67,12 +68,15 @@ like any other unparseable document -- the ``ValueError``'s text becomes the fai
 
 List every language the document ``id_`` of ``type_`` exists in (REQ-012, ACC-008).
 
-Probes the flat EN directory and then every shape-valid ``{language}`` subdirectory of the domain's base
-directory (:func:`~biz.dfch.specmgr.general.tools._doc_paths.iter_language_dirs`), each through :func:`locate`.
-``"en"`` leads the result when the EN source exists and is never invented when it does not; the other languages
-follow sorted by code. A variant that exists but fails to parse is listed with ``parseable=False``. Only ``.md``
-documents participate (the domains' own scans are ``*.md`` globs), so a non-``.md`` sibling asset or a
-shape-invalid directory name is never reported.
+Probes the EN directory explicitly and then every OTHER shape-valid ``{language}`` subdirectory of the domain's
+base directory (:func:`~biz.dfch.specmgr.general.tools._doc_paths.iter_language_dirs` -- in feat-245's uniform
+sharded layout the loop also yields the ``en/`` directory itself, which is skipped because the explicit probe
+above already covered it, the same ``DEFAULT_LANGUAGE`` skip :func:`~biz.dfch.specmgr.general.tools._doc_paths.
+iter_doc_paths_all_languages` carries), each through :func:`locate`. ``"en"`` leads the result when the EN
+source exists and is never invented when it does not; the other languages follow sorted by code. A variant
+that exists but fails to parse is listed with ``parseable=False``. Only ``.md`` documents participate (the
+domains' own scans are ``*.md`` globs), so a non-``.md`` sibling asset or a shape-invalid directory name is
+never reported.
 
 Parameters
 ----------
@@ -108,7 +112,7 @@ type_:
 id_:
     The document id (shared by every language variant).
 language:
-    The language to locate; ``"en"`` = the flat directory.
+    The language to locate; ``"en"`` = the ``en/`` sharded directory.
 
 Returns
 -------

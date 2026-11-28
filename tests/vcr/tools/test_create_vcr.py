@@ -111,17 +111,20 @@ class TestCreateVcr(TempVcrDirTestCase):
         self.assertEqual(fetched.body.text, "Sample Verification Case")
 
     def test_writes_expected_filename(self) -> None:
-        """create_vcr must write f'vcr-{id}-{slug}.md' under the verification case record base dir."""
+        """create_vcr must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/vcr/en/,
+        leaving nothing directly under docs/vcr/ or docs/vcr/en/ (feat-245, ACC-001)."""
         result = create_vcr(_MINIMAL_BODY)
 
-        expected_path = vcr_base_dir() / f"vcr-{result.id}-sample-verification-case.md"
+        expected_path = vcr_base_dir("en") / result.id[:2] / f"{result.id}-sample-verification-case.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "vcr").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "vcr" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_vcr(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_vcr(_MINIMAL_BODY)
 
-        expected_path = vcr_base_dir() / f"vcr-{result.id}-sample-verification-case.md"
+        expected_path = vcr_base_dir("en") / result.id[:2] / f"{result.id}-sample-verification-case.md"
         on_disk = parse_vcr(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

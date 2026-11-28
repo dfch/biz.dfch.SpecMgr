@@ -61,7 +61,7 @@ from functools import partial
 from pathlib import Path
 
 from ...general.tools._doc_cache import DocCache
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ..models.v1 import SetDocument, parse_set
 
 __all__ = ["invalidate_set_cache", "read_set", "reconcile_set_cache", "reset_set_cache"]
@@ -101,10 +101,10 @@ def read_set(path: Path) -> SetDocument:
 
     **Language-aware (feat-197-i18n Phase 125).** The effective language is
     derived from the file's own position relative to the set document base
-    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
-    directly in the flat ``docs/set/`` directory parses canonical/EN, a file
-    directly in ``docs/set/{language}/`` parses in that language, anything
-    else canonical), never from a caller argument: the location *is* the
+    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file in the
+    ``docs/set/en/`` directory parses canonical/EN, a file in
+    ``docs/set/{language}/`` parses in that language, anything else
+    canonical), never from a caller argument: the location *is* the
     language encoding (DEC 38efdb66 item 1), so every consumer of this
     reader (``find_set_path``'s scan, ``list_set``'s rows, ``load_by_id``'s
     second read, the generic tools' own set adapters) parses a variant file
@@ -126,9 +126,9 @@ def read_set(path: Path) -> SetDocument:
     # ``read_set``/``reconcile_set_cache`` at module level (the
     # ``_io.py -> _paths.py -> _io.py`` cycle the module docstring describes),
     # so a module-level import back into it would be a circular import.
-    from ._paths import set_base_dir  # pylint: disable=import-outside-toplevel
+    from ._paths import SET_TYPE_NAME  # pylint: disable=import-outside-toplevel
 
-    language = language_for_doc_path(set_base_dir(), path)
+    language = language_for_doc_path(doc_domain_base_dir(SET_TYPE_NAME), path)
     result = _cache.read(path, partial(_parse, language=language))
     return result
 

@@ -94,17 +94,22 @@ class TestCreateGol(TempGolDirTestCase):
         self.assertEqual(fetched.body.text, "Competitive Engines in Consumer Vehicles")
 
     def test_writes_expected_filename(self) -> None:
-        """create_gol must write f'gol-{id}-{slug}.md' under the goal base dir."""
+        """create_gol must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/gol/en/,
+        leaving nothing directly under docs/gol/ or docs/gol/en/ (feat-245, ACC-001)."""
         result = create_gol(_MINIMAL_BODY)
 
-        expected_path = gol_base_dir() / f"gol-{result.id}-competitive-engines-in-consumer-vehicles.md"
+        filename = f"{result.id}-competitive-engines-in-consumer-vehicles.md"
+        expected_path = gol_base_dir("en") / result.id[:2] / filename
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "gol").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "gol" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_gol(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_gol(_MINIMAL_BODY)
 
-        expected_path = gol_base_dir() / f"gol-{result.id}-competitive-engines-in-consumer-vehicles.md"
+        filename = f"{result.id}-competitive-engines-in-consumer-vehicles.md"
+        expected_path = gol_base_dir("en") / result.id[:2] / filename
         on_disk = parse_gol(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

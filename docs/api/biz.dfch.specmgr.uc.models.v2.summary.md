@@ -24,7 +24,7 @@ status:
     The use case's ``frontmatter.status`` value, verbatim.
 ref:
     The document's extensionless base name (e.g.
-    ``"uc-<uuid>-a-title"``), deliberately *not* a filename or path --
+    ``"<uuid>-a-title"``), deliberately *not* a filename or path --
     callers must not read this off disk themselves, only pass it to
     ``get_uc`` alongside (or instead of) ``id``. Named ``ref`` rather
     than ``filename`` precisely to avoid inviting direct filesystem

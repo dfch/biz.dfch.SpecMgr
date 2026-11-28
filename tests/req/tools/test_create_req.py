@@ -91,17 +91,20 @@ class TestCreateReq(TempReqDirTestCase):
         self.assertEqual(fetched.body.text, "Maximum Engine Temperature")
 
     def test_writes_expected_filename(self) -> None:
-        """create_req must write f'req-{id}-{slug}.md' under the requirement base dir."""
+        """create_req must write the prefix-less f'{id}-{slug}.md' in the id's shard dir under docs/req/en/,
+        leaving nothing directly under docs/req/ or docs/req/en/ (feat-245, ACC-001)."""
         result = create_req(_MINIMAL_BODY)
 
-        expected_path = req_base_dir() / f"req-{result.id}-maximum-engine-temperature.md"
+        expected_path = req_base_dir("en") / result.id[:2] / f"{result.id}-maximum-engine-temperature.md"
         self.assertTrue(expected_path.exists())
+        self.assertEqual(list((self.docs_root / "req").glob("*.md")), [])
+        self.assertEqual(list((self.docs_root / "req" / "en").glob("*.md")), [])
 
     def test_written_file_round_trips_via_parse_req(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_req(_MINIMAL_BODY)
 
-        expected_path = req_base_dir() / f"req-{result.id}-maximum-engine-temperature.md"
+        expected_path = req_base_dir("en") / result.id[:2] / f"{result.id}-maximum-engine-temperature.md"
         on_disk = parse_req(expected_path.read_text(encoding="utf-8"))
 
         self.assertEqual(on_disk.frontmatter.id, result.id)

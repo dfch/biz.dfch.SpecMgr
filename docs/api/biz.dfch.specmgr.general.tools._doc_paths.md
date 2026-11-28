@@ -7,7 +7,10 @@ A single module shared across document domains (REQ now, UC later) instead
 of a copy per domain: one root
 env var (:data:`DOCS_DIR_ENV_VAR`, default :data:`DEFAULT_DOCS_ROOT`) holds
 every doc type's own subdirectory (``{root}/{type_name}/``, e.g. ``docs/req/``
-for ``type_name="req"``).
+for ``type_name="req"``) -- the domain's own base directory
+(:func:`doc_domain_base_dir`), under which every language keeps its own
+sharded directory (the uniform layout, feat-245:
+``docs/{type}/{language}/{id[:2]}/{id}-{slug}.md``, ``en`` included).
 
 
 This module has no ``mcp``/file-write
@@ -66,27 +69,59 @@ triggers the exact same race for every one of the other domains. A file
 vanishing mid-scan this way is now skipped exactly like any other
 unparseable file, and the scan continues looking for the target id.
 
-**Language-variant directories (feat-197-i18n, DEC 38efdb66 items 1/6).** A
-non-default language ``L`` of a domain's documents lives in a direct
-``{L}`` subdirectory of the domain's flat base directory
-(``docs/{type}/{L}/<type>-<id>-<slug>.md``); the default language EN
-(:data:`~biz.dfch.specmgr.general.models.heading_table.DEFAULT_LANGUAGE`,
-whether omitted or passed explicitly) keeps exactly today's flat path
-``docs/{type}/<type>-<id>-<slug>.md``. :func:`doc_base_dir`/
-:func:`ensure_doc_base_dir` take the optional ``language`` parameter that
-selects between the two (shape-guarding a non-default value via
-:func:`_path_safety.assert_language` before it becomes part of a path),
-:func:`language_for_doc_path` recovers the language a given document path
-is encoded by (its position relative to the flat base directory), and
-:func:`iter_doc_paths_all_languages` yields the domain-wide live listing
-(flat EN files plus every file in every shape-valid ``{language}``
-subdirectory) that a domain's reconcile-on-scan needs once a single scan
-no longer covers the whole domain. :func:`iter_doc_paths` itself is
-unchanged and stays non-recursive: it never descends into ``{language}``
-subfolders, which is exactly what keeps every EN-only consumer (each
-domain's own flat scan, plus ``list_references``,
-``find_related``/``find_similar_text``, ``get_reference_diagram(_all)``)
-EN-only by directory layout (REQ-013/ACC-014, DEC 38efdb66 item 8).
+**Uniform sharded per-language layout (feat-245, Phase 100 -- refining DEC
+38efdb66 item 1).** Every document of a UUID whole-body domain lives in a
+shard subdirectory of its language's own directory, the shard named by the
+first :data:`SHARD_DIGITS` characters of the document's uuid:
+``docs/{type}/{language}/{id[:2]}/{id}-{slug}.md`` -- for every language,
+English included. The flat-EN location DEC 38efdb66 item 1 reserved
+(``docs/{type}/<type>-<id>-<slug>.md``) is retired: sharding already moves
+every English file, so the compatibility argument is void --
+:func:`doc_base_dir`/:func:`ensure_doc_base_dir` resolve every language
+(``None`` (omitted) or the default language EN
+(:data:`~biz.dfch.specmgr.general.models.heading_table.DEFAULT_LANGUAGE`)
+included, no flat special case) to ``docs/{type}/{language}/``, so an
+omitted language targets the ``en/`` directory. File names carry no
+``{type}-`` prefix: the prefix-less ``<uuid>-<slug>.md`` convention
+:func:`sharded_doc_path` builds (DEC's existing naming extended to every
+sharded domain, REQ-002). The read path is shard-only (REQ-003, the hard
+cut-over): :func:`iter_doc_paths` yields a language directory's sharded
+listing (``<base>/*/*.md``, sorted by relative path), so a file directly
+under ``docs/{type}/`` (missing language dir) or directly under
+``docs/{type}/{language}/`` (missing shard dir) is invisible to every
+``list_<d>``/``get_<d>``/id-resolution consumer;
+:func:`find_doc_path_by_id`/:func:`find_parse_failure` scan the shard
+derived from the id (:func:`shard_token`) first and fall back to the
+language's full sharded listing, so a document whose placement disagrees
+with its id still resolves (the filesystem remains the sole source of
+truth, DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3). The EN-only consumers
+(each domain's own scan via the omitted-language base directory, plus
+``list_references``, ``find_related``/``find_similar_text``,
+``get_reference_diagram(_all)``) are re-rooted at the ``en/`` directory by
+that same omitted-language resolution -- ``None`` maps to ``en/``, never
+the domain root -- so they never see a variant file by directory layout
+alone (REQ-013/ACC-014, DEC 38efdb66 item 8, re-stated for the uniform
+layout). :func:`language_for_doc_path` recovers the language a given
+document path is encoded by: the path's first subdirectory under the
+domain's own base directory (:func:`doc_domain_base_dir`), a shape-
+validated two-letter name (``"en"`` included); any other position -- a
+flat file, a non-shape-validated first subdirectory, a path outside the
+base -- parses canonical. :func:`iter_doc_paths_all_languages` yields the
+domain-wide live listing -- the union of the sharded listings of ``en/``
+plus every shape-valid ``{language}/`` subdirectory -- that a domain's
+reconcile-on-scan needs once a single language's scan no longer covers the
+whole domain. Languages and shards sit at different path levels, so no
+directory ever plays two roles: the two-letter code that is also a valid
+two-hex shard name (``"de"``) needs no disambiguation (the shard/language
+collision the uniform layout kills). Only a shard directory named by
+exactly :data:`SHARD_DIGITS` lowercase-hex characters is read (feat-245
+Phase 180, D4): a file in a non-hex directory is as invisible as a flat
+one. An EMPTY shard or language directory -- e.g. the one the generic
+``delete`` tool leaves behind after removing its last document -- is
+expected and harmless (feat-245 Phase 180, I2; documented, not pruned):
+git does not track empty directories, every read path here treats it as
+no files, and pruning would race a concurrent ``create_<d>`` of a
+different id in the same shard (the locks are per id, not per shard).
 
 **A companion :func:`find_parse_failure` surfaces the parse-failure a skipped id
 encodes (feat-150-mcp-lifecycle-commands Phase 1a, DEC
@@ -147,25 +182,81 @@ Reads :data:`DOCS_DIR_ENV_VAR` through the central env-var registry's
 set-but-empty (feat-208, Phase 120).
 
 
+### `assert_variant_absent(base_dir: 'Path', id_: 'str', language: 'str', label: 'str', target_path: 'Path', find_path_fn: 'Callable[[Path, str], Path]', read_fn: 'Callable[[Path], _DocT]') -> 'None'`
+
+Raise ``FileExistsError`` when the ``language`` variant of document ``id_`` already exists, in ANY shard.
+
+The single shared variant-exists guard of every ``create_<d>`` tool's
+*variant* branch (feat-245 Phase 210, CR2). The guard is by **id**, not
+by the computed target path: every read path resolves a document whose
+placement disagrees with its id through the full sharded-listing
+fallback (REQ-004), so a variant sitting in another shard than
+``id_[:2]`` exists for ``get_<d>``/``list_<d>`` -- and a guard on the
+computed ``<language>/<id[:2]>/<EN file name>`` path alone would write a
+second file with the same id and language beside it. Three conditions
+count as "exists", checked in this order:
+
+1. ``find_path_fn(base_dir, id_)`` resolves (the domain's own
+   cache-backed ``find_<d>_path`` -- the same id lookup ``get_<d>``
+   uses, shard-narrowed first, full listing as the fallback);
+2. :func:`find_parse_failure` reports an existing-but-unparseable
+   variant whose file name carries ``id_``;
+3. ``target_path`` itself exists (a file at the computed path that
+   neither lookup attributes to ``id_`` -- it is never overwritten).
+
+Must be called under the variant's own per-language lock, so the guard
+and the following write are atomic with respect to every other mutation
+of this variant.
+
+Parameters
+----------
+base_dir:
+    The variant language's own base directory, e.g. ``docs/req/de``.
+id_:
+    The shared document id.
+language:
+    The variant's language code (named in the error message).
+label:
+    The document noun of the error message (the domain name, or
+    ``decision`` for ``dec``).
+target_path:
+    The computed path the variant would be written to.
+find_path_fn:
+    The domain's ``find_<d>_path(base_dir, id_)``; raises a
+    ``LookupError`` subclass when no parseable document has ``id_``.
+read_fn:
+    The domain's cache-backed ``read_<d>`` (for :func:`find_parse_failure`).
+
+Raises
+------
+FileExistsError
+    The variant already exists; the message names the path of the file
+    that exists.
+
+
 ### `doc_base_dir(type_name: 'str', language: 'str | None' = None) -> 'Path'`
 
-Return the base directory for ``type_name`` documents, without creating it.
+Return the base directory for ``type_name`` documents, in the given language, without creating it.
 
-Reads :data:`DOCS_DIR_ENV_VAR` through the central env-var registry's
-``get_with_default`` accessor, falling back to the record's default
-(the derived :data:`DEFAULT_DOCS_ROOT`) when the variable is unset or
-set-but-empty, then appends ``type_name`` as a subdirectory (e.g.
-``docs/req`` for ``type_name="req"``). Read-only tools/resources use
-this so merely reading never has the side effect of creating the
-directory -- see :func:`ensure_doc_base_dir` for the write path.
-
-With an optional ``language`` (feat-197-i18n, DEC 38efdb66 item 1):
-``None`` (omitted) or the default language EN (:data:`DEFAULT_LANGUAGE`)
-resolves to the flat ``docs/{type_name}`` directory -- exactly today's
-path, unchanged; any other value is shape-guarded by
+Resolves the language's own directory under the domain base
+(:func:`doc_domain_base_dir`): ``docs/{type_name}/{language}/`` --
+**every language, ``en`` included, no flat special case** (feat-245,
+the uniform sharded layout, refining DEC 38efdb66 item 1, whose
+flat-EN location is retired). ``None`` (omitted) therefore resolves to
+the ``en/`` directory -- the EN-only call sites (every domain's own
+``iter_<d>_paths()``/``find_<d>_path()`` scans, ``config_info()``, and
+the EN-only consumers ``list_references``, ``find_related``/
+``find_similar_text``, ``get_reference_diagram(_all)``) pass no
+language and are re-rooted at ``en/`` by construction, never seeing a
+variant file (REQ-003/REQ-005; the invariant holds only because
+``None`` maps to ``en/`` rather than raising or returning the domain
+root). Any non-None value is shape-guarded by
 :func:`_path_safety.assert_language` first (a caller-supplied payload
-like ``"../../etc"`` never reaches the path join) and resolves to the
-language variant's subdirectory ``docs/{type_name}/{language}``.
+like ``"../../etc"`` never reaches the path join) -- the guard runs on
+the resolved value, so the defaulted ``"en"`` passes through the same
+single code path. Read-only tools/resources use this so merely reading
+never has the side effect of creating the directory -- see
+:func:`ensure_doc_base_dir` for the write path.
 
 Parameters
 ----------
@@ -173,9 +264,9 @@ type_name:
     The document type's subdirectory name, e.g. ``"req"``.
 language:
     The document language to resolve. ``None`` (the default) or
-    :data:`DEFAULT_LANGUAGE` (``"en"``) resolve to the flat, default
+    :data:`DEFAULT_LANGUAGE` (``"en"``) resolve to the ``en/``
     directory; any other shape-validated code (e.g. ``"de"``) resolves
-    to that code's subdirectory under the flat one.
+    to that code's own directory under the domain base.
 
 Returns
 -------
@@ -184,15 +275,44 @@ Path
     given language).
 
 
+### `doc_domain_base_dir(type_name: 'str') -> 'Path'`
+
+Return the domain's own base directory (``{docs root}/{type_name}``, e.g. ``docs/req``), without creating it.
+
+The parent of every per-language directory (feat-245, the uniform
+sharded layout): ``docs/{type_name}/{language}/`` for every language --
+the ``en/`` directory the omitted language of :func:`doc_base_dir`
+targets, plus one directory per other language. This is the position
+:func:`language_for_doc_path` derives the effective language from (the
+document path's first subdirectory under this directory) and
+:func:`iter_language_dirs` discovers over (every shape-valid two-letter
+subdirectory of it is a language location, ``en/`` included). Reads
+:data:`DOCS_DIR_ENV_VAR` through the central env-var registry's
+``get_with_default`` accessor, falling back to the record's default
+(the derived :data:`DEFAULT_DOCS_ROOT`) when the variable is unset or
+set-but-empty. Never creates the directory.
+
+Parameters
+----------
+type_name:
+    The document type's subdirectory name, e.g. ``"req"``.
+
+Returns
+-------
+Path
+    The resolved domain base directory for ``type_name`` documents.
+
+
 ### `ensure_doc_base_dir(type_name: 'str', language: 'str | None' = None) -> 'Path'`
 
-Return the base directory for ``type_name`` documents, creating it if missing.
+Return the base directory for ``type_name`` documents, in the given language, creating it if missing.
 
 Only a doc type's ``create_*`` tool should call this -- every other
 tool/resource uses the read-only :func:`doc_base_dir` instead. The
-optional ``language`` parameter selects the same flat-vs-subdirectory
-resolution as :func:`doc_base_dir` (feat-197-i18n, DEC 38efdb66
-item 1) before the directory is created.
+optional ``language`` parameter selects the same per-language
+``docs/{type_name}/{language}/`` resolution as :func:`doc_base_dir`
+(feat-245: every language, ``en`` included; the omitted language
+targets the ``en/`` directory) before the directory is created.
 
 Parameters
 ----------
@@ -212,11 +332,22 @@ Path
 
 Resolve an ``id`` to its on-disk file path, for any doc type.
 
-Materializes the full ``*.md`` path listing under ``base_dir`` up
-front, reconciles a cache against it (via ``reconcile_fn``, if given)
-before doing any per-file work, then scans that same materialized
-listing, reading each path via ``read_fn`` and comparing
-``get_id_fn(parsed)`` against ``id_``. A file that fails to parse
+``base_dir`` is one language's own directory (``docs/{type}/{language}/``
+-- the ``en/`` directory for English, feat-245's uniform sharded
+layout). The scan is shard-narrowed (REQ-004): it materializes the
+language's full sharded listing (``<base_dir>/*/*.md``, sorted by
+relative path -- :func:`iter_doc_paths`) up front, reconciles a cache
+against that same materialized listing (via ``reconcile_fn``, if given)
+before doing any per-file work (the reconcile semantics, unchanged),
+then reads the files of the shard derived from ``id_``
+(:func:`shard_token`) first and only falls back to the listing's
+remaining shards if the target is not among them -- a document whose
+placement disagrees with its id is still found, so the filesystem
+remains the sole source of truth (DEC
+33c5ab08-ff58-4c73-8c32-23abaf3838e3). On a correctly placed document
+the cold per-id cost drops from O(N-domain) parses to O(N/256). Each
+path is read via ``read_fn`` and compared ``get_id_fn(parsed)`` against
+``id_``. A file that fails to parse
 (``AssertionError`` or ``ValueError``, which ``pydantic.ValidationError``
 and every parser-specific error in this codebase -- subclass;
 ``yaml.YAMLError``, raised unwrapped
@@ -226,23 +357,21 @@ a file vanishes between this function's own directory-listing
 snapshot and its own turn in the per-file scan loop -- e.g. a
 concurrent ``delete`` tool call racing this lock-free scan, Phase 8,
 REQ-014) is silently skipped -- one broken (or vanished) file must not
-prevent lookup of a different, valid id. Before Phase 6, ``yaml.YAMLError``
-was not caught here (it is not a ``ValueError`` subclass), even though
-``DocCache``'s own ``CACHEABLE_ERROR_TYPES`` and
-``general.tools._listing.build_summaries`` (the ``list_*`` read
-callback) both already treated it as a normal, skippable failure -- a
-domain directory with one file whose frontmatter YAML was malformed
-crashed this scan with an uncaught ``yaml.YAMLError`` for *any* id in
-that domain, not just the malformed file's own id. Before Phase 8,
-``FileNotFoundError`` was likewise not caught here, even though it is
-the identical delete/scan race class REQ-012 (Phase 6) closed for
-``feat`` alone -- see this module's own docstring above for the full
-explanation.
+prevent lookup of a different, valid id. (Before Phase 6,
+``yaml.YAMLError`` was not caught here -- it is not a ``ValueError``
+subclass -- even though ``DocCache``'s own ``CACHEABLE_ERROR_TYPES``
+and ``general.tools._listing.build_summaries`` (the ``list_*`` read
+callback) both already treated it as a normal, skippable failure;
+before Phase 8, ``FileNotFoundError`` was likewise not caught here,
+even though it is the identical delete/scan race class REQ-012 (Phase 6)
+closed for ``feat`` alone -- see this module's own docstring above for
+the full explanation.)
 
 Parameters
 ----------
 base_dir:
-    The directory to scan for ``*.md`` files.
+    The language's own directory to scan for its sharded ``*.md``
+    listing (e.g. ``docs/req/en``).
 id_:
     The id to look up.
 read_fn:
@@ -286,12 +415,21 @@ silently skips such a file during its id scan (one broken file must not
 block lookup of a different, valid id), so ``get_<d>`` on a broken
 document would otherwise only raise the domain's generic not-found error,
 with no parse cause, path, or line. This function recovers exactly that
-case: it scans :func:`iter_doc_paths` for the single name-matching file -- a stem that
-carries ``id_`` as a hyphen-bounded token, i.e. ``f"-{id_}-" in stem``
-(the flat-file naming is ``<type>-<id>-<slug>.md``, so ``id_`` sits
-between the type prefix and the slug) or a ``f"{id_}-"`` prefix (the
-``<id>-<slug>.md`` form) -- attempts the domain's own cache-backed
-``read_fn`` on it, and returns
+case: it scans the language directory's sharded listing (
+:func:`iter_doc_paths` over ``base_dir``) for the single name-matching
+file -- a stem that carries ``id_`` as a hyphen-bounded token, i.e.
+``f"-{id_}-" in stem`` (the legacy type-prefixed NAME
+``<type>-<id>-<slug>.md`` -- the hard cut-over is about LOCATION, not
+name: such a file moved into its correct shard without renaming (the
+likely downstream migration) already resolves by id (content-based)
+and passes the shape-only placement gate, and this match is what makes
+``get_<d>`` return the real ``ParseFailureResult`` for it when it is
+broken instead of a bare not-found -- feat-245 Phase 180, S3) or a
+``f"{id_}-"`` prefix (the prefix-less ``<id>-<slug>.md`` form the
+sharded layout writes) -- shard-narrowed first (the name matches inside the shard
+derived from ``id_``) with the full listing as the fallback (a
+misplaced broken document still surfaces), attempts the domain's own
+cache-backed ``read_fn`` on it, and returns
 ``(path, str(exc))`` if that read raises a parse error
 (``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError`` --
 the same channels :func:`general.tools._listing.build_summaries` catches
@@ -320,7 +458,8 @@ chain), with the same ``read_fn``/``assert_within`` mirroring.
 Parameters
 ----------
 base_dir:
-    The directory to scan for ``*.md`` files.
+    The language's own directory to scan for its sharded ``*.md``
+    listing (e.g. ``docs/req/en``).
 id_:
     The id whose on-disk file may exist but be unparseable.
 read_fn:
@@ -338,52 +477,73 @@ tuple[Path, str] | None
 
 ### `iter_doc_paths(base_dir: 'Path') -> 'Iterator[Path]'`
 
-Yield every ``*.md`` file directly under ``base_dir``, sorted by name.
+Yield the sharded listing of ``base_dir``: every ``*.md`` file in a two-hex shard directory directly below it.
 
-Yields nothing (rather than raising) if ``base_dir`` does not exist.
+The per-language scan primitive (feat-245, REQ-003): called with a
+language's own base directory (``docs/{type}/{language}/`` -- ``en``
+included), it yields ``<base>/<2-hex>/*.md`` sorted by relative path,
+i.e. by (shard directory, file name) -- which for the prefix-less
+``<uuid>-<slug>.md`` file names equals the lexicographic file-name
+order, so ``list_<d>`` result order and ``ref`` values stay stable
+except the intended prefix removal (REQ-008). Only a shard directory
+whose name is exactly :data:`SHARD_DIGITS` lowercase-hex characters is
+listed (feat-245 Phase 180, D4 -- the pattern is derived from
+:data:`SHARD_DIGITS`, the same shape the ``specmgr lint`` placement gate
+accepts). Files directly under ``base_dir`` (missing shard dir), files
+in a non-hex directory (e.g. ``zz/``, ``Notes/``), and any deeper
+nesting (deeper than one shard level) are excluded -- the shard-only
+read is the hard cut-over: a misplaced file is invisible to every
+``list_<d>``/``get_<d>``/id-resolution/``find_parse_failure``/
+``list_languages``/similarity-corpus consumer (all of them list through
+this function), and the ``specmgr lint`` layout-violation gate
+(feat-245 Phase 120) is what catches it. Yields nothing (rather than
+raising) if ``base_dir`` does not exist.
 
-Non-recursive by design (feat-197-i18n, REQ-013/ACC-014, DEC 38efdb66
-item 8): the single-level ``*.md`` glob never descends into
-``{language}`` subfolders (or any other subdirectory), so every
-EN-only consumer of this function -- each domain's own flat scan, plus
-``list_references``, ``find_related``/``find_similar_text``, and
-``get_reference_diagram(_all)`` -- keeps seeing exactly the flat files
-with zero code change. A future switch to a recursive glob would
-silently break that property; the feature's own tests pin it.
+The EN-only consumers (each domain's own scan via the omitted-language
+base directory, plus ``list_references``, ``find_related``/
+``find_similar_text``, and ``get_reference_diagram(_all)``) are
+re-rooted at the ``en/`` directory (ACC-008): their ``base_dir``
+argument is the ``en/`` directory itself, so this same shard-only
+listing never yields a variant file -- by directory layout, with no
+glob-shape argument needed (REQ-013/ACC-014, DEC 38efdb66 item 8,
+re-stated for the uniform layout).
 
 Parameters
 ----------
 base_dir:
-    The directory to scan for ``*.md`` files.
+    The language's own base directory to scan for its sharded
+    ``*.md`` listing, e.g. ``docs/req/en``.
 
 Returns
 -------
 Iterator[Path]
-    An iterator over the matching, sorted paths.
+    An iterator over the matching paths, sorted by relative path.
 
 
 ### `iter_doc_paths_all_languages(base_dir: 'Path') -> 'Iterator[Path]'`
 
-Yield the domain-wide live ``*.md`` listing: the flat directory plus every ``{language}`` subdirectory.
+Yield the domain-wide live ``*.md`` listing: the sharded listing of every language directory.
 
-The reconcile-on-scan counterpart of the language variant's directory
-layout (feat-197-i18n, DEC 38efdb66 item 9): once a domain's documents
-can live in a per-language subdirectory, a scan of one directory no
-longer covers the whole domain, so a domain's cache-reconcile call must
-be handed the union -- the flat (default-EN) files plus every file
-directly under every shape-valid ``{language}`` subdirectory of
-``base_dir`` -- or a scan of one language would evict the other
-languages' cached entries. Yields the union sorted by path, and nothing
-(rather than raising) if ``base_dir`` does not exist. Non-recursive at
-both levels, like :func:`iter_doc_paths`: a deeper nesting is never
-part of any domain's live listing (no tool ever scans it, so no cache
-entry for it can exist).
+The reconcile-on-scan counterpart of the uniform sharded layout
+(feat-245, refining DEC 38efdb66 item 9): a domain's documents live in
+one ``{language}`` subdirectory per language (``en/`` included), so a
+scan of one language directory no longer covers the whole domain, and a
+domain's cache-reconcile call must be handed the union -- the sharded
+listing of ``en/`` plus the sharded listing of every other shape-valid
+``{language}/`` subdirectory of ``base_dir`` (the domain's own base
+directory, :func:`doc_domain_base_dir`) -- or a scan of one language
+would evict the other languages' cached entries. Yields the union
+sorted by path, and nothing (rather than raising) if ``base_dir`` does
+not exist. Shard-only at the language level, like :func:`iter_doc_paths`:
+a flat file (missing language dir) and any deeper nesting are never
+part of any domain's live listing (no tool ever scans them, so no cache
+entry for them can exist).
 
 Parameters
 ----------
 base_dir:
-    The domain's flat (default-language) base directory, e.g.
-    ``docs/dec``.
+    The domain's own base directory, e.g. ``docs/dec``
+    (:func:`doc_domain_base_dir`).
 
 Returns
 -------
@@ -395,19 +555,23 @@ Iterator[Path]
 
 Yield ``(language, directory)`` for every shape-valid ``{language}`` subdirectory of ``base_dir``, sorted.
 
-The directory-level discovery primitive of the language-variant layout (feat-197-i18n Phase 140,
-DEC 38efdb66 items 1/7): a direct subdirectory of a domain's flat base directory whose name fullmatches the
-language-code shape (``^[a-z]{2}$``, :data:`~biz.dfch.specmgr.general.tools._path_safety.LANGUAGE_PATTERN`) is a
-language location; every other entry -- a plain file, a shape-invalid directory name (``"Notes"``, ``"de-DE"``),
-anything deeper -- is not and is skipped. It never inspects the directory's contents (a language directory may
-be empty, hold non-``.md`` assets, or hold documents of other ids) and never descends. Yields nothing (rather
-than raising) if ``base_dir`` does not exist. :func:`iter_doc_paths_all_languages` is built on it, and the
+The directory-level discovery primitive of the language layout (feat-197-i18n Phase 140,
+DEC 38efdb66 items 1/7; unchanged by feat-245's uniform sharded layout -- in it, the
+shape-valid subdirectories of the domain's own base directory are exactly the language
+directories, ``en/`` included, the shards sitting one level deeper): a direct subdirectory
+of the domain's base directory whose name fullmatches the language-code shape (``^[a-z]{2}$``,
+:data:`~biz.dfch.specmgr.general.tools._path_safety.LANGUAGE_PATTERN`) is a language location;
+every other entry -- a plain file, a shape-invalid directory name (``"Notes"``, ``"de-DE"``,
+a shard-shaped ``"00"``), anything deeper -- is not and is skipped. It never inspects the
+directory's contents (a language directory may be empty, hold non-``.md`` assets, or hold
+documents of other ids) and never descends. Yields nothing (rather than raising) if
+``base_dir`` does not exist. :func:`iter_doc_paths_all_languages` is built on it, and the
 language-listing tool (``list_languages``) probes each yielded directory for one id.
 
 Parameters
 ----------
 base_dir:
-    The domain's flat (default-language) base directory, e.g. ``docs/dec``.
+    The domain's own base directory, e.g. ``docs/dec``.
 
 Returns
 -------
@@ -417,20 +581,30 @@ Iterator[tuple[str, Path]]
 
 ### `language_for_doc_path(base_dir: 'Path', doc_path: 'Path') -> 'str | None'`
 
-Return the language a document path is encoded by, from its position under ``base_dir``.
+Return the language a document path is encoded by, from its position under the domain base ``base_dir``.
 
 The inverse of :func:`doc_base_dir`'s own language resolution
-(feat-197-i18n, DEC 38efdb66 items 1/5): the language is encoded by
-directory location only, so a document directly under ``base_dir``
-(the flat, default-EN directory) maps to ``None`` (no heading-mapping
-table applies -- EN is the canonical form itself), and a document
-directly under a shape-valid ``{language}`` subdirectory of
-``base_dir`` maps to that language code (e.g. ``docs/dec/de/x.md``
-under ``docs/dec`` maps to ``"de"``). Every other position -- a
-non-shape-valid subdirectory name (``"de-DE"``, ``"Notes"``), a
-deeper nesting, or a path outside ``base_dir`` entirely -- maps to
-``None``: it is not a language location, so the document parses
-canonical-only, exactly as today's flat behavior. Both paths are
+(feat-245, refining DEC 38efdb66 items 1/5): in the uniform sharded
+layout the language is encoded by directory location only, and it is
+the document path's **first subdirectory under the domain's own base
+directory** (:func:`doc_domain_base_dir`, e.g. ``docs/dec``) --
+``docs/dec/de/{shard}/x.md`` maps to ``"de"``, and
+``docs/dec/en/{shard}/x.md`` maps to ``"en"`` (``"en"`` then resolves
+to the canonical parse with no heading-mapping table, exactly like
+``None`` does -- the shared table resolver treats the two identically,
+so ``en`` is a normal language directory, not a special case). The
+first subdirectory must fullmatch the language-code shape
+(:data:`LANGUAGE_PATTERN`); every other
+position maps to ``None`` -- a document directly under the domain base
+(a missing language dir), a first subdirectory that is not a shape-
+valid two-letter code (``"Notes"``, ``"de-DE"``, a shard-shaped
+``"00"``), or a path outside ``base_dir`` entirely: it is not a
+language location, so the document parses canonical-only and the
+placement gate (feat-245 Phase 120) catches it. Note the shard level
+(``{shard}``, two lowercase-hex characters) is never inspected: a
+shape-valid two-letter first subdirectory is a language by its
+position, and a shard that looks like one (``"de"``) sits one level
+deeper, where no language is derived from it. Both paths are
 ``.resolve()``d before comparison (the ``DocCache`` REQ-009
 normalization discipline), so relative and absolute spellings of the
 same location agree.
@@ -438,16 +612,109 @@ same location agree.
 Parameters
 ----------
 base_dir:
-    The domain's flat (default-language) base directory, e.g.
-    ``docs/dec``.
+    The domain's own base directory, e.g. ``docs/dec``
+    (:func:`doc_domain_base_dir`).
 doc_path:
     The on-disk document path to classify.
 
 Returns
 -------
 str | None
-    The shape-validated ``{language}`` code the document lives in, or
-    ``None`` for the flat directory (or any non-language location).
+    The shape-validated two-letter code of the document's first
+    subdirectory under the domain base (``"en"`` for the default
+    language's own directory included), or ``None`` for every other
+    position (canonical parse).
+
+
+### `shard_token(id_: 'str') -> 'str'`
+
+Return the shard directory name for ``id_``: its first :data:`SHARD_DIGITS` characters.
+
+The shard a document of id ``id_`` is placed in (feat-245, REQ-001):
+``id_[:SHARD_DIGITS]`` -- e.g. ``"de"`` for ``"deadbeef-..."`` -- the
+two-hex prefix of the uuid that names the directory
+``docs/{type}/{language}/{shard}/``. In every sharded domain ``id_`` is
+a canonical lowercase-hex uuid, so the token is a valid shard name by
+construction; no further validation runs here (id shape is guarded at
+the tool boundary, :func:`_path_safety.assert_uuid`).
+
+Parameters
+----------
+id_:
+    The document id whose shard to derive.
+
+Returns
+-------
+str
+    The shard directory name (the id's first :data:`SHARD_DIGITS`
+    characters).
+
+
+### `sharded_doc_path(base_dir: 'Path', id_: 'str', slug: 'str') -> 'Path'`
+
+Return the sharded document path ``base_dir/{shard}/{id_}-{slug}.md``, creating the shard directory.
+
+The single shared write-path layout helper every ``create_<d>`` tool
+builds its target over (feat-245, REQ-001/REQ-002/REQ-005):
+``base_dir`` is the language's own directory (``doc_base_dir(type,
+language)`` -- ``docs/{type}/{language}/``, ``en`` included), the shard
+subdirectory is named by :func:`shard_token` (the id's first
+:data:`SHARD_DIGITS` characters), and the file name is ``{id_}-{slug}.md``
+-- **no** ``{type}-`` prefix (the prefix-less naming convention, REQ-002).
+Creates the shard directory (and the language directory, if missing) so
+the caller can write the file directly; the returned path itself is not
+created.
+
+Parameters
+----------
+base_dir:
+    The language's own base directory, e.g. ``docs/req/en``.
+id_:
+    The document's uuid (the shard is derived from it, and it leads the
+    file name).
+slug:
+    The title slug the file name ends with (``slugify``'s output).
+
+Returns
+-------
+Path
+    ``base_dir / shard_token(id_) / f"{id_}-{slug}.md"``.
+
+
+### `sharded_variant_path(base_dir: 'Path', source_path: 'Path', id_: 'str') -> 'Path'`
+
+Return a language variant's sharded path ``base_dir/{shard}/{source_path.name}``, creating the shard directory.
+
+The single shared write-path helper of every ``create_<d>`` tool's
+*variant* branch (feat-245 Phase 180, E3 -- amending REQ-005's
+single-helper wording: :func:`sharded_doc_path` builds a fresh EN
+document's name, this helper places a variant): DEC 38efdb66 item 2 makes
+the EN source's basename the single filename authority for a variant, so
+the variant's file name is ``source_path.name`` **verbatim** -- never
+rebuilt from a slug. Rebuilding (``removeprefix(f"{id_}-")`` +
+:func:`sharded_doc_path`) would turn an EN source not named
+``<id>-<slug>.md`` (a legacy type-prefixed ``<type>-<id>-<slug>.md`` file
+moved into its shard without renaming, or a hand-named file) into a
+different, doubled ``<id>-<type>-<id>-<slug>.md`` name. ``base_dir`` is
+the variant language's own directory (``doc_base_dir(type, language)``),
+the shard is :func:`shard_token` of ``id_`` (the variant is placed in its
+id's own shard even when the EN source sits in a wrong shard). Creates
+the shard directory (and the language directory, if missing); the
+returned path itself is not created.
+
+Parameters
+----------
+base_dir:
+    The variant language's own base directory, e.g. ``docs/req/de``.
+source_path:
+    The resolved path of the EN source document (its basename is reused).
+id_:
+    The shared document id (the shard is derived from it).
+
+Returns
+-------
+Path
+    ``base_dir / shard_token(id_) / source_path.name``.
 
 
 ### `slugify(title: 'str') -> 'str'`

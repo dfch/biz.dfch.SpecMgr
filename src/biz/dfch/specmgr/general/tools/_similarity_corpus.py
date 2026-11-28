@@ -31,7 +31,7 @@ yields every ``(domain name, on-disk path)`` candidate pair across the
 target whole-body domains -- the full registry set (req, uc, tsk, qa,
 prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt, set) by default, a
 caller-supplied, order-preserving, de-duplicated subset otherwise --
-flat domains via the shared ``iter_doc_paths`` and ``feat``'s
+the sharded domains via the shared ``iter_doc_paths`` and ``feat``'s
 ``<base>/<id>/README.md`` folder shape via its own bespoke
 ``iter_feat_paths`` (DEC 8cf940c5). Every target name is validated up
 front via :func:`whole_body_domain` (a ``ValueError`` **before any
@@ -114,7 +114,7 @@ def iter_candidate_paths(target_types: Sequence[str] | None = None) -> Iterator[
     caller-supplied ``target_types`` restricts the walk to that
     (order-preserving, de-duplicated) subset. Within each domain the
     paths come from the domain's own registry adapter -- the shared
-    flat-file ``iter_doc_paths`` (every domain other than ``feat``) or
+    sharded ``iter_doc_paths`` (every domain other than ``feat``) or
     ``feat``'s own ``iter_feat_paths`` (``<base>/<id>/README.md``,
     folder-per-document, DEC 8cf940c5) -- in the adapter's own sorted
     order, so the enumeration is deterministic for a given on-disk

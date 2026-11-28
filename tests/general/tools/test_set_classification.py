@@ -616,7 +616,7 @@ class TempDocsDirTestCase(unittest.TestCase):
         if case.doc_type == "feat":
             result = feat_base_dir() / doc_id / "README.md"
         else:
-            matches = list((self.docs_root / case.doc_type).glob("*.md"))
+            matches = list((self.docs_root / case.doc_type).rglob("*.md"))
             self.assertEqual(len(matches), 1)
             result = matches[0]
         return result

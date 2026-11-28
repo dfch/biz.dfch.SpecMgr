@@ -59,7 +59,7 @@ class RskSummary(DocSummary):
         six-value set). Inherited from :class:`DocSummary`.
     ref:
         The document's extensionless base name (e.g.
-        ``"rsk-<uuid>-a-title"``). Inherited from :class:`DocSummary`.
+        ``"<uuid>-a-title"``). Inherited from :class:`DocSummary`.
     path:
         The real, absolute (``.resolve()``d) filesystem path to the
         document's on-disk file. Inherited from :class:`DocSummary`

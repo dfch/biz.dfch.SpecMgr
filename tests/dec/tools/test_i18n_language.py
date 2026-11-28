@@ -20,8 +20,9 @@
 Pins the pilot-domain read side: ``get_dec``/``list_dec``'s optional
 ``language`` parameter (default ``"en"``, omitted = today's exact behavior),
 the path-derived language of the ``parse_dec`` tool, the language guard's
-before-filesystem-access rejection (ACC-013), the flat-scan non-recursive
-property at the domain level (ACC-014 unit pin), the translated-headings-
+before-filesystem-access rejection (ACC-013), the EN-scan non-recursive
+property at the domain level (ACC-014 unit pin -- feat-245: the EN scan is
+the sharded listing of ``docs/dec/en/``), the translated-headings-
 resolve-to-canonical-keys behavior (ACC-004), the closed-vocabulary tokens
 staying canonical (ACC-012 unit pin), the raw-read byte-identity
 (ACC-005/ACC-007 read half), and the ``ParseFailureResult``/failed-row
@@ -130,15 +131,19 @@ _DE_BODY = textwrap.dedent(
 
 
 def _seed_en_and_de(docs_root: Path) -> tuple[str, Path, Path]:
-    """Create the EN document via ``create_dec`` and write its DE variant under the same basename.
+    """Create the EN document via ``create_dec`` and write its DE variant under the same shard
+    directory and basename (feat-245's uniform sharded layout:
+    ``docs/dec/{en,de}/{shard}/<uuid>-<slug>.md``).
 
     Returns the shared id, the EN file path, and the DE file path (the DE frontmatter is the EN
     frontmatter verbatim -- the language is encoded by directory location only, DEC 38efdb66 item 1).
     """
     created = create_dec(_EN_BODY)
     assert created.id is not None  # create_dec always assigns the frontmatter id
-    en_file = next((docs_root / "dec").glob("*.md"))
-    de_dir = docs_root / "dec" / "de"
+    # EN dir scope: a domain-dir rglob would also see the de/ variant once it exists, and the
+    # traversal order (hence next()'s pick) is Python-version-dependent.
+    en_file = next((docs_root / "dec" / "en").rglob("*.md"))
+    de_dir = docs_root / "dec" / "de" / en_file.parent.name
     de_dir.mkdir(parents=True)
     frontmatter = en_file.read_text(encoding="utf-8").split("---\n")[1]
     de_file = de_dir / en_file.name
@@ -329,10 +334,10 @@ class TestListDecLanguage(unittest.TestCase):
         reset_dec_cache()
         self.doc_id, self.en_file, self.de_file = _seed_en_and_de(self.docs_root)
 
-    def test_omitted_lists_only_the_flat_en_files(self):
-        """list_dec() must list exactly the EN (flat) documents -- a DE variant of the same id
-        never appears in the default listing (ACC-007 second half; the flat scan is non-recursive,
-        ACC-014)."""
+    def test_omitted_lists_only_the_en_files(self):
+        """list_dec() must list exactly the EN documents (the sharded ``en/`` listing) -- a DE
+        variant of the same id never appears in the default listing (ACC-007 second half; the EN
+        scan is re-rooted at ``docs/dec/en/`` and never sees a variant file, ACC-014)."""
         result = list_dec()
         self.assertEqual(result.total, 1)
         self.assertEqual(len(result.results), 1)
@@ -391,8 +396,9 @@ class TestListDecLanguage(unittest.TestCase):
         self.assertIn("no heading-mapping table", str(ctx.exception))
 
     def test_reconcile_covers_the_domain_wide_union(self):
-        """list_dec reconciles the cache against the domain-wide live listing (flat EN files plus
-        every {language} subdirectory's files), never just the scanned directory -- with a DE
+        """list_dec reconciles the cache against the domain-wide live listing (the sharded ``en/``
+        listing plus every {language} subdirectory's sharded listing), never just the scanned
+        directory -- with a DE
         variant present, reconciling a DE scan still carries the EN file, so the EN cache entries
         survive (DEC 38efdb66 item 9, behaviorally pinned at the call-argument level)."""
         import importlib
@@ -469,8 +475,9 @@ class TestParseDecLanguage(unittest.TestCase):
         assert not isinstance(result, DecDocument)
         self.assertFalse(result.valid)
 
-    def test_a_flat_en_path_parses_as_before(self):
-        """parse_dec on the flat EN file must parse exactly as before this feature."""
+    def test_an_en_path_parses_as_before(self):
+        """parse_dec on the EN file (sharded under ``docs/dec/en/``, feat-245) must parse exactly as
+        before this feature (the path-derived ``en`` maps to the canonical parse)."""
         result = parse_dec(str(self.en_file))
         self.assertIsInstance(result, DecDocument)
         assert isinstance(result, DecDocument)
@@ -502,9 +509,10 @@ class TestDecPathsLanguage(unittest.TestCase):
         reset_dec_cache()
         self.doc_id, self.en_file, self.de_file = _seed_en_and_de(self.docs_root)
 
-    def test_iter_dec_paths_is_flat_only_by_default(self):
-        """iter_dec_paths() (omitted language) yields only the flat EN files -- it never descends
-        into the {language} subfolder (ACC-014 unit pin at the domain level)."""
+    def test_iter_dec_paths_is_en_only_by_default(self):
+        """iter_dec_paths() (omitted language) yields only the EN files (the sharded ``en/``
+        listing) -- it never descends into the other {language} subfolders (ACC-014 unit pin at the
+        domain level)."""
         paths = list(iter_dec_paths())
         self.assertEqual(paths, [self.en_file])
 
@@ -514,20 +522,21 @@ class TestDecPathsLanguage(unittest.TestCase):
         self.assertEqual(paths, [self.de_file])
 
     def test_dec_base_dir_language(self):
-        """dec_base_dir() is the flat directory (as before); dec_base_dir('de') is the subfolder;
-        dec_base_dir('en') is the flat directory."""
-        self.assertEqual(dec_base_dir(), self.docs_root / "dec")
-        self.assertEqual(dec_base_dir("en"), self.docs_root / "dec")
+        """dec_base_dir() and dec_base_dir('en') both resolve the ``en/`` directory (feat-245: the
+        omitted language targets ``docs/dec/en/``, no flat special case); dec_base_dir('de') is the
+        de subfolder."""
+        self.assertEqual(dec_base_dir(), self.docs_root / "dec" / "en")
+        self.assertEqual(dec_base_dir("en"), self.docs_root / "dec" / "en")
         self.assertEqual(dec_base_dir("de"), self.docs_root / "dec" / "de")
 
     def test_find_dec_path_in_the_language_subdirectory(self):
         """find_dec_path must resolve the id against the language subdirectory exactly as it does
-        against the flat one (the id scan is language-agnostic once the base_dir is chosen)."""
+        against the EN one (the id scan is language-agnostic once the base_dir is chosen)."""
         self.assertEqual(find_dec_path(dec_base_dir("de"), self.doc_id), self.de_file)
         self.assertEqual(find_dec_path(dec_base_dir(), self.doc_id), self.en_file)
 
     def test_find_dec_path_does_not_cross_languages(self):
-        """An id absent from the scanned base_dir raises DecNotFoundError for both the flat scan and
+        """An id absent from the scanned base_dir raises DecNotFoundError for both the EN scan and
         the language-subdirectory scan (the id scan is confined to the given base_dir)."""
         with self.assertRaises(DecNotFoundError):
             find_dec_path(dec_base_dir(), "11111111-1111-1111-1111-111111111111")
@@ -653,8 +662,8 @@ class TestI18nVariantWithFurtherBlocks(unittest.TestCase):
         created = create_dec(self._EN_BODY_WITH_BLOCKS)
         assert created.id is not None
         self.doc_id = created.id
-        en_file = next((self.docs_root / "dec").glob("*.md"))
-        de_dir = self.docs_root / "dec" / "de"
+        en_file = next((self.docs_root / "dec" / "en").rglob("*.md"))  # EN dir scope (see _seed_en_and_de)
+        de_dir = self.docs_root / "dec" / "de" / en_file.parent.name
         de_dir.mkdir(parents=True)
         frontmatter = en_file.read_text(encoding="utf-8").split("---\n")[1]
         self.de_file = de_dir / en_file.name

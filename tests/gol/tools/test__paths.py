@@ -70,12 +70,12 @@ class TestGolBaseDir(unittest.TestCase):
         """Without SPECMGR_DOCS_DIR set, the default root's gol subdirectory is returned."""
         with mock.patch.dict(os.environ, {}, clear=False):
             os.environ.pop(DOCS_DIR_ENV_VAR, None)
-            self.assertEqual(gol_base_dir(), DEFAULT_DOCS_ROOT / GOL_TYPE_NAME)
+            self.assertEqual(gol_base_dir(), DEFAULT_DOCS_ROOT / GOL_TYPE_NAME / "en")
 
     def test_respects_env_var(self):
         """SPECMGR_DOCS_DIR, when set, overrides the default root."""
         with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/some-custom-docs-dir"}):
-            self.assertEqual(gol_base_dir(), Path("/tmp/some-custom-docs-dir/gol"))
+            self.assertEqual(gol_base_dir(), Path("/tmp/some-custom-docs-dir/gol/en"))
 
     def test_does_not_create_the_directory(self):
         """gol_base_dir must never create the directory as a side effect."""
@@ -96,7 +96,7 @@ class TestEnsureGolBaseDir(unittest.TestCase):
             with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(missing_root)}):
                 result = ensure_gol_base_dir()
             self.assertTrue(result.exists())
-            self.assertEqual(result, missing_root / GOL_TYPE_NAME)
+            self.assertEqual(result, missing_root / GOL_TYPE_NAME / "en")
 
 
 class TestIterGolPaths(unittest.TestCase):
@@ -114,9 +114,10 @@ class TestIterGolPaths(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: tmp}):
                 base = ensure_gol_base_dir()
-                (base / "b.md").write_text(_gol_text("b-id"), encoding="utf-8")
-                (base / "a.md").write_text(_gol_text("a-id"), encoding="utf-8")
-                (base / "not-markdown.txt").write_text("x", encoding="utf-8")
+                (base / "00").mkdir(parents=True)
+                (base / "00" / "b.md").write_text(_gol_text("b-id"), encoding="utf-8")
+                (base / "00" / "a.md").write_text(_gol_text("a-id"), encoding="utf-8")
+                (base / "00" / "not-markdown.txt").write_text("x", encoding="utf-8")
                 paths = list(iter_gol_paths())
             self.assertEqual([p.name for p in paths], ["a.md", "b.md"])
 
@@ -128,15 +129,17 @@ class TestFindGolPath(unittest.TestCase):
         """A file whose frontmatter.id matches must be returned."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            path = base / "target.md"
-            path.write_text(_gol_text("target-id"), encoding="utf-8")
-            self.assertEqual(find_gol_path(base, "target-id"), path)
+            (base / "ab").mkdir(parents=True)
+            path = base / "ab" / "target.md"
+            path.write_text(_gol_text("ab-target-id"), encoding="utf-8")
+            self.assertEqual(find_gol_path(base, "ab-target-id"), path)
 
     def test_raises_not_found_for_unknown_id(self):
         """An id with no matching file must raise GolNotFoundError with the standardized message."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "one.md").write_text(_gol_text("one-id"), encoding="utf-8")
+            (base / "0e").mkdir(parents=True)
+            (base / "0e" / "one.md").write_text(_gol_text("one-id"), encoding="utf-8")
             with self.assertRaises(GolNotFoundError) as ctx:
                 find_gol_path(base, "missing-id")
             message = str(ctx.exception)
@@ -149,10 +152,12 @@ class TestFindGolPath(unittest.TestCase):
         """A file that fails to parse must not prevent finding a different, valid id."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            (base / "broken.md").write_text("not a valid GOL file at all, no headings", encoding="utf-8")
-            good_path = base / "good.md"
-            good_path.write_text(_gol_text("good-id"), encoding="utf-8")
-            self.assertEqual(find_gol_path(base, "good-id"), good_path)
+            (base / "b0").mkdir(parents=True)
+            (base / "b0" / "broken.md").write_text("not a valid GOL file at all, no headings", encoding="utf-8")
+            (base / "cd").mkdir(parents=True)
+            good_path = base / "cd" / "good.md"
+            good_path.write_text(_gol_text("cd-good-id"), encoding="utf-8")
+            self.assertEqual(find_gol_path(base, "cd-good-id"), good_path)
 
 
 if __name__ == "__main__":

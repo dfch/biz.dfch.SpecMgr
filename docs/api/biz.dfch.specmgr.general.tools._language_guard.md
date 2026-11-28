@@ -14,7 +14,7 @@ runs, before any filesystem access and before dispatch:
    the shape guard (REQ-008/ACC-013), run for *every* ``type`` and every
    value, including the paths that end up rejecting the value anyway.
 2. The default language (``"en"``) always passes: it is the byte-identical,
-   flat, pre-i18n path for every domain.
+   pre-i18n path for every domain.
 3. A non-default language for a language-aware domain resolves its
    heading-mapping table (so a shape-valid code without a packaged table is
    an actionable ``ValueError`` before any filesystem access).

@@ -35,6 +35,7 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.models import LanguageListResult, ParseFailureResult
+from biz.dfch.specmgr.general.tools._doc_paths import doc_domain_base_dir
 from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS
 from biz.dfch.specmgr.general.tools._language_guard import LANGUAGE_AWARE_DOMAINS
 from biz.dfch.specmgr.general.tools.list_languages import list_languages
@@ -71,7 +72,7 @@ class TestListLanguagesAcc008(_TempDocsMixin):
         self.assertEqual(entry.language, "en")
         self.assertTrue(entry.parseable)
         self.assertIsNone(entry.error)
-        self.assertEqual(Path(entry.path), next(spec.base_dir().glob("*.md")).resolve())
+        self.assertEqual(Path(entry.path), next(spec.base_dir().rglob("*.md")).resolve())
 
     def test_en_and_de_variant_list_en_first_then_de(self):
         spec = SPECS_BY_NAME["dec"]
@@ -87,9 +88,10 @@ class TestListLanguagesAcc008(_TempDocsMixin):
     def test_other_languages_follow_en_sorted_by_code(self):
         spec = SPECS_BY_NAME["dec"]
         doc_id, en_file, de_file = self.seed(spec)
-        # the variants of `fr` and `bg` are placed by hand (no heading tables for them: listed, flagged)
+        # the variants of `fr` and `bg` are placed by hand in the shard directory (no heading tables
+        # for them: listed, flagged)
         for language in ("fr", "bg"):
-            target = spec.base_dir(language)
+            target = spec.base_dir(language) / de_file.parent.name
             target.mkdir(parents=True)
             shutil.copy(de_file, target / de_file.name)
 
@@ -97,6 +99,27 @@ class TestListLanguagesAcc008(_TempDocsMixin):
 
         self.assertEqual(result.languages, ["en", "bg", "de", "fr"])
         self.assertEqual([e.parseable for e in result.entries], [True, False, True, False])
+
+    def test_en_de_and_fr_list_each_language_exactly_once(self):
+        """Regression (feat-245 Phase 100 correction 2): in the uniform sharded layout
+        ``iter_language_dirs`` also yields the ``en/`` directory, so without the ``DEFAULT_LANGUAGE`` skip in
+        ``list_language_variants``' loop, EN appeared twice in the result (``["en", "de", "en"]``). An artifact
+        existing in EN + ``de`` + ``fr`` lists exactly ``["en", "de", "fr"]`` -- one entry per language, ``en``
+        first, no duplicate -- with the correct path in each language's own directory."""
+        spec = SPECS_BY_NAME["dec"]
+        doc_id, en_file, de_file = self.seed(spec)
+        fr_file = spec.base_dir("fr") / de_file.parent.name / de_file.name
+        fr_file.parent.mkdir(parents=True)
+        shutil.copy(de_file, fr_file)
+
+        result = list_languages("dec", doc_id)
+
+        self.assertEqual(result.languages, ["en", "de", "fr"])
+        self.assertEqual(len(result.entries), 3)
+        self.assertEqual([e.language for e in result.entries], ["en", "de", "fr"])
+        self.assertEqual(Path(result.entries[0].path), en_file.resolve())
+        self.assertEqual(Path(result.entries[1].path), de_file.resolve())
+        self.assertEqual(Path(result.entries[2].path), fr_file.resolve())
 
     def test_every_language_aware_domain_lists_en_and_de(self):
         for spec in SPECS:
@@ -177,7 +200,7 @@ class TestListLanguagesVariantStates(_TempDocsMixin):
     def test_table_less_language_directory_is_listed_and_flagged_with_the_table_error(self):
         spec = SPECS_BY_NAME["dec"]
         doc_id, _en_file, de_file = self.seed(spec)
-        target = spec.base_dir("fr")
+        target = spec.base_dir("fr") / de_file.parent.name
         target.mkdir(parents=True)
         shutil.copy(de_file, target / de_file.name)
 
@@ -218,7 +241,7 @@ class TestListLanguagesLayoutRules(_TempDocsMixin):
         spec = SPECS_BY_NAME["dec"]
         doc_id, en_file, de_file = self.seed(spec)
         for name in ("Notes", "de-DE", "DE", "deu"):
-            target = spec.base_dir() / name
+            target = doc_domain_base_dir("dec") / name
             target.mkdir()
             shutil.copy(de_file, target / de_file.name)
 
@@ -250,7 +273,7 @@ class TestListLanguagesLayoutRules(_TempDocsMixin):
     def test_a_language_directory_that_is_a_file_is_ignored(self):
         spec = SPECS_BY_NAME["dec"]
         created = spec.fn("create")(spec.en_body())
-        (spec.base_dir() / "de").write_text("not a directory", encoding="utf-8")
+        (doc_domain_base_dir("dec") / "de").write_text("not a directory", encoding="utf-8")
 
         self.assertEqual(list_languages("dec", created.id).languages, ["en"])
 
@@ -350,8 +373,8 @@ class TestListLanguagesReadOnly(_TempDocsMixin):
     def test_the_docs_tree_is_byte_and_mtime_identical_after_a_listing(self):
         spec = SPECS_BY_NAME["dec"]
         doc_id, _en_file, de_file = self.seed(spec)
-        (spec.base_dir("fr")).mkdir()
-        shutil.copy(de_file, spec.base_dir("fr") / de_file.name)
+        (spec.base_dir("fr") / de_file.parent.name).mkdir(parents=True)
+        shutil.copy(de_file, spec.base_dir("fr") / de_file.parent.name / de_file.name)
         before = snapshot(self.docs_root)
 
         list_languages("dec", doc_id)
@@ -390,7 +413,8 @@ class TestListLanguagesReadOnly(_TempDocsMixin):
 
 
 class TestListLanguagesDoesNotChangeTheEnOnlyScans(_TempDocsMixin):
-    """REQ-013: the EN-only consumers still see exactly the flat EN files after (and regardless of) a listing."""
+    """REQ-013: the EN-only consumers still see exactly the EN (sharded ``en/``) files after (and
+    regardless of) a listing."""
 
     def test_list_dec_en_is_unchanged_by_the_presence_of_variants_and_the_listing(self):
         spec = SPECS_BY_NAME["dec"]

@@ -69,7 +69,7 @@ from functools import partial
 from pathlib import Path
 
 from ...general.tools._doc_cache import DocCache
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ..models.v1 import DecDocument, parse_dec
 
 __all__ = ["invalidate_dec_cache", "read_dec", "reconcile_dec_cache", "reset_dec_cache"]
@@ -109,10 +109,10 @@ def read_dec(path: Path) -> DecDocument:
 
     **Language-aware (feat-197-i18n Phase 110).** The effective language is
     derived from the file's own position relative to the decision base
-    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
-    directly in the flat ``docs/dec/`` directory parses canonical/EN, a file
-    directly in ``docs/dec/{language}/`` parses in that language, anything
-    else canonical), never from a caller argument: the location *is* the
+    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file in the
+    ``docs/dec/en/`` directory parses canonical/EN, a file in
+    ``docs/dec/{language}/`` parses in that language, anything else
+    canonical), never from a caller argument: the location *is* the
     language encoding (DEC 38efdb66 item 1), so every consumer of this
     reader (``find_dec_path``'s scan, ``list_dec``'s rows, ``load_by_id``'s
     second read, the generic tools' own dec adapters) parses a variant file
@@ -137,9 +137,9 @@ def read_dec(path: Path) -> DecDocument:
     # so a module-level import back into it would be a circular import --
     # the same deferred-import discipline ``general.tools._path_safety``
     # applies to its own ``_domains`` import.
-    from ._paths import dec_base_dir  # pylint: disable=import-outside-toplevel
+    from ._paths import DEC_TYPE_NAME  # pylint: disable=import-outside-toplevel
 
-    language = language_for_doc_path(dec_base_dir(), path)
+    language = language_for_doc_path(doc_domain_base_dir(DEC_TYPE_NAME), path)
     result = _cache.read(path, partial(_parse, language=language))
     return result
 

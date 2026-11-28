@@ -80,23 +80,30 @@ class _DiagramUcTestBase(unittest.TestCase):
     def _seed_package_fixtures(self) -> None:
         """Seed the four committed package fixture documents (the healthy ones as ``<id>.md``, the
         broken one in the ``create_uc`` naming convention ``uc-<id>-<slug>.md`` so
-        ``find_parse_failure`` can classify an explicit request as existing-but-broken, not missing)."""
-        uc_dir = self.docs_root / "uc"
-        uc_dir.mkdir()
+        ``find_parse_failure`` can classify an explicit request as existing-but-broken, not
+        missing) -- each into its id's own shard under ``uc/en/`` (feat-245's uniform layout)."""
+        uc_dir = self.docs_root / "uc" / "en"
         for name, doc_id in (
             ("place-order.md", _PLACE),
             ("charge-card.md", _CHARGE),
             ("refund-order.md", _REFUND),
         ):
-            shutil.copy(_PACKAGE_FIXTURES / name, uc_dir / f"{doc_id}.md")
-        shutil.copy(_PACKAGE_FIXTURES / "broken.md", uc_dir / f"uc-{_BROKEN}-broken.md")
+            target = uc_dir / doc_id[:2] / f"{doc_id}.md"
+            target.parent.mkdir(parents=True)
+            shutil.copy(_PACKAGE_FIXTURES / name, target)
+        broken = uc_dir / _BROKEN[:2] / f"uc-{_BROKEN}-broken.md"
+        broken.parent.mkdir(parents=True)
+        shutil.copy(_PACKAGE_FIXTURES / "broken.md", broken)
 
     def _seed_example_only(self) -> None:
-        """Seed only the packaged example UC document (its own ``read_packaged_text`` content)."""
-        uc_dir = self.docs_root / "uc"
-        uc_dir.mkdir()
-        example_text = read_packaged_text("uc", "example")
-        (uc_dir / f"uc-{_EXAMPLE_ID}-buy-goods.md").write_text(example_text, encoding="utf-8")
+        """Seed only the packaged example UC document (its own ``read_packaged_text`` content),
+        placed in the two-hex shard ``00`` (feat-245): the legacy id ``uc-001`` has no hex prefix, and
+        the read scan lists two-hex shard dirs only (Phase 180, D4), so the document is resolved via
+        the full sharded-listing fallback."""
+        uc_dir = self.docs_root / "uc" / "en"
+        target = uc_dir / "00" / f"uc-{_EXAMPLE_ID}-buy-goods.md"
+        target.parent.mkdir(parents=True)
+        target.write_text(read_packaged_text("uc", "example"), encoding="utf-8")
 
     def _invoke(self, *args: str) -> "unittest.mock.MagicMock":
         """One ``specmgr diagram uc ...`` invocation (the full Typer app, like every CLI test)."""

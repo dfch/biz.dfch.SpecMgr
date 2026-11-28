@@ -57,7 +57,7 @@ class ReferenceRow(BaseModel):
         full ``feat-NNN-slug`` id or the bare ``feat-NNN`` number.
     title:
         The referenced document's ``# {title}`` H1, re-derived from the
-        resolved document on disk (``doc.body.text`` for the flat target
+        resolved document on disk (``doc.body.text`` for the single-file target
         domains, the ``feat`` H1 with its ``Feature: `` prefix stripped
         via ``feature_title``) -- or
         ``None`` if the reference could not be resolved (``error`` is

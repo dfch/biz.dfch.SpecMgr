@@ -50,7 +50,7 @@ _CAFE_ID = "cafebab0-1234-4567-89ab-cdef01234567"
 _BROKEN_REF = "broken"
 
 #: The ACC-002 known-UUID: a real id from this repo's own live corpus, read off
-#: ``docs/req/req-10b78b36-abad-4bfe-9281-f75677ff7d09-verification-case-record-document-management.md``.
+#: ``docs/req/en/10/10b78b36-abad-4bfe-9281-f75677ff7d09-verification-case-record-document-management.md``.
 _DOCS_REQ_ID = "10b78b36-abad-4bfe-9281-f75677ff7d09"
 
 #: The total healthy file count (and thus the unfiltered ``total`` minus the one broken file).
@@ -107,7 +107,9 @@ def _body_with_title(title: str) -> str:
 def _write_document(base_dir: Path, filename: str, doc_id: str, title: str) -> None:
     """Write one healthy fixture document (frontmatter carrying ``doc_id`` plus the titled body)."""
     content = _FRONTMATTER_TEMPLATE.format(id=doc_id) + _body_with_title(title)
-    (base_dir / filename).write_text(content, encoding="utf-8")
+    shard_dir = base_dir / "en" / doc_id[:2]
+    shard_dir.mkdir(parents=True, exist_ok=True)
+    (shard_dir / filename).write_text(content, encoding="utf-8")
 
 
 class TestListReqGlob(unittest.TestCase):
@@ -122,7 +124,9 @@ class TestListReqGlob(unittest.TestCase):
         for index, doc_id in enumerate(_DEAD_IDS, start=1):
             _write_document(base_dir, f"dead-{index}.md", doc_id, f"Glob Fixture {index}")
         _write_document(base_dir, "cafe.md", _CAFE_ID, "Glob Fixture Three")
-        (base_dir / f"{_BROKEN_REF}.md").write_text(_BROKEN_CONTENT, encoding="utf-8")
+        shard_dir = base_dir / "en" / "00"
+        shard_dir.mkdir(parents=True, exist_ok=True)
+        (shard_dir / f"{_BROKEN_REF}.md").write_text(_BROKEN_CONTENT, encoding="utf-8")
 
     def tearDown(self) -> None:
         cache_module.reset_req_cache()

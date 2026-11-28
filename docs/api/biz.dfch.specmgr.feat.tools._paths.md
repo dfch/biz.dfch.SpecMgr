@@ -3,9 +3,10 @@
 Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
 
 **Hand-rolled**, deliberately
-**not** built on the shared, flat-file ``general.tools._doc_paths`` --
-that module assumes one file per document directly under the base
-directory (``<base>/<type>-<uuid>-<slug>.md``); ``feat`` is folder-per-
+**not** built on the shared, sharded ``general.tools._doc_paths`` --
+that module assumes one ``.md`` file per document, sharded per language
+(``docs/<type>/<lang>/<id[:2]>/<uuid>-<slug>.md``, prefix-less file
+names); ``feat`` is folder-per-
 document instead (``<base>/<id>/README.md``, a fixed filename), and
 ``id`` is a chosen ``feat-NNN-slug`` string, not a server-generated UUID.
 See ``.specmgr/feat/feat-31-feature/README.md`` Design Notes
@@ -166,8 +167,9 @@ str
 Resolve the parse-failure for a ``feat`` id whose folder exists but is unparseable.
 
 The ``feat``-specific companion to
-:func:`general.tools._doc_paths.find_parse_failure`, for the flat-file
-domains' shared name-prefix scan. Since a ``feat`` id *is* the containing
+:func:`general.tools._doc_paths.find_parse_failure`, for the
+one-`.md`-per-document domains' shared name-prefix scan. Since a
+``feat`` id *is* the containing
 folder's own name (DEC 8cf940c5), there is no directory scan to fall back
 on: the target file is always ``<base_dir>/<id_>/README.md``. This helper
 checks that single path -- if it exists and the domain's own cache-backed
@@ -257,9 +259,10 @@ FeatNotFoundError
 Yield every ``<base_dir>/*/README.md`` path, sorted by folder name.
 
 Unlike every generic-``_doc_paths``-based domain's ``iter_*_paths``
-(which globs ``*.md`` directly under the base directory), this globs
-one level deeper -- ``*/README.md`` -- since ``feat`` is folder-per-
-document, not flat-file. Yields nothing (rather than raising) if
+(which yields a language directory's sharded ``*.md`` listing,
+``<base>/*/*.md``), this globs ``*/README.md`` under the base
+directory itself -- since ``feat`` is folder-per-document, not
+one-`.md`-per-document. Yields nothing (rather than raising) if
 ``base_dir`` does not exist.
 
 Parameters

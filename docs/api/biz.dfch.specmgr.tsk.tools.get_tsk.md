@@ -34,9 +34,9 @@ form.
 **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/5/6/7).**
 A 1:1 port of ``get_dec``'s ``language`` handling. The optional ``language``
 parameter (default ``"en"``) selects which on-disk variant of the id to
-read: omitted/``"en"`` = the flat ``docs/tsk/<id>.md`` document, exactly
-today's behavior; any other shape-validated ISO 639-1-shaped code (e.g.
-``"de"``) = the variant at ``docs/tsk/{language}/<id>.md`` (the EN source's
+read: omitted/``"en"`` = the sharded ``docs/tsk/en/<id[:2]>/`` document (the default
+language, ``en``); any other shape-validated ISO 639-1-shaped code (e.g.
+``"de"``) = the variant at ``docs/tsk/{language}/<id[:2]>/`` (the EN source's
 exact basename). The language is shape-guarded by
 :func:`biz.dfch.specmgr.general.tools._path_safety.assert_language` before
 any filesystem access (the same discipline as ``id``), and a shape-valid
@@ -91,9 +91,9 @@ numbered:
 language:
     The language variant to read (feat-197-i18n Phase 125, DEC
     38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
-    reads the flat ``docs/tsk/`` document -- today's exact behavior;
+    reads the sharded ``docs/tsk/en/`` document (the default language, ``en``);
     any other ISO 639-1-shaped lowercase two-letter code (e.g.
-    ``"de"``) reads the variant at ``docs/tsk/{language}/`` under the
+    ``"de"``) reads the variant at ``docs/tsk/{language}/<id[:2]>/`` under the
     EN source's exact basename. Shape-guarded before any filesystem
     access (like ``id``); a shape-valid code without a packaged
     heading-mapping table is rejected up front with the table

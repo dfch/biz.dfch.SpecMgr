@@ -120,7 +120,7 @@ class TempReqFsmDocsDirTestCase(unittest.TestCase):
 
     def _path_for(self, doc_id: str) -> Path:
         """The on-disk file of the req document with ``doc_id``."""
-        matches = list((self.docs_root / "req").glob("*.md"))
+        matches = list((self.docs_root / "req").rglob("*.md"))
         result = next(path for path in matches if doc_id in path.name)
         return result
 

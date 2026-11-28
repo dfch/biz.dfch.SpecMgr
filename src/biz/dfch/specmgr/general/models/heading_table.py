@@ -81,9 +81,11 @@ __all__ = [
 ]
 
 #: The default/primary document language (feat-197-i18n, DEC 38efdb66 items 1/6/7):
-#: English. The only language without a ``{language}`` subfolder (its documents live
-#: directly in the domain's flat base directory) and without a heading-mapping table
-#: (its headings are the canonical form itself).
+#: English. A normal ``{language}`` directory under the uniform sharded layout
+#: (feat-245-shard-docs refining DEC 38efdb66 item 1: its documents live at
+#: ``docs/<type>/en/<id[:2]>/<uuid>-<slug>.md``, like every other language's) and
+#: the one language without a heading-mapping table (its headings are the
+#: canonical form itself).
 DEFAULT_LANGUAGE = "en"
 
 #: The anchor package whose packaged data holds the per-language tables
@@ -230,7 +232,8 @@ def resolve_heading_table(language: str | None) -> dict[str, str] | None:
     language:
         The effective language of the parse: the tool's explicit
         ``language`` parameter, or the language a path-based parse derived
-        from the document's position (``None`` = flat/default).
+        from the document's position (``None`` = the omitted language,
+        which resolves to the ``en/`` sharded directory).
 
     Returns
     -------

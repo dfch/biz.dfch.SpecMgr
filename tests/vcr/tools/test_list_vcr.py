@@ -79,7 +79,8 @@ class TestListVcr(unittest.TestCase):
         second = create_vcr(_OTHER_BODY)
 
         base_dir = ensure_vcr_base_dir()
-        broken_path = base_dir / "broken.md"
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        broken_path = base_dir / "00" / "broken.md"
         broken_path.write_text("not a valid verification case record, no headings at all", encoding="utf-8")
 
         sut = list_vcr()
@@ -198,7 +199,8 @@ class TestListVcr(unittest.TestCase):
         for i in range(5):
             create_vcr(_body_with_title(f"Verification Case Number {i:02d}"))
         base_dir = ensure_vcr_base_dir()
-        (base_dir / "broken.md").write_text(
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        (base_dir / "00" / "broken.md").write_text(
             "not a valid verification case record, no headings at all", encoding="utf-8"
         )
 

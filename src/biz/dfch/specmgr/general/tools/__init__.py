@@ -40,7 +40,8 @@ generic, cross-domain hard-delete for the whole-body document types
 (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set),
 resolving the document by ``id``, taking the domain's own
 per-id lock, and removing it from disk (the single ``*.md`` file for the
-flat domains, the entire ``<base>/<id>/`` folder for ``feat``),
+one-`.md`-per-document domains, the entire ``<base>/<id>/`` folder for
+``feat``),
 returning the deleted path as a string. ``edit`` -- the generic,
 cross-domain surgical, exact-match string replacement of an existing
 document's frontmatter-stripped body for the whole-body document types

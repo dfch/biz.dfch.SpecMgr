@@ -44,7 +44,7 @@ seventh copies.
   text parser (``parse_text``) -- the same per-domain adapter shape
   ``general/tools/delete.py`` already imports at module level. ``feat``'s
   ``<base>/<id>/README.md`` folder shape is the one bespoke path iterator
-  (``iter_feat_paths``); every other domain uses the shared flat-file
+  (``iter_feat_paths``); every other domain uses the shared sharded
   ``iter_doc_paths``. ``parse_text`` (added feat-134 Phase 2, Task 2.1)
   backs the similarity engine's per-candidate parseability check -- a
   document is unparseable when its domain's own text parser raises on any
@@ -80,9 +80,9 @@ Attributes:
         one for every domain other than ``feat``, ``SPECMGR_FEAT_DIR``
         for ``feat``).
     iter_paths:
-        The domain's document path iterator: the shared flat-file
-        ``iter_doc_paths`` (every ``*.md`` directly under the base
-        directory, sorted) for every domain other than ``feat``,
+        The domain's document path iterator: the shared sharded
+        ``iter_doc_paths`` (the base directory's sharded ``*.md``
+        listing, sorted) for every domain other than ``feat``,
         ``iter_feat_paths`` (``<base>/<id>/README.md``, sorted by
         folder name) for ``feat`` -- the one bespoke,
         folder-per-document domain (DEC 8cf940c5).

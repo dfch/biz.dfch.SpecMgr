@@ -577,9 +577,10 @@ class TempListReferencesDirTestCase(unittest.TestCase):
             )
         )
 
-    def _flat_path(self, doc_type: str) -> Path:
-        """The single on-disk document file seeded for the flat domain ``doc_type``."""
-        matches = list((self.docs_root / doc_type).glob("*.md"))
+    def _doc_path(self, doc_type: str) -> Path:
+        """The single on-disk document file seeded for the domain ``doc_type`` (the sharded
+        ``<docs_root>/<doc_type>/<lang>/<shard>/`` file, feat-245's uniform layout)."""
+        matches = list((self.docs_root / doc_type).rglob("*.md"))
         self.assertEqual(len(matches), 1)
         result = matches[0]
         return result
@@ -621,7 +622,7 @@ class TestListReferencesResolved(TempListReferencesDirTestCase):
                 path = Path(row.path)
                 self.assertTrue(path.is_absolute())
                 self.assertTrue(path.exists())
-                self.assertEqual(path, self._flat_path(ref_type).resolve())
+                self.assertEqual(path, self._doc_path(ref_type).resolve())
 
 
 class TestListReferencesEmpty(TempListReferencesDirTestCase):
@@ -895,7 +896,7 @@ class TestListReferencesTxtSource(TempListReferencesDirTestCase):
         self.assertEqual((row.type, row.id), ("req", created_req.id))
         self.assertEqual(row.title, _REQ_TITLE)
         self.assertIsNone(row.error)
-        self.assertEqual(Path(row.path), self._flat_path("req").resolve())
+        self.assertEqual(Path(row.path), self._doc_path("req").resolve())
 
     def test_a_txt_source_with_a_txt_target_reference_returns_a_resolved_row(self) -> None:
         """REQ-009's first half: a txt source referencing another txt document by
@@ -916,8 +917,11 @@ class TestListReferencesTxtSource(TempListReferencesDirTestCase):
         self.assertEqual((row.type, row.id), ("txt", created_target.id))
         self.assertEqual(row.title, _TXT_TITLE)
         self.assertIsNone(row.error)
-        # Two txt documents share the temp base dir: the target is the file named after its own id.
-        target_path = next(path for path in (self.docs_root / "txt").glob("*.md") if created_target.id in path.name)
+        # Two txt documents share the temp base dir: the target is the file named after its own id
+        # (EN dir scope: a domain-dir rglob would also see a <lang>/ variant of the same id).
+        target_path = next(
+            path for path in (self.docs_root / "txt" / "en").rglob("*.md") if created_target.id in path.name
+        )
         self.assertEqual(Path(row.path), target_path.resolve())
 
 

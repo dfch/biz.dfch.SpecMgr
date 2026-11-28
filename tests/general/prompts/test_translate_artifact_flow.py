@@ -275,7 +275,7 @@ class TestTranslateFlowCreatesAVariant(_FreshDocsMixin):
                 created = spec.fn("create")(en_body)
                 assert not isinstance(created, ValidateResult), created
                 doc_id = created.id
-                en_file = next(spec.base_dir().glob("*.md"))
+                en_file = next(spec.base_dir().rglob("*.md"))
                 en_bytes = en_file.read_bytes()
 
                 self.assertEqual(_flow_probe(spec, doc_id), "create")
@@ -284,11 +284,11 @@ class TestTranslateFlowCreatesAVariant(_FreshDocsMixin):
                 # ACC-010: a new, schema-valid variant sharing the same id and the EN basename; EN untouched
                 assert not isinstance(variant, ValidateResult), variant
                 self.assertEqual(variant.id, doc_id)
-                de_file = spec.base_dir("de") / en_file.name
+                de_file = spec.base_dir("de") / en_file.relative_to(spec.base_dir())
                 self.assertTrue(de_file.is_file())
                 self.assertEqual(en_file.read_bytes(), en_bytes)
                 self.assertEqual(_flow_probe(spec, doc_id), "update")
-                self.assertEqual([p.name for p in spec.base_dir("de").glob("*.md")], [en_file.name])
+                self.assertEqual([p.name for p in spec.base_dir("de").rglob("*.md")], [en_file.name])
 
                 # the flow's verification step: a parsed document, not a failure result
                 parsed_de = spec.fn("get")(doc_id, language="de")
@@ -352,7 +352,7 @@ class TestTranslateFlowCreatesAVariant(_FreshDocsMixin):
         spec = _SPEC["dec"]
         created = create_dec(_DEC_EN)
         create_dec(_DEC_DE, language="de", id=created.id)
-        de_file = next(spec.base_dir("de").glob("*.md"))
+        de_file = next(spec.base_dir("de").rglob("*.md"))
         before = de_file.read_bytes()
 
         with self.assertRaises(FileExistsError):
@@ -368,13 +368,13 @@ class TestTranslateFlowCreatesAVariant(_FreshDocsMixin):
         with self.assertRaises(ValueError) as ctx:
             create_dec(_DEC_DE, language="fr", id=created.id)
         self.assertIn("no heading-mapping table", str(ctx.exception))
-        self.assertEqual(list(spec.base_dir("fr").glob("*.md")) if spec.base_dir("fr").exists() else [], [])
+        self.assertEqual(list(spec.base_dir("fr").rglob("*.md")) if spec.base_dir("fr").exists() else [], [])
 
     def test_the_flow_probe_reports_stop_for_an_unparseable_existing_variant(self):
         spec = _SPEC["dec"]
         created = create_dec(_DEC_EN)
         create_dec(_DEC_DE, language="de", id=created.id)
-        de_file = next(spec.base_dir("de").glob("*.md"))
+        de_file = next(spec.base_dir("de").rglob("*.md"))
         de_file.write_text(
             de_file.read_text(encoding="utf-8").replace("\nstatus: draft\n", "\nstatus: bogus\n"), encoding="utf-8"
         )
@@ -397,8 +397,8 @@ class TestTranslateFlowUpdatesAVariant(_FreshDocsMixin):
         created = spec.fn("create")(en_body)
         assert not isinstance(created, ValidateResult), created
         spec.fn("create")(de_body, language="de", id=created.id)
-        en_file = next(spec.base_dir().glob("*.md"))
-        return created.id, en_file, spec.base_dir("de") / en_file.name
+        en_file = next(spec.base_dir().rglob("*.md"))
+        return created.id, en_file, spec.base_dir("de") / en_file.relative_to(spec.base_dir())
 
     def test_whole_body_update_rewrites_only_the_variant(self):
         for domain, en_body, de_body in ((("dec", _DEC_EN, _DEC_DE)), ("vcr", _VCR_EN, _VCR_DE)):
@@ -417,7 +417,7 @@ class TestTranslateFlowUpdatesAVariant(_FreshDocsMixin):
                 self.assertEqual(spec.fn("get")(doc_id, raw=True, language="de").rstrip("\n"), revised.rstrip("\n"))
                 self.assertEqual(en_file.read_bytes(), en_bytes)  # the EN document, bytes and `updated`, is untouched
                 self.assertEqual(spec.fn("get")(doc_id, language="de").frontmatter.id, doc_id)
-                self.assertEqual([p.name for p in spec.base_dir("de").glob("*.md")], [en_file.name])
+                self.assertEqual([p.name for p in spec.base_dir("de").rglob("*.md")], [en_file.name])
                 self.assertEqual(_token_lines(domain, revised), _token_lines(domain, en_body))
 
     def test_surgical_edit_matches_the_translated_on_disk_text(self):
@@ -507,7 +507,7 @@ class TestTranslatingAClosedVocabularyTokenIsRejectedBySchema(_FreshDocsMixin):
                 self.assertFalse(rejected.valid)
                 self.assertEqual(len(rejected.errors), 1)
                 self.assertTrue(rejected.errors[0].message)
-                self.assertEqual(list(spec.base_dir("de").glob("*.md")) if spec.base_dir("de").exists() else [], [])
+                self.assertEqual(list(spec.base_dir("de").rglob("*.md")) if spec.base_dir("de").exists() else [], [])
 
                 accepted = spec.fn("create")(good, language="de", id=created.id)
                 self.assertNotIsInstance(accepted, ValidateResult, accepted)
@@ -522,7 +522,7 @@ class TestTranslatingAClosedVocabularyTokenIsRejectedBySchema(_FreshDocsMixin):
                 assert not isinstance(created, ValidateResult), created
                 good = spec.de_body()
                 spec.fn("create")(good, language="de", id=created.id)
-                de_file = next(spec.base_dir("de").glob("*.md"))
+                de_file = next(spec.base_dir("de").rglob("*.md"))
                 before = de_file.read_bytes()
 
                 rejected = update(type=domain, id=created.id, content=transform(good), language="de")

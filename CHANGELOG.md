@@ -101,8 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `numbered`/`language` + the non-raising `ParseFailureResult` channel,
   `get_set_example`, `get_set_template`, `get_set_schema`; 2 resources:
   `specmgr://set/example`/`specmgr://set/template`; 2 prompts:
-  `create_set`/`update_set`; schema at `set/models/v1/`; flat documents
-  `docs/set/set-{uuid}-{slug}.md`), the `set` entries in every generic
+  `create_set`/`update_set`; schema at `set/models/v1/`; documents in
+  the uniform sharded layout `docs/set/<lang>/<id[:2]>/<uuid>-<slug>.md`
+  of the BREAKING entry under Changed), the `set` entries in every generic
   tool's dispatch table (forced by their import-time asserts), and the
   self-triggering OpenCode skill `specmgr-set` as the host surface (no
   dedicated `/set` command). `set` is the 13th language-aware domain
@@ -156,6 +157,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (feat-263-delegation-prompts Phase 110, GitHub issue #263).
 
 ### Changed
+
+- **BREAKING**: the thirteen UUID whole-body domains (`req`, `uc`, `tsk`,
+  `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`, `set`)
+  now store every document in a uniform sharded layout for every
+  language, English included:
+  `docs/<type>/<language>/<id[:2]>/<id>-<slug>.md` (the shard named by
+  the first two hex digits of the id, 256 shards per language).
+  Pre-existing flat trees are invisible to every MCP read path until
+  moved under `<lang>/<shard>/` (no dual-layout compatibility, no
+  migration CLI); file names lose the `<type>-` prefix (DEC's
+  prefix-less `<uuid>-<slug>.md` convention extended to the other
+  twelve domains); `ref` values change from `<type>-<uuid>-<slug>` to
+  `<uuid>-<slug>` (`ref` stays opaque and is never an input to
+  `get_<d>`); and English moves from `docs/<type>/` into
+  `docs/<type>/en/`, retiring DEC
+  38efdb66-8025-45c5-bbe8-45b25fc7a772 item 1's flat-EN special case;
+  accordingly `specmgr://config` now reports each of the thirteen
+  sharded domains' `base_dir` ending in `/en` (the omitted-language
+  directory). Only a shard directory named by exactly two lowercase hex
+  digits is read: a file in any other directory (e.g. `en/zz/`) is as
+  invisible as a flat one.
+  The `specmgr lint` gate recognizes the sharded layout and fails with
+  exit 2 (naming the correct path, then the `git mv` command that moves
+  the file there; when a single directory is both a language code and
+  the file's own uuid prefix, e.g. `docs/req/de/deadbeef-...-x.md`, both
+  readings are named) on a file that misses the language
+  dir, misses the shard dir, carries a non-hex shard, or sits deeper
+  than one shard level; `specmgr lint --type T --dir D` classifies `D`
+  by its own content (a domain directory `D/<lang>/<shard>/` is swept in
+  every language, one language directory `D/<shard>/` in the language
+  its name gives) and exits 2 when `D` holds `.md` files but no document
+  in that layout; path mode also recognizes the sharded shape under
+  a docs root of any name (`specdocs/req/en/ab/x.md`, the parse language
+  taken from that position). The `docs` anchor (final rule, feat-245 Phase
+  210) is a pure function of the resolved path, the resolved working
+  directory, the path's repo roots (EVERY ancestor directory that holds a
+  `.git` entry, not only the nearest) and the configured docs root. One
+  precedence principle: the file's own nearest repo decides whether the
+  file is under a docs directory; an outer repo's docs directory may only
+  ADD placement gating for the UUID domains, never an unconditional
+  non-domain skip. (1) Anchoring directories, in order: the configured
+  docs root (`SPECMGR_DOCS_DIR`, whatever it is named, when it is not the
+  default `docs`) when the path lies under it; then the `docs` directory
+  of each root candidate -- the working directory, only when the path lies
+  under it and it is inside one of those repo roots, or no repo exists,
+  then every repo root, from the outermost inward -- when `docs` is the
+  FIRST segment of the path relative to the candidate. (2) An anchoring
+  directory is ROOTED unless a repo root lies at or inside it (the
+  directory is itself a repo root, or a repo is cloned or vendored into
+  it); the first rooted anchor wins, and an anchor that is not rooted is
+  taken only when no later anchoring directory gives a rooted one. (3)
+  When nothing anchors, the LAST `docs` segment anchors, un-rooted --
+  searched inside the outermost repo root, or over the whole path when no
+  repo exists. A registered UUID domain under ANY anchor is
+  placement-validated; a rooted anchor's non-domain skip is unconditional,
+  an un-rooted anchor's applies only when no other rule matches, and no
+  non-domain skip applies when `--type` is given. Consequences: a working
+  directory above every repo and a `docs`-named directory above the
+  outermost repo root never anchor; a `docs` tree that is itself a repo (a
+  submodule, or a spec repo whose root directory is named `docs`) and a
+  vendored repo's own `docs/` are placement-gated, and the feature READMEs
+  of such a repo are linted; a misplaced document under a configured docs
+  root of any name (`specdocs/req/x.md`) is a layout violation; a nested
+  project (`mono/.git`, docs at `mono/proj/docs/`) is placement-gated from
+  every working directory, but its non-domain `docs/<dir>/` files are
+  skipped unconditionally only when lint runs from inside the project --
+  from `mono/`, `proj/docs/archive/sop/README.md` is linted as `sop` (its
+  parent-name rule matches). Known limitations: (a) a symlinked `docs`
+  directory is judged by its resolved location, so placement under the
+  link is not gated by the `docs` rules (unreachable for the hook and CI:
+  git does not track files through a symlinked directory); (b) a repo
+  whose directory is named after a UUID domain inside an outer repo's
+  `docs` tree (`super/docs/req/.git`) has its files placement-validated by
+  the outer anchor -- run lint without the outer repo, or rename the
+  directory; (c) with no repo at all, nothing marks where the project
+  starts: a `docs`-named ancestor of the project can anchor, and from the
+  directory directly above such an ancestor the anchor is rooted, so the
+  non-domain files below it, feature READMEs included, are skipped. Id
+  resolution is shard-narrowed with a
+  per-language full-listing fallback, and the 76 in-repo documents
+  migrated in the same change (feat-245-shard-docs, GitHub issue #245).
 
 - The `specmgr harness-bundle` generator and its install protocol, refined
   by the feat-167-mcp-lifecycle-commands-2 Phase 170 fix phase (review

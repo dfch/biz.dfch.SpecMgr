@@ -33,12 +33,12 @@ surface as MCP tool errors to the caller.
 A 1:1 port of ``parse_dec``'s handling. This tool takes no ``language``
 parameter: it derives the effective language from the file's own position
 relative to the QA document base directory
-(``general.tools._doc_paths.language_for_doc_path``) -- a file directly in
-the flat ``docs/qa/`` directory parses canonical (no heading-mapping
-table), a file directly in a shape-validated ``docs/qa/{language}/``
-subdirectory parses with that language's table, and any other location
-(outside the base, a non-shape-validated subdirectory, a deeper nesting)
-parses canonical. A derived language without a table file therefore fails
+(``general.tools._doc_paths.language_for_doc_path``) -- a file in the
+``docs/qa/en/`` language directory parses canonical (no heading-mapping
+table), a file in a shape-validated ``docs/qa/{language}/`` language
+directory parses with that language's table, and any other location
+(outside the base, a non-shape-validated first subdirectory) parses
+canonical. A derived language without a table file therefore fails
 with the table loader's actionable ``ValueError`` (propagated, like every
 other caller-usage error -- the non-raising ``ValidateResult`` channel
 covers content-validation failures only).
@@ -49,13 +49,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...general.models import ValidateResult, ValidationErrorEntry
-from ...general.tools._doc_paths import language_for_doc_path
+from ...general.tools._doc_paths import doc_domain_base_dir, language_for_doc_path
 from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md._errors import wrap_tool_errors
 from ...models.md._markdown import snippet
 from ...server import mcp
 from ..models.v2 import QaDocument, parse_qa as _parse_qa
-from ._paths import qa_base_dir
+from ._paths import QA_TYPE_NAME
 
 
 @mcp.tool(
@@ -72,8 +72,8 @@ from ._paths import qa_base_dir
         "raises the `OSError`-family file-access error (`FileNotFoundError`/`PermissionError`/`OSError`) "
         "from `Path.read_text()`."
         " The file's language is derived from its path position relative to the QA document base "
-        "directory: a file in the flat docs/qa/ directory parses canonical (no heading-mapping table); "
-        "a file in a direct two-letter docs/qa/{language}/ subdirectory parses through that language's "
+        "directory: a file in the docs/qa/en/ language directory parses canonical (no heading-mapping table); "
+        "a file in a direct two-letter docs/qa/{language}/ language directory parses through that language's "
         "table (an actionable ValueError when no table exists for the language); any other location "
         "parses canonical."
     ),
@@ -110,9 +110,9 @@ def parse_qa(path: str) -> QaDocument | ValidateResult:
 
         The file's language is derived from this path's position relative to the
         QA document base directory (feat-197-i18n Phase 125, DEC 38efdb66 item 5):
-        flat ``docs/qa/`` = canonical (no table), a direct shape-validated
-        ``docs/qa/{language}/`` subdirectory = that language's table, any
-        other location = canonical.
+        the ``docs/qa/en/`` language directory = canonical (no table), a
+        direct shape-validated ``docs/qa/{language}/`` language directory =
+        that language's table, any other location = canonical.
 
     Returns
     -------
@@ -144,7 +144,7 @@ def parse_qa(path: str) -> QaDocument | ValidateResult:
     """
     doc_path = Path(path)
     text = doc_path.read_text(encoding="utf-8")
-    language = language_for_doc_path(qa_base_dir(), doc_path)
+    language = language_for_doc_path(doc_domain_base_dir(QA_TYPE_NAME), doc_path)
     try:
         with wrap_tool_errors(domain="qa", tool="parse_qa"):
             return _parse_qa(text, language=language)

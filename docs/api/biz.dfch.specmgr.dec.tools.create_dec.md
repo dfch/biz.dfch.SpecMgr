@@ -17,15 +17,15 @@ codebase.
 
 **Language variants (feat-197-i18n Phase 120, DEC 38efdb66 items 1/2/5/6).**
 ``create_dec`` gains two optional parameters, ``language`` (default
-``"en"``) and ``id``. With ``language`` omitted/``"en"`` the tool is
-byte-identical to before: it assigns a fresh id and writes the flat
-``docs/dec/dec-<id>-<slug>.md`` file (and ``id`` must not be given). With
+``"en"``) and ``id``. With ``language`` omitted/``"en"`` (the default language)
+the tool assigns a fresh id and writes the sharded
+``docs/dec/en/<id[:2]>/<uuid>-<slug>.md`` file (and ``id`` must not be given). With
 a non-default ``language`` the tool creates a *translation* of an existing
 decision: ``id`` -- the shared id of the EN source document (REQ-003, the
 id is never language-qualified and is never freshly assigned for a
 variant) -- is then **required**, the EN source must already exist on disk
 (DEC 38efdb66 item 2: the EN slug is the single filename authority), and the
-variant is written to ``docs/dec/{language}/`` under the EN source's exact
+variant is written to ``docs/dec/{language}/<id[:2]>/`` under the EN source's exact
 basename with the shared id as its frontmatter ``id`` (fresh
 ``created``/``updated``, ``status="draft"`` as on every create). The
 body is validated through the variant's heading-mapping table
@@ -39,8 +39,8 @@ language is never overwritten (``FileExistsError``).
 
 Create the ``language`` variant of the existing EN decision ``id_`` (DEC 38efdb66 item 2).
 
-Resolves the EN source's path (the flat directory's id-scan), reuses its
-exact basename inside ``docs/dec/{language}/``, and writes the
+Resolves the EN source's path (the ``en/`` directory's shard-narrowed id-scan), reuses its
+exact basename inside ``docs/dec/{language}/<id[:2]>/``, and writes the
 already-validated ``content`` byte-for-byte with a frontmatter carrying
 the shared id (REQ-003). Runs under the variant's own per-language lock
 so the existence guard and the write are atomic with respect to every
@@ -65,7 +65,7 @@ Raises
 DecNotFoundError
     No EN source document with ``id_`` exists.
 FileExistsError
-    The variant file already exists.
+    The variant already exists, in any shard of the language directory (guarded by id).
 
 
 ### `create_dec(content: 'str', language: 'str' = 'en', id: 'str | None' = None) -> 'DecFrontmatter | ValidateResult'`
@@ -104,7 +104,7 @@ decision rather than a new decision -- see the module docstring: the
 shared ``id`` of the EN source is a required argument (the variant's
 frontmatter ``id`` is that same id, never a fresh one, REQ-003), the EN
 source must exist, and the variant is written to
-``docs/dec/{language}/`` under the EN source's exact basename
+``docs/dec/{language}/<id[:2]>/`` under the EN source's exact basename
 (DEC 38efdb66 item 2). ``content`` is validated through the variant's
 heading-mapping table, and the existing-variant guard
 (``FileExistsError``) runs under the variant's own per-language lock.
@@ -117,10 +117,10 @@ content:
     headings may be translated per that language's table).
 language:
     The language to create the document in: ``"en"`` (the default)
-    creates a new, flat ``docs/dec/`` document with a freshly assigned
-    id -- today's exact behavior; any other ISO 639-1-shaped lowercase
+    creates a new, sharded ``docs/dec/en/<id[:2]>/<uuid>-<slug>.md`` document with a freshly assigned
+    id (the default language, ``en``); any other ISO 639-1-shaped lowercase
     two-letter code (e.g. ``"de"``) creates a translation variant of
-    an existing EN document in ``docs/dec/{language}/``. Shape-guarded
+    an existing EN document in ``docs/dec/{language}/<id[:2]>/``. Shape-guarded
     (and its heading-mapping table resolved) before any filesystem
     access.
 id:

@@ -23,12 +23,12 @@ free function of the same name -- see the feature README's Decisions Made.
 A 1:1 port of ``parse_dec``'s handling. This tool takes no ``language``
 parameter: it derives the effective language from the file's own position
 relative to the task list base directory
-(``general.tools._doc_paths.language_for_doc_path``) -- a file directly in
-the flat ``docs/tsk/`` directory parses canonical (no heading-mapping
-table), a file directly in a shape-validated ``docs/tsk/{language}/``
-subdirectory parses with that language's table, and any other location
-(outside the base, a non-shape-validated subdirectory, a deeper nesting)
-parses canonical. A derived language without a table file therefore fails
+(``general.tools._doc_paths.language_for_doc_path``) -- a file in the
+``docs/tsk/en/`` language directory parses canonical (no heading-mapping
+table), a file in a shape-validated ``docs/tsk/{language}/`` language
+directory parses with that language's table, and any other location
+(outside the base, a non-shape-validated first subdirectory) parses
+canonical. A derived language without a table file therefore fails
 with the table loader's actionable ``ValueError`` (propagated, like every
 other caller-usage error -- the non-raising ``ValidateResult`` channel
 covers content-validation failures only).
@@ -70,9 +70,9 @@ path:
 
     The file's language is derived from this path's position relative to the
     task list base directory (feat-197-i18n Phase 125, DEC 38efdb66 item 5):
-    flat ``docs/tsk/`` = canonical (no table), a direct shape-validated
-    ``docs/tsk/{language}/`` subdirectory = that language's table, any
-    other location = canonical.
+    the ``docs/tsk/en/`` language directory = canonical (no table), a
+    direct shape-validated ``docs/tsk/{language}/`` language directory =
+    that language's table, any other location = canonical.
 
 Returns
 -------

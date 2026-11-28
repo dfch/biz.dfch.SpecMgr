@@ -50,6 +50,7 @@ from pathlib import Path
 from ...general.tools._doc_paths import (
     DocNotFoundError,
     doc_base_dir,
+    doc_domain_base_dir,
     ensure_doc_base_dir,
     find_doc_path_by_id,
     iter_doc_paths,
@@ -87,10 +88,12 @@ def req_base_dir(language: str | None = None) -> Path:
     Thin wrapper over ``general.tools._doc_paths.doc_base_dir(REQ_TYPE_NAME)``
     -- see that function's own docstring for the env var/default it reads.
 
-    The optional ``language`` (feat-197-i18n Phase 125) selects the flat-vs-subdirectory
-    resolution: ``None``/omitted or ``"en"`` = the flat ``docs/req/`` directory exactly
-    as before; any other shape-validated code = its ``docs/req/{language}/``
-    subdirectory.
+    The optional ``language`` (feat-197-i18n Phase 125; reworked to the
+    uniform per-language layout by feat-245 Phase 100) selects the
+    language's own directory: every language -- ``None``/omitted or
+    ``"en"`` included -- resolves to ``docs/req/{language}/`` (the omitted
+    language targets the ``en/`` directory; the flat-EN location is
+    retired, DEC 38efdb66 item 1 refined).
 
     Parameters
     ----------
@@ -113,8 +116,10 @@ def ensure_req_base_dir(language: str | None = None) -> Path:
     Only ``create_req`` (Task 3.12) should call this -- every other
     tool/resource uses the read-only :func:`req_base_dir` instead.
 
-    The optional ``language`` parameter selects the same flat-vs-subdirectory resolution as
-    :func:`req_base_dir` (feat-197-i18n Phase 125) before the directory is created.
+    The optional ``language`` parameter selects the same per-language
+    ``docs/req/{language}/`` resolution as :func:`req_base_dir` (feat-245
+    Phase 100, refining feat-197-i18n Phase 125) before the directory is
+    created.
 
     Parameters
     ----------
@@ -136,10 +141,13 @@ def iter_req_paths(language: str | None = None) -> Iterator[Path]:
 
     Yields nothing (rather than raising) if the base directory does not exist.
 
-    The optional ``language`` (feat-197-i18n Phase 125) selects the scanned directory:
-    ``None``/omitted or ``"en"`` = the flat ``docs/req/`` directory (exactly today's
-    listing); any other shape-validated code = its ``docs/req/{language}/``
-    subdirectory (non-recursive; never descends further).
+    The optional ``language`` (feat-197-i18n Phase 125; reworked by
+    feat-245 Phase 100) selects the scanned language directory: every
+    language -- ``None``/omitted or ``"en"`` included -- yields that
+    language's own ``docs/req/{language}/`` sharded listing (every
+    ``*.md`` file exactly one shard subdirectory below it, sorted by
+    relative path; a flat file and any deeper nesting are excluded,
+    REQ-003).
 
     Parameters
     ----------
@@ -172,20 +180,18 @@ def _reconcile_req_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=
     longer covers the whole domain -- reconciling against ``scan_paths``
     alone would evict every other language's cached entries -- so this
     wrapper instead hands :func:`~._cache.reconcile_req_cache` the
-    domain-wide union (the flat EN files plus every file in every
-    shape-valid ``{language}`` subdirectory,
+    domain-wide union (the sharded listing of every language directory --
+    ``en/`` plus every shape-valid ``{language}/`` subdirectory,
     ``general.tools._doc_paths.iter_doc_paths_all_languages``).
     ``scan_paths`` is intentionally unused: the union is a superset of it.
-    With no language subdirectory present the union is the scanned listing
-    itself (the pre-i18n behavior, byte-identical).
     """
-    reconcile_req_cache(list(iter_doc_paths_all_languages(req_base_dir())))
+    reconcile_req_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(REQ_TYPE_NAME))))
 
 
 def find_req_path(base_dir: Path, id_: str) -> Path:
     """Resolve an ``id`` to its on-disk file path under ``base_dir``.
 
-    Scans every ``*.md`` file under ``base_dir``, reading each through the
+    Scans the sharded ``*.md`` listing of ``base_dir``, reading each through the
     cache-backed :func:`~._cache.read_req` (feat-107-doc-cache Phase 3) and
     comparing ``frontmatter.id`` against ``id_`` -- a file whose on-disk
     content hash is unchanged since its last read is not re-parsed. A file
@@ -201,8 +207,9 @@ def find_req_path(base_dir: Path, id_: str) -> Path:
     Parameters
     ----------
     base_dir:
-        The directory to scan for ``*.md`` files (the flat EN directory,
-        or one ``{language}`` subdirectory).
+        The language's own directory to scan for its sharded ``*.md``
+        listing (e.g. ``docs/req/en`` for English, or one
+        ``docs/req/{language}/`` variant directory).
     id_:
         The id to look up.
 

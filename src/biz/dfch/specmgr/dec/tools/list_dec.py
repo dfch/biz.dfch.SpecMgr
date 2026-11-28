@@ -52,9 +52,9 @@ result).
 
 **Language variants (feat-197-i18n Phase 110, DEC 38efdb66 items 1/6/7).**
 The optional ``language`` parameter (default ``"en"``) selects which
-directory this tool scans: omitted/``"en"`` = the flat ``docs/dec/``
-directory -- today's exact behavior; any other shape-validated code (e.g.
-``"de"``) = only the ``docs/dec/{language}/`` subdirectory, listing
+directory this tool scans: omitted/``"en"`` = the ``docs/dec/en/``
+sharded directory (the default language, ``en``); any other shape-validated code (e.g.
+``"de"``) = only the ``docs/dec/{language}/`` sharded directory, listing
 exactly the existing variants of that language (ACC-007). There is
 deliberately NO "all languages" mode (the ``DocSummary`` row shape carries
 no language column and would repeat ids). The language is shape-guarded
@@ -71,7 +71,7 @@ from pathlib import Path
 
 from ...general.models import PagedResult
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._doc_paths import iter_doc_paths_all_languages
+from ...general.tools._doc_paths import doc_domain_base_dir, iter_doc_paths_all_languages
 from ...general.tools._listing import build_summaries, default_failed_summary, filter_summaries_by_glob
 from ...general.tools._paging import normalize_paging, paginate
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language
@@ -79,7 +79,7 @@ from ...server import mcp
 from ..models.v1 import DecDocument, DecSummary
 from ._cache import reconcile_dec_cache
 from ._io import read_dec
-from ._paths import dec_base_dir, iter_dec_paths
+from ._paths import DEC_TYPE_NAME, iter_dec_paths
 
 
 def _to_summary(doc: DecDocument, path: Path) -> DecSummary:
@@ -107,8 +107,8 @@ def _to_failed_summary(path: Path, error: Exception) -> DecSummary:
         "extensionless identifier -- not a filename to read from disk -- for documents that "
         "have no assigned id; use it with the get_dec tool instead. "
         "The optional `language` parameter (default 'en') selects the directory scanned: omitted/'en' "
-        "= the flat docs/dec/ directory (the default behavior, unchanged); any other ISO 639-1-shaped "
-        "lowercase two-letter code (e.g. 'de') = only that language's docs/dec/{language}/ subdirectory, "
+        "= the docs/dec/en/ sharded directory (the default language, en); any other ISO 639-1-shaped "
+        "lowercase two-letter code (e.g. 'de') = only that language's docs/dec/{language}/ sharded directory, "
         "listing exactly the existing variants of that language (there is deliberately no "
         "'all languages' mode). The language is shape-validated before any file access (an "
         "invalid-shaped value is a ValueError, like an invalid id), and a shape-valid language without "
@@ -169,7 +169,7 @@ def list_dec(
     language:
         The language whose directory to list (feat-197-i18n Phase 110, DEC
         38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
-        scans the flat ``docs/dec/`` directory -- today's exact behavior;
+        scans the ``docs/dec/en/`` sharded directory (the default language, ``en``);
         any other ISO 639-1-shaped lowercase two-letter code (e.g.
         ``"de"``) scans only ``docs/dec/{language}/``, listing exactly the
         existing variants of that language (ACC-007). There is deliberately
@@ -205,11 +205,10 @@ def list_dec(
     # feat-107-doc-cache Phase 4, REQ-005 -- and feat-197-i18n Phase 110 (DEC 38efdb66
     # item 9): with {language} subfolders, a scan of one language's directory no
     # longer covers the whole domain, so reconcile against the domain-wide live
-    # listing (flat EN files plus every {language} subdirectory's files), never
-    # just the scanned directory -- or listing one language would evict the
-    # other languages' cached entries. With no subdirectory present the union
-    # is the scanned listing itself (the pre-i18n behavior, byte-identical).
-    reconcile_dec_cache(list(iter_doc_paths_all_languages(dec_base_dir())))
+    # listing (the union of the sharded listings of en/ plus every {language}
+    # subdirectory), never just the scanned directory -- or listing one language
+    # would evict the other languages' cached entries.
+    reconcile_dec_cache(list(iter_doc_paths_all_languages(doc_domain_base_dir(DEC_TYPE_NAME))))
     summaries, error_count = build_summaries(paths, read_dec, _to_summary, _to_failed_summary)
 
     # feat-200-list, Task 110.100 (REQ-002/REQ-003): the id-glob filter runs between the row build

@@ -36,9 +36,9 @@ result).
 **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/6/7).**
 A 1:1 port of ``list_dec``'s ``language`` handling. The optional
 ``language`` parameter (default ``"en"``) selects which directory this tool
-scans: omitted/``"en"`` = the flat ``docs/sop/`` directory -- today's exact
-behavior; any other shape-validated code (e.g. ``"de"``) = only the
-``docs/sop/{language}/`` subdirectory, listing exactly the existing
+scans: omitted/``"en"`` = the ``docs/sop/en/`` sharded directory (the default language,
+``en``); any other shape-validated code (e.g. ``"de"``) = only the
+``docs/sop/{language}/`` sharded directory, listing exactly the existing
 variants of that language (ACC-007). There is deliberately NO "all
 languages" mode (the ``DocSummary`` row shape carries no language column
 and would repeat ids). The language is shape-guarded before any filesystem
@@ -100,7 +100,7 @@ glob:
 language:
     The language whose directory to list (feat-197-i18n Phase 125, DEC
     38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
-    scans the flat ``docs/sop/`` directory -- today's exact behavior;
+    scans the ``docs/sop/en/`` sharded directory (the default language, ``en``);
     any other ISO 639-1-shaped lowercase two-letter code (e.g.
     ``"de"``) scans only ``docs/sop/{language}/``, listing exactly the
     existing variants of that language (ACC-007). There is deliberately

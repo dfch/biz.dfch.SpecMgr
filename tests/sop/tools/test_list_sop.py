@@ -75,7 +75,8 @@ class TestListSop(unittest.TestCase):
         second = create_sop(_OTHER_BODY)
 
         base_dir = ensure_sop_base_dir()
-        broken_path = base_dir / "broken.md"
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        broken_path = base_dir / "00" / "broken.md"
         broken_path.write_text("not a valid SOP, no headings at all", encoding="utf-8")
 
         sut = list_sop()
@@ -196,7 +197,8 @@ class TestListSop(unittest.TestCase):
         for i in range(5):
             create_sop(_body_with_title(f"Procedure Number {i:02d}"))
         base_dir = ensure_sop_base_dir()
-        (base_dir / "broken.md").write_text("not a valid SOP, no headings at all", encoding="utf-8")
+        (base_dir / "00").mkdir(parents=True, exist_ok=True)
+        (base_dir / "00" / "broken.md").write_text("not a valid SOP, no headings at all", encoding="utf-8")
 
         sut = list_sop(max_results=1, offset=1)
 

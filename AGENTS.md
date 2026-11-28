@@ -468,10 +468,10 @@ type or cross-cutting:
   (DEC 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen
   `feat-NNN-slug` — the containing folder's own name, not a
   server-generated UUID — and documents live one-per-folder as
-  `<base>/<id>/README.md` (a fixed filename), not flat files directly
-   under the base directory. This bespoke, folder-per-document addressing
-   is hand-rolled in `feat/tools/_paths.py`, **not** built on the shared
-   flat-file
+  `<base>/<id>/README.md` (a fixed filename), not one `.md` file per
+  document like every other whole-body domain (sharded per language). This
+  bespoke, folder-per-document addressing is hand-rolled in
+  `feat/tools/_paths.py`, **not** built on the shared one-`.md`-per-document
   `general/tools/_doc_paths.py` every other whole-body domain uses;
   `SPECMGR_FEAT_DIR` overrides the base directory (mandatory-in-spirit
   test-isolation env var, same as every other domain's own equivalent).
@@ -746,8 +746,9 @@ type or cross-cutting:
   `list_txt` for a near-duplicate; `update_txt` names the generic
   `update`/`edit`/`set_status`/`set_classification` tools with
   `type="txt"`). Its schema lives at `txt/models/v1/`, inside the domain
-  package, not top-level `models/`. Documents live flat under the shared
-  docs root as `docs/txt/txt-{uuid}-{slug}.md` (the shared
+  package, not top-level `models/`. Documents live sharded under the shared
+  docs root as `docs/txt/<lang>/<id[:2]>/<uuid>-<slug>.md` (`en` a normal
+  language dir — feat-245-shard-docs; the shared
   `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
   `SPECMGR_TXT_DIR`). `txt` is one of the thirteen language-aware domains
   (feat-197-i18n, see its paragraph below): `get_txt`/`list_txt`/`create_txt`
@@ -812,8 +813,9 @@ type or cross-cutting:
   duplicate-guard precedent); no `## Owner`, no `## Source`, no `## Tags`,
   no other section (the engine's trailing-completeness error rejects any
   further H2). Its schema lives at `set/models/v1/`, inside the domain
-  package, not top-level `models/`. Documents live flat under the shared
-  docs root as `docs/set/set-{uuid}-{slug}.md` (the shared
+  package, not top-level `models/`. Documents live sharded under the shared
+  docs root as `docs/set/<lang>/<id[:2]>/<uuid>-<slug>.md` (`en` a normal
+  language dir — feat-245-shard-docs; the shared
   `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
   `SPECMGR_SET_DIR`). `set` is one of the thirteen language-aware domains
   (feat-197-i18n, see its paragraph below): `get_set`/`list_set`/
@@ -928,7 +930,11 @@ type or cross-cutting:
      domains implements a `delete` adapter in that one tool (a future domain
     adds its own adapter there, never a per-domain `delete_<d>` tool),
     resolving by `id`, taking the domain's own lock, and returning the
-    deleted path; `validate`, the generic, disk-free/id-free dry-run
+    deleted path (an emptied shard or language directory is left in place —
+    expected and harmless: git does not track empty directories, every read
+    path treats it as no files, and pruning would race a concurrent
+    `create_<d>` of a different id in the same shard, the locks being per id,
+    not per shard; feat-245 Phase 180); `validate`, the generic, disk-free/id-free dry-run
      content validator for the same whole-body domains (`type` is one of
      req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set) — replacing
      the former per-domain `validate_<d>` tools
@@ -1411,13 +1417,15 @@ unchanged; only the startup orchestration moved.
 added first-class **multi-language variants of the same artifact** for the
 **thirteen** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
 `rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`/`set` (`general/tools/_language_guard.
-LANGUAGE_AWARE_DOMAINS`, derived from the shared domain registry). English is
-the default and keeps its exact, unchanged location; every other language is
-a `docs/{type}/{language}/` subfolder holding the variant under the EN
-source's **exact basename** (the slug always derives from the EN title, never
-a translated one), with the **same `id`** and the identical frontmatter/body
-schema — the language lives in the file's location only, there is no
-`language` frontmatter field. **`feat` is permanently excluded**
+LANGUAGE_AWARE_DOMAINS`, derived from the shared domain registry). Every
+language — English included — is a sharded `docs/{type}/{language}/<id[:2]>/`
+directory (feat-245-shard-docs, refining this DEC's item 1: the flat-EN
+special case is retired, the uniform layout holds for every language)
+holding the variant under the EN source's **exact basename** in its own
+shard dir (the slug always derives from the EN title, never a translated
+one), with the **same `id`** and the identical frontmatter/body schema — the
+language lives in the file's location only, there is no `language`
+frontmatter field. **`feat` is permanently excluded**
 (REQ-002, ACC-002): no `feat` tool, resource or prompt
 has a `language` parameter, no `{language}` path convention reaches `feat`'s
 folder-per-document addressing, and a `language` that
@@ -1494,10 +1502,13 @@ permanent "`feat` documents are always English" wording
   (`.opencode/skill/`, `.opencode/command/`).
 - **EN-only consumers (REQ-013, ACC-014)** — `find_related`/
   `find_similar_text`/`list_references`/`get_reference_diagram(_all)` gained
-  nothing and never see a variant: `iter_doc_paths` is a non-recursive
-  `*.md` glob that does not descend into `{language}` subfolders, so every
-  hit and every resolved reference is the EN path by directory layout alone.
-  Never switch it to a recursive glob —
+  nothing and never see a variant: under the uniform sharded layout
+  (feat-245) `iter_doc_paths` is the per-language shard listing
+  (`<lang-dir>/<2-hex>/*.md`), and the EN-only consumers call it rooted at
+  the `en/` directory (the omitted-language base resolves to `en/`, never the
+  domain root), so every hit and every resolved reference is the EN path by
+  directory layout alone. Never root an EN-only scan at the domain directory
+  or switch it to the all-languages union —
   `tests/general/tools/test_i18n_en_only_consumers.py` fails if you do.
 
 The tests: `tests/general/tools/test_i18n_all_domains.py` (all thirteen domains),
@@ -1642,9 +1653,13 @@ locally
 instead of failing later in CI. The local `specmgr lint` hook (feat-218)
 lints the staged in-tree spec artifacts (the feature README.md files under
 `.specmgr/feat/` and the documents under `docs/{type}/`, selected by the
-anchored pattern `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$`)
-with the `specmgr lint` full-parse gate, and is placed ahead of the `pytest`
-hook. It is the config's first `pass_filenames: true` hook (every other
+anchored pattern `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/.+\.md)$` —
+an open-depth docs match so misplaced depths are selected for the placement
+validator and non-domain dirs are selected and then skipped) with the
+`specmgr lint` full-parse gate, plus the sharded-layout placement check
+(missing language dir, missing shard dir, non-hex shard, or deeper than one
+shard level is a blocking layout violation — exit 2, naming the correct
+path), and is placed ahead of the `pytest` hook. It is the config's first `pass_filenames: true` hook (every other
 local hook takes no file list) and runs with `require_serial: true`, so the
 staged files are linted by one process with one ordered summary (a staged
 list longer than the OS argument-length limit is still split into sequential
@@ -1737,29 +1752,99 @@ extras onto every consumer of the base library.
   unparseable document (path + parse error), each followed by its per-type
   repair pointer (whole-body domains `/repair {type} {id}`, the id derived
   from the path — the folder name for feat, the file-name UUID for the
-   others — falling back to `/repair {type}`), plus one summary
-   (`linted`/`failed`/`skipped`). Three scopes, so the cost
+  others — falling back to `/repair {type}`), plus — for a misplaced
+  docs-domain file (missing language dir, missing shard dir, non-hex
+  shard, or deeper than one shard level) — a blocking layout violation
+  (exit 2, naming the correct path, then the move instruction
+  `move it: git mv <path> <correct path>` instead of a `/repair` pointer;
+  both readings are named when a single directory is both a language code
+  and the file's own uuid prefix, e.g. `docs/req/de/deadbeef-...-x.md`;
+  the file is never parsed), plus one
+  summary (`linted`/`failed`/`skipped`/`layout`). Three scopes, so the cost
   scales with the size of a change and never with the size of the corpus:
-  path mode (the type is inferred from the path layout alone — the
+  path mode (the type is inferred from the path layout alone, four rules in
+  order — the docs-anchored sharded shape `docs/<type>/<lang>/<2-hex>/<file>.md`,
+  the root-name-independent sharded shape `<type>/<lang>/<2-hex>/<file>.md`
+  under a docs root of any name (`specdocs/req/en/ab/x.md`, the parse
+  language derived from that same position, feat-245 Phase 180), the
   containing directory named after a type, or the `feat/{id}/README.md`
-  shape — with the `--type` override and `--skip-unrecognized`; used by
-  the `specmgr-lint` pre-commit hook over the staged in-tree artifacts and
-  by the CI pull-request step over the artifacts changed against the base
-  branch), and the `--type T` sweep (from `--dir` if given, else the
-  domain's registered base directory) and the `--all` sweep — both
-   CLI-only, never on the commit path or in the test suite. Exit codes:
-   **0** every document parsed (incl. a run where every path was skipped),
-  **1** at least one document failed to parse or the `mcp` extra is
-  missing (required, like `specmgr diagram`; the decoupling is tracked as
-  issue #238), **2** usage-or-resolution error (no paths and no sweep
-  flag, an unreadable or missing path, an unrecognized layout without
-  `--skip-unrecognized`, `--dir` without `--type` or combined with explicit
-   paths, paths combined with `--all`, an unknown `--type`, `--all`
-    discovering nothing at all -- no document). Accepted
-   limitation: because the gate is change-scoped, a schema or parser change
-   can break untouched documents without failing any gate — the full sweep
-   (manual, or the follow-up nightly workflow whose issue owns the
-   limitation) finds them.
+  shape — with the `--type` override and `--skip-unrecognized`. The `docs`
+  anchor (final rule, feat-245 Phase 210) is a pure function of the resolved
+  path, the resolved working directory, the path's repo roots (EVERY ancestor
+  directory that holds a `.git` entry, not only the nearest) and the
+  configured docs root. One precedence principle: the file's own nearest repo
+  decides whether the file is under a docs directory; an outer repo's docs
+  directory may only ADD placement gating for the UUID domains, never an
+  unconditional non-domain skip. (1) Anchoring directories, in order: the
+  configured docs root (`SPECMGR_DOCS_DIR`, whatever it is named, when it is
+  not the default `docs`) when the path lies under it; then the `docs`
+  directory of each root candidate -- the working directory, only when the
+  path lies under it and it is inside one of those repo roots, or no repo
+  exists, then every repo root, from the outermost inward -- when `docs` is
+  the FIRST segment of the path relative to the candidate. (2) An anchoring
+  directory is ROOTED unless a repo root lies at or inside it (the directory
+  is itself a repo root, or a repo is cloned or vendored into it); the first
+  rooted anchor wins, and an anchor that is not rooted is taken only when no
+  later anchoring directory gives a rooted one. (3) When nothing anchors, the
+  LAST `docs` segment anchors, un-rooted -- searched inside the outermost repo
+  root, or over the whole path when no repo exists. A registered UUID domain
+  under ANY anchor is placement-validated; a rooted anchor's non-domain skip
+  is unconditional, an un-rooted anchor's applies only when no other rule
+  matches, and no non-domain skip applies when `--type` is given.
+  Consequences: a working directory above every repo and a `docs`-named
+  directory above the outermost repo root never anchor; a `docs` tree that is
+  itself a repo (a submodule, or a spec repo whose root directory is named
+  `docs`) and a vendored repo's own `docs/` are placement-gated, and the
+  feature READMEs of such a repo are linted; a misplaced document under a
+  configured docs root of any name (`specdocs/req/x.md`) is a layout
+  violation; a nested project (`mono/.git`, docs at `mono/proj/docs/`) is
+  placement-gated from every working directory, but its non-domain
+  `docs/<dir>/` files are skipped unconditionally only when lint runs from
+  inside the project -- from `mono/`, `proj/docs/archive/sop/README.md` is
+  linted as `sop` (its parent-name rule matches). Known limitations: (a) a
+  symlinked `docs` directory is judged by its resolved location, so placement
+  under the link is not gated by the `docs` rules (unreachable for the hook
+  and CI: git does not track files through a symlinked directory); (b) a repo
+  whose directory is named after a UUID domain inside an outer repo's `docs`
+  tree (`super/docs/req/.git`) has its files placement-validated by the outer
+  anchor -- run lint without the outer repo, or rename the directory; (c) with
+  no repo at all, nothing marks where the project starts: a `docs`-named
+  ancestor of the project can anchor, and from the directory directly above
+  such an ancestor the anchor is rooted, so the non-domain files below it,
+  feature READMEs included, are skipped. A file under a non-domain
+  `docs/<dir>/` (e.g.
+  `docs/archive/`, any depth) that is skipped is counted, exit 0. Path mode is
+  used by the `specmgr-lint` pre-commit hook over
+  the staged in-tree artifacts and by the CI pull-request step over the
+  artifacts changed against the base branch), and the `--type T` sweep (from
+  `--dir` if given — for a sharded domain classified by its own content: a
+  domain directory (`<dir>/<lang>/<2-hex-shard>/`) is swept in every
+  language, one language directory (`<dir>/<2-hex-shard>/`) in the language
+  its name gives (canonical when the name is no language code) — else the
+  domain-wide union of every language directory —
+  EN + every variant language dir — for the sharded domains, the registered
+  base directory for `feat`) and the `--all` sweep (the same per-type
+  enumeration) — both CLI-only in the sense that NO hook/CI/test file invokes
+  `specmgr lint` with a sweep flag at shell level (the change-scoped gates
+  lint staged/changed paths only); the sweeps ARE covered in the test suite
+  via in-process Typer-app invocations (`tests/commands/test_lint.py`, incl.
+  the Phase 150 `TestLintSweepAllLanguages`). Exit codes: **0** every
+  document parsed (incl. a run where every path was skipped), **1** at least
+  one document failed to parse or the `mcp` extra is missing (required, like
+  `specmgr diagram`; the decoupling is tracked as issue #238), **2**
+  usage-or-resolution error (no paths and no sweep flag, an unreadable or
+  missing path, an unrecognized layout without `--skip-unrecognized`,
+  `--dir` without `--type` or combined with explicit paths, paths combined
+  with `--all`, an unknown `--type`, `--all` discovering nothing at all — no
+  document, a `--dir` that holds `.md` files but no document in the sharded
+  layout) or a docs-domain file violating the sharded layout (missing
+  language dir, missing shard dir, non-hex shard, deeper than one shard
+  level — reported as a layout violation naming the correct path). Accepted
+  limitation: because the gate is change-scoped, a schema or parser change
+  can break untouched documents without failing any gate — the full sweep
+  (manual, or the follow-up nightly workflow whose issue owns the
+  limitation) finds them; the tracked repo tree's sharded shape itself is
+  pinned continuously by `tests/test_repo_doc_layout.py` (feat-245 Phase 180).
 - `specmgr harness-bundle` (feat-167-mcp-lifecycle-commands-2 Phase 130,
   `commands/harness_bundle.py`, `[cli]`-only — no `mcp` import, no server
   import): regenerates the single committed package-data bundle

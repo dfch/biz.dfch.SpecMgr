@@ -342,7 +342,9 @@ class TestUseCasePackage(unittest.TestCase):
             uc_dir = Path(tmp) / "uc"
             uc_dir.mkdir()
             for name, doc_id in _PACKAGE_FIXTURE_IDS.items():
-                shutil.copy(_FIXTURES / "package" / name, uc_dir / f"{doc_id}.md")
+                target = uc_dir / "en" / doc_id[:2] / f"{doc_id}.md"
+                target.parent.mkdir(parents=True)
+                shutil.copy(_FIXTURES / "package" / name, target)
             with mock.patch.dict(os.environ, {"SPECMGR_DOCS_DIR": tmp}):
                 documents = self._package_documents()
 
@@ -365,7 +367,9 @@ class TestUseCasePackage(unittest.TestCase):
             uc_dir = Path(tmp) / "uc"
             uc_dir.mkdir()
             for name, doc_id in _PACKAGE_FIXTURE_IDS.items():
-                shutil.copy(_FIXTURES / "package" / name, uc_dir / f"{doc_id}.md")
+                target = uc_dir / "en" / doc_id[:2] / f"{doc_id}.md"
+                target.parent.mkdir(parents=True)
+                shutil.copy(_FIXTURES / "package" / name, target)
             with mock.patch.dict(os.environ, {"SPECMGR_DOCS_DIR": tmp}):
                 documents = self._package_documents()
 
